@@ -90,3 +90,12 @@ candidate. Its run and conservative reservations are retained. A separately
 named pilot-digitalocean batch uses the same Kimi release via DigitalOcean,
 which supports the required parameters; endpoint precision is unknown. This
 replacement was declared before any candidate grading or research generation.
+
+### Updated cost planning
+
+Read-only dry runs with the refreshed prices and declared DigitalOcean Kimi
+endpoint estimate $10.05 for both pilots, $27.34 for controls, and $796.85
+for all 24 primary trajectories, including 25% headroom. These are approximate
+uncached token estimates, not measured pilot projections, and exclude transfer
+and confirmation. See `current_cost_plan.json`. The authorized shared ceiling
+remains $100. No scope reduction or model substitution is inferred from it.

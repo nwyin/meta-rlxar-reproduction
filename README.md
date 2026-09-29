@@ -12,8 +12,8 @@ GLM-5.2 and Qwen9B apply the saved rubrics for transfer/ablation. Anthropic and
 Google models are excluded in every role, including repairs. Intermediate scaling
 is implemented as a separately preregistered later extension.
 
-**Execution status:** implementation and mock-provider tests exist. No live
-generation, grading, optimization, or confirmation results exist yet. See
+**Execution status:** implementation and mock-provider tests pass. Separate live
+pilots are running; no completed research or confirmation results exist yet. See
 [reports/progress.md](reports/progress.md) and [reports/matrix.csv](reports/matrix.csv).
 Mock tests are operational checks, never scientific evidence.
 
@@ -85,7 +85,10 @@ Verify model identity, structured outputs, provider routing, and
 reasoning modes in the operational pilot. Changes before research must be
 documented; changes within a trajectory require a new run. The current provider
 pins remain provisional until live checks succeed. The direct Kimi endpoint
-does not advertise temperature support, so its provisional pin is Crusoe BF16.
+does not advertise temperature support. Crusoe BF16 returned four upstream 429
+errors before producing a candidate. A separately declared pilot now uses
+DigitalOcean for the same Kimi release; its precision is unknown. The old attempt
+and reservations are preserved. See [the provider declaration](reports/pilot_provider_deviation.json).
 
 Once you have set `RUN_BUDGET_USD` and `TOTAL_BUDGET_USD` to your chosen ceilings:
 
@@ -101,6 +104,11 @@ uv run python run_matrix.py --phase transfers \
 uv run python run_matrix.py --phase confirmation \
   --budget-usd "$RUN_BUDGET_USD" --total-budget-usd "$TOTAL_BUDGET_USD"
 ```
+
+For the currently declared replacement batch, add
+`--pilot-prefix pilot-digitalocean` to pilot, controls, and matrix invocations
+(or to `--phase all`). The configured `.env` total ceiling is $100; the current
+per-run ceiling is also $100, subordinate to the shared total.
 
 `--phase all` runs those phases in order. The research gate checks both separate
 pilot trajectories against raw responses. It does not require a negative
