@@ -71,3 +71,10 @@ improvement. Missing matrix cells produce no imputed contrasts. Sixteen tests,
 lint, and dataset validation pass. The refreshed report still verifies 0/24 live
 trajectories. Credential and spending-ceiling checks remain unmet; the objective
 has not been completed.
+
+Execution prerequisite audit (2026-09-29T20:06:57.762206+00:00): credential and both explicit USD
+ceilings remain absent. There are no live run manifests or spending ledger. This
+same blocker has persisted across three goal turns. All paid experiments and
+result-dependent deliverables remain pending; goal status is being marked blocked
+until these inputs are supplied. Existing code, paper splits, and full scope are
+preserved. See reports/execution_prerequisites.json for the recorded evidence.
