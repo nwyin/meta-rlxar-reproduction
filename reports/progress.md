@@ -78,3 +78,8 @@ same blocker has persisted across three goal turns. All paid experiments and
 result-dependent deliverables remain pending; goal status is being marked blocked
 until these inputs are supplied. Existing code, paper splits, and full scope are
 preserved. See reports/execution_prerequisites.json for the recorded evidence.
+
+User supplied an OpenRouter credential and a $100 total ceiling in ignored .env
+and requested continuation. Per-run ceiling is also $100, subordinate to the
+shared $100 global ledger. Begin the preregistered GG2/GG4 strong-writer pilots;
+the full objective is preserved even if the budget executes only a subset.

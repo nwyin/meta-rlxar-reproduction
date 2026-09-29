@@ -1,24 +1,9 @@
 {
-  "checked_at": "2026-09-29T20:06:57.762206+00:00",
-  "execution_ready": false,
-  "missing": [
-    "OPENROUTER_API_KEY",
-    "explicit per-run USD ceiling",
-    "explicit total USD ceiling"
-  ],
-  "live_run_manifests": [],
-  "budget_ledger_exists": false,
-  "verified_primary_trajectories": 0,
-  "required_primary_trajectories": 24,
-  "requirement_source": "PLAN.md:130,141,330,399",
-  "remaining_scope": [
-    "live operational pilots",
-    "writer/control calls",
-    "24 XAR trajectories",
-    "judge and writer transfers",
-    "confirmation",
-    "result figures and interpretation",
-    "release packaging"
-  ],
-  "continuation": "Supply the credential through the process environment or ignored local .env and explicit spending ceilings; then resume the unchanged full objective."
+  "checked_at": "2026-09-29T20:21:58.253331+00:00",
+  "execution_ready": true,
+  "credential_available": true,
+  "per_run_ceiling_usd": 100.0,
+  "total_ceiling_usd": 100.0,
+  "authorization": "User configured XAR_TOTAL_BUDGET_USD in local .env and requested continuation. Each run ceiling equals, and cannot enlarge, the global ceiling.",
+  "full_scope_funded": "Unproven; measure pilot usage before estimating remaining costs."
 }
