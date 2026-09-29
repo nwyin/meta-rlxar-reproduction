@@ -6,6 +6,7 @@ import httpx
 import pytest
 
 import exp_baselines
+import exp_confirmation
 import exp_judge_transfer
 import exp_writer_transfer
 import exp_xar
@@ -182,6 +183,17 @@ def test_full_pilot_orchestration_resume_and_frozen_transfer(tmp_path, monkeypat
         "--target-writer-model", "qwen/qwen3.5-9b"])
     assert all("criteria" not in p.get("response_format", {}).get("json_schema", {}).get("schema", {}).get("properties", {})
                for p in fake.payloads[n:])
+    response_path = next((out / "scores/main/0/train").glob("*/human.json"))
+    response = shared.read_json(response_path)["attempts"][-1]["response"]
+    request_path = shared.Path(response["raw_response"]).parent / "request.json"
+    request = shared.read_json(request_path)
+    original = request["payload"]["temperature"]
+    request["payload"]["temperature"] = .9
+    shared.write_json(request_path, request)
+    with pytest.raises(shared.ContractError, match="decoding contract"):
+        shared.audit_xar_run(out)
+    request["payload"]["temperature"] = original
+    shared.write_json(request_path, request)
     grade_path = out / "scores/main/0/train/pilot0_abstract/human.json"
     grade = shared.read_json(grade_path)
     grade["total"] = 10
@@ -287,3 +299,71 @@ def test_rejected_proposal_consumes_update_with_one_repair(tmp_path):
     assert "previous_proposal" in api.calls[-1]
     artifact = shared.read_json(tmp_path / "feedback/iter_01/proposal.json")
     assert artifact["update_consumed"] is True and artifact["accepted"] is False
+
+
+def test_primary_matrix_rejects_different_judge_and_protocol():
+    design = shared.yaml.safe_load((shared.ROOT / "configs/experiments.yaml").read_text())
+    manifest = {"roles": {r: shared.role_config(SimpleNamespace(), r) for r in ("writer", "rubric", "optimizer", "judge")},
+                "arguments": {k: design[k] for k in ("iterations", "max_meta_prompt_words", "failure_examples")},
+                "extra": {"initial_meta_prompt_hash": shared.digest(shared.prompt("rubric_initial"))}}
+    shared.validate_primary_manifest(manifest, design)
+    changed = json.loads(json.dumps(manifest))
+    changed["roles"]["judge"] = shared.role_config(SimpleNamespace(), "judge", model="z-ai/glm-5.2")
+    with pytest.raises(shared.ContractError, match="main judge fixed"):
+        shared.validate_primary_manifest(changed, design)
+    changed = json.loads(json.dumps(manifest))
+    changed["arguments"]["iterations"] = 6
+    with pytest.raises(shared.ContractError, match="iterations"):
+        shared.validate_primary_manifest(changed, design)
+    changed = json.loads(json.dumps(manifest))
+    changed["roles"]["rubric"]["reasoning"] = {"enabled": False}
+    with pytest.raises(shared.ContractError, match="decoding"):
+        shared.validate_primary_manifest(changed, design)
+
+
+def test_confirmation_cannot_relabel_validation(monkeypatch, tmp_path):
+    with pytest.raises(shared.ContractError, match="reserved confirmation split"):
+        invoke(monkeypatch, exp_confirmation, ["--source-run", str(tmp_path / "missing-source"),
+            "--output-dir", str(tmp_path / "confirmation"), "--split", "validation", "--dry-run"])
+
+
+def test_confirmation_rejects_changed_dataset_override(monkeypatch, tmp_path):
+    source = tmp_path / "source"
+    original = tmp_path / "original.jsonl"
+    original.write_text("original")
+    changed = tmp_path / "changed.jsonl"
+    changed.write_text("changed")
+    manifest = {"experiment": "xar", "arguments": {"split": "research", "seed": 0},
+        "roles": {r: shared.role_config(SimpleNamespace(), r) for r in ("writer", "rubric", "optimizer", "judge")},
+        "dataset": str(original), "dataset_hash": shared.file_hash(original)}
+    shared.write_json(source / "manifest.json", manifest)
+    shared.write_json(source / "freeze.json", {"selected": 0})
+    with pytest.raises(shared.ContractError, match="dataset differs"):
+        invoke(monkeypatch, exp_confirmation, ["--source-run", str(source), "--dataset", str(changed),
+            "--output-dir", str(tmp_path / "confirmation"), "--dry-run"])
+
+
+def test_factorial_comparisons_pair_baseline_adjusted_effects_and_interactions():
+    design = {"weak": "weak", "strong": "strong", "seeds": [0]}
+    observed = {}
+    for w, g, o in shared.itertools.product((0, 1), repeat=3):
+        initial = 10*g
+        improvement = w + 2*g + 3*o + 4*g*o + 5*w*o
+        key = tuple("strong" if v else "weak" for v in (w, g, o)) + (0,)
+        rows = {checkpoint: [{"example_id": str(i), "paper_id": "paper", "gap": gap} for i in range(4)]
+                for checkpoint, gap in ((0, initial), (1, initial+improvement))}
+        observed[key] = {"freeze": {"selected": 1}, "rows": {(i, "validation"): r for i, r in rows.items()}}
+    effects = shared.matrix_effects(observed, design)
+    assert len(effects) == 36
+    optimizer = next(e for e in effects if e["kind"] == "main_effect" and e["varied_role"] == "optimizer"
+                     and e["fixed_roles"] == {"writer": "strong", "generator": "strong"}
+                     and e["metric"] == "improvement")
+    assert optimizer["mean"] == 12 and optimizer["paper_interval"]["paper_clusters"] == 1
+    generator = [e for e in effects if e["kind"] == "main_effect" and e["varied_role"] == "generator"
+                 and e["fixed_roles"] == {"writer": "weak", "optimizer": "weak"}]
+    assert {e["metric"]: e["mean"] for e in generator} == {"selected_gap": 12, "improvement": 2}
+    interaction = [e for e in effects if e["kind"] == "interaction" and e["varied_roles"] == ["generator", "optimizer"]]
+    assert all(e["mean"] == 4 for e in interaction)
+    del observed[("strong", "strong", "strong", 0)]
+    partial = shared.matrix_effects(observed, design)
+    assert len(partial) < len(effects)  # Missing cells never produce imputed contrasts.

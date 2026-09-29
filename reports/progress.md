@@ -57,3 +57,17 @@ $13 for both pilots, $34 for controls, and $987 for the matrix; transfers and
 confirmation are additional. These estimates are not spending authorization and
 remain provisional until pilot measurements. The batch invocation without dollar
 ceilings stopped before dispatch; no live run manifests exist.
+
+Acceptance-gate follow-up: raw-output audits now check sent model/provider,
+decoding, schema, and fixed rubric/judge wrappers against the saved role contract,
+including dispatch order for held-out grades. Primary matrix reports reject a
+different main judge or changed preregistered iteration/prompt bounds and flag
+inconsistent data/software contracts across trajectories. Confirmation rejects
+validation-split relabeling and incompatible dataset/split overrides.
+
+Paired factorial summaries now include writer, generator, and optimizer effects
+and their interactions, per trajectory, for selected gaps and baseline-adjusted
+improvement. Missing matrix cells produce no imputed contrasts. Sixteen tests,
+lint, and dataset validation pass. The refreshed report still verifies 0/24 live
+trajectories. Credential and spending-ceiling checks remain unmet; the objective
+has not been completed.

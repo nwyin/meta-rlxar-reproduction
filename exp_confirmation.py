@@ -8,6 +8,7 @@ from shared import (
     digest,
     estimate,
     evaluate_checkpoint,
+    file_hash,
     initialize_run,
     main_guard,
     operational_summary,
@@ -28,6 +29,8 @@ def main():
     parser.add_argument("--source-run", required=True)
     parser.add_argument("--writer-generations")
     args = parse_args(parser)
+    if args.split != "confirmation":
+        raise ContractError("Confirmation must use the reserved confirmation split")
     source = Path(args.source_run)
     manifest, freeze = read_json(source / "manifest.json"), read_json(source / "freeze.json")
     if manifest["experiment"] != "xar" or manifest["arguments"]["split"] != "research":
@@ -39,7 +42,13 @@ def main():
             raise ContractError("Source differs from preregistered confirmation configuration")
     if manifest["arguments"]["seed"] != prereg["source_seed"]:
         raise ContractError("Source trajectory differs from confirmation preregistration")
-    args.dataset, args.splits = manifest["dataset"], manifest["splits"]
+    for name in ("dataset", "splits"):
+        given = getattr(args, name)
+        default = "data/examples.jsonl" if name == "dataset" else "data/splits.json"
+        path = manifest[name] if given == default else given
+        if file_hash(path) != manifest[name + "_hash"]:
+            raise ContractError(f"Confirmation {name} differs from the frozen source")
+        setattr(args, name, path)
     examples = selected_examples(args)
     if len(examples) != 20 or len({e["paper_id"] for e in examples}) != 5:
         raise ContractError("Confirmation requires five distinct reserved papers / twenty examples")

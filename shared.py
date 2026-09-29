@@ -10,6 +10,7 @@ import datetime as dt
 import fcntl
 import functools
 import hashlib
+import itertools
 import json
 import math
 import os
@@ -903,7 +904,30 @@ def estimate(args, roles, examples, counts):
     return result
 
 
-def audit_saved_output(record, schema):
+def audit_request_contract(payload, cfg, endpoint, schema, prompt_file):
+    """Check the actual sent request against the frozen role, scoring wrapper, and schema."""
+    expected = {"model": cfg["model"], "temperature": cfg["temperature"],
+                "reasoning": cfg["reasoning"], "max_tokens": cfg["max_tokens"],
+                "stream": False, "plugins": [], "transforms": [],
+                "provider": {"only": [cfg["provider"]], "order": [cfg["provider"]],
+                             "allow_fallbacks": False, "require_parameters": True}}
+    if any(payload.get(key) != value for key, value in expected.items()):
+        raise ContractError("Saved request differs from frozen role/routing/decoding contract")
+    if payload.get("response_format") != {"type": "json_schema", "json_schema": {
+            "name": "xar_output", "strict": True, "schema": schema}}:
+        raise ContractError("Saved request differs from fixed output schema")
+    messages = payload.get("messages", [])
+    if len(messages) != 2 or [m.get("role") for m in messages] != ["system", "user"]:
+        raise ContractError("Saved request includes conversation history or unexpected message roles")
+    system = messages[0]["content"]
+    base = system.split("\nFORMAT REPAIR: Return complete valid JSON matching the schema. ", 1)[0]
+    if digest(base) != prompt_file:
+        raise ContractError("Saved request changed the frozen grading/rubric wrapper")
+    if "seed" in payload and "seed" not in endpoint["endpoint"]["supported_parameters"]:
+        raise ContractError("Saved request used an unsupported seed")
+
+
+def audit_saved_output(record, schema, cfg=None, endpoint=None, prompt_file=None):
     if record["status"] != "valid":
         raise ContractError("Missing structured output")
     last = record["attempts"][-1]
@@ -921,6 +945,14 @@ def audit_saved_output(record, schema):
     if canonical(parsed) != canonical(record["value"]):
         raise ContractError("Derived artifact differs from raw response")
     request = read_json(Path(response["raw_response"]).parent / "request.json")
+    if cfg is not None:
+        audit_request_contract(request["payload"], cfg, endpoint, schema, prompt_file)
+        raw = receipt["response"]
+        if raw.get("model") not in {cfg["model"], endpoint["canonical_slug"]}:
+            raise ContractError("Raw response used a different model from the frozen role")
+        provider = raw.get("provider")
+        if provider and provider not in {endpoint["endpoint"]["provider_name"], cfg["provider"]}:
+            raise ContractError("Raw response used a different provider from the frozen role")
     return request["payload"]
 
 
@@ -967,7 +999,10 @@ def audit_xar_run(path):
                 if candidate["context_hash"] != e["context_hash"] or candidate["text_hash"] != digest(candidate["text"]):
                     raise ContractError("Writer candidate integrity failed")
                 rubric = read_json(path / f"rubrics/main/{iteration}/{split}/{eid}/rubric.json")
-                rubric_payload = audit_saved_output(rubric, RUBRIC_SCHEMA)
+                if rubric["generator_configuration"] != manifest["roles"]["rubric"]:
+                    raise ContractError("Rubric artifact configuration differs from the frozen generator")
+                rubric_payload = audit_saved_output(rubric, RUBRIC_SCHEMA, manifest["roles"]["rubric"],
+                    manifest["endpoints"]["rubric"], manifest["software_hashes"]["prompts/rubric_wrapper.md"])
                 if split == "validation":
                     if not freeze.get("frozen_at"):
                         raise ContractError("Freeze lacks timestamp evidence for held-out evaluation ordering")
@@ -981,7 +1016,15 @@ def audit_xar_run(path):
                 totals = {}
                 for origin, text in (("human", e["reference"]), ("model", candidate["text"])):
                     grade = read_json(path / f"scores/main/{iteration}/{split}/{eid}/{origin}.json")
-                    grade_payload = audit_saved_output(grade, GRADE_SCHEMA)
+                    if grade["judge_configuration"] != manifest["roles"]["judge"]:
+                        raise ContractError("Grade artifact configuration differs from the frozen judge")
+                    grade_payload = audit_saved_output(grade, GRADE_SCHEMA, manifest["roles"]["judge"],
+                        manifest["endpoints"]["judge"], manifest["software_hashes"]["prompts/judge.md"])
+                    if split == "validation":
+                        for attempt in grade["attempts"]:
+                            receipt = read_json(attempt["response"]["raw_response"])
+                            if not receipt.get("sent_at") or receipt["sent_at"] < freeze["frozen_at"]:
+                                raise ContractError("Validation grade was dispatched before trajectory freeze")
                     expected = {**task_data(e), "rubric": rubric["value"], "candidate": text}
                     if json.loads(grade_payload["messages"][1]["content"]) != expected:
                         raise ContractError("Anonymous grade payload violates input contract")
@@ -1008,6 +1051,77 @@ def audit_xar_run(path):
             "candidates": candidates, "raw_verified": True}
 
 
+def validate_primary_manifest(manifest, design):
+    if manifest["roles"]["judge"]["model"] != design["judge"]:
+        raise ContractError("Primary matrix must hold the preregistered main judge fixed")
+    for field in ("iterations", "max_meta_prompt_words", "failure_examples"):
+        if manifest["arguments"].get(field) != design[field]:
+            raise ContractError(f"Primary matrix differs from preregistered {field}")
+    if manifest["extra"].get("initial_meta_prompt_hash") != digest(prompt("rubric_initial")):
+        raise ContractError("Primary matrix differs from the frozen neutral starting prompt")
+    for role, cfg in manifest["roles"].items():
+        if cfg != role_config(argparse.Namespace(), role, model=cfg["model"]):
+            raise ContractError(f"Primary {role} provider/decoding differs from the frozen configuration")
+
+
+def matrix_effects(observed, design):
+    """Paired factorial effects on selected gaps and baseline-adjusted improvement, per trajectory."""
+    weak, strong = design["weak"], design["strong"]
+    axes = ("writer", "generator", "optimizer")
+    effects = []
+
+    def contrast(keys, weights, metadata):
+        if not all(key in observed for key in keys):
+            return
+        values = []
+        for key in keys:
+            run = observed[key]
+            selected = {r["example_id"]: r for r in run["rows"][(run["freeze"]["selected"], "validation")]}
+            initial = {r["example_id"]: r for r in run["rows"][(0, "validation")]}
+            if set(selected) != set(initial):
+                raise ContractError("Factorial comparison has incomplete paired baseline coverage")
+            values.append({eid: {"paper_id": row["paper_id"], "selected_gap": row["gap"],
+                                "improvement": row["gap"]-initial[eid]["gap"]} for eid, row in selected.items()})
+        ids = set(values[0])
+        if any(set(v) != ids for v in values[1:]):
+            effects.append({**metadata, "status": "incompatible_example_sets"})
+            return
+        for metric in ("selected_gap", "improvement"):
+            rows = [{"paper_id": values[0][eid]["paper_id"],
+                     "gap": sum(weight * v[eid][metric] for weight, v in zip(weights, values))}
+                    for eid in sorted(ids)]
+            effects.append({**metadata, "metric": metric, "status": "paired_complete",
+                            "paired_examples": len(rows), "mean": statistics.mean(r["gap"] for r in rows),
+                            "paper_interval": bootstrap(rows, metadata["seed"])})
+
+    for axis in range(3):
+        fixed_axes = [i for i in range(3) if i != axis]
+        for fixed in itertools.product((weak, strong), repeat=2):
+            for seed in design["seeds"]:
+                low = [None]*3
+                for index, model in zip(fixed_axes, fixed):
+                    low[index] = model
+                low[axis] = weak
+                high = low.copy()
+                high[axis] = strong
+                contrast([(*low, seed), (*high, seed)], [-1, 1], {"kind": "main_effect",
+                    "varied_role": axes[axis], "direction": "strong_minus_weak", "seed": seed,
+                    "fixed_roles": {axes[index]: model for index, model in zip(fixed_axes, fixed)}})
+    for a, b in itertools.combinations(range(3), 2):
+        fixed_axis = next(i for i in range(3) if i not in (a, b))
+        for fixed in (weak, strong):
+            for seed in design["seeds"]:
+                keys = []
+                for amodel, bmodel in ((weak, weak), (weak, strong), (strong, weak), (strong, strong)):
+                    roles = [None]*3
+                    roles[a], roles[b], roles[fixed_axis] = amodel, bmodel, fixed
+                    keys.append((*roles, seed))
+                contrast(keys, [1, -1, -1, 1], {"kind": "interaction", "varied_roles": [axes[a], axes[b]],
+                    "direction": "strong_strong-minus-strong_weak-minus-weak_strong-plus-weak_weak", "seed": seed,
+                    "fixed_roles": {axes[fixed_axis]: fixed}})
+    return effects
+
+
 def render_report(runs_root, output):
     """Report all expected matrix cells, including missing runs; never infer completion from status alone."""
     output = Path(output)
@@ -1027,11 +1141,12 @@ def render_report(runs_root, output):
                 raise ContractError("Run is outside primary preregistered matrix")
             if key in observed:
                 raise ContractError("Duplicate primary matrix cell; no favorable-run selection permitted")
+            validate_primary_manifest(manifest, design)
             observed[key] = audit_xar_run(path.parent)
         except (ContractError, FileNotFoundError, jsonschema.ValidationError, ValueError) as e:
             failures.append({"run": str(path.parent), "error": str(e)})
     summaries = []
-    writer_hashes = {}
+    writer_hashes, shared_contract = {}, None
     for key in sorted(expected):
         w, g, o, seed = key
         row = {"writer": model_labels[w], "generator": model_labels[g], "optimizer": model_labels[o], "seed": seed,
@@ -1039,6 +1154,10 @@ def render_report(runs_root, output):
                "terminal_gap": None, "improvement": None, "reversal": None}
         if key in observed:
             run = observed[key]
+            contract = {k: run["manifest"][k] for k in ("dataset_hash", "splits_hash", "software_hashes", "schema_version")}
+            if shared_contract is not None and shared_contract != contract:
+                failures.append({"condition": key, "error": "Primary matrix data/software/scoring contracts differ"})
+            shared_contract = contract
             selected = run["freeze"]["selected"]
             initial, final = run["table"][0]["val_gap"], run["table"][selected]["val_gap"]
             row.update(status="raw_verified", selected_checkpoint=selected, initial_gap=initial,
@@ -1075,6 +1194,7 @@ def render_report(runs_root, output):
                 "selected": summarize(selected_rows), "improvement": paired_improvement(initial_rows, selected_rows)})
         write_json(output / "shared_compliance_sensitivity.json", sensitivities)
     write_json(output / "paired_comparisons.json", comparisons)
+    write_json(output / "factorial_effects.json", matrix_effects(observed, design))
     complete = len(observed) == len(expected) and not failures
     write_json(output / "audit.json", {"expected_trajectories": len(expected), "raw_verified_trajectories": len(observed),
         "primary_matrix_complete": complete, "failures": failures,

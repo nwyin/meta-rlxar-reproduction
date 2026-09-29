@@ -159,6 +159,13 @@ output rates, and costs. Figures are created only when verified results exist.
 Matrix completion alone does not prove that controls, transfers, confirmation,
 release packaging, or the complete PLAN.md milestone is finished.
 
+The raw audit also verifies sent model/provider, decoding, schema, and wrapper
+identities. Matrix acceptance requires the fixed preregistered main judge and
+consistent input/scoring contracts across trajectories. `factorial_effects.json`
+contains paired W/G/O effects and interactions for selected gaps and improvement,
+with separate per-trajectory paper intervals. Confirmation accepts only reserved
+papers and hash-identical source data overrides.
+
 Routing/schema contracts follow the primary
 [OpenRouter provider routing documentation](https://openrouter.ai/docs/guides/routing/provider-selection)
 and [structured-output documentation](https://openrouter.ai/docs/guides/features/structured-outputs).
