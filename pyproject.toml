@@ -1,0 +1,23 @@
+[project]
+name = "meta-rlxar-reproduction"
+version = "0.1.0"
+description = "Independent OpenRouter XAR procedural reproduction"
+requires-python = ">=3.11"
+dependencies = [
+  "httpx>=0.28,<0.29",
+  "jsonschema>=4.25,<5",
+  "PyYAML>=6,<7",
+  "python-dotenv>=1,<2",
+  "beautifulsoup4>=4.13,<5",
+  "matplotlib>=3.10,<4",
+]
+
+[dependency-groups]
+dev = ["pytest>=8,<10", "ruff>=0.13,<1"]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 110
