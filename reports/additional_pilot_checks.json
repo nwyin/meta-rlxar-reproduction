@@ -126,6 +126,62 @@
     "gate_uses_score_gap": false,
     "concurrency": 1,
     "combined_concurrency_ceiling": 5,
-    "purpose": "Operational format/evidence validation only; no research or confirmation requests"
+    "purpose": "Operational format/evidence validation only; no research or confirmation requests",
+    "status": {
+      "state": "format_incomplete",
+      "coverage": {
+        "z-ai/glm-5.2": {
+          "human_valid": true,
+          "model_valid": true
+        },
+        "qwen/qwen3.5-9b": {
+          "human_valid": true,
+          "model_valid": false
+        }
+      },
+      "gate_uses_score_gap": false,
+      "rubric_regeneration": false,
+      "paid": true
+    },
+    "operational_summary": {
+      "format_validation": {
+        "evaluation_1": {
+          "structured_attempts": 3,
+          "invalid_attempts": 2,
+          "invalid_fraction": 0.6666666666666666
+        },
+        "evaluation_0": {
+          "structured_attempts": 2,
+          "invalid_attempts": 0,
+          "invalid_fraction": 0.0
+        }
+      },
+      "transport_attempts": 5,
+      "inherited_frozen_responses": 1,
+      "raw_usage_cost_usd": 0.0441056853,
+      "unresolved_transport": 0
+    },
+    "missing_cause": "Weak model candidate: initial finish_reason=length at 16384 output tokens; one format repair returned provider stream interruption error at about300seconds. Human grade valid. All attempts retained."
+  },
+  "weak_judge_endpoint_probe": {
+    "declared_at": "2026-09-29T23:26:50.417853+00:00",
+    "run": "runs/probe-weak-judge-siliconflow",
+    "source": "runs/pilot-parallel-GG2",
+    "model": "qwen/qwen3.5-9b",
+    "provider": "siliconflow/fp8",
+    "rubric": "Exact same saved P0 training-pilot rubric, both same anonymous candidate texts",
+    "reason": "Operational check after Parasail weak-judge output-limit failure and stream interruption; SiliconFlow passed separate Qwen rubric and optimizer schema checks",
+    "parameters_unchanged": {
+      "temperature": 0,
+      "reasoning": {
+        "enabled": true
+      },
+      "max_tokens": 16384
+    },
+    "precision_caveat": "FP8 differs from BF16 and seed unsupported. Same model release/mode; no output-limit increase or model replacement.",
+    "gate_uses_score_gap": false,
+    "concurrency": 1,
+    "combined_concurrency_ceiling": 5,
+    "research_calls": 0
   }
 }
