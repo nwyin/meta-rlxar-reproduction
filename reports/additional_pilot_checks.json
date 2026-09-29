@@ -108,5 +108,24 @@
       }
     },
     "active_trajectory_provider_changed": false
+  },
+  "transfer_judge_probe": {
+    "declared_at": "2026-09-29T23:13:41.880552+00:00",
+    "run": "runs/probe-transfer-judges",
+    "source": "runs/pilot-parallel-GG2",
+    "rubric": "exact saved P0 rubric for first sorted pilot training example; no regeneration",
+    "judges": [
+      "z-ai/glm-5.2",
+      "qwen/qwen3.5-9b"
+    ],
+    "providers": {
+      "z-ai/glm-5.2": "wafer",
+      "qwen/qwen3.5-9b": "parasail/bf16"
+    },
+    "decoding": "Unchanged preregistered judge temperature 0, reasoning modes and max_tokens16384",
+    "gate_uses_score_gap": false,
+    "concurrency": 1,
+    "combined_concurrency_ceiling": 5,
+    "purpose": "Operational format/evidence validation only; no research or confirmation requests"
   }
 }
