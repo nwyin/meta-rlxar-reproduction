@@ -4,10 +4,22 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from shared import (  # noqa: E402
-    ROOT, ContractError, common_parser, digest, file_hash, generate_rubric,
-    initialize_run, main_guard, operational_summary, parse_args, propose_prompt,
-    read_json, role_config, run_lock, selected_examples, write_json,
+from shared import (
+    ContractError,
+    common_parser,
+    digest,
+    file_hash,
+    generate_rubric,
+    initialize_run,
+    main_guard,
+    operational_summary,
+    parse_args,
+    propose_prompt,
+    read_json,
+    role_config,
+    run_lock,
+    selected_examples,
+    write_json,
 )
 
 
@@ -27,9 +39,9 @@ def main():
     if not feedback['summary']['complete']:
         raise ContractError('Full pilot training baseline required for the optimizer probe')
     examples = selected_examples(args)
-    paper = sorted({e['paper_id'] for e in examples})[0]
+    paper = min(e['paper_id'] for e in examples)
     train = [{**e, 'split': 'train'} for e in examples if e['paper_id'] == paper]
-    example = sorted(train, key=lambda e: e['example_id'])[0]
+    example = min(train, key=lambda e: e['example_id'])
     initial = (source / 'prompts/iter_00.md').read_text()
     roles = {role: role_config(args, role) for role in ('rubric', 'optimizer')}
     with run_lock(args.output_dir):
