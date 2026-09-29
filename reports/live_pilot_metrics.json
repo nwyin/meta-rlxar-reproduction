@@ -1,0 +1,70 @@
+{
+  "as_of": "2026-09-29T20:57:03.806185+00:00",
+  "runs": {
+    "pilot-digitalocean-GG2": {
+      "transport_statuses": {
+        "success": 6,
+        "uncertain": 1
+      },
+      "roles": {
+        "writer": {
+          "successful_transport_calls": 6,
+          "mean_latency_seconds": 256.3204872225081,
+          "p90_latency_seconds": 488.82544062501984,
+          "mean_prompt_tokens": 18622,
+          "mean_completion_tokens": 9030,
+          "mean_reasoning_tokens": 8220.833333333334,
+          "actual_usage_cost_usd": 0.193587912,
+          "mean_usage_cost_usd": 0.032264652,
+          "cached_prompt_tokens": 288
+        }
+      },
+      "completed_research_trajectory": false
+    },
+    "pilot-weak-parasail": {
+      "transport_statuses": {
+        "success": 19,
+        "uncertain": 1
+      },
+      "roles": {
+        "rubric": {
+          "successful_transport_calls": 5,
+          "mean_latency_seconds": 50.424402224808,
+          "p90_latency_seconds": 124.08051529200748,
+          "mean_prompt_tokens": 35862.2,
+          "mean_completion_tokens": 6845,
+          "mean_reasoning_tokens": 4721,
+          "actual_usage_cost_usd": 0.02648735,
+          "mean_usage_cost_usd": 0.0052974699999999994,
+          "cached_prompt_tokens": 0
+        },
+        "writer": {
+          "successful_transport_calls": 8,
+          "mean_latency_seconds": 107.527024906125,
+          "p90_latency_seconds": 243.42941474998952,
+          "mean_prompt_tokens": 23974.125,
+          "mean_completion_tokens": 8280.375,
+          "mean_reasoning_tokens": 7284.125,
+          "actual_usage_cost_usd": 0.03574005,
+          "mean_usage_cost_usd": 0.00446750625,
+          "cached_prompt_tokens": 0
+        },
+        "judge": {
+          "successful_transport_calls": 6,
+          "mean_latency_seconds": 30.59107981950122,
+          "p90_latency_seconds": 43.3745794580027,
+          "mean_prompt_tokens": 33113.5,
+          "mean_completion_tokens": 4738.166666666667,
+          "mean_reasoning_tokens": 4325.5,
+          "actual_usage_cost_usd": 0.1775372602,
+          "mean_usage_cost_usd": 0.029589543366666665,
+          "cached_prompt_tokens": 0
+        }
+      },
+      "completed_research_trajectory": false
+    }
+  },
+  "global_actual_complete_usd": 0.4333525722,
+  "global_charged_or_reserved_usd": 0.8463055224,
+  "limitations": "Incomplete operational pilot measurements; transport successes include any format repairs and are not scientific results. Strong rubric/optimizer measurements remain pending. Main-judge cost will depend on full research paper sizes."
+}
