@@ -155,3 +155,19 @@ identify Parasail upstream stream interruptions at about 301 seconds. A
 prospectively declared SiliconFlow FP8 probe uses the same failing conclusion
 context, unchanged reasoning/output limits, and fixed complete pilot feedback;
 this diagnostic does not use a gap sign to choose an endpoint.
+
+GG2 completed P0 and update-one training with full four-example coverage and
+started update-two evaluation. The SiliconFlow Qwen9B diagnostic passed rubric
+and proposal schemas on the same failing conclusion context; measured rubric
+latency was 98.39 s and optimizer latency 118.82 s. Active providers stay frozen.
+The alternate GLM judge has two valid pilot candidate grades; the weak-judge
+probe is still live. Both reuse a fixed saved P0 rubric.
+
+An isolated `perf/shared-initial-evaluation` branch implements PLAN.md initial
+artifact reuse for paired optimizer conditions: GG2 from GG1 and GG4 from GG3,
+matching each writer/generator/seed. Only training P0 is inherited after exact
+raw-input/output, model/provider, code, dataset, seed and writer checks. Validation
+remains fresh and post-selection; unchanged-prompt controls remain independent.
+All 25 tests and lint pass in that worktree. End-to-end checks verify reduced
+calls, untouched source validation, seed/tamper rejection, resume and no duplicate
+billing. Apply after the active frozen pilots, before the research matrix.

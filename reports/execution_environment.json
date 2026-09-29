@@ -34,7 +34,7 @@
   "frozen_recovery_source": "/tmp/xar-frozen-pilot-b2fb545",
   "frozen_recovery_software_hashes": "Verified exact matches for both existing pilot manifests",
   "latest_active_batch": {
-    "checked_at": "2026-09-29T23:03:05.557315+00:00",
+    "checked_at": "2026-09-29T23:16:05.053627+00:00",
     "driver": "runs/pilot-schema-driver.log",
     "prefix": "pilot-schema",
     "concurrency": 4,
@@ -47,14 +47,24 @@
     "research_and_confirmation_dispatches": 0,
     "pilot_GG2_progress": {
       "completed_training_checkpoints": [
-        0
+        0,
+        1
       ],
       "training_coverage": 4,
       "required_training_examples": 4,
-      "current_stage": "optimizer update 1",
+      "current_stage": "checkpoint 2 training evaluation",
       "validation_opened": false
     },
     "weak_optimizer_schema_status": "valid; accepted bounded proposal",
     "weak_endpoint_diagnostic": "running; same failing pilot conclusion, prospective SiliconFlow FP8 check"
+  },
+  "prepared_initial_training_reuse": {
+    "worktree": "/tmp/meta-rlxar-p0-reuse-20260929",
+    "branch": "perf/shared-initial-evaluation",
+    "implementation_commit": "54a9c89",
+    "verified": "25 full tests and lint passed; extended end-to-end test verifies P0 import without writer/train-P0 calls, independent post-freeze validation, seed mismatch rejection, tamper rejection, idempotent resume and no duplicate cost accounting",
+    "scope": "Only paired-condition P0 training artifacts; fresh validation and fresh unchanged-prompt controls preserved",
+    "application": "After current frozen pilots, before research matrix dispatch",
+    "root_live_source_unchanged": true
   }
 }
