@@ -1,0 +1,28 @@
+{
+  "checked_at": "2026-09-29T23:29:12.664416+00:00",
+  "source_commit": "89cb7aa",
+  "source_root": "/tmp/xar-frozen-pilot-89cb7aa",
+  "run": "runs/pilot-schema-GG2",
+  "software_hashes_verified": {
+    "configs/tokenizers.json": true,
+    "exp_baselines.py": true,
+    "exp_confirmation.py": true,
+    "exp_judge_transfer.py": true,
+    "exp_scaling.py": true,
+    "exp_writer_transfer.py": true,
+    "exp_xar.py": true,
+    "prompts/judge.md": true,
+    "prompts/optimizer.md": true,
+    "prompts/pairwise.md": true,
+    "prompts/rubric_initial.md": true,
+    "prompts/rubric_wrapper.md": true,
+    "prompts/writer.md": true,
+    "run_matrix.py": true,
+    "shared.py": true,
+    "uv.lock": true
+  },
+  "model_tiers_verified": true,
+  "shared_paths_linked_to_original": true,
+  "paid_resume_dispatched": false,
+  "purpose": "Preserve exact live pilot source before applying tested paired-training cache changes at the next scientific batch boundary. Recovery never resends unresolved calls."
+}
