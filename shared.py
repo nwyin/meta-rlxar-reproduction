@@ -190,6 +190,10 @@ def pricing_upper(endpoint):
 
 @functools.lru_cache(maxsize=4)
 def tokenizer(name):
+    cfg = read_json(ROOT / "configs/tokenizers.json")[name]
+    filename = "tiktoken.model" if name == "kimi" else "tokenizer.json"
+    if file_hash(ROOT / "data/tokenizers" / name / filename) != cfg["checksums"][filename]:
+        raise ContractError(f"Tokenizer differs from pinned checksum: {name}")
     if name == "kimi":
         import tiktoken
         from tiktoken.load import load_tiktoken_bpe
@@ -297,7 +301,7 @@ class OpenRouter:
 
     def payload(self, role, system, data, schema, identity):
         cfg = self.roles[role]
-        payload = {"model": cfg["model"], "stream": False,
+        payload = {"model": cfg["model"], "stream": False, "plugins": [], "transforms": [],
                    "messages": [{"role": "system", "content": system},
                                 {"role": "user", "content": canonical(data)}],
                    "temperature": cfg["temperature"], "reasoning": cfg["reasoning"],
@@ -309,6 +313,44 @@ class OpenRouter:
         if "seed" in self.endpoints[role][0]["supported_parameters"]:
             payload["seed"] = int(digest({"seed": self.seed, "identity": identity})[:8], 16) % (2**31)
         return payload
+
+    def preflight(self):
+        """Fresh read-only catalog evidence before a batch; pinned settings never silently change."""
+        stamp = now().replace(":", "-")
+        directory = self.output / "preflight" / stamp
+        response = self.client.get(API_BASE + "/models")
+        response.raise_for_status()
+        catalog = response.json()
+        write_json(directory / "models.json", catalog)
+        models = {m["id"]: m for m in catalog["data"]}
+        endpoints = {}
+        for role, cfg in self.roles.items():
+            model = cfg["model"]
+            if model not in models or models[model]["canonical_slug"] != self.endpoints[role][1]["canonical_slug"]:
+                raise ContractError("Pinned catalog release changed; declare a new batch")
+            if model not in endpoints:
+                response = self.client.get(API_BASE + "/models/" + model + "/endpoints")
+                response.raise_for_status()
+                endpoints[model] = response.json()
+                write_json(directory / (model.replace("/", "_") + "-endpoints.json"), endpoints[model])
+            matching = [e for e in endpoints[model]["data"]["endpoints"] if e["tag"] == cfg["provider"]]
+            if len(matching) != 1:
+                raise ContractError("Pinned provider endpoint missing or ambiguous")
+            current, prior = matching[0], self.endpoints[role][0]
+            required = {"temperature", "reasoning", "max_tokens", "response_format", "structured_outputs"}
+            if not required <= set(current["supported_parameters"]):
+                raise ContractError("Pinned endpoint no longer supports required parameters")
+            if current["context_length"] < prior["context_length"] or (
+                current.get("max_completion_tokens") or current["context_length"]) < cfg["max_tokens"]:
+                raise ContractError("Pinned endpoint limits changed; recheck whole payloads")
+            if pricing_upper(current) != pricing_upper(prior):
+                raise ContractError("Endpoint pricing changed; refresh frozen evidence for a new batch")
+            efforts = models[model].get("reasoning", {}).get("supported_efforts", [])
+            if efforts and cfg["reasoning"].get("effort", efforts[0]) not in efforts:
+                raise ContractError("Pinned reasoning mapping changed")
+        write_json(directory / "checks.json", {"at": now(), "roles": self.roles, "passed": True,
+                   "read_only": True, "paid_capability_checks": "separate_operational_pilot"})
+        return directory
 
     def call(self, role, system, data, schema, identity):
         payload = self.payload(role, system, data, schema, identity)
@@ -337,7 +379,8 @@ class OpenRouter:
                     raise ContractError(f"Prior nonretryable transport failure: {receipt}")
                 continue
             self.ledger.reserve(ledger_key, bound)
-            write_json(receipt, {"status": "uncertain", "sent_at": now(), "upper_usd": bound})
+            sent_at = now()
+            write_json(receipt, {"status": "uncertain", "sent_at": sent_at, "upper_usd": bound})
             started = time.monotonic()
             try:
                 response = self.client.post(API_BASE + "/chat/completions", json=payload,
@@ -351,7 +394,7 @@ class OpenRouter:
                 success = response.status_code == 200 and "choices" in raw and not raw.get("error")
                 write_json(receipt, {"status": "success" if success else "http_error",
                     "response": raw, "http_status": response.status_code, "retryable": retryable,
-                    "timestamp": now(), "duration_seconds": time.monotonic() - started})
+                    "timestamp": now(), "sent_at": sent_at, "duration_seconds": time.monotonic() - started})
                 if success:
                     result = self.extract(raw, request_key, ledger_key, directory)
                     write_json(cached, result)
@@ -592,10 +635,13 @@ def bootstrap(rows, seed=0, replicates=2000, field="gap"):
     if not bundles:
         return None
     rng = random.Random(seed)
-    means = [statistics.mean(bundles[p]) for p in sorted(bundles)]
-    samples = sorted(statistics.mean(rng.choices(means, k=len(means))) for _ in range(replicates))
-    return {"method": "paired_whole_paper_percentile_bootstrap", "paper_clusters": len(means),
+    papers = sorted(bundles)
+    samples = sorted(statistics.mean(value for p in rng.choices(papers, k=len(papers)) for value in bundles[p])
+                     for _ in range(replicates))
+    return {"method": "paired_whole_paper_percentile_bootstrap", "paper_clusters": len(papers),
             "replicates": replicates, "seed": seed,
+            "estimate": statistics.mean(value for values in bundles.values() for value in values),
+            "bootstrap_median": samples[replicates//2],
             "low": samples[int(.025*replicates)], "high": samples[int(.975*replicates)]}
 
 
@@ -713,8 +759,13 @@ def operational_summary(output):
         for path in (output / folder).rglob("*.json"):
             collect(read_json(path))
     role_rates = {}
+    inherited = 0
     for key, status in attempts.items():
-        role = read_json(output / "requests" / key / "request.json")["role"]
+        request_path = output / "requests" / key / "request.json"
+        if not request_path.exists():
+            inherited += 1
+            continue
+        role = read_json(request_path)["role"]
         counts = role_rates.setdefault(role, {"structured_attempts": 0, "invalid_attempts": 0})
         counts["structured_attempts"] += 1
         counts["invalid_attempts"] += status == "invalid"
@@ -730,6 +781,7 @@ def operational_summary(output):
                 "prompt_tokens": usage.get("prompt_tokens"), "completion_tokens": usage.get("completion_tokens"),
                 "cost_usd": usage.get("cost"), "latency_seconds": data.get("duration_seconds")})
     summary = {"format_validation": role_rates, "transport_attempts": len(usage_rows),
+               "inherited_frozen_responses": inherited,
                "raw_usage_cost_usd": sum(r["cost_usd"] or 0 for r in usage_rows),
                "unresolved_transport": sum(r["status"] == "uncertain" for r in usage_rows)}
     write_json(output / "operational_summary.json", summary)
@@ -774,6 +826,7 @@ def initialize_run(args, roles, experiment, extra=None):
         raise ContractError("Selected papers still need human review; see data/review.md")
     manifest["human_review_hash"] = file_hash(review_path)
     api = OpenRouter(out, roles, args.seed, args.budget_usd, args.total_budget_usd, args.budget_ledger)
+    api.preflight()
     if path.exists():
         if not args.resume:
             raise ContractError("Run exists; use --resume or a new output directory")
@@ -825,7 +878,23 @@ def estimate(args, roles, examples, counts):
             typical_tokens*price["prompt"] + output_tokens*price["completion"]),
             "per_request_conservative_usd": (max(contexts)+12000)*price["prompt"] +
                                             roles[role]["max_tokens"]*price["completion"]}
+    reuse = {}
+    for field in ("writer_generations", "target_generations"):
+        artifact = getattr(args, field, None)
+        if artifact:
+            path = Path(artifact)
+            reuse[field] = {"path": artifact, "status": "available" if path.exists() else "preceding_phase_prerequisite_missing"}
+            if path.exists() and "writer" in roles:
+                saved = read_json(path)
+                expected_hash = digest({"writer": roles["writer"], "prompt": prompt("writer"), "schema_version": SCHEMA_VERSION})
+                if saved["writer_configuration_hash"] != expected_hash:
+                    raise ContractError("Planned cached writer artifact has incompatible settings")
+                for e in examples:
+                    candidate = saved["candidates"].get(e["example_id"])
+                    if not candidate or candidate["context_hash"] != e["context_hash"]:
+                        raise ContractError("Planned cached writer artifact lacks matching example coverage")
     result = {"dry_run": True, "examples": len(examples), "roles": roles, "counts_and_costs": estimates,
+              "artifact_reuse": reuse,
               "retry_reserve_fraction": .25,
               "estimated_phase_usd_with_reserve": 1.25*sum(e["typical_uncached_usd"] for e in estimates.values()),
               "pricing_source": "saved_endpoint_snapshots", "limitations": "Pilot token usage required; optimizer feedback may be larger.",
@@ -899,6 +968,13 @@ def audit_xar_run(path):
                     raise ContractError("Writer candidate integrity failed")
                 rubric = read_json(path / f"rubrics/main/{iteration}/{split}/{eid}/rubric.json")
                 rubric_payload = audit_saved_output(rubric, RUBRIC_SCHEMA)
+                if split == "validation":
+                    if not freeze.get("frozen_at"):
+                        raise ContractError("Freeze lacks timestamp evidence for held-out evaluation ordering")
+                    for record in rubric["attempts"]:
+                        receipt = read_json(record["response"]["raw_response"])
+                        if not receipt.get("sent_at") or receipt["sent_at"] < freeze["frozen_at"]:
+                            raise ContractError("Validation rubric was dispatched before trajectory freeze")
                 validate_rubric(rubric["value"])
                 if json.loads(rubric_payload["messages"][1]["content"]) != {**task_data(e), "meta_prompt": checkpoint}:
                     raise ContractError("Rubric inputs contain an unexpected field or changed context")
@@ -1060,7 +1136,7 @@ def render_report(runs_root, output):
 def main_guard(main):
     try:
         main()
-    except (ContractError, FileNotFoundError, jsonschema.ValidationError) as e:
+    except (ContractError, FileNotFoundError, jsonschema.ValidationError, httpx.HTTPError) as e:
         print(f"STOP: {e}")
         raise SystemExit(2) from None
 

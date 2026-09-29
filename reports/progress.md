@@ -43,3 +43,17 @@ and final release acceptance are still outstanding.
 
 OPENROUTER_API_KEY and numeric per-run/total spending ceilings are still absent.
 No paid calls have been dispatched. The goal remains active.
+
+Execution-readiness follow-up: live batches now capture fresh read-only catalog
+and endpoint evidence and reject drift. Freeze timestamps and request-dispatch
+timestamps prove validation rubric generation follows trajectory selection.
+Usage summaries distinguish inherited transfer rubrics from local model calls.
+Whole-paper bootstrap sampling retains every available section in each sampled
+paper, including unequal bundles in compliance sensitivity analyses.
+
+All 24 matrix dry runs and all four control dry runs passed. Primary request
+counts match PLAN.md. Preliminary uncached estimates with 25% reserve are about
+$13 for both pilots, $34 for controls, and $987 for the matrix; transfers and
+confirmation are additional. These estimates are not spending authorization and
+remain provisional until pilot measurements. The batch invocation without dollar
+ceilings stopped before dispatch; no live run manifests exist.

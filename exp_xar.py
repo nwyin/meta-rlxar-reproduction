@@ -10,6 +10,7 @@ from shared import (
     evaluate_checkpoint,
     initialize_run,
     main_guard,
+    now,
     operational_summary,
     paired_improvement,
     parse_args,
@@ -104,6 +105,7 @@ def main():
         freeze = {"selected": selected, "terminal": args.iterations, "selection": "highest_train_gap_then_earliest",
                   "training_gaps": gaps, "prompt_hashes": [digest(p) for p in checkpoints],
                   "validation_used_for_selection": False}
+        freeze["frozen_at"] = read_json(out / "freeze.json")["frozen_at"] if (out / "freeze.json").exists() else now()
         write_json(out / "freeze.json", freeze, immutable=True)
         validation_rows, table = [], []
         for iteration, meta_prompt in enumerate(checkpoints):

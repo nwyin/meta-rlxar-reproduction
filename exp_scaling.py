@@ -12,6 +12,7 @@ def main():
     parser.add_argument("--models", nargs="+", required=True)
     parser.add_argument("--seeds", nargs="+", type=int, default=[0, 1, 2])
     parser.add_argument("--source-run")
+    parser.add_argument("--writer-generations", help="Frozen shared candidates for rubric/optimizer scaling")
     parser.add_argument("--preregistration", help="Required extension-specific frozen JSON before paid execution")
     args = parse_args(parser)
     intervention = "frozen_artifact_regrading" if args.vary_role == "judge" else "XAR_reoptimization"
@@ -23,6 +24,8 @@ def main():
             raise ContractError("Scaling invocation differs from its preregistration")
     else:
         prereg = {"pending": True}
+    if not args.dry_run and args.vary_role in {"rubric", "optimizer"} and not args.writer_generations:
+        raise ContractError("Rubric/optimizer scaling requires frozen --writer-generations to hold the writer sample fixed")
     commands = []
     for model in args.models:
         for seed in args.seeds:
@@ -35,6 +38,11 @@ def main():
                 command += ["--source-run", args.source_run, "--evaluation-judge-models", model]
             else:
                 command += ["--dataset", args.dataset, "--splits", args.splits, "--split", args.split]
+                if args.vary_role in {"rubric", "optimizer"} and args.writer_generations:
+                    command += ["--writer-generations", args.writer_generations]
+                elif args.vary_role == "writer" and seed != args.seeds[0]:
+                    first = Path(args.output_dir) / f"{model.replace('/', '_')}-seed{args.seeds[0]}"
+                    command += ["--writer-generations", str(first / "generations/candidates.json")]
                 for role in ("writer", "rubric", "optimizer", "judge"):
                     chosen = model if role == args.vary_role else getattr(args, role + "_model")
                     if chosen:

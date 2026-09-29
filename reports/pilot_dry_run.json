@@ -1,0 +1,15 @@
+{
+  "phase": "pilot",
+  "planned_runs": 2,
+  "request_counts_before_retries": {
+    "writer": 8,
+    "rubric": 128,
+    "judge": 256,
+    "optimizer": 14
+  },
+  "estimated_uncached_usd_with_25_percent_reserve": 12.665068387285716,
+  "pricing_date": "2026-09-29",
+  "paid_calls": 0,
+  "budget_authorized": false,
+  "limitations": "Approximate pre-pilot estimate; optimizer feedback sizes and reasoning output may differ."
+}

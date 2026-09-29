@@ -78,8 +78,10 @@ provisional until actual pilot token/latency measurements exist. Shared-writer
 reuse in a staged dry run assumes the preceding control phase will create those
 artifacts. Transfer and confirmation dry runs need existing frozen source runs.
 
-Refresh the OpenRouter catalog and endpoint evidence before each new experiment
-batch, and verify model identity, structured outputs, provider routing, and
+Every live batch saves fresh read-only OpenRouter catalog and endpoint snapshots,
+rejecting changed releases, capabilities, or pricing against the frozen settings.
+Refresh the frozen evidence before a new batch if this check finds a change.
+Verify model identity, structured outputs, provider routing, and
 reasoning modes in the operational pilot. Changes before research must be
 documented; changes within a trajectory require a new run. The current provider
 pins remain provisional until live checks succeed. The direct Kimi endpoint

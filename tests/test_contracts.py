@@ -96,6 +96,12 @@ class FakeProvider:
         self.payloads = []
 
     def handle(self, request):
+        if request.method == "GET":
+            if request.url.path.endswith("/endpoints"):
+                model = request.url.path.split("/models/")[-1].removesuffix("/endpoints")
+                return httpx.Response(200, json=shared.read_json(shared.ROOT / "configs/snapshots" /
+                    (model.replace("/", "_") + "-endpoints.json")))
+            return httpx.Response(200, json=shared.read_json(shared.ROOT / "configs/snapshots/openrouter-models-2026-09-29.json"))
         payload = json.loads(request.content)
         self.payloads.append(payload)
         assert payload["provider"]["allow_fallbacks"] is False
@@ -215,6 +221,8 @@ def test_bootstrap_resamples_paper_bundles():
     interval = shared.bootstrap(rows)
     assert interval["paper_clusters"] == 2
     assert interval["low"] == 1 and interval["high"] == 3
+    unequal = shared.bootstrap([{"paper_id": "a", "gap": 0}] + [{"paper_id": "b", "gap": 10}]*4)
+    assert unequal["estimate"] == 8 and unequal["bootstrap_median"] == 8
 
 
 def test_transport_uncertain_timeout_is_not_resent(tmp_path):
