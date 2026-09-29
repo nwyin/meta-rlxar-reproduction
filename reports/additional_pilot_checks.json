@@ -1,0 +1,19 @@
+{
+  "declared_at": "2026-09-29T20:33:20.181141+00:00",
+  "purpose": "Check weak writer and optimizer task competence before research using only the separate pilot papers. Later verify GLM with exact saved pilot rubrics.",
+  "run": "runs/pilot-weak-competence",
+  "writer": "qwen/qwen3.5-9b",
+  "generator": "qwen/qwen3.5-9b",
+  "optimizer": "qwen/qwen3.5-9b",
+  "judge": "deepseek/deepseek-v4-pro-0813",
+  "iterations": 1,
+  "seed": 0,
+  "selection_for_research": false,
+  "gate_uses_gap_sign": false,
+  "research_papers_used": false,
+  "concurrency": 1,
+  "combined_operational_concurrency_ceiling": 3,
+  "concurrency_reason": "An additional one-request pilot overlaps the main pilot, whose writer stage is serial and has measured multi-minute latency. Main pilot evaluation remains at two in-flight requests.",
+  "shared_budget_ledger": "runs/budget_ledger.json",
+  "total_ceiling_usd": 100
+}
