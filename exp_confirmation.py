@@ -4,6 +4,7 @@ from pathlib import Path
 from shared import (
     ContractError,
     audit_xar_run,
+    checkpoint_indices,
     common_parser,
     digest,
     estimate,
@@ -53,10 +54,11 @@ def main():
     if len(examples) != 20 or len({e["paper_id"] for e in examples}) != 5:
         raise ContractError("Confirmation requires five distinct reserved papers / twenty examples")
     roles = {r: manifest["roles"][r] for r in ("writer", "rubric", "judge")}
+    indices = checkpoint_indices(freeze, ["initial", "selected"])
     prompts = {label: (source / f"prompts/iter_{i:02d}.md").read_text()
-               for label, i in (("initial", 0), ("selected", freeze["selected"]))}
+               for label, i in indices.items()}
     if args.dry_run:
-        estimate(args, roles, examples, {"writer": 0 if args.writer_generations else 20, "rubric": 40, "judge": 80})
+        estimate(args, roles, examples, {"writer": 0 if args.writer_generations else 20, "rubric": 20*len(set(indices.values())), "judge": 40*len(set(indices.values()))})
         return
     audit_xar_run(source)
     with run_lock(args.output_dir):
@@ -68,10 +70,10 @@ def main():
             "prompt_hashes": {label: digest(text) for label, text in prompts.items()},
             "frozen_before_confirmation_calls": True}, immutable=True)
         candidates = writer_candidates(api, examples, args.output_dir, args.writer_generations, concurrency=args.concurrency)
-        rows = {label: evaluate_checkpoint(api, examples, candidates, text, label, args.output_dir,
+        rows = {label: evaluate_checkpoint(api, examples, candidates, text, indices[label], args.output_dir,
                         args.concurrency, namespace="confirmation") for label, text in prompts.items()}
         summaries = {label: summarize(values, args.seed) for label, values in rows.items()}
-        write_json(Path(args.output_dir) / "results.json", {"summaries": summaries,
+        write_json(Path(args.output_dir) / "results.json", {"summaries": summaries, "source_checkpoint_indices": indices,
             "improvement": paired_improvement(rows["initial"], rows["selected"], args.seed)})
         operational_summary(args.output_dir)
         write_json(Path(args.output_dir) / "costs.json", api.ledger.summary())

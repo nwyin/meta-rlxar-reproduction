@@ -3,6 +3,7 @@ from pathlib import Path
 
 from shared import (
     ContractError,
+    checkpoint_indices,
     common_parser,
     digest,
     estimate,
@@ -30,6 +31,7 @@ def main():
     parser.add_argument("--target-generations")
     args = parse_args(parser)
     source, freeze, examples, _, rubrics = source_artifacts(args)
+    indices = checkpoint_indices(freeze, args.checkpoints)
     writer = role_config(args, "writer", model=args.target_writer_model)
     judge = source["roles"]["judge"]
     overridden = role_config(args, "judge") if any(getattr(args, "judge_" + key, None) is not None
@@ -39,17 +41,17 @@ def main():
     roles = {"writer": writer, "judge": judge}
     if args.dry_run:
         estimate(args, roles, examples, {"writer": 0 if args.target_generations else len(examples),
-                                       "judge": 2*len(examples)*len(args.checkpoints)})
+                                       "judge": 2*len(examples)*len(set(indices.values()))})
         return
     with run_lock(args.output_dir):
         api = initialize_run(args, roles, "writer_transfer", {"source_hash": source["substantive_hash"], "freeze_hash": digest(freeze)})
         candidates = writer_candidates(api, examples, args.output_dir, args.target_generations, concurrency=args.concurrency)
-        rows = {label: evaluate_checkpoint(api, examples, candidates, None, label, args.output_dir,
+        rows = {label: evaluate_checkpoint(api, examples, candidates, None, indices[label], args.output_dir,
                 args.concurrency, frozen_rubrics=rubrics[label], namespace="writer_transfer") for label in args.checkpoints}
         summaries = {label: summarize(values, args.seed) for label, values in rows.items()}
         write_json(Path(args.output_dir) / "results.json", {"summaries": summaries,
             "improvement": paired_improvement(rows["initial"], rows["selected"], args.seed)
-                           if "initial" in rows and "selected" in rows else None, "rubric_regeneration": False})
+                           if "initial" in rows and "selected" in rows else None, "rubric_regeneration": False, "source_checkpoint_indices": indices})
         operational_summary(args.output_dir)
         write_json(Path(args.output_dir) / "costs.json", api.ledger.summary())
         write_json(Path(args.output_dir) / "status.json", {"state": "complete" if all(s["complete"] for s in summaries.values()) else "incomplete", "paid": True})

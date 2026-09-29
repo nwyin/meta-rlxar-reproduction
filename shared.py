@@ -299,6 +299,7 @@ class OpenRouter:
         self.client = client or httpx.Client(timeout=httpx.Timeout(600, connect=30))
         self.endpoints = {r: endpoint_for(c) for r, c in roles.items()}
         self.ledger = Ledger(ledger_path, str(self.output.resolve()), budget, total_budget)
+        self.dispatch_stopped = threading.Event()
 
     def payload(self, role, system, data, schema, identity):
         cfg = self.roles[role]
@@ -325,6 +326,7 @@ class OpenRouter:
         write_json(directory / "models.json", catalog)
         models = {m["id"]: m for m in catalog["data"]}
         endpoints = {}
+        pricing_bounds = {}
         for role, cfg in self.roles.items():
             model = cfg["model"]
             if model not in models or models[model]["canonical_slug"] != self.endpoints[role][1]["canonical_slug"]:
@@ -344,16 +346,31 @@ class OpenRouter:
             if current["context_length"] < prior["context_length"] or (
                 current.get("max_completion_tokens") or current["context_length"]) < cfg["max_tokens"]:
                 raise ContractError("Pinned endpoint limits changed; recheck whole payloads")
-            if pricing_upper(current) != pricing_upper(prior):
-                raise ContractError("Endpoint pricing changed; refresh frozen evidence for a new batch")
+            current_price, frozen_upper = pricing_upper(current), pricing_upper(prior)
+            if any(current_price[k] > frozen_upper[k] for k in frozen_upper):
+                raise ContractError("Endpoint pricing exceeds frozen upper rates; refresh evidence for a new batch")
+            pricing_bounds[role] = {"observed": current_price, "frozen_upper": frozen_upper,
+                                   "lower_prices_within_bound": current_price != frozen_upper}
+            if current.get("quantization") != prior.get("quantization"):
+                raise ContractError("Pinned endpoint precision changed; declare a new batch")
+            if "seed" in prior["supported_parameters"] and "seed" not in current["supported_parameters"]:
+                raise ContractError("Pinned endpoint no longer supports the frozen seed parameter")
             efforts = models[model].get("reasoning", {}).get("supported_efforts", [])
             if efforts and cfg["reasoning"].get("effort", efforts[0]) not in efforts:
                 raise ContractError("Pinned reasoning mapping changed")
         write_json(directory / "checks.json", {"at": now(), "roles": self.roles, "passed": True,
-                   "read_only": True, "paid_capability_checks": "separate_operational_pilot"})
+                   "read_only": True, "pricing_bounds": pricing_bounds,
+                   "paid_capability_checks": "separate_operational_pilot"})
         return directory
 
     def call(self, role, system, data, schema, identity):
+        try:
+            return self._call(role, system, data, schema, identity)
+        except BaseException:
+            self.dispatch_stopped.set()
+            raise
+
+    def _call(self, role, system, data, schema, identity):
         payload = self.payload(role, system, data, schema, identity)
         request_key = digest({"payload": payload, "identity": identity, "schema_version": SCHEMA_VERSION})
         directory = self.output / "requests" / request_key
@@ -379,6 +396,8 @@ class OpenRouter:
                 if not prior.get("retryable"):
                     raise ContractError(f"Prior nonretryable transport failure: {receipt}")
                 continue
+            if self.dispatch_stopped.is_set():
+                raise ContractError("Dispatch halted after another request failed")
             self.ledger.reserve(ledger_key, bound)
             sent_at = now()
             write_json(receipt, {"status": "uncertain", "sent_at": sent_at, "upper_usd": bound})
@@ -509,6 +528,40 @@ def contamination(candidate, reference):
             "flagged": longest >= 30, "exclusion": False}
 
 
+def bounded_map(function, items, concurrency, stopped=None):
+    """Keep at most concurrency tasks active; retain input order and stop refilling on errors."""
+    if not 1 <= concurrency <= 32:
+        raise ContractError("Concurrency must be 1–32")
+    stopped = stopped if stopped is not None else threading.Event()
+
+    def invoke(item):
+        if stopped.is_set():
+            raise ContractError("Parallel work halted after another task failed")
+        try:
+            return function(item)
+        except BaseException:
+            stopped.set()
+            raise
+
+    remaining, results = iter(enumerate(items)), {}
+    with concurrent.futures.ThreadPoolExecutor(max_workers=concurrency) as pool:
+        pending = {pool.submit(invoke, item): i for i, item in itertools.islice(remaining, concurrency)}
+        try:
+            while pending:
+                done, _ = concurrent.futures.wait(pending, return_when=concurrent.futures.FIRST_COMPLETED)
+                for future in done:
+                    results[pending.pop(future)] = future.result()
+                if not stopped.is_set():
+                    pending.update({pool.submit(invoke, item): i
+                                    for i, item in itertools.islice(remaining, len(done))})
+        except BaseException:
+            stopped.set()
+            for future in pending:
+                future.cancel()
+            raise
+    return [results[i] for i in sorted(results)]
+
+
 def writer_candidates(api, examples, output, existing=None, concurrency=1):
     if not 1 <= concurrency <= 32:
         raise ContractError("Writer concurrency must be 1–32")
@@ -517,7 +570,7 @@ def writer_candidates(api, examples, output, existing=None, concurrency=1):
     frozen = read_json(existing) if existing else None
     if frozen and frozen["writer_configuration_hash"] != config_hash:
         raise ContractError("Cached writer configuration differs")
-    stopped = threading.Event()
+    stopped = getattr(api, "dispatch_stopped", threading.Event())
 
     def generate_one(e):
         path = Path(output) / "generations" / (e["example_id"] + ".json")
@@ -563,34 +616,9 @@ def writer_candidates(api, examples, output, existing=None, concurrency=1):
             raise ContractError("Local cached writer settings differ")
         return record
 
-    def generate(e):
-        try:
-            return generate_one(e)
-        except BaseException:
-            stopped.set()
-            raise
-
-    # Only the active wave is submitted; an error prevents further dispatch.
-    remaining = iter(examples)
-    records = {}
-    with concurrent.futures.ThreadPoolExecutor(max_workers=concurrency) as pool:
-        pending = {pool.submit(generate, e) for e in itertools.islice(remaining, concurrency)}
-        try:
-            while pending:
-                done, _ = concurrent.futures.wait(pending, return_when=concurrent.futures.FIRST_COMPLETED)
-                for future in done:
-                    record = future.result()
-                    records[record["example_id"]] = record
-                pending -= done
-                if not stopped.is_set():
-                    pending.update(pool.submit(generate, e) for e in itertools.islice(remaining, len(done)))
-        except BaseException:
-            stopped.set()
-            for future in pending:
-                future.cancel()
-            raise
+    records = bounded_map(generate_one, examples, concurrency, stopped)
     # Completion order never changes the frozen dataset/candidate order.
-    candidates = {e["example_id"]: records[e["example_id"]] for e in examples}
+    candidates = {record["example_id"]: record for record in records}
     artifact = {"writer_configuration_hash": config_hash, "writer_configuration": api.roles["writer"],
                 "candidates": candidates}
     write_json(Path(output) / "generations/candidates.json", artifact, immutable=True)
@@ -656,8 +684,7 @@ def evaluate_checkpoint(api, examples, candidates, meta_prompt, checkpoint, outp
                 "rubric_path": str(root / "rubrics" / label / "rubric.json"),
                 "grade_paths": {o: str(root / "scores" / label / (o + ".json")) for o in labels}}
 
-    with concurrent.futures.ThreadPoolExecutor(max_workers=concurrency) as pool:
-        rows = list(pool.map(evaluate, examples))
+    rows = bounded_map(evaluate, examples, concurrency, getattr(api, "dispatch_stopped", None))
     write_json(root / "scores" / namespace / str(checkpoint) / f"{examples[0]['split']}_rows.json", rows)
     return rows
 
@@ -1356,6 +1383,11 @@ def propose_prompt(api, current, feedback, examples, initial, args, iteration):
     write_json(directory / "proposal.json", record, immutable=True)
     return proposal
 
+
+
+def checkpoint_indices(freeze, labels):
+    indices = {"initial": 0, "selected": freeze["selected"], "terminal": freeze["terminal"]}
+    return {label: indices[label] for label in labels}
 
 
 def source_artifacts(args):

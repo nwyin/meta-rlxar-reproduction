@@ -4,6 +4,7 @@ from pathlib import Path
 
 from shared import (
     PAIRWISE_SCHEMA,
+    bounded_map,
     common_parser,
     estimate,
     evaluate_checkpoint,
@@ -51,7 +52,7 @@ def main():
         candidates = writer_candidates(api, examples, args.output_dir, args.writer_generations, concurrency=args.concurrency)
         tables, pairwise = [], []
         if "pairwise" in args.baseline_methods:
-            for e in examples:
+            def evaluate_pairwise(e):
                 results, preferences = [], []
                 for order in range(2):
                     labels = ["human", "model"] if order == 0 else ["model", "human"]
@@ -67,7 +68,8 @@ def main():
                           "orders": results, "human_preference": statistics.mean(preferences) if None not in preferences else None,
                           "order_disagreement": preferences[0] != preferences[1] if None not in preferences else None}
                 write_json(Path(args.output_dir) / "scores/pairwise" / (e["example_id"] + ".json"), record, immutable=True)
-                pairwise.append(record)
+                return record
+            pairwise = bounded_map(evaluate_pairwise, examples, args.concurrency, api.dispatch_stopped)
             write_json(Path(args.output_dir) / "scores/pairwise_summary.json", {
                 "examples": n, "complete": all(r["human_preference"] is not None for r in pairwise),
                 "coverage": sum(r["human_preference"] is not None for r in pairwise),

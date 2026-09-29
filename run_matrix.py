@@ -17,6 +17,7 @@ def main():
     parser.add_argument("--dry-run", action="store_true")
     parser.add_argument("--resume", action="store_true")
     parser.add_argument("--runs-root", default="runs")
+    parser.add_argument("--pilot-writer-generations", help="Reuse compatible frozen pilot writer candidates")
     parser.add_argument("--pilot-prefix", default="pilot", help="Separate operational batch name after declared endpoint replacement")
     parser.add_argument("--concurrency", type=int, default=2)
     args = parser.parse_args()
@@ -53,6 +54,8 @@ def main():
             for gg, generator in ((2, "weak"), (4, "strong")):
                 extra = ["--split", "pilot", "--writer-model", models["strong"], "--rubric-model", models[generator],
                          "--optimizer-model", models["strong"], "--judge-model", design["judge"], "--seed", "0"]
+                if gg == 2 and args.pilot_writer_generations:
+                    extra += ["--writer-generations", args.pilot_writer_generations]
                 if gg == 4:
                     extra += ["--writer-generations", str(root / f"{args.pilot_prefix}-GG2/generations/candidates.json")]
                 execute("exp_xar.py", root / f"{args.pilot_prefix}-GG{gg}", extra)

@@ -178,11 +178,16 @@ def test_full_pilot_orchestration_resume_and_frozen_transfer(tmp_path, monkeypat
     assert len(fake.payloads) == n
     invoke(monkeypatch, exp_judge_transfer, [*common, "--source-run", str(out), "--output-dir", str(tmp_path / "judge")])
     assert all("scores" in p["response_format"]["json_schema"]["schema"]["properties"] for p in fake.payloads[n:])
+    assert len(fake.payloads) - n == 16  # Two judges, four examples, two candidates; selected aliases P0.
+    transferred = shared.read_json(tmp_path / "judge/results.json")
+    assert all(result["improvement"]["mean"] == 0 for result in transferred.values())
     n = len(fake.payloads)
     invoke(monkeypatch, exp_writer_transfer, [*common, "--source-run", str(out), "--output-dir", str(tmp_path / "writer"),
         "--target-writer-model", "qwen/qwen3.5-9b"])
     assert all("criteria" not in p.get("response_format", {}).get("json_schema", {}).get("schema", {}).get("properties", {})
                for p in fake.payloads[n:])
+    assert len(fake.payloads) - n == 12  # Four new writers plus eight grades; selected aliases P0.
+    assert shared.read_json(tmp_path / "writer/results.json")["improvement"]["mean"] == 0
     response_path = next((out / "scores/main/0/train").glob("*/human.json"))
     response = shared.read_json(response_path)["attempts"][-1]["response"]
     request_path = shared.Path(response["raw_response"]).parent / "request.json"
@@ -464,3 +469,101 @@ def test_parallel_reservations_share_one_budget(tmp_path):
         assert sum(pool.map(reserve, range(8))) == 2
     entries = shared.read_json(path)['entries']
     assert sum(e['charge'] for e in entries.values()) == .8
+
+
+@pytest.mark.parametrize('factor,accepted', [(.5, True), (1.1, False)])
+def test_preflight_pricing_changes_stay_within_frozen_bounds(tmp_path, factor, accepted):
+    cfg = shared.role_config(SimpleNamespace(), 'judge')
+    endpoint, _ = shared.endpoint_for(cfg)
+
+    def handler(request):
+        if request.url.path.endswith('/endpoints'):
+            data = shared.read_json(shared.ROOT / 'configs/snapshots' / (cfg['model'].replace('/', '_') + '-endpoints.json'))
+            for e in data['data']['endpoints']:
+                if e['tag'] == cfg['provider']:
+                    e['pricing']['completion'] = str(float(e['pricing']['completion']) * factor)
+        else:
+            data = shared.read_json(shared.ROOT / 'configs/snapshots/openrouter-models-2026-09-29.json')
+        return httpx.Response(200, json=data)
+
+    api = shared.OpenRouter(tmp_path / 'run', {'judge': cfg}, 0, 10, 10, tmp_path / 'ledger.json',
+                            client=httpx.Client(transport=httpx.MockTransport(handler)))
+    if accepted:
+        directory = api.preflight()
+        bounds = shared.read_json(directory / 'checks.json')['pricing_bounds']['judge']
+        assert bounds['lower_prices_within_bound'] is True
+        assert bounds['frozen_upper'] == shared.pricing_upper(endpoint)
+        assert api.endpoints['judge'][0] == endpoint
+    else:
+        with pytest.raises(shared.ContractError, match='exceeds frozen upper'):
+            api.preflight()
+    assert not (tmp_path / 'ledger.json').exists()
+
+
+def test_unknown_send_halts_dispatch_for_other_tasks(tmp_path):
+    cfg = shared.role_config(SimpleNamespace(), 'writer')
+    sends = []
+
+    def handler(request):
+        sends.append(request)
+        raise httpx.ReadTimeout('Completion outcome unknown')
+
+    api = shared.OpenRouter(tmp_path / 'run', {'writer': cfg}, 0, 10, 10, tmp_path / 'ledger.json',
+                            client=httpx.Client(transport=httpx.MockTransport(handler)))
+    with pytest.raises(shared.BudgetStop, match='unknown'):
+        api.call('writer', 'Instructions', {'paper': 'first'}, None, 'first')
+    with pytest.raises(shared.ContractError, match='Dispatch halted'):
+        api.call('writer', 'Instructions', {'paper': 'second'}, None, 'second')
+    assert len(sends) == 1
+    assert len(shared.read_json(tmp_path / 'ledger.json')['entries']) == 1
+
+
+def test_pairwise_examples_overlap_but_each_order_is_sent_once(tmp_path, monkeypatch):
+    import sys
+    import threading
+
+    original = FakeProvider
+
+    class ParallelPairwise(original):
+        def __init__(self):
+            super().__init__()
+            self.barrier = threading.Barrier(2)
+            self.lock = threading.Lock()
+            self.active = self.peak = 0
+
+        def handle(self, request):
+            if request.method != 'POST':
+                return super().handle(request)
+            payload = json.loads(request.content)
+            properties = payload.get('response_format', {}).get('json_schema', {}).get('schema', {}).get('properties', {})
+            if 'winner' not in properties:
+                return super().handle(request)
+            data = json.loads(payload['messages'][1]['content'])
+            with self.lock:
+                self.active += 1
+                self.peak = max(self.peak, self.active)
+            if data['A'].startswith('Original'):
+                self.barrier.wait(timeout=5)
+            result = super().handle(request)
+            with self.lock:
+                self.active -= 1
+            return result
+
+    monkeypatch.setattr(sys.modules[__name__], 'FakeProvider', ParallelPairwise)
+    fake = install_fake(monkeypatch)
+    examples = [dummy_example('pairwise', s, 'validation') for s in shared.SECTIONS]
+    dataset, splits = tmp_path / 'examples.jsonl', tmp_path / 'splits.json'
+    dataset.write_text(''.join(shared.canonical(e) + '\n' for e in examples))
+    shared.write_json(splits, {'papers': {'validation': ['pairwise']}})
+    shared.write_json(tmp_path / 'human_review.json', {'dataset_hash': shared.file_hash(dataset),
+        'papers': {'pairwise': {'decision': 'approved'}}})
+    out = tmp_path / 'baseline'
+    invoke(monkeypatch, exp_baselines, ['--dataset', str(dataset), '--splits', str(splits), '--output-dir', str(out),
+        '--budget-usd', '10', '--total-budget-usd', '10', '--budget-ledger', str(tmp_path / 'ledger.json'),
+        '--split', 'validation', '--baseline-methods', 'pairwise', '--concurrency', '2'])
+    assert fake.peak == 2
+    assert shared.read_json(out / 'scores/pairwise_summary.json')['coverage'] == 4
+    for p in (out / 'scores/pairwise').glob('*.json'):
+        record = shared.read_json(p)
+        assert [r['order'] for r in record['orders']] == [0, 1]
+    assert len(fake.payloads) == 12  # Four writers plus two orders for each example.

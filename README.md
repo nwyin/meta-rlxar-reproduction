@@ -83,7 +83,9 @@ reuse in a staged dry run assumes the preceding control phase will create those
 artifacts. Transfer and confirmation dry runs need existing frozen source runs.
 
 Every live batch saves fresh read-only OpenRouter catalog and endpoint snapshots,
-rejecting changed releases, capabilities, or pricing against the frozen settings.
+rejecting changed releases, precision, unsupported decoding, or prices above the
+frozen upper rates. Lower prices are recorded and the higher reservation rates
+remain in force.
 Refresh the frozen evidence before a new batch if this check finds a change.
 Verify model identity, structured outputs, provider routing, and
 reasoning modes in the operational pilot. Changes before research must be
@@ -138,10 +140,14 @@ requires an extension-specific preregistration.
 workers within each run. Length repairs for a section remain sequential, and the
 first compliant completion is frozen. A generation failure stops new work;
 completed sections remain reusable on resume. Artifact order follows the frozen
-dataset order rather than completion timing. Optimizer updates remain sequential
+dataset order rather than completion timing. Pairwise controls also evaluate
+examples concurrently, keeping both presentation orders within each example. A fatal request failure halts further dispatch within that run. Optimizer updates remain sequential
 and validation waits for the training freeze. The batch driver currently runs
 trajectories sequentially; separate processes share a ceiling only when they use
 the same `--budget-ledger`, and their concurrency limits add together.
+`--pilot-writer-generations` lets a new pilot batch reuse compatible frozen
+writer sections. Transfers and confirmation use source checkpoint identities;
+if P* is P0, both labels share the same evaluation and improvement is exactly zero.
 
 ## Recovery and audit
 
