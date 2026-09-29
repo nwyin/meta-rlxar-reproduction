@@ -52,6 +52,18 @@ def test_input_allowlist_and_model_policy():
             shared.model_policy(model)
 
 
+def test_role_provider_defaults_and_explicit_override():
+    model = "moonshotai/kimi-k2.6"
+    args = SimpleNamespace()
+    assert shared.role_config(args, "writer", model=model)["provider"] == "digitalocean"
+    for role in ("rubric", "optimizer"):
+        assert shared.role_config(args, role, model=model)["provider"] == "siliconflow/fp8"
+    assert shared.role_config(args, "rubric", model="qwen/qwen3.5-9b")["provider"] == "parasail/bf16"
+    args.optimizer_provider = "explicit-provider"
+    assert shared.role_config(args, "optimizer", model=model)["provider"] == "explicit-provider"
+    assert shared.role_config(args, "optimizer", model=model, provider="argument-provider")["provider"] == "argument-provider"
+
+
 def test_feedback_rejects_validation_and_deterministic_failure_order(tmp_path):
     examples = [dummy_example("paper" + str(i)) for i in range(5)]
     candidates = {e["example_id"]: {"text": "Generated"} for e in examples}
@@ -127,7 +139,8 @@ class FakeProvider:
             assert "Write the missing section" in system
             value = " ".join("generated" for _ in range(data["target_words"]))
         provider = payload["provider"]["only"][0]
-        names = {"deepinfra/bf16": "DeepInfra", "parasail/bf16": "Parasail", "crusoe/bf16": "Crusoe", "digitalocean": "DigitalOcean", "wafer": "Wafer"}
+        names = {"deepinfra/bf16": "DeepInfra", "parasail/bf16": "Parasail", "crusoe/bf16": "Crusoe",
+                 "digitalocean": "DigitalOcean", "siliconflow/fp8": "SiliconFlow", "wafer": "Wafer"}
         return httpx.Response(200, json={"model": payload["model"], "provider": names[provider],
             "id": f"fake-{len(self.payloads)}", "usage": {"cost": .0001, "prompt_tokens": 100, "completion_tokens": 100},
             "choices": [{"finish_reason": "stop", "message": {"content": json.dumps(value) if isinstance(value, dict) else value,

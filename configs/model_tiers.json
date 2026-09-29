@@ -30,9 +30,14 @@
       "requested_reasoning": {
         "enabled": true
       },
-      "mode_match_status": "writer_length_validated_generator_and_optimizer_pilot_pending_provider_precision_unknown",
+      "mode_match_status": "writer_length_validated_native_rubric_and_optimizer_schema_validated_full_pilots_pending",
       "provider": "digitalocean",
-      "quantization_caveat": "DigitalOcean endpoint reports unknown precision. Original Crusoe BF16 operational attempt was upstream rate-limited before any candidate or grade."
+      "quantization_caveat": "DigitalOcean writer precision unknown; SiliconFlow rubric/optimizer FP8, which may differ from AA evaluation. Same Kimi release and reasoning-enabled mode. DigitalOcean native schema rejection prompted separate operational probe; no score outcome used.",
+      "role_providers": {
+        "writer": "digitalocean",
+        "rubric": "siliconflow/fp8",
+        "optimizer": "siliconflow/fp8"
+      }
     },
     {
       "use": "main_judge",

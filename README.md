@@ -93,8 +93,11 @@ documented; changes within a trajectory require a new run. The current provider
 pins remain provisional until live checks succeed. The direct Kimi endpoint
 does not advertise temperature support. Crusoe BF16 returned four upstream 429
 errors before producing a candidate. A separately declared pilot now uses
-DigitalOcean for the same Kimi release; its precision is unknown. The old attempt
-and reservations are preserved. See [the provider declaration](reports/pilot_provider_deviation.json).
+DigitalOcean for Kimi writing; its precision is unknown. DigitalOcean rejected
+native JSON schemas for optimization. SiliconFlow FP8 passed separate live
+rubric and optimizer schema checks and is now pinned for those Kimi roles.
+Old attempts and reservations are preserved. See
+[the schema check declaration](reports/kimi_schema_endpoint_check.json).
 
 Once you have set `RUN_BUDGET_USD` and `TOTAL_BUDGET_USD` to your chosen ceilings:
 
@@ -112,7 +115,7 @@ uv run python run_matrix.py --phase confirmation \
 ```
 
 For the currently declared replacement batch, add
-`--pilot-prefix pilot-parallel` to pilot, controls, and matrix invocations
+`--pilot-prefix pilot-schema` to pilot, controls, and matrix invocations
 (or to `--phase all`). The configured `.env` total ceiling is $100; the current
 per-run ceiling is also $100, subordinate to the shared total.
 

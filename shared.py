@@ -144,7 +144,8 @@ def role_config(args, role, model=None, provider=None):
     model = model or getattr(args, f"{role}_model", None) or defaults["model"]
     model_policy(model)
     saved = cfg["models"].get(model, {})
-    provider = provider or getattr(args, f"{role}_provider", None) or saved.get("provider")
+    provider = (provider or getattr(args, f"{role}_provider", None)
+                or defaults.get("providers", {}).get(model) or saved.get("provider"))
     if not provider:
         raise ContractError(f"Explicit provider required for unclassified model {model}")
     reasoning = saved.get("reasoning", {"enabled": True})

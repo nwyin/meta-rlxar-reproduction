@@ -10,5 +10,27 @@
   "source_training_feedback": "runs/pilot-parallel-GG2/feedback/iter_01/training.json",
   "probe_run": "runs/probe-kimi-siliconflow",
   "no_gap_sign_or_improvement_used": true,
-  "total_shared_ceiling_usd": 100
+  "total_shared_ceiling_usd": 100,
+  "probe_status": {
+    "state": "complete",
+    "rubric_status": "valid",
+    "optimizer_json_valid": true,
+    "proposal_accepted": true,
+    "gate_uses_score_gap": false,
+    "paid": true
+  },
+  "declared_research_role_providers": {
+    "writer": "digitalocean",
+    "rubric": "siliconflow/fp8",
+    "optimizer": "siliconflow/fp8"
+  },
+  "new_full_pilot_prefix": "pilot-schema",
+  "weak_check_status": {
+    "run": "runs/pilot-weak-parallel",
+    "state": "incomplete",
+    "reason": "provider finish_reason=error on both allowed conclusion rubric format attempts; 3/4 paired training examples; no optimization or validation dispatched",
+    "retained": true,
+    "no_resampling": true
+  },
+  "updated_at": "2026-09-29T22:55:07.049316+00:00"
 }

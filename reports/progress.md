@@ -124,3 +124,16 @@ concurrency four. A one-update weak-role competence trial reuses eight frozen
 Qwen sections at concurrency one. Fresh catalog/price evidence and a 25% pricing
 reserve are declared in `parallel_pilot_declaration.json`; all live work shares
 the original $100 ledger. Research and confirmation are still unopened.
+
+### Compatible structured-output provider
+
+SiliconFlow FP8 passed native Kimi rubric and optimizer schemas, including an
+accepted bounded proposal on fixed complete pilot feedback. Kimi writing stays
+on DigitalOcean; rubric generation and optimization now use SiliconFlow.
+The distinct `pilot-schema` seven-update GG2/GG4 batch reuses the eight frozen
+strong-writer sections at concurrency four, under the same shared $100 ledger.
+The separate weak parallel check stopped at 3/4 training pairs after the provider
+returned finish_reason=error on both allowed conclusion-rubric attempts. All
+attempts are retained; no validation or optimization was opened in that trial.
+Provider selection uses schema support, precision, and transport behavior, not
+gap signs or improvements. Full research and confirmation remain pending.
