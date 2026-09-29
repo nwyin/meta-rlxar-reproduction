@@ -56,6 +56,10 @@ artifacts stay local and are ignored by Git. Paper redistribution permissions
 are not assumed. Source URLs, content hashes, splits, prompts, code, and permitted
 metadata are version controlled. Do not publicly release original paper text
 unless its individual license has been verified.
+The frozen [license inventory](data/license_inventory.json) records 11 CC BY 4.0,
+1 CC BY-SA 4.0, and 8 arXiv non-exclusive labels, each checked against its
+source HTML hash. The current public artifacts contain metadata and reconstruction
+instructions; source text remains local. See [arXiv license information](https://info.arxiv.org/help/license/index.html).
 
 Put `OPENROUTER_API_KEY` in the process environment or an ignored local `.env`
 file. `.env.example` contains names only. Credentials and authorization headers

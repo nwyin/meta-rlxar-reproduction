@@ -1,0 +1,187 @@
+{
+  "checked_at": "2026-09-29T20:46:22.022728+00:00",
+  "evidence": "License labels in frozen source HTML verified against source_manifest.json hashes. No new paper selection or model calls.",
+  "policy": "Release identifiers, hashes, extraction instructions and permitted metadata; no full original paper text released.",
+  "papers": [
+    {
+      "paper_id": "2609.35769v1",
+      "source_url": "https://arxiv.org/html/2609.35769v1",
+      "source_html_hash": "51e719043e7e234ba504920f3741f20e24b264c7b5945295c9ded784ee03a4b9",
+      "license_label": "License: arXiv.org perpetual non-exclusive license",
+      "license_information_url": "https://info.arxiv.org/help/license/index.html#licenses-available",
+      "public_text_release": false,
+      "reconstruction": "Versioned source URL and exact extraction hashes are provided; full source and extracted text remain local."
+    },
+    {
+      "paper_id": "2609.35759v1",
+      "source_url": "https://arxiv.org/html/2609.35759v1",
+      "source_html_hash": "99a9e0b44f67d5b9fe950f264a035da4901da35fe8cd15824b209feec3d52c63",
+      "license_label": "License: CC BY 4.0",
+      "license_information_url": "https://info.arxiv.org/help/license/index.html#licenses-available",
+      "public_text_release": false,
+      "reconstruction": "Versioned source URL and exact extraction hashes are provided; full source and extracted text remain local."
+    },
+    {
+      "paper_id": "2609.35751v1",
+      "source_url": "https://arxiv.org/html/2609.35751v1",
+      "source_html_hash": "07457e6731701e7ec7f23dd8707e0fa1276ab24740d739049100dcefb5bc0ca7",
+      "license_label": "License: CC BY 4.0",
+      "license_information_url": "https://info.arxiv.org/help/license/index.html#licenses-available",
+      "public_text_release": false,
+      "reconstruction": "Versioned source URL and exact extraction hashes are provided; full source and extracted text remain local."
+    },
+    {
+      "paper_id": "2609.35749v1",
+      "source_url": "https://arxiv.org/html/2609.35749v1",
+      "source_html_hash": "2ea4a642cf3880c232e90dcf98bb148a58f3d9fbf2c45d37358b4d2204663366",
+      "license_label": "License: arXiv.org perpetual non-exclusive license",
+      "license_information_url": "https://info.arxiv.org/help/license/index.html#licenses-available",
+      "public_text_release": false,
+      "reconstruction": "Versioned source URL and exact extraction hashes are provided; full source and extracted text remain local."
+    },
+    {
+      "paper_id": "2609.35748v1",
+      "source_url": "https://arxiv.org/html/2609.35748v1",
+      "source_html_hash": "808062259c22d5cf93b6e22a8251f503fe4706f716f10ac840788669ae53b4b9",
+      "license_label": "License: arXiv.org perpetual non-exclusive license",
+      "license_information_url": "https://info.arxiv.org/help/license/index.html#licenses-available",
+      "public_text_release": false,
+      "reconstruction": "Versioned source URL and exact extraction hashes are provided; full source and extracted text remain local."
+    },
+    {
+      "paper_id": "2609.35741v1",
+      "source_url": "https://arxiv.org/html/2609.35741v1",
+      "source_html_hash": "91c8dd56df847db8db8962b9e6cf074692a9637966525a5368c77307aedcc15d",
+      "license_label": "License: CC BY 4.0",
+      "license_information_url": "https://info.arxiv.org/help/license/index.html#licenses-available",
+      "public_text_release": false,
+      "reconstruction": "Versioned source URL and exact extraction hashes are provided; full source and extracted text remain local."
+    },
+    {
+      "paper_id": "2609.35738v1",
+      "source_url": "https://arxiv.org/html/2609.35738v1",
+      "source_html_hash": "6795f33e45d24497846c54f72d9ab730777bd79f51f1f26f614630ff964437f0",
+      "license_label": "License: CC BY 4.0",
+      "license_information_url": "https://info.arxiv.org/help/license/index.html#licenses-available",
+      "public_text_release": false,
+      "reconstruction": "Versioned source URL and exact extraction hashes are provided; full source and extracted text remain local."
+    },
+    {
+      "paper_id": "2609.35695v1",
+      "source_url": "https://arxiv.org/html/2609.35695v1",
+      "source_html_hash": "e1042d6f66126a01125a7d2bd855a79afb851ad3f8df8c2b96d5672d8cf3c09f",
+      "license_label": "License: CC BY-SA 4.0",
+      "license_information_url": "https://info.arxiv.org/help/license/index.html#licenses-available",
+      "public_text_release": false,
+      "reconstruction": "Versioned source URL and exact extraction hashes are provided; full source and extracted text remain local."
+    },
+    {
+      "paper_id": "2609.35663v1",
+      "source_url": "https://arxiv.org/html/2609.35663v1",
+      "source_html_hash": "a54eaf8c6088fa5fcb7f846718b19746621219fe286afb61e1d4bcad877fcfc9",
+      "license_label": "License: CC BY 4.0",
+      "license_information_url": "https://info.arxiv.org/help/license/index.html#licenses-available",
+      "public_text_release": false,
+      "reconstruction": "Versioned source URL and exact extraction hashes are provided; full source and extracted text remain local."
+    },
+    {
+      "paper_id": "2609.35645v1",
+      "source_url": "https://arxiv.org/html/2609.35645v1",
+      "source_html_hash": "edf60b4d5698f2d0eaf41b9abce5adac5c7838db91e2bf580fcfb0c7a454d6ee",
+      "license_label": "License: CC BY 4.0",
+      "license_information_url": "https://info.arxiv.org/help/license/index.html#licenses-available",
+      "public_text_release": false,
+      "reconstruction": "Versioned source URL and exact extraction hashes are provided; full source and extracted text remain local."
+    },
+    {
+      "paper_id": "2609.35630v1",
+      "source_url": "https://arxiv.org/html/2609.35630v1",
+      "source_html_hash": "c0d22de2f66c8dd42e488465c46e409a8c49baca467ea70e9b19f5770dd5dee2",
+      "license_label": "License: CC BY 4.0",
+      "license_information_url": "https://info.arxiv.org/help/license/index.html#licenses-available",
+      "public_text_release": false,
+      "reconstruction": "Versioned source URL and exact extraction hashes are provided; full source and extracted text remain local."
+    },
+    {
+      "paper_id": "2609.35627v1",
+      "source_url": "https://arxiv.org/html/2609.35627v1",
+      "source_html_hash": "7f1b531271733791a41d9b8267ddf02fb8e31a3361ce640fe928670839f8f57d",
+      "license_label": "License: CC BY 4.0",
+      "license_information_url": "https://info.arxiv.org/help/license/index.html#licenses-available",
+      "public_text_release": false,
+      "reconstruction": "Versioned source URL and exact extraction hashes are provided; full source and extracted text remain local."
+    },
+    {
+      "paper_id": "2609.35609v1",
+      "source_url": "https://arxiv.org/html/2609.35609v1",
+      "source_html_hash": "0827e06f0fe1538878fa30c4538b8ff170277dc05d2c987c706d0a50f8c58257",
+      "license_label": "License: CC BY 4.0",
+      "license_information_url": "https://info.arxiv.org/help/license/index.html#licenses-available",
+      "public_text_release": false,
+      "reconstruction": "Versioned source URL and exact extraction hashes are provided; full source and extracted text remain local."
+    },
+    {
+      "paper_id": "2609.35608v1",
+      "source_url": "https://arxiv.org/html/2609.35608v1",
+      "source_html_hash": "eeae04ac030d87c07265f6a228a3cba8c8ee7906b3f9b20a1aeff7697769a4bf",
+      "license_label": "License: arXiv.org perpetual non-exclusive license",
+      "license_information_url": "https://info.arxiv.org/help/license/index.html#licenses-available",
+      "public_text_release": false,
+      "reconstruction": "Versioned source URL and exact extraction hashes are provided; full source and extracted text remain local."
+    },
+    {
+      "paper_id": "2609.35606v1",
+      "source_url": "https://arxiv.org/html/2609.35606v1",
+      "source_html_hash": "383f7ceffce019b27d718c60069398fa6e65c6ad39c567cd7c40e463a991ba60",
+      "license_label": "License: CC BY 4.0",
+      "license_information_url": "https://info.arxiv.org/help/license/index.html#licenses-available",
+      "public_text_release": false,
+      "reconstruction": "Versioned source URL and exact extraction hashes are provided; full source and extracted text remain local."
+    },
+    {
+      "paper_id": "2609.35576v1",
+      "source_url": "https://arxiv.org/html/2609.35576v1",
+      "source_html_hash": "adceb314d0047c07d0f210178c3a713f27a79b774f9c3a8599863f6b191dafd1",
+      "license_label": "License: arXiv.org perpetual non-exclusive license",
+      "license_information_url": "https://info.arxiv.org/help/license/index.html#licenses-available",
+      "public_text_release": false,
+      "reconstruction": "Versioned source URL and exact extraction hashes are provided; full source and extracted text remain local."
+    },
+    {
+      "paper_id": "2609.35564v1",
+      "source_url": "https://arxiv.org/html/2609.35564v1",
+      "source_html_hash": "b4f267b62bde95f48d9e2168333a20140342a5024656f9568cdba1deabbadd9d",
+      "license_label": "License: arXiv.org perpetual non-exclusive license",
+      "license_information_url": "https://info.arxiv.org/help/license/index.html#licenses-available",
+      "public_text_release": false,
+      "reconstruction": "Versioned source URL and exact extraction hashes are provided; full source and extracted text remain local."
+    },
+    {
+      "paper_id": "2609.35486v1",
+      "source_url": "https://arxiv.org/html/2609.35486v1",
+      "source_html_hash": "6887c2ba78cdaf4c994408213d1c64efbd4cc4f52641c3b148f3b0d1b8d35389",
+      "license_label": "License: CC BY 4.0",
+      "license_information_url": "https://info.arxiv.org/help/license/index.html#licenses-available",
+      "public_text_release": false,
+      "reconstruction": "Versioned source URL and exact extraction hashes are provided; full source and extracted text remain local."
+    },
+    {
+      "paper_id": "2609.35475v1",
+      "source_url": "https://arxiv.org/html/2609.35475v1",
+      "source_html_hash": "1ad0b600f02bfdf2be6ce903488d934b38b8616989ba86588b19d5896c8d75d7",
+      "license_label": "License: arXiv.org perpetual non-exclusive license",
+      "license_information_url": "https://info.arxiv.org/help/license/index.html#licenses-available",
+      "public_text_release": false,
+      "reconstruction": "Versioned source URL and exact extraction hashes are provided; full source and extracted text remain local."
+    },
+    {
+      "paper_id": "2609.35387v1",
+      "source_url": "https://arxiv.org/html/2609.35387v1",
+      "source_html_hash": "deeceb4262bec4b241e0059fff76e35da40f930bdf5096835303e8fd6c7e34cc",
+      "license_label": "License: arXiv.org perpetual non-exclusive license",
+      "license_information_url": "https://info.arxiv.org/help/license/index.html#licenses-available",
+      "public_text_release": false,
+      "reconstruction": "Versioned source URL and exact extraction hashes are provided; full source and extracted text remain local."
+    }
+  ]
+}
