@@ -36,5 +36,19 @@
       "scientific_parameters": "identical to initial one-update competence pilot",
       "research_use": "pending operational check; no score gap used to choose endpoint"
     }
-  ]
+  ],
+  "weak_optimizer_probe": {
+    "declared_at": "2026-09-29T22:56:06.748050+00:00",
+    "source": "runs/pilot-parallel-GG2",
+    "output": "runs/probe-weak-optimizer",
+    "generator": "qwen/qwen3.5-9b",
+    "optimizer": "qwen/qwen3.5-9b",
+    "provider": "parasail/bf16",
+    "mode": "reasoning enabled, max_tokens 16384, original fixed temperatures",
+    "reason": "Test weak optimizer native schema using complete fixed pilot feedback after separate one-update trajectory stopped on a generator provider error",
+    "gate_uses_score_gap": false,
+    "concurrency": 1,
+    "combined_concurrency_ceiling": 5,
+    "does_not_replace_or_resample_failed_weak_trajectory": true
+  }
 }

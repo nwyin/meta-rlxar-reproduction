@@ -1,27 +1,8 @@
 {
-  "at": "2026-09-29T20:30:03.208006+00:00",
+  "at": "2026-09-29T22:58:45.726122+00:00",
   "budget_authorized_usd": 100,
-  "provider_declaration": "reports/pilot_provider_deviation.json",
+  "provider_declaration": "reports/kimi_schema_endpoint_check.json",
   "phases": {
-    "pilot": {
-      "planned_runs": 2,
-      "request_counts_before_retries": {
-        "writer": 8,
-        "rubric": 128,
-        "judge": 256,
-        "optimizer": 14
-      },
-      "estimated_uncached_usd_with_25_percent_reserve": 10.0456599215
-    },
-    "controls": {
-      "planned_runs": 4,
-      "request_counts_before_retries": {
-        "writer": 104,
-        "rubric": 240,
-        "judge": 688
-      },
-      "estimated_uncached_usd_with_25_percent_reserve": 27.338522382285717
-    },
     "matrix": {
       "planned_runs": 24,
       "request_counts_before_retries": {
@@ -30,8 +11,40 @@
         "judge": 19968,
         "optimizer": 168
       },
-      "estimated_uncached_usd_with_25_percent_reserve": 796.8458785765714
+      "estimated_uncached_usd_with_25_percent_reserve": 998.8903436759999
+    },
+    "controls": {
+      "planned_runs": 4,
+      "request_counts_before_retries": {
+        "writer": 104,
+        "rubric": 240,
+        "judge": 688
+      },
+      "estimated_uncached_usd_with_25_percent_reserve": 33.554368530285714
+    },
+    "transfers": {
+      "planned_runs": 48,
+      "request_counts_before_retries": {
+        "alternate_strong_judge": 1920,
+        "weak_judge": 1920,
+        "cross_writer_main_judge": 1920
+      },
+      "estimated_uncached_usd_with_25_percent_reserve": 132.6093948137143,
+      "assumption": "Two distinct source checkpoints, P0 and selected. Equal checkpoints share artifacts and cost less."
+    },
+    "confirmation": {
+      "planned_runs": 1,
+      "request_counts_before_retries": {
+        "writer": 20,
+        "rubric": 40,
+        "judge": 80
+      },
+      "estimated_uncached_usd_with_25_percent_reserve": 3.480941227714286,
+      "assumption": "Preregistered strong W / weak G / strong O seed0; P0 and selected distinct."
     }
   },
-  "limitations": "Read-only approximate token estimates at refreshed prices. Pilot-measured projections pending; transfer and confirmation not included. Estimates do not change scientific scope or authorize additional spending."
+  "estimated_remaining_research_phases_usd": 1168.5350482477143,
+  "pilot_latency_and_usage_measurements": "reports/live_pilot_metrics.json",
+  "provider_quota": "reports/provider_quota.json",
+  "limitations": "Read-only approximate uncached token estimates, not spending authorization. The full scope includes all 24 primary trajectories. Final pilot-measured projections remain pending; estimates use context bytes/3.5 +1500 input tokens and5000 output tokens per call, so optimizer feedback and reasoning variance may increase costs. Paid operational attempts and remaining pilots are additional. Shared ledger remains capped at $100; provider API key separately caps weekly usage at $50."
 }

@@ -1,0 +1,37 @@
+{
+  "at": "2026-09-29T20:30:03.208006+00:00",
+  "budget_authorized_usd": 100,
+  "provider_declaration": "reports/pilot_provider_deviation.json",
+  "phases": {
+    "pilot": {
+      "planned_runs": 2,
+      "request_counts_before_retries": {
+        "writer": 8,
+        "rubric": 128,
+        "judge": 256,
+        "optimizer": 14
+      },
+      "estimated_uncached_usd_with_25_percent_reserve": 10.0456599215
+    },
+    "controls": {
+      "planned_runs": 4,
+      "request_counts_before_retries": {
+        "writer": 104,
+        "rubric": 240,
+        "judge": 688
+      },
+      "estimated_uncached_usd_with_25_percent_reserve": 27.338522382285717
+    },
+    "matrix": {
+      "planned_runs": 24,
+      "request_counts_before_retries": {
+        "writer": 0,
+        "rubric": 9984,
+        "judge": 19968,
+        "optimizer": 168
+      },
+      "estimated_uncached_usd_with_25_percent_reserve": 796.8458785765714
+    }
+  },
+  "limitations": "Read-only approximate token estimates at refreshed prices. Pilot-measured projections pending; transfer and confirmation not included. Estimates do not change scientific scope or authorize additional spending."
+}

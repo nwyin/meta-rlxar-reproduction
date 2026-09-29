@@ -137,3 +137,12 @@ returned finish_reason=error on both allowed conclusion-rubric attempts. All
 attempts are retained; no validation or optimization was opened in that trial.
 Provider selection uses schema support, precision, and transport behavior, not
 gap signs or improvements. Full research and confirmation remain pending.
+
+Current-provider planning dry runs verified all 24 matrix and four control
+configurations. Approximate uncached costs with 25% headroom are $998.89 for
+the matrix, $33.55 for controls, $132.61 for two alternate judges plus
+cross-writer transfers, and $3.48 for confirmation, about $1,168.54 before
+remaining pilots and past operational charges. These are provisional estimates,
+not additional authorization. The shared ceiling remains $100. The refreshed
+provider quota separately reports a $50 weekly key limit and $47.49 remaining.
+See current_cost_plan.json; source and scientific scope remain unchanged.
