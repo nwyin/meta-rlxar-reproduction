@@ -49,6 +49,40 @@
     "gate_uses_score_gap": false,
     "concurrency": 1,
     "combined_concurrency_ceiling": 5,
-    "does_not_replace_or_resample_failed_weak_trajectory": true
+    "does_not_replace_or_resample_failed_weak_trajectory": true,
+    "status": {
+      "state": "complete",
+      "rubric_status": "valid",
+      "optimizer_json_valid": true,
+      "proposal_accepted": true,
+      "gate_uses_score_gap": false,
+      "paid": true
+    }
+  },
+  "weak_generator_endpoint_probe": {
+    "declared_at": "2026-09-29T23:02:02.829648+00:00",
+    "run": "runs/probe-weak-siliconflow",
+    "model": "qwen/qwen3.5-9b",
+    "provider": "siliconflow/fp8",
+    "roles": [
+      "rubric",
+      "optimizer"
+    ],
+    "example_id": "2609.35759v1_conclusion",
+    "reason": "Parasail returned embedded 502 provider_unavailable stream interruption errors at 301-304 seconds on initial and format-repair calls, including current pilot. Test a different high-uptime endpoint on the same failing context before changing research providers.",
+    "seed_caveat": "SiliconFlow does not advertise seed support; recorded unsupported instead of sending an ignored seed.",
+    "precision_caveat": "FP8 differs from Parasail BF16. Same Qwen release and reasoning-enabled mode; no output-budget reduction.",
+    "decoding_unchanged": {
+      "rubric_temperature": 0.2,
+      "optimizer_temperature": 0.7,
+      "reasoning": {
+        "enabled": true
+      },
+      "max_tokens": 16384
+    },
+    "gate_uses_score_gap": false,
+    "concurrency": 1,
+    "combined_concurrency_ceiling": 5,
+    "source_feedback": "runs/pilot-parallel-GG2/feedback/iter_01/training.json"
   }
 }

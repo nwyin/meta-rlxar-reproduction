@@ -27,6 +27,7 @@ def main():
     parser = common_parser(__doc__, ['rubric', 'optimizer'])
     parser.set_defaults(split='pilot')
     parser.add_argument('--source-run', required=True)
+    parser.add_argument('--rubric-example-id', help='Explicit operational test case from the pilot training paper')
     parser.add_argument('--max-meta-prompt-words', type=int, default=800)
     args = parse_args(parser)
     if args.split != 'pilot':
@@ -42,13 +43,20 @@ def main():
     paper = min(e['paper_id'] for e in examples)
     train = [{**e, 'split': 'train'} for e in examples if e['paper_id'] == paper]
     example = min(train, key=lambda e: e['example_id'])
+    if args.rubric_example_id:
+        matches = [e for e in train if e['example_id'] == args.rubric_example_id]
+        if len(matches) != 1:
+            raise ContractError('Explicit probe example must belong to the fixed pilot training paper')
+        example = matches[0]
     initial = (source / 'prompts/iter_00.md').read_text()
     roles = {role: role_config(args, role) for role in ('rubric', 'optimizer')}
     with run_lock(args.output_dir):
         api = initialize_run(args, roles, 'role_capability_probe', {
             'source_hash': manifest['substantive_hash'], 'feedback_hash': digest(feedback),
             'initial_prompt_hash': digest(initial), 'probe_script_hash': file_hash(__file__),
-            'gate_uses_score_gap': False, 'example_selection': 'first_sorted_pilot_training_example'})
+            'gate_uses_score_gap': False,
+            'example_selection': 'explicit_operational_case' if args.rubric_example_id else 'first_sorted_pilot_training_example',
+            'example_id': example['example_id']})
         rubric = generate_rubric(api, example, initial, {'probe': 'rubric'},
                                 Path(args.output_dir) / 'rubrics/probe.json')
         propose_prompt(api, initial, feedback, train, initial, args, 1)
