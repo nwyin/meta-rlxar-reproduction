@@ -1,0 +1,130 @@
+{
+  "dataset_hash": "0d6f1af5cd49db179f53e2720c95b12fa3efdea6cef07232e29475d97f5bc8da",
+  "reviewer": "user",
+  "reviewed_at": "2026-09-29T19:48:58.573864+00:00",
+  "instruction": "A human reviewer must inspect extraction completeness and writing suitability. Set decision approved or rejected, with notes; no choices are made using model grades.",
+  "papers": {
+    "2609.35769v1": {
+      "decision": "approved",
+      "extraction_complete": true,
+      "writing_suitable": true,
+      "notes": "User accepted the review packet and directed continuation; no grade-based selection."
+    },
+    "2609.35759v1": {
+      "decision": "approved",
+      "extraction_complete": true,
+      "writing_suitable": true,
+      "notes": "User accepted the review packet and directed continuation; no grade-based selection."
+    },
+    "2609.35751v1": {
+      "decision": "approved",
+      "extraction_complete": true,
+      "writing_suitable": true,
+      "notes": "User accepted the review packet and directed continuation; no grade-based selection."
+    },
+    "2609.35749v1": {
+      "decision": "approved",
+      "extraction_complete": true,
+      "writing_suitable": true,
+      "notes": "User accepted the review packet and directed continuation; no grade-based selection."
+    },
+    "2609.35748v1": {
+      "decision": "approved",
+      "extraction_complete": true,
+      "writing_suitable": true,
+      "notes": "User accepted the review packet and directed continuation; no grade-based selection."
+    },
+    "2609.35741v1": {
+      "decision": "approved",
+      "extraction_complete": true,
+      "writing_suitable": true,
+      "notes": "User accepted the review packet and directed continuation; no grade-based selection."
+    },
+    "2609.35738v1": {
+      "decision": "approved",
+      "extraction_complete": true,
+      "writing_suitable": true,
+      "notes": "User accepted the review packet and directed continuation; no grade-based selection."
+    },
+    "2609.35695v1": {
+      "decision": "approved",
+      "extraction_complete": true,
+      "writing_suitable": true,
+      "notes": "User accepted the review packet and directed continuation; no grade-based selection."
+    },
+    "2609.35663v1": {
+      "decision": "approved",
+      "extraction_complete": true,
+      "writing_suitable": true,
+      "notes": "User accepted the review packet and directed continuation; no grade-based selection."
+    },
+    "2609.35645v1": {
+      "decision": "approved",
+      "extraction_complete": true,
+      "writing_suitable": true,
+      "notes": "User accepted the review packet and directed continuation; no grade-based selection."
+    },
+    "2609.35630v1": {
+      "decision": "approved",
+      "extraction_complete": true,
+      "writing_suitable": true,
+      "notes": "User accepted the review packet and directed continuation; no grade-based selection."
+    },
+    "2609.35627v1": {
+      "decision": "approved",
+      "extraction_complete": true,
+      "writing_suitable": true,
+      "notes": "User accepted the review packet and directed continuation; no grade-based selection."
+    },
+    "2609.35609v1": {
+      "decision": "approved",
+      "extraction_complete": true,
+      "writing_suitable": true,
+      "notes": "User accepted the review packet and directed continuation; no grade-based selection."
+    },
+    "2609.35608v1": {
+      "decision": "approved",
+      "extraction_complete": true,
+      "writing_suitable": true,
+      "notes": "User accepted the review packet and directed continuation; no grade-based selection."
+    },
+    "2609.35606v1": {
+      "decision": "approved",
+      "extraction_complete": true,
+      "writing_suitable": true,
+      "notes": "User accepted the review packet and directed continuation; no grade-based selection."
+    },
+    "2609.35576v1": {
+      "decision": "approved",
+      "extraction_complete": true,
+      "writing_suitable": true,
+      "notes": "User accepted the review packet and directed continuation; no grade-based selection."
+    },
+    "2609.35564v1": {
+      "decision": "approved",
+      "extraction_complete": true,
+      "writing_suitable": true,
+      "notes": "User accepted the review packet and directed continuation; no grade-based selection."
+    },
+    "2609.35486v1": {
+      "decision": "approved",
+      "extraction_complete": true,
+      "writing_suitable": true,
+      "notes": "User accepted the review packet and directed continuation; no grade-based selection."
+    },
+    "2609.35475v1": {
+      "decision": "approved",
+      "extraction_complete": true,
+      "writing_suitable": true,
+      "notes": "User accepted the review packet and directed continuation; no grade-based selection."
+    },
+    "2609.35387v1": {
+      "decision": "approved",
+      "extraction_complete": true,
+      "writing_suitable": true,
+      "notes": "User accepted the review packet and directed continuation; no grade-based selection."
+    }
+  },
+  "assessment_basis": "User accepted the linked review packet in this thread: yeah this is fine. keep going",
+  "limitation": "Detailed independent manual boundary-by-boundary review was not separately documented."
+}

@@ -1,0 +1,89 @@
+{
+  "tiers": [
+    {
+      "use": "weak",
+      "model": "qwen/qwen3.5-9b",
+      "release": "qwen/qwen3.5-9b-20260310",
+      "aa_url": "https://artificialanalysis.ai/models/qwen3-5-9b",
+      "retrieved_at": "2026-09-29",
+      "index_version": "v4.3.2",
+      "score": 11,
+      "estimated": false,
+      "evaluated_mode": "reasoning",
+      "requested_reasoning": {
+        "enabled": true
+      },
+      "mode_match_status": "catalog_mapping_verified_pilot_pending",
+      "provider": "deepinfra/bf16",
+      "quantization_caveat": "Endpoint quantization may differ from AA evaluation; task competence not yet checked."
+    },
+    {
+      "use": "strong",
+      "model": "moonshotai/kimi-k2.6",
+      "release": "moonshotai/kimi-k2.6-20260420",
+      "aa_url": "https://artificialanalysis.ai/models/kimi-k2-6",
+      "retrieved_at": "2026-09-29",
+      "index_version": "v4.3.2",
+      "score": 27,
+      "estimated": false,
+      "evaluated_mode": "reasoning",
+      "requested_reasoning": {
+        "enabled": true
+      },
+      "mode_match_status": "catalog_mapping_verified_pilot_pending",
+      "provider": "crusoe/bf16",
+      "quantization_caveat": "Endpoint quantization may differ from AA evaluation; task competence not yet checked."
+    },
+    {
+      "use": "main_judge",
+      "model": "deepseek/deepseek-v4-pro-0813",
+      "release": "deepseek/deepseek-v4-pro-20260813",
+      "aa_url": "https://artificialanalysis.ai/models/deepseek-v4-pro",
+      "retrieved_at": "2026-09-29",
+      "index_version": "v4.3.2",
+      "score": 36,
+      "estimated": false,
+      "evaluated_mode": "max",
+      "requested_reasoning": {
+        "effort": "max"
+      },
+      "mode_match_status": "catalog_mapping_verified_pilot_pending",
+      "provider": "wafer",
+      "quantization_caveat": "Endpoint quantization may differ from AA evaluation; task competence not yet checked."
+    },
+    {
+      "use": "transfer_judge",
+      "model": "z-ai/glm-5.2",
+      "release": "z-ai/glm-5.2-20260616",
+      "aa_url": "https://artificialanalysis.ai/models/glm-5-2",
+      "retrieved_at": "2026-09-29",
+      "index_version": "v4.3.2",
+      "score": 34,
+      "estimated": false,
+      "evaluated_mode": "max",
+      "requested_reasoning": {
+        "effort": "xhigh"
+      },
+      "mode_match_status": "catalog_mapping_verified_pilot_pending",
+      "provider": "wafer",
+      "quantization_caveat": "Endpoint quantization may differ from AA evaluation; task competence not yet checked."
+    },
+    {
+      "use": "intermediate",
+      "model": "qwen/qwen3.5-27b",
+      "release": "qwen/qwen3.5-27b-20260224",
+      "aa_url": "https://artificialanalysis.ai/models/releases/qwen3-5-27b",
+      "retrieved_at": "2026-09-29",
+      "index_version": "v4.3.2",
+      "score": 23,
+      "estimated": true,
+      "evaluated_mode": "reasoning",
+      "requested_reasoning": {
+        "enabled": true
+      },
+      "mode_match_status": "catalog_mapping_verified_pilot_pending",
+      "provider": "alibaba",
+      "quantization_caveat": "Endpoint quantization may differ from AA evaluation; task competence not yet checked."
+    }
+  ]
+}

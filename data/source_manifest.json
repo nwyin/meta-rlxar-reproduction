@@ -1,0 +1,1256 @@
+{
+  "source": "arXiv open-access CS HTML subset",
+  "source_deviation": "S2ORC bulk access was not configured. Official S2ORC directs acquisition through Semantic Scholar. The allenai/s2orc Hugging Face lookup returned not found. Do not substitute an undocumented mirror.",
+  "policy_hash": "8af72a8613fcf22bfcbc61a9165da8dc1fe004d5993e409bf5f78008cac26f73",
+  "discovery_hash": "414f93e238f7604086195db582624d5752163703837935c4b9598f7a9520d0b4",
+  "dataset_hash": "0d6f1af5cd49db179f53e2720c95b12fa3efdea6cef07232e29475d97f5bc8da",
+  "papers": [
+    {
+      "paper_id": "2609.35769v1",
+      "title": "Telescopic Language Models",
+      "authors": [
+        "Zhilin Guo",
+        "Boqiao Zhang",
+        "Hakan Aktas",
+        "Kyle Fogarty",
+        "Nursena Koprucu Aslan",
+        "Wenzhao Li",
+        "Canberk Baykal",
+        "Albert Miao",
+        "Siyu Hong",
+        "Yixiao Liu",
+        "Adam Wu",
+        "Ashish Kumar Singh",
+        "Sakar Khattar",
+        "Chenliang Zhou",
+        "Weihao Xia",
+        "Cristina Nader Vasconcelos",
+        "Cengiz Oztireli"
+      ],
+      "source_url": "https://arxiv.org/html/2609.35769v1",
+      "abstract_url": "https://arxiv.org/abs/2609.35769v1",
+      "year": 2026,
+      "venue": "arXiv preprint; peer review not verified",
+      "extraction_version": "latexhtml-v1",
+      "retrieved_at": "2026-09-29",
+      "redistribution": "not verified; text stays local",
+      "html_hash": "51e719043e7e234ba504920f3741f20e24b264c7b5945295c9ded784ee03a4b9",
+      "inspection": {
+        "agent_extraction_check": "passed",
+        "human_review": "pending"
+      }
+    },
+    {
+      "paper_id": "2609.35759v1",
+      "title": "Scaling Long-Form Story Generation via Narrative State Tracking",
+      "authors": [
+        "Zhennan Wan",
+        "Jianfei Chen"
+      ],
+      "source_url": "https://arxiv.org/html/2609.35759v1",
+      "abstract_url": "https://arxiv.org/abs/2609.35759v1",
+      "year": 2026,
+      "venue": "arXiv preprint; peer review not verified",
+      "extraction_version": "latexhtml-v1",
+      "retrieved_at": "2026-09-29",
+      "redistribution": "not verified; text stays local",
+      "html_hash": "99a9e0b44f67d5b9fe950f264a035da4901da35fe8cd15824b209feec3d52c63",
+      "inspection": {
+        "agent_extraction_check": "passed",
+        "human_review": "pending"
+      }
+    },
+    {
+      "paper_id": "2609.35751v1",
+      "title": "How to Loop MoE: Flatten the Experts, Untie the Attention",
+      "authors": [
+        "Shouren Wang",
+        "Chuang Ma",
+        "Mohsen Hariri",
+        "Debargha Ganguly",
+        "Wang Yang",
+        "Xiaoqing Tong",
+        "Qianying Liu",
+        "Xiaotian Han",
+        "Vipin Chaudhary"
+      ],
+      "source_url": "https://arxiv.org/html/2609.35751v1",
+      "abstract_url": "https://arxiv.org/abs/2609.35751v1",
+      "year": 2026,
+      "venue": "arXiv preprint; peer review not verified",
+      "extraction_version": "latexhtml-v1",
+      "retrieved_at": "2026-09-29",
+      "redistribution": "not verified; text stays local",
+      "html_hash": "07457e6731701e7ec7f23dd8707e0fa1276ab24740d739049100dcefb5bc0ca7",
+      "inspection": {
+        "agent_extraction_check": "passed",
+        "human_review": "pending"
+      }
+    },
+    {
+      "paper_id": "2609.35749v1",
+      "title": "Towards Communication-Efficient Social Intelligence in Language Agents",
+      "authors": [
+        "Linxiao Gong",
+        "Yijie Xu",
+        "Tianfu Wang",
+        "Yin Wu",
+        "Yili Wang",
+        "Xingbo Yao",
+        "Huizai Yao",
+        "Xilin Xia",
+        "Haowen Yang",
+        "Hui Xiong"
+      ],
+      "source_url": "https://arxiv.org/html/2609.35749v1",
+      "abstract_url": "https://arxiv.org/abs/2609.35749v1",
+      "year": 2026,
+      "venue": "arXiv preprint; peer review not verified",
+      "extraction_version": "latexhtml-v1",
+      "retrieved_at": "2026-09-29",
+      "redistribution": "not verified; text stays local",
+      "html_hash": "2ea4a642cf3880c232e90dcf98bb148a58f3d9fbf2c45d37358b4d2204663366",
+      "inspection": {
+        "agent_extraction_check": "passed",
+        "human_review": "pending"
+      }
+    },
+    {
+      "paper_id": "2609.35748v1",
+      "title": "Improving Test-Time Scaling with Adaptive Looped Transformers",
+      "authors": [
+        "Yichen You",
+        "Tianyu Fu",
+        "Aosong Feng",
+        "Xingtai Lv",
+        "Xuefei Ning",
+        "Ning Ding",
+        "Yu Wang"
+      ],
+      "source_url": "https://arxiv.org/html/2609.35748v1",
+      "abstract_url": "https://arxiv.org/abs/2609.35748v1",
+      "year": 2026,
+      "venue": "arXiv preprint; peer review not verified",
+      "extraction_version": "latexhtml-v1",
+      "retrieved_at": "2026-09-29",
+      "redistribution": "not verified; text stays local",
+      "html_hash": "808062259c22d5cf93b6e22a8251f503fe4706f716f10ac840788669ae53b4b9",
+      "inspection": {
+        "agent_extraction_check": "passed",
+        "human_review": "pending"
+      }
+    },
+    {
+      "paper_id": "2609.35741v1",
+      "title": "Shockingly Simple Self-retrospection Improves Agentic Models Without RL",
+      "authors": [
+        "Jonathan Light",
+        "Christopher Zhang Cui",
+        "Jeonghye Kim",
+        "Roger Creus Castanyer",
+        "Emiliano Penaloza",
+        "Zhengyan Shi",
+        "Alessandro Sordoni",
+        "Marc-Alexandre Côté",
+        "Xingdi Yuan",
+        "Minseon Kim"
+      ],
+      "source_url": "https://arxiv.org/html/2609.35741v1",
+      "abstract_url": "https://arxiv.org/abs/2609.35741v1",
+      "year": 2026,
+      "venue": "arXiv preprint; peer review not verified",
+      "extraction_version": "latexhtml-v1",
+      "retrieved_at": "2026-09-29",
+      "redistribution": "not verified; text stays local",
+      "html_hash": "91c8dd56df847db8db8962b9e6cf074692a9637966525a5368c77307aedcc15d",
+      "inspection": {
+        "agent_extraction_check": "passed",
+        "human_review": "pending"
+      }
+    },
+    {
+      "paper_id": "2609.35738v1",
+      "title": "Harness Learning Enables Generalizable Test-Time Adaptation",
+      "authors": [
+        "Alvin Zhang",
+        "Xuecheng Liu",
+        "Zixuan Wang",
+        "Fahim Tajwar",
+        "Daman Arora",
+        "Ruslan Salakhutdinov",
+        "Daniel Khashabi",
+        "Yuda Song",
+        "Andrea Zanette"
+      ],
+      "source_url": "https://arxiv.org/html/2609.35738v1",
+      "abstract_url": "https://arxiv.org/abs/2609.35738v1",
+      "year": 2026,
+      "venue": "arXiv preprint; peer review not verified",
+      "extraction_version": "latexhtml-v1",
+      "retrieved_at": "2026-09-29",
+      "redistribution": "not verified; text stays local",
+      "html_hash": "6795f33e45d24497846c54f72d9ab730777bd79f51f1f26f614630ff964437f0",
+      "inspection": {
+        "agent_extraction_check": "passed",
+        "human_review": "pending"
+      }
+    },
+    {
+      "paper_id": "2609.35695v1",
+      "title": "Rethinking Personalized Generation: Test-Time Alignment via Factorized Ranking Models",
+      "authors": [
+        "Qiyao Ma",
+        "Junshan Zhang",
+        "Zhe Zhao"
+      ],
+      "source_url": "https://arxiv.org/html/2609.35695v1",
+      "abstract_url": "https://arxiv.org/abs/2609.35695v1",
+      "year": 2026,
+      "venue": "arXiv preprint; peer review not verified",
+      "extraction_version": "latexhtml-v1",
+      "retrieved_at": "2026-09-29",
+      "redistribution": "not verified; text stays local",
+      "html_hash": "e1042d6f66126a01125a7d2bd855a79afb851ad3f8df8c2b96d5672d8cf3c09f",
+      "inspection": {
+        "agent_extraction_check": "passed",
+        "human_review": "pending"
+      }
+    },
+    {
+      "paper_id": "2609.35663v1",
+      "title": "Late Attention Layers Alone Can Copy Entity Tokens, but Not Without Attending to Their Context",
+      "authors": [
+        "Muyu He",
+        "Yuchen Liu",
+        "Ran Tao",
+        "Li Zhang"
+      ],
+      "source_url": "https://arxiv.org/html/2609.35663v1",
+      "abstract_url": "https://arxiv.org/abs/2609.35663v1",
+      "year": 2026,
+      "venue": "arXiv preprint; peer review not verified",
+      "extraction_version": "latexhtml-v1",
+      "retrieved_at": "2026-09-29",
+      "redistribution": "not verified; text stays local",
+      "html_hash": "a54eaf8c6088fa5fcb7f846718b19746621219fe286afb61e1d4bcad877fcfc9",
+      "inspection": {
+        "agent_extraction_check": "passed",
+        "human_review": "pending"
+      }
+    },
+    {
+      "paper_id": "2609.35645v1",
+      "title": "CoSE-E: A Benchmark for Code-switched Speech Evaluation in Enterprise Settings",
+      "authors": [
+        "Shama Gupta",
+        "Hoang H Nguyen",
+        "Chelsea Huang",
+        "Lindsay Devon Brin",
+        "Fanny Riols"
+      ],
+      "source_url": "https://arxiv.org/html/2609.35645v1",
+      "abstract_url": "https://arxiv.org/abs/2609.35645v1",
+      "year": 2026,
+      "venue": "arXiv preprint; peer review not verified",
+      "extraction_version": "latexhtml-v1",
+      "retrieved_at": "2026-09-29",
+      "redistribution": "not verified; text stays local",
+      "html_hash": "edf60b4d5698f2d0eaf41b9abce5adac5c7838db91e2bf580fcfb0c7a454d6ee",
+      "inspection": {
+        "agent_extraction_check": "passed",
+        "human_review": "pending"
+      }
+    },
+    {
+      "paper_id": "2609.35630v1",
+      "title": "Which the Eye Fears: Writing with Read-Blindness Explains Massive Activations in Transformers",
+      "authors": [
+        "Swagatam Mukhopadhyay",
+        "Vishal Vivek Saley",
+        "Vraj Parikh",
+        "Mausam"
+      ],
+      "source_url": "https://arxiv.org/html/2609.35630v1",
+      "abstract_url": "https://arxiv.org/abs/2609.35630v1",
+      "year": 2026,
+      "venue": "arXiv preprint; peer review not verified",
+      "extraction_version": "latexhtml-v1",
+      "retrieved_at": "2026-09-29",
+      "redistribution": "not verified; text stays local",
+      "html_hash": "c0d22de2f66c8dd42e488465c46e409a8c49baca467ea70e9b19f5770dd5dee2",
+      "inspection": {
+        "agent_extraction_check": "passed",
+        "human_review": "pending"
+      }
+    },
+    {
+      "paper_id": "2609.35627v1",
+      "title": "Can LLMs Value the Right Evidence? Evidence-Value Misalignment in Dynamic Medical Diagnosis",
+      "authors": [
+        "Kehua Feng",
+        "Yunsheng Lu",
+        "Yitong Qiao",
+        "Tiantian He",
+        "Lei Liu",
+        "Yue Shen",
+        "Jian Wang",
+        "Jinjie Gu"
+      ],
+      "source_url": "https://arxiv.org/html/2609.35627v1",
+      "abstract_url": "https://arxiv.org/abs/2609.35627v1",
+      "year": 2026,
+      "venue": "arXiv preprint; peer review not verified",
+      "extraction_version": "latexhtml-v1",
+      "retrieved_at": "2026-09-29",
+      "redistribution": "not verified; text stays local",
+      "html_hash": "7f1b531271733791a41d9b8267ddf02fb8e31a3361ce640fe928670839f8f57d",
+      "inspection": {
+        "agent_extraction_check": "passed",
+        "human_review": "pending"
+      }
+    },
+    {
+      "paper_id": "2609.35609v1",
+      "title": "Twist, Don't Tilt: Trajectory-Exact Constrained Decoding for Masked Diffusion Models",
+      "authors": [
+        "Aditya Thimmaiah",
+        "Lara Marinov",
+        "Jayanth Srinivasa",
+        "Haris Vikalo",
+        "Junyi Jessy Li",
+        "Milos Gligoric"
+      ],
+      "source_url": "https://arxiv.org/html/2609.35609v1",
+      "abstract_url": "https://arxiv.org/abs/2609.35609v1",
+      "year": 2026,
+      "venue": "arXiv preprint; peer review not verified",
+      "extraction_version": "latexhtml-v1",
+      "retrieved_at": "2026-09-29",
+      "redistribution": "not verified; text stays local",
+      "html_hash": "0827e06f0fe1538878fa30c4538b8ff170277dc05d2c987c706d0a50f8c58257",
+      "inspection": {
+        "agent_extraction_check": "passed",
+        "human_review": "pending"
+      }
+    },
+    {
+      "paper_id": "2609.35608v1",
+      "title": "Simultaneous Translation between Sign Languages",
+      "authors": [
+        "Zetian Wu",
+        "Bowen Xie",
+        "Stefan Lee",
+        "Liang Huang"
+      ],
+      "source_url": "https://arxiv.org/html/2609.35608v1",
+      "abstract_url": "https://arxiv.org/abs/2609.35608v1",
+      "year": 2026,
+      "venue": "arXiv preprint; peer review not verified",
+      "extraction_version": "latexhtml-v1",
+      "retrieved_at": "2026-09-29",
+      "redistribution": "not verified; text stays local",
+      "html_hash": "eeae04ac030d87c07265f6a228a3cba8c8ee7906b3f9b20a1aeff7697769a4bf",
+      "inspection": {
+        "agent_extraction_check": "passed",
+        "human_review": "pending"
+      }
+    },
+    {
+      "paper_id": "2609.35606v1",
+      "title": "TCSAlgBench: Benchmarking Automated Proving for Research-Level Theoretical Computer Science",
+      "authors": [
+        "Chutong Yang",
+        "Xiyuan Zhang",
+        "Yu Huang",
+        "Boran Han",
+        "Soonho Kong",
+        "Shuai Zhang",
+        "Vihang Prakash Patil",
+        "Zhen Han",
+        "Michael Bohlke-Schneider",
+        "Bernie Wang"
+      ],
+      "source_url": "https://arxiv.org/html/2609.35606v1",
+      "abstract_url": "https://arxiv.org/abs/2609.35606v1",
+      "year": 2026,
+      "venue": "arXiv preprint; peer review not verified",
+      "extraction_version": "latexhtml-v1",
+      "retrieved_at": "2026-09-29",
+      "redistribution": "not verified; text stays local",
+      "html_hash": "383f7ceffce019b27d718c60069398fa6e65c6ad39c567cd7c40e463a991ba60",
+      "inspection": {
+        "agent_extraction_check": "passed",
+        "human_review": "pending"
+      }
+    },
+    {
+      "paper_id": "2609.35576v1",
+      "title": "Share-Borne AI Virus: Memory-Hopping Attacks Across LLM Agents",
+      "authors": [
+        "Sidharth Pulipaka",
+        "Ansh Sharma",
+        "Stanislau Hlebik",
+        "Leonidas Raghav",
+        "Vyas Raina",
+        "Ivaxi Sheth",
+        "Mario Fritz"
+      ],
+      "source_url": "https://arxiv.org/html/2609.35576v1",
+      "abstract_url": "https://arxiv.org/abs/2609.35576v1",
+      "year": 2026,
+      "venue": "arXiv preprint; peer review not verified",
+      "extraction_version": "latexhtml-v1",
+      "retrieved_at": "2026-09-29",
+      "redistribution": "not verified; text stays local",
+      "html_hash": "adceb314d0047c07d0f210178c3a713f27a79b774f9c3a8599863f6b191dafd1",
+      "inspection": {
+        "agent_extraction_check": "passed",
+        "human_review": "pending"
+      }
+    },
+    {
+      "paper_id": "2609.35564v1",
+      "title": "Almieyar: A Culturally Grounded Benchmark for Multi-Dialect Arabic Speech Recognition",
+      "authors": [
+        "Omid Ghahroodi",
+        "Anas Madkoor",
+        "Dima Faris Al Saudi",
+        "Fagr Tahir",
+        "Malak Annan",
+        "Talha shahid javad allah rakha",
+        "Omar Al-Busaidi",
+        "Zineb El Kahla",
+        "Iheb Zouari",
+        "Essa Ahmed Abou Jabal",
+        "Ahmed Ezzat",
+        "Hind AL-Merekhi",
+        "Aisha Hamad M A Al-Naimi",
+        "Hadi Wazni",
+        "Bushra Alnajjar",
+        "Omar Amin",
+        "Haya Al-Thani",
+        "Houssam Eddine-Othman Lachemat",
+        "Marwa Elwakedy",
+        "Sundus Abdulmalik Al Nahari",
+        "Elahe Zahiri",
+        "Osamah Sarraj",
+        "Raghad Mousa",
+        "Mckeen Assi",
+        "Ahd Al Jumah",
+        "Heyam Salman",
+        "Alhanouf Abdulraqib",
+        "Sara Benoumhani",
+        "Alia Hamwi",
+        "Ayaat Al-Yasseri",
+        "Rim Ibrahim Ghazal",
+        "Lamia Ben hiba",
+        "Mohamed Eltabakh",
+        "Fatima Al-Raisi",
+        "Yassine El Kheir",
+        "Mohammed Abdulrahman",
+        "Hamdy Mubarak",
+        "Ayah Hashem",
+        "Lefkir Meriem",
+        "Ehsaneddin Asgari"
+      ],
+      "source_url": "https://arxiv.org/html/2609.35564v1",
+      "abstract_url": "https://arxiv.org/abs/2609.35564v1",
+      "year": 2026,
+      "venue": "arXiv preprint; peer review not verified",
+      "extraction_version": "latexhtml-v1",
+      "retrieved_at": "2026-09-29",
+      "redistribution": "not verified; text stays local",
+      "html_hash": "b4f267b62bde95f48d9e2168333a20140342a5024656f9568cdba1deabbadd9d",
+      "inspection": {
+        "agent_extraction_check": "passed",
+        "human_review": "pending"
+      }
+    },
+    {
+      "paper_id": "2609.35486v1",
+      "title": "Who Is Left of Whom? Tracing Spatial Evidence and Role Binding in Relative-Position Reasoning",
+      "authors": [
+        "Yingjin Song",
+        "Denis Paperno",
+        "Albert Gatt"
+      ],
+      "source_url": "https://arxiv.org/html/2609.35486v1",
+      "abstract_url": "https://arxiv.org/abs/2609.35486v1",
+      "year": 2026,
+      "venue": "arXiv preprint; peer review not verified",
+      "extraction_version": "latexhtml-v1",
+      "retrieved_at": "2026-09-29",
+      "redistribution": "not verified; text stays local",
+      "html_hash": "6887c2ba78cdaf4c994408213d1c64efbd4cc4f52641c3b148f3b0d1b8d35389",
+      "inspection": {
+        "agent_extraction_check": "passed",
+        "human_review": "pending"
+      }
+    },
+    {
+      "paper_id": "2609.35475v1",
+      "title": "Spontaneous Context Restoration: How Language Models Recover from Corrupted Inputs",
+      "authors": [
+        "Pranjal Garg",
+        "Jacob Beck"
+      ],
+      "source_url": "https://arxiv.org/html/2609.35475v1",
+      "abstract_url": "https://arxiv.org/abs/2609.35475v1",
+      "year": 2026,
+      "venue": "arXiv preprint; peer review not verified",
+      "extraction_version": "latexhtml-v1",
+      "retrieved_at": "2026-09-29",
+      "redistribution": "not verified; text stays local",
+      "html_hash": "1ad0b600f02bfdf2be6ce903488d934b38b8616989ba86588b19d5896c8d75d7",
+      "inspection": {
+        "agent_extraction_check": "passed",
+        "human_review": "pending"
+      }
+    },
+    {
+      "paper_id": "2609.35387v1",
+      "title": "TRACE: Single-Pass Decoding-Trace Risk Localization for Generation Calibration",
+      "authors": [
+        "Yuebin Xu",
+        "Xuemei Peng",
+        "Junlan Chen",
+        "Zhiyi Chen",
+        "Zeyi Wen"
+      ],
+      "source_url": "https://arxiv.org/html/2609.35387v1",
+      "abstract_url": "https://arxiv.org/abs/2609.35387v1",
+      "year": 2026,
+      "venue": "arXiv preprint; peer review not verified",
+      "extraction_version": "latexhtml-v1",
+      "retrieved_at": "2026-09-29",
+      "redistribution": "not verified; text stays local",
+      "html_hash": "deeceb4262bec4b241e0059fff76e35da40f930bdf5096835303e8fd6c7e34cc",
+      "inspection": {
+        "agent_extraction_check": "passed",
+        "human_review": "pending"
+      }
+    }
+  ],
+  "examples": [
+    {
+      "example_id": "2609.35769v1_abstract",
+      "paper_id": "2609.35769v1",
+      "section_type": "abstract",
+      "split": "pilot",
+      "context_hash": "2dc813cf0e07c40e4d4c47bf82cd016cdf82c37e4642ccc37682ef35ea0407bb",
+      "reference_hash": "760313d1adcf14bfc2b6c4bdb9ff6f8b31a7e293b7dd3e4b56b352fe869d657c",
+      "target_words": 256
+    },
+    {
+      "example_id": "2609.35769v1_introduction",
+      "paper_id": "2609.35769v1",
+      "section_type": "introduction",
+      "split": "pilot",
+      "context_hash": "684176fc7ca73e1c3c34ca3a655caf6176b3385348417d1dad4bbaae7848480b",
+      "reference_hash": "3848d20c10117f2c5e820eec01878ae11361a1d92a3848921a38b457d9321443",
+      "target_words": 850
+    },
+    {
+      "example_id": "2609.35769v1_related_work",
+      "paper_id": "2609.35769v1",
+      "section_type": "related_work",
+      "split": "pilot",
+      "context_hash": "0660dbb875b3cf2580ed8a41b65c6400e99a3cf054eb691e5b32711a36440002",
+      "reference_hash": "63a312222d041638b08ecfa8e7c69f728ab190d6dd0e8de62ecf108e985f372e",
+      "target_words": 751
+    },
+    {
+      "example_id": "2609.35769v1_conclusion",
+      "paper_id": "2609.35769v1",
+      "section_type": "conclusion",
+      "split": "pilot",
+      "context_hash": "b9e3c320728298aa832d0a670bd9d72ecc36c6ee5cb7331fb04982db0f02fd39",
+      "reference_hash": "57f57485be290e4c11091a799338d6248f2a1e81af70ebe4ddc9208c8ac09475",
+      "target_words": 260
+    },
+    {
+      "example_id": "2609.35759v1_abstract",
+      "paper_id": "2609.35759v1",
+      "section_type": "abstract",
+      "split": "pilot",
+      "context_hash": "a6bcdd39ad1be4cf0afc89751d43ce8899e6bdb13a0dd11d32d51f99f4871134",
+      "reference_hash": "74d1417aeb5e3c7ffded32a92e9e4aa1ae68185a80492aafe048d37a4b19567c",
+      "target_words": 156
+    },
+    {
+      "example_id": "2609.35759v1_introduction",
+      "paper_id": "2609.35759v1",
+      "section_type": "introduction",
+      "split": "pilot",
+      "context_hash": "3e7b04f84a663dcb3bab871f06ee5d92efa5601a0407b9e1410e75c2c7a5f6fd",
+      "reference_hash": "459a81177cf5f5ee845928385e6ebc322045006a2df37b306c6304edfbc5ca77",
+      "target_words": 715
+    },
+    {
+      "example_id": "2609.35759v1_related_work",
+      "paper_id": "2609.35759v1",
+      "section_type": "related_work",
+      "split": "pilot",
+      "context_hash": "c38f40c45f0a2605a574338e195dacf79238431a9251380939662be9d35da6ca",
+      "reference_hash": "ae1c4340715b9dc1445d674b14ef770bbf862dc7efb7b9ea3ecf7d72a500ca82",
+      "target_words": 613
+    },
+    {
+      "example_id": "2609.35759v1_conclusion",
+      "paper_id": "2609.35759v1",
+      "section_type": "conclusion",
+      "split": "pilot",
+      "context_hash": "c4916a32e0aba8dc05d861cb6a3c69dfd2e747e076a711ee5116986cfa5c448b",
+      "reference_hash": "f2168247cc1e48bdd8ee129461d7ff2e3549815bacb392a0b8688ca285a23779",
+      "target_words": 541
+    },
+    {
+      "example_id": "2609.35627v1_abstract",
+      "paper_id": "2609.35627v1",
+      "section_type": "abstract",
+      "split": "train",
+      "context_hash": "8a29925b9f0dc1e4f8013c9178fad3f7e93b9fcf27646b2d13dd1fa51adee93d",
+      "reference_hash": "0cf39fd5d8f73e50c3c81c398533c2723948f7b12448c117f57de5660c3093e7",
+      "target_words": 254
+    },
+    {
+      "example_id": "2609.35627v1_introduction",
+      "paper_id": "2609.35627v1",
+      "section_type": "introduction",
+      "split": "train",
+      "context_hash": "da279a2f9dcf91f1d019a4ea4cefcd249c1a63df6bb1ee828208cbfd213957c9",
+      "reference_hash": "7801217ca3011567e3d9e80328a1f7c5b0d628a58298da68cb3fd0000ec161c5",
+      "target_words": 744
+    },
+    {
+      "example_id": "2609.35627v1_related_work",
+      "paper_id": "2609.35627v1",
+      "section_type": "related_work",
+      "split": "train",
+      "context_hash": "40ffb21f9783f3c056b9167e387cbce9f603d343e748d80dee8f98af31d37e73",
+      "reference_hash": "ed090a80dbbad98da04b1562ba5fef1848de6187fafde35a0c344114c2d1ea06",
+      "target_words": 379
+    },
+    {
+      "example_id": "2609.35627v1_conclusion",
+      "paper_id": "2609.35627v1",
+      "section_type": "conclusion",
+      "split": "train",
+      "context_hash": "4923b6c34cee837804d71becdd99200cca113554e0f00fb078827995edabe258",
+      "reference_hash": "dfa2605ddc45dc92218cb4feb19a5957700b66377a4ea360052c050eb60c87ba",
+      "target_words": 121
+    },
+    {
+      "example_id": "2609.35695v1_abstract",
+      "paper_id": "2609.35695v1",
+      "section_type": "abstract",
+      "split": "train",
+      "context_hash": "cd4a23d8c4cf257a7ad0808434a3f16ec95bf7d5fc75476b3b50b1ab82a32e39",
+      "reference_hash": "f53980e78b1cac181338d32dfc83a5599f6c8f63c82aa6c548cf4829529ac558",
+      "target_words": 211
+    },
+    {
+      "example_id": "2609.35695v1_introduction",
+      "paper_id": "2609.35695v1",
+      "section_type": "introduction",
+      "split": "train",
+      "context_hash": "9d462880a479b30be02f824c08705762ff1219d3937ea907d560052217de349a",
+      "reference_hash": "0bf312c45a04f2bc69068eb4cc1a08fbbd460338bb2543f1890de40686809712",
+      "target_words": 1042
+    },
+    {
+      "example_id": "2609.35695v1_related_work",
+      "paper_id": "2609.35695v1",
+      "section_type": "related_work",
+      "split": "train",
+      "context_hash": "de6e7acd9a13cbcd39672eb693546c59825cbb59bbdd5c0ee1364b52f9c21e47",
+      "reference_hash": "dc2dd82db2a8b1dd699c50cefd2775a8d4d3d64b94f408781e93a827dc0ab25a",
+      "target_words": 422
+    },
+    {
+      "example_id": "2609.35695v1_conclusion",
+      "paper_id": "2609.35695v1",
+      "section_type": "conclusion",
+      "split": "train",
+      "context_hash": "202ba16c18c14a4809c483779b10ff283626ea534008b6408cb43c9022f8c3c7",
+      "reference_hash": "0849584d9e24652a414447b0d26ea0eda4efbc14e2fe7c4b91556ddb1c7369ba",
+      "target_words": 196
+    },
+    {
+      "example_id": "2609.35751v1_abstract",
+      "paper_id": "2609.35751v1",
+      "section_type": "abstract",
+      "split": "train",
+      "context_hash": "463ff00f3026c0930f8a477478c2fff1aa29a1536480f341bfb4da95695a6208",
+      "reference_hash": "07d611dc4fb0e090b49201bb793a7207e2170343e8418e2c9bf091ebfb17288b",
+      "target_words": 267
+    },
+    {
+      "example_id": "2609.35751v1_introduction",
+      "paper_id": "2609.35751v1",
+      "section_type": "introduction",
+      "split": "train",
+      "context_hash": "c165c4bc447a60b41dfd90f4a60e5e1864e04d0b6aa20df016606844cdd0c2a3",
+      "reference_hash": "1c598cbbdccb12731fac0c9680e6f6250bdf42eedf9d8d4789fb6a7c041caea5",
+      "target_words": 807
+    },
+    {
+      "example_id": "2609.35751v1_related_work",
+      "paper_id": "2609.35751v1",
+      "section_type": "related_work",
+      "split": "train",
+      "context_hash": "c3a347505e5740c7a2c5a8282bb35beb7f0fb8087d2267db6416aa48b506fd47",
+      "reference_hash": "ca51a02cb2e53e970c02c1bebe2fa0c21e755ff4da0edbca5ccecfc26d98c3e3",
+      "target_words": 544
+    },
+    {
+      "example_id": "2609.35751v1_conclusion",
+      "paper_id": "2609.35751v1",
+      "section_type": "conclusion",
+      "split": "train",
+      "context_hash": "3ccc217a3fd9b24bc6d87a754fb666188886b35ef2f8072eb2dc7aea1dd9ed68",
+      "reference_hash": "6355253d27551c3b064401a7cf026a12ad7f4a46d97e08adbdbb4306e1ef2486",
+      "target_words": 113
+    },
+    {
+      "example_id": "2609.35741v1_abstract",
+      "paper_id": "2609.35741v1",
+      "section_type": "abstract",
+      "split": "train",
+      "context_hash": "013eab27790fac0417972055e26712f0a811c04cb5b19e0638cd7d14021e8fd0",
+      "reference_hash": "e29e624125e766f9afa4097a380495ef53a72bd68faeb5aaa13c61f72098de63",
+      "target_words": 251
+    },
+    {
+      "example_id": "2609.35741v1_introduction",
+      "paper_id": "2609.35741v1",
+      "section_type": "introduction",
+      "split": "train",
+      "context_hash": "3e05256ca4197e63a553a007508822e2b544099e9e1a791691506b72ae71feff",
+      "reference_hash": "c5cd6122a73f871554419dcc5e08a5b5601ae41c5640b5a6ffb911cd7d140abe",
+      "target_words": 810
+    },
+    {
+      "example_id": "2609.35741v1_related_work",
+      "paper_id": "2609.35741v1",
+      "section_type": "related_work",
+      "split": "train",
+      "context_hash": "a16bae0ddb41d8ad9dd24e001fda9002f9651312b6af1b58216f21e221292a8e",
+      "reference_hash": "bb9fcccb0221206c66a2830f8b58e9cd86549b009fa867168ebd506677fcd620",
+      "target_words": 699
+    },
+    {
+      "example_id": "2609.35741v1_conclusion",
+      "paper_id": "2609.35741v1",
+      "section_type": "conclusion",
+      "split": "train",
+      "context_hash": "4bc3436353017464cc75260c641926bbf9d043371923bc93a459c4597ec7535e",
+      "reference_hash": "feedcec5bdb378bda43d11214723a682e41ea2ccc4b0a553dcde447e63a7593c",
+      "target_words": 542
+    },
+    {
+      "example_id": "2609.35608v1_abstract",
+      "paper_id": "2609.35608v1",
+      "section_type": "abstract",
+      "split": "train",
+      "context_hash": "f43eb480beed241e8a4fb16b6b7c83fbc9a6f7ee78d05d775246a0af6d9482ff",
+      "reference_hash": "65026070e0f938917244a37e58d816befcc27a5ba346bb710872c40d2285e3ca",
+      "target_words": 172
+    },
+    {
+      "example_id": "2609.35608v1_introduction",
+      "paper_id": "2609.35608v1",
+      "section_type": "introduction",
+      "split": "train",
+      "context_hash": "c719f19d59363735d3b2849b3e8f53bdc2b7c4314a0b08e9df9d3e15c52fd245",
+      "reference_hash": "db970fafc6f545e6d3f6b02ee90b06726720cb092c24526edf188d33409cc7cc",
+      "target_words": 501
+    },
+    {
+      "example_id": "2609.35608v1_related_work",
+      "paper_id": "2609.35608v1",
+      "section_type": "related_work",
+      "split": "train",
+      "context_hash": "2d14ad00f17a28eace418fc75be8fca81084680bd75737ea368b746ff1d7db3d",
+      "reference_hash": "779334c77322fa218758a614e31c1e03fa1d5e25d16912c4da96b3c3ecb47325",
+      "target_words": 465
+    },
+    {
+      "example_id": "2609.35608v1_conclusion",
+      "paper_id": "2609.35608v1",
+      "section_type": "conclusion",
+      "split": "train",
+      "context_hash": "0145635becc151386d160723fd7225dcb63dad43c601a9434a7e9a75864839e1",
+      "reference_hash": "0f0e4ea49da50b344d594753e8604e8efea1101f5a340b4b48a7047ae57e1432",
+      "target_words": 183
+    },
+    {
+      "example_id": "2609.35609v1_abstract",
+      "paper_id": "2609.35609v1",
+      "section_type": "abstract",
+      "split": "train",
+      "context_hash": "42cb33f3a836a8d5ae12ce57386e7dbf4f2f81c6c57e5c5c210d83a62b5f5d19",
+      "reference_hash": "2abd99e29cc3a822e431a3381b00ada4e13780e7e29dc80d592f34617e36bd98",
+      "target_words": 198
+    },
+    {
+      "example_id": "2609.35609v1_introduction",
+      "paper_id": "2609.35609v1",
+      "section_type": "introduction",
+      "split": "train",
+      "context_hash": "c9b9c77b4acecc504dc420bae846b3734dcb12c7894020e9bfad203c6a134e3f",
+      "reference_hash": "4283c7debfef9a611806ec4a5ed7b44ba15209960586f0689c17205fad34777b",
+      "target_words": 473
+    },
+    {
+      "example_id": "2609.35609v1_related_work",
+      "paper_id": "2609.35609v1",
+      "section_type": "related_work",
+      "split": "train",
+      "context_hash": "2944a2904f103119941b8a153ffbcca2128051578de6e180afbc9b6a29b12e33",
+      "reference_hash": "3e31bb8e912f2819646b8c55f75f14bb673cbb5134aeff3530c6b464b1743dea",
+      "target_words": 394
+    },
+    {
+      "example_id": "2609.35609v1_conclusion",
+      "paper_id": "2609.35609v1",
+      "section_type": "conclusion",
+      "split": "train",
+      "context_hash": "38d8f8cff801d9a00c1deba944d36313a1214bda0286a4b51f01b4377324cc1e",
+      "reference_hash": "6a5d307f675578300a60888e6bac2bc12e3ae3709dba61a52105cf49fa62ce48",
+      "target_words": 153
+    },
+    {
+      "example_id": "2609.35749v1_abstract",
+      "paper_id": "2609.35749v1",
+      "section_type": "abstract",
+      "split": "train",
+      "context_hash": "10308f7f8f59e62aa45bd0cace2f96273ce2ea28181f570b2fcd9919ea11131a",
+      "reference_hash": "006fafcc5db2cd7a76081d32201a827d9f9126b277d51dc7dd23c81dba37f75e",
+      "target_words": 237
+    },
+    {
+      "example_id": "2609.35749v1_introduction",
+      "paper_id": "2609.35749v1",
+      "section_type": "introduction",
+      "split": "train",
+      "context_hash": "e87a626c45be6a2d1817b7f00a3a701abf1117a25714ef7b3d00778421d96673",
+      "reference_hash": "ed7412ec368b58755f1617b3df641ddd6d84f75e5dd836e896582d82775c1986",
+      "target_words": 767
+    },
+    {
+      "example_id": "2609.35749v1_related_work",
+      "paper_id": "2609.35749v1",
+      "section_type": "related_work",
+      "split": "train",
+      "context_hash": "c6458407d02443ad43ffa12039ddfabf3b73a181cd0901af117be1a190105517",
+      "reference_hash": "a346c1594bd6b787ba25fea06957ccfe9c9ddcd84f1338dbb7b2205d45763c09",
+      "target_words": 359
+    },
+    {
+      "example_id": "2609.35749v1_conclusion",
+      "paper_id": "2609.35749v1",
+      "section_type": "conclusion",
+      "split": "train",
+      "context_hash": "1f37fc95eea61332d35f3813bf1409a62ce3607f46cf6755a6192e251db213d6",
+      "reference_hash": "6715d1fbacf68b9e3288528fb56533aa21bb04166d2820c445a1f562b34dae01",
+      "target_words": 159
+    },
+    {
+      "example_id": "2609.35606v1_abstract",
+      "paper_id": "2609.35606v1",
+      "section_type": "abstract",
+      "split": "train",
+      "context_hash": "cd65fe9ae34208473cfff321be8d0748169c8a2852ec9e699eae885ff5dd2b13",
+      "reference_hash": "2e59c540bfb61bc553aa0f5a315a617fe90a2674175d73259c937c24069ed34e",
+      "target_words": 214
+    },
+    {
+      "example_id": "2609.35606v1_introduction",
+      "paper_id": "2609.35606v1",
+      "section_type": "introduction",
+      "split": "train",
+      "context_hash": "6520a6257abe664e4145bb6df891e6bee27ee015efb99b8b635c94096a4403b9",
+      "reference_hash": "38773e9278c8356ccaa092c5c606e68f0804e70309a29f43f9d011212a571e13",
+      "target_words": 899
+    },
+    {
+      "example_id": "2609.35606v1_related_work",
+      "paper_id": "2609.35606v1",
+      "section_type": "related_work",
+      "split": "train",
+      "context_hash": "cc5a6090b6fc7771decfa927b1d6eb1baffafced749bbda980967eda16ca4e2c",
+      "reference_hash": "c77d74c112715407410761a774727d5a86c472786acbfd93d2b64cb639619688",
+      "target_words": 615
+    },
+    {
+      "example_id": "2609.35606v1_conclusion",
+      "paper_id": "2609.35606v1",
+      "section_type": "conclusion",
+      "split": "train",
+      "context_hash": "fad2b09cdc15f4febfd48e227806d5d3072720fa738791a7fa4f9f328a05c0a5",
+      "reference_hash": "c23e563bb385cc0fce888835778af8bcba846ce9f811d52b66a8f17d978f9bbe",
+      "target_words": 376
+    },
+    {
+      "example_id": "2609.35748v1_abstract",
+      "paper_id": "2609.35748v1",
+      "section_type": "abstract",
+      "split": "validation",
+      "context_hash": "ce421a492e902580f43ee88f6d00b49ddb2d29ee0af6eacb25c2f3322fa30501",
+      "reference_hash": "652816d3628dbac88b2d575ad83bcbdd7c8a0102c5300ebd3731a1fab7839cda",
+      "target_words": 225
+    },
+    {
+      "example_id": "2609.35748v1_introduction",
+      "paper_id": "2609.35748v1",
+      "section_type": "introduction",
+      "split": "validation",
+      "context_hash": "75d08a9c79a8b0cf08faafb11c0d6548296b136043f1555ad1d57ee986748aea",
+      "reference_hash": "562ee8a96692ef03544cc532fb38978520e87808d88e8ecddc5e27a8c6b4f94a",
+      "target_words": 715
+    },
+    {
+      "example_id": "2609.35748v1_related_work",
+      "paper_id": "2609.35748v1",
+      "section_type": "related_work",
+      "split": "validation",
+      "context_hash": "3576991ef80901938311303039a86c454a580af5d79859a2365d04a37fdcb950",
+      "reference_hash": "a0f445d4c1645fff6a45cf7c108a591845e0607ad13f2326ae9f957eb0b5c38f",
+      "target_words": 506
+    },
+    {
+      "example_id": "2609.35748v1_conclusion",
+      "paper_id": "2609.35748v1",
+      "section_type": "conclusion",
+      "split": "validation",
+      "context_hash": "3e1c8245e04e32a38ce2d8f5939743b2e1e88bb22e4ed1d36775529b56f24a18",
+      "reference_hash": "16a6c5bf0f04138de3036f70d02c7f1012d3eb795a7089fff5322cdbc913603a",
+      "target_words": 312
+    },
+    {
+      "example_id": "2609.35645v1_abstract",
+      "paper_id": "2609.35645v1",
+      "section_type": "abstract",
+      "split": "validation",
+      "context_hash": "cc430e6df94c66b36de450534eebf1aca187cadddf12a80c1a033439b0a5192f",
+      "reference_hash": "94bd2687395c11f25e5fffc33514ac20974fe70f18d44b7fdf6a9f0121e2a793",
+      "target_words": 113
+    },
+    {
+      "example_id": "2609.35645v1_introduction",
+      "paper_id": "2609.35645v1",
+      "section_type": "introduction",
+      "split": "validation",
+      "context_hash": "5394f7db06b2f434d4f51d33121dac0b9c79ff1109fca7e722af31713375ef7c",
+      "reference_hash": "ff621a21ac74526b087960b2c96df3e1cbc15757449503b121bf5d05ff31cf6c",
+      "target_words": 407
+    },
+    {
+      "example_id": "2609.35645v1_related_work",
+      "paper_id": "2609.35645v1",
+      "section_type": "related_work",
+      "split": "validation",
+      "context_hash": "b0f3cc36f1d3e3b1879623e3b956d315f98de8c0984488071cb56d31aa122ea2",
+      "reference_hash": "c2d2279a22c0dfc383f7296d74c6431bc5b67bd6bed1badef213154eaec55798",
+      "target_words": 267
+    },
+    {
+      "example_id": "2609.35645v1_conclusion",
+      "paper_id": "2609.35645v1",
+      "section_type": "conclusion",
+      "split": "validation",
+      "context_hash": "b32146f104cb665e925d18bb1888940924119c0cec2c5bd4469ffe33a0888703",
+      "reference_hash": "590bb9b92d8c74aab228a4965c4306108f61b481ad2ef22ea73312a8b731a877",
+      "target_words": 170
+    },
+    {
+      "example_id": "2609.35738v1_abstract",
+      "paper_id": "2609.35738v1",
+      "section_type": "abstract",
+      "split": "validation",
+      "context_hash": "0d71c2940458ec6a7cf5b9ea280a3fa5a5c2606a443a77736d47e47786398e42",
+      "reference_hash": "3b2759be94b3f32901d58e484b8f76fafa356fb4cf5c7753e1735f54cd5a9b4b",
+      "target_words": 193
+    },
+    {
+      "example_id": "2609.35738v1_introduction",
+      "paper_id": "2609.35738v1",
+      "section_type": "introduction",
+      "split": "validation",
+      "context_hash": "844a9f033a2ca2c24826768acfe541992e571a1d0ae3b78a169faa87a65c5121",
+      "reference_hash": "3914005a897d6838326b08b7c5532898cab2ef614d4c974c08b8064d9fea8aab",
+      "target_words": 625
+    },
+    {
+      "example_id": "2609.35738v1_related_work",
+      "paper_id": "2609.35738v1",
+      "section_type": "related_work",
+      "split": "validation",
+      "context_hash": "5c1f5fd065e73553a78c03d46455df18839c82518010b5abee037481ca003d1e",
+      "reference_hash": "446558a546674319ea947550f92901a39fd3b00157d9995bcc5ccfb9e24b2f14",
+      "target_words": 290
+    },
+    {
+      "example_id": "2609.35738v1_conclusion",
+      "paper_id": "2609.35738v1",
+      "section_type": "conclusion",
+      "split": "validation",
+      "context_hash": "3d6fb16f958ad624dd28679f311ed66501497766ef1439acfdcdab9b5b50f080",
+      "reference_hash": "791f84e2c860a4c2eecea05605ed6463a74150d6fc000637f805c9862fd83f9c",
+      "target_words": 173
+    },
+    {
+      "example_id": "2609.35630v1_abstract",
+      "paper_id": "2609.35630v1",
+      "section_type": "abstract",
+      "split": "validation",
+      "context_hash": "dc1c72e25a9e6628a2bc52621a6dd7edfb6cbee029d2f1f2f92e294870b75247",
+      "reference_hash": "fa406db7128e2fd308e958fec31bc48c84dde22b6fe083941b7f134b94f4c79f",
+      "target_words": 173
+    },
+    {
+      "example_id": "2609.35630v1_introduction",
+      "paper_id": "2609.35630v1",
+      "section_type": "introduction",
+      "split": "validation",
+      "context_hash": "f6bb26b9e54d0b3bc2d2be4bd8c61ebc7ba6d9740a674b81d4200c438e97f2b5",
+      "reference_hash": "c06914253a8ddbccba6ea7c11b61f97a3b521a3f7acf6c866121e40594d6e64d",
+      "target_words": 713
+    },
+    {
+      "example_id": "2609.35630v1_related_work",
+      "paper_id": "2609.35630v1",
+      "section_type": "related_work",
+      "split": "validation",
+      "context_hash": "2cf5a1bc636c2ffbe198d43c252139ed1d77f5ce23a5c9d2e34f8635b885d6d2",
+      "reference_hash": "c5e681f6a3db96abad3d828eff0b3e87204e0a7c6b1a75cb3fb1af2f27956b99",
+      "target_words": 431
+    },
+    {
+      "example_id": "2609.35630v1_conclusion",
+      "paper_id": "2609.35630v1",
+      "section_type": "conclusion",
+      "split": "validation",
+      "context_hash": "28924c5d9e279aed8eb0bb13e2963775a9393e27b30fa053ffbb4762944ce506",
+      "reference_hash": "968ce5c7cc383cdda524d3ed1d861a37e0de82b0e9a06f859530ef0f9d2a9026",
+      "target_words": 330
+    },
+    {
+      "example_id": "2609.35663v1_abstract",
+      "paper_id": "2609.35663v1",
+      "section_type": "abstract",
+      "split": "validation",
+      "context_hash": "b4815d8c5ea1ab21439f04ad57cdc0ec9d14da1d138cc71ee9c45ae225955e69",
+      "reference_hash": "30f2af844c6384f856986330ed6b95d5d275b028fc75dfe96a162a0d42c283d0",
+      "target_words": 217
+    },
+    {
+      "example_id": "2609.35663v1_introduction",
+      "paper_id": "2609.35663v1",
+      "section_type": "introduction",
+      "split": "validation",
+      "context_hash": "aff344ad779f91afe42263e2fc535a6ec03249b7a5619e00efd29b3f435cfbf6",
+      "reference_hash": "e2fd7b0b4049ef477dce5848925856353cda18606361a495f74ab562a120b8cd",
+      "target_words": 1011
+    },
+    {
+      "example_id": "2609.35663v1_related_work",
+      "paper_id": "2609.35663v1",
+      "section_type": "related_work",
+      "split": "validation",
+      "context_hash": "796ea2bfcf2c06a021a708db5b6959d1d32ecc253da5d753f2165e6f29778e72",
+      "reference_hash": "e9813f3136be7c9c20297d13fcebac6b683b2efed6f8f2bc10f7e97694ed2fe6",
+      "target_words": 590
+    },
+    {
+      "example_id": "2609.35663v1_conclusion",
+      "paper_id": "2609.35663v1",
+      "section_type": "conclusion",
+      "split": "validation",
+      "context_hash": "60a00510785bab50c962db88f0ac7ca799e376e7d78aefb4a3591f45e396fdae",
+      "reference_hash": "d51fcc226a96c4faa9025662d4a6c1940b84fa59e3ebabb093fabc69c1dc1cd7",
+      "target_words": 138
+    },
+    {
+      "example_id": "2609.35576v1_abstract",
+      "paper_id": "2609.35576v1",
+      "section_type": "abstract",
+      "split": "confirmation",
+      "context_hash": "82fd8bad49f380f8d7e8b8f79936188d364df6612bd4897457a1d8c1dd1f1893",
+      "reference_hash": "f5b363209088ccaccd21af11ce0599000c640ad487e1664b025a0bd2c29d02d4",
+      "target_words": 186
+    },
+    {
+      "example_id": "2609.35576v1_introduction",
+      "paper_id": "2609.35576v1",
+      "section_type": "introduction",
+      "split": "confirmation",
+      "context_hash": "a626174970479b981af54c2208538181b3d15cce537a0c134c5a12c7a70ff6bf",
+      "reference_hash": "c5ee8d500106b268714573b55388d61ee0230dd6057e5887b9bddff9363f2a5b",
+      "target_words": 787
+    },
+    {
+      "example_id": "2609.35576v1_related_work",
+      "paper_id": "2609.35576v1",
+      "section_type": "related_work",
+      "split": "confirmation",
+      "context_hash": "08c00b7efd57f77642c5500920bd9c3f64e078517f25a278b9a2f6ece9a115db",
+      "reference_hash": "62edc0ad98b8f3c1b9391bfb55cffbbc3640bb0c8ce3f6fc6851da480d94670a",
+      "target_words": 723
+    },
+    {
+      "example_id": "2609.35576v1_conclusion",
+      "paper_id": "2609.35576v1",
+      "section_type": "conclusion",
+      "split": "confirmation",
+      "context_hash": "52c5ebc86ace02fc338ee072911a01db037f0f76a482ec5e3bc04594ef20def1",
+      "reference_hash": "65d7325d77b01ed66cca73adb9dded2ea47ae001feda1b42489b485b4c124bc0",
+      "target_words": 119
+    },
+    {
+      "example_id": "2609.35564v1_abstract",
+      "paper_id": "2609.35564v1",
+      "section_type": "abstract",
+      "split": "confirmation",
+      "context_hash": "1e78646e72bacb9e9860edb99cc5c459f6c313f76691399ef74b4fb9e507fb6e",
+      "reference_hash": "fb68c2b331cc24730dd6204e04dce4282c0b8404cf9bffc3baf5fd071e89aa36",
+      "target_words": 181
+    },
+    {
+      "example_id": "2609.35564v1_introduction",
+      "paper_id": "2609.35564v1",
+      "section_type": "introduction",
+      "split": "confirmation",
+      "context_hash": "764033afce638e67e0760d207dc5b08c27aa38e7c248b581d13f5ff3f2207c37",
+      "reference_hash": "ac17d1a2158dff38d72b58f21a4f8385f199f12dff9addda8b575af2744e7645",
+      "target_words": 330
+    },
+    {
+      "example_id": "2609.35564v1_related_work",
+      "paper_id": "2609.35564v1",
+      "section_type": "related_work",
+      "split": "confirmation",
+      "context_hash": "441c206e8b8d97ba98e36482ef715ea8458fcb3adf99f2783da23ea8dea20835",
+      "reference_hash": "17660df70ee56c2ebda4be952292c2dd02d1b77dd313440e84892324737c8458",
+      "target_words": 293
+    },
+    {
+      "example_id": "2609.35564v1_conclusion",
+      "paper_id": "2609.35564v1",
+      "section_type": "conclusion",
+      "split": "confirmation",
+      "context_hash": "1d949ae0c9a12c87d92073f27fae855f04a1cb5921998daf7471c1d44fea2bdd",
+      "reference_hash": "463be85531f8d55ac5d3dac04b772152f15ba3133bff5523884590797eb12c55",
+      "target_words": 117
+    },
+    {
+      "example_id": "2609.35486v1_abstract",
+      "paper_id": "2609.35486v1",
+      "section_type": "abstract",
+      "split": "confirmation",
+      "context_hash": "e8ca4803566056b2d65d050cb724d4e814aa8af45712a41a99c5acf273d3961d",
+      "reference_hash": "c194997a0682e6eba1faeb122bd2dd1846b7fe884506de5c4662478ef04381fd",
+      "target_words": 172
+    },
+    {
+      "example_id": "2609.35486v1_introduction",
+      "paper_id": "2609.35486v1",
+      "section_type": "introduction",
+      "split": "confirmation",
+      "context_hash": "7c1438b7b34bf01411887fe7e34b297383c008e1191587f0e2eecc9ac5fd11d7",
+      "reference_hash": "9d20eda8e44af9acbc8bd46e03360a3bcd665318201d388a9e5d1624a40a2b87",
+      "target_words": 813
+    },
+    {
+      "example_id": "2609.35486v1_related_work",
+      "paper_id": "2609.35486v1",
+      "section_type": "related_work",
+      "split": "confirmation",
+      "context_hash": "a5e6f612fddb368dcb3701b762c04d5a21418f4e6266c7f44468dc7538ca5d4c",
+      "reference_hash": "019e8a12934dc2c2f19e72c53f60f0bb9caad77ed13522985b6065538c5f97fd",
+      "target_words": 426
+    },
+    {
+      "example_id": "2609.35486v1_conclusion",
+      "paper_id": "2609.35486v1",
+      "section_type": "conclusion",
+      "split": "confirmation",
+      "context_hash": "2aa32ca961dedcd31a96e8b6f5f1786ea01e8a632ac4bc2bd905b54903bd1011",
+      "reference_hash": "a8f2d520c7ae10b6e3fe84d7d7ee9cdf9754427f11d37fa0e9dc2f26902828f2",
+      "target_words": 223
+    },
+    {
+      "example_id": "2609.35475v1_abstract",
+      "paper_id": "2609.35475v1",
+      "section_type": "abstract",
+      "split": "confirmation",
+      "context_hash": "079a7f56c3fa66a998bffd06dc0722055dd9a853d9359e9efc1c7a3df6fd7536",
+      "reference_hash": "0660ac114924d56721515a64a9dc9daded7313367daaf6f1b261e29aa25337af",
+      "target_words": 205
+    },
+    {
+      "example_id": "2609.35475v1_introduction",
+      "paper_id": "2609.35475v1",
+      "section_type": "introduction",
+      "split": "confirmation",
+      "context_hash": "07bd97e50bfee44fa821b6b7d8b7a0a6fb1d6b42764dbd9f0844a3841f556466",
+      "reference_hash": "d68affcff14a49a04dd472e0e6b6dd32065945181219908bcb68e71c8d82ab87",
+      "target_words": 754
+    },
+    {
+      "example_id": "2609.35475v1_related_work",
+      "paper_id": "2609.35475v1",
+      "section_type": "related_work",
+      "split": "confirmation",
+      "context_hash": "a94968bbeac1d7b15f73b533750908ac345dd5f53855aacab9f137de39d6466c",
+      "reference_hash": "006854f2a89067aa7b9e5fa46fcc21ed0f55fe708dd2a05e6448c943d46a35d5",
+      "target_words": 544
+    },
+    {
+      "example_id": "2609.35475v1_conclusion",
+      "paper_id": "2609.35475v1",
+      "section_type": "conclusion",
+      "split": "confirmation",
+      "context_hash": "104c25c9917c0de8d54890d6312d1e5060da83d679f353247b5ebd35566dbc3e",
+      "reference_hash": "3cf3179a001a2d2e1e58ad87441bb24cf23616afba23dbebf20395a3ea7f3589",
+      "target_words": 421
+    },
+    {
+      "example_id": "2609.35387v1_abstract",
+      "paper_id": "2609.35387v1",
+      "section_type": "abstract",
+      "split": "confirmation",
+      "context_hash": "96a113f3ac3eae6b9fa19f9f01030d69e3b9ab328ed3309c17f0970683b49f37",
+      "reference_hash": "b668f0179f3db5c1416be0a07978ad71fee6e1d3c51f5a402d9dced510f7bee5",
+      "target_words": 192
+    },
+    {
+      "example_id": "2609.35387v1_introduction",
+      "paper_id": "2609.35387v1",
+      "section_type": "introduction",
+      "split": "confirmation",
+      "context_hash": "c3ea2d088a4738e10445c8bece6256b4fe5fd9e1d35559d5249ecb072ba7d496",
+      "reference_hash": "9447bef7d61f81fdec5e5957e56bd6c741fa1ce71e1d952516fb25e1b5f1476b",
+      "target_words": 791
+    },
+    {
+      "example_id": "2609.35387v1_related_work",
+      "paper_id": "2609.35387v1",
+      "section_type": "related_work",
+      "split": "confirmation",
+      "context_hash": "e3269aea77f76ed7952ae0eafd16ea57ee08a77720744a331275f79324f24987",
+      "reference_hash": "00104b356e0056b542f06612d055674e526ae1faed9942d42de3650fc3e6c21b",
+      "target_words": 377
+    },
+    {
+      "example_id": "2609.35387v1_conclusion",
+      "paper_id": "2609.35387v1",
+      "section_type": "conclusion",
+      "split": "confirmation",
+      "context_hash": "ffa5b131a3585345d505cc12666a474c0c0fd9283f3b247ad331475f919896c5",
+      "reference_hash": "4e63fba07fccfc8f6c8fbaaf096344655882298d301dde91a21e79e03e09eabd",
+      "target_words": 105
+    }
+  ]
+}

@@ -9,6 +9,8 @@ __pycache__/
 data/raw/
 data/papers/
 data/examples.jsonl
+data/review.md
+data/tokenizers/
 runs/
 *.lock.tmp
 .DS_Store

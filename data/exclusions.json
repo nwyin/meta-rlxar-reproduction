@@ -1,0 +1,102 @@
+[
+  {
+    "paper_id": "2609.35765v1",
+    "reason": "Missing or duplicated abstract",
+    "before_grading": true
+  },
+  {
+    "paper_id": "2609.35706v1",
+    "reason": "Required top-level sections missing",
+    "before_grading": true
+  },
+  {
+    "paper_id": "2609.35685v1",
+    "reason": "Required top-level sections missing",
+    "before_grading": true
+  },
+  {
+    "paper_id": "2609.35674v1",
+    "reason": "Required top-level sections missing",
+    "before_grading": true
+  },
+  {
+    "paper_id": "2609.35664v1",
+    "reason": "Required top-level sections missing",
+    "before_grading": true
+  },
+  {
+    "paper_id": "2609.35646v1",
+    "reason": "Subject overlaps rubric optimization",
+    "before_grading": true
+  },
+  {
+    "paper_id": "2609.35629v1",
+    "reason": "Conservative four-failure optimizer context bound exceeded",
+    "before_grading": true
+  },
+  {
+    "paper_id": "2609.35596v1",
+    "reason": "Required top-level sections missing",
+    "before_grading": true
+  },
+  {
+    "paper_id": "2609.35591v1",
+    "reason": "Required top-level sections missing",
+    "before_grading": true
+  },
+  {
+    "paper_id": "2609.35578v1",
+    "reason": "Missing or duplicated abstract",
+    "before_grading": true
+  },
+  {
+    "paper_id": "2609.35571v1",
+    "reason": "Author or manuscript overlap with prior selected paper",
+    "before_grading": true
+  },
+  {
+    "paper_id": "2609.35544v1",
+    "reason": "Required top-level sections missing",
+    "before_grading": true
+  },
+  {
+    "paper_id": "2609.35521v1",
+    "reason": "Required top-level sections missing",
+    "before_grading": true
+  },
+  {
+    "paper_id": "2609.35462v1",
+    "reason": "Required top-level sections missing",
+    "before_grading": true
+  },
+  {
+    "paper_id": "2609.35461v1",
+    "reason": "Extraction debris",
+    "before_grading": true
+  },
+  {
+    "paper_id": "2609.35427v1",
+    "reason": "Required top-level sections missing",
+    "before_grading": true
+  },
+  {
+    "paper_id": "2609.35426v1",
+    "reason": "Required top-level sections missing",
+    "before_grading": true
+  },
+  {
+    "paper_id": "2609.35425v1",
+    "reason": "Extraction debris",
+    "before_grading": true
+  },
+  {
+    "paper_id": "2609.35412v1",
+    "reason": "Required top-level sections missing",
+    "before_grading": true
+  },
+  {
+    "paper_id": "2609.35409v1",
+    "reason": "Author or manuscript overlap with prior selected paper",
+    "before_grading": true
+  }
+]

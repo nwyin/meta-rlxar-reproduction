@@ -17,5 +17,7 @@
   "normalization": "Whitespace normalization and equivalent HTML math/heading handling only; no expert rewriting",
   "redistribution": "Raw papers and extracted text stay local unless an individually verified license allows release; publish URLs, hashes, and reconstruction commands",
   "inspection": "Record agent extraction/suitability inspection separately from human review; human suitability review remains an explicit acceptance gate",
-  "limitations": "Recent preprints may lack peer review. Report publication status for every selected paper and do not claim guaranteed expert writing."
+  "limitations": "Recent preprints may lack peer review. Report publication status for every selected paper and do not claim guaranteed expert writing.",
+  "context_screen": "Pinned official Qwen/Kimi tokenizers; maximum count with 25% headroom, four complete failure contexts and candidate pairs, 16000 feedback overhead tokens, and 16384 output tokens. Every actual request is checked again.",
+  "amendment_before_grading": "Initial UTF-8-byte-as-token screen was needlessly restrictive; all rejection logs from that pass are preserved separately. No candidate generation or grading occurred before this amendment."
 }

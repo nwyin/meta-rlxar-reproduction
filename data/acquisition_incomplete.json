@@ -1,0 +1,24 @@
+{
+  "eligible": 1,
+  "policy": {
+    "frozen_before_grading": true,
+    "source": "arXiv open-access CS HTML subset",
+    "source_deviation": "S2ORC bulk access was not configured. Official S2ORC directs acquisition through Semantic Scholar. The allenai/s2orc Hugging Face lookup returned not found. Do not substitute an undocumented mirror.",
+    "discovery_query": "cat:cs.CL, submittedDate descending, first 60 records",
+    "discovery_snapshot": "data/discovery.xml",
+    "eligibility": [
+      "Versioned arXiv HTML with one abstract and unambiguous top-level introduction, related work, and conclusion sections",
+      "Complete bibliography and no obvious extraction debris",
+      "At least 60 words per target section and at least 10 bibliography entries",
+      "Whole visible contexts and four-failure feedback fit every pinned endpoint without truncation",
+      "No duplicate titles, manuscript versions, or author overlap with previously selected papers",
+      "No paper whose subject directly studies rubric optimization or this XAR procedure"
+    ],
+    "selection": "First 20 eligible papers in frozen discovery order; first 2 are pilots; shuffle next 13 with seed 20260929 for 8 train and 5 validation; last 5 are confirmation",
+    "replacement_order": "Frozen discovery order, with every exclusion recorded before generation",
+    "normalization": "Whitespace normalization and equivalent HTML math/heading handling only; no expert rewriting",
+    "redistribution": "Raw papers and extracted text stay local unless an individually verified license allows release; publish URLs, hashes, and reconstruction commands",
+    "inspection": "Record agent extraction/suitability inspection separately from human review; human suitability review remains an explicit acceptance gate",
+    "limitations": "Recent preprints may lack peer review. Report publication status for every selected paper and do not claim guaranteed expert writing."
+  }
+}
