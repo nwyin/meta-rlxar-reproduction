@@ -509,14 +509,17 @@ def contamination(candidate, reference):
             "flagged": longest >= 30, "exclusion": False}
 
 
-def writer_candidates(api, examples, output, existing=None):
+def writer_candidates(api, examples, output, existing=None, concurrency=1):
+    if not 1 <= concurrency <= 32:
+        raise ContractError("Writer concurrency must be 1–32")
     config_hash = digest({"writer": api.roles["writer"], "prompt": prompt("writer"),
                           "schema_version": SCHEMA_VERSION})
     frozen = read_json(existing) if existing else None
     if frozen and frozen["writer_configuration_hash"] != config_hash:
         raise ContractError("Cached writer configuration differs")
-    candidates = {}
-    for e in examples:
+    stopped = threading.Event()
+
+    def generate_one(e):
         path = Path(output) / "generations" / (e["example_id"] + ".json")
         if frozen:
             record = frozen["candidates"].get(e["example_id"])
@@ -532,6 +535,8 @@ def writer_candidates(api, examples, output, existing=None):
                     data.update(previous_section=attempts[-1]["text"],
                                 length_revision=f"Revise only to fit {math.ceil(.85*e['target_words'])}–"
                                                 f"{math.floor(1.15*e['target_words'])} words. Preserve claims.")
+                if stopped.is_set():
+                    raise ContractError("Writer generation halted after another section failed")
                 response = api.call("writer", prompt("writer"), data, None,
                                     {"writer": config_hash, "example": e["example_id"], "attempt": attempt})
                 text = response["content"].strip()
@@ -556,7 +561,36 @@ def writer_candidates(api, examples, output, existing=None):
             raise ContractError("Cached writer context or content differs")
         if record["writer_configuration_hash"] != config_hash:
             raise ContractError("Local cached writer settings differ")
-        candidates[e["example_id"]] = record
+        return record
+
+    def generate(e):
+        try:
+            return generate_one(e)
+        except BaseException:
+            stopped.set()
+            raise
+
+    # Only the active wave is submitted; an error prevents further dispatch.
+    remaining = iter(examples)
+    records = {}
+    with concurrent.futures.ThreadPoolExecutor(max_workers=concurrency) as pool:
+        pending = {pool.submit(generate, e) for e in itertools.islice(remaining, concurrency)}
+        try:
+            while pending:
+                done, _ = concurrent.futures.wait(pending, return_when=concurrent.futures.FIRST_COMPLETED)
+                for future in done:
+                    record = future.result()
+                    records[record["example_id"]] = record
+                pending -= done
+                if not stopped.is_set():
+                    pending.update(pool.submit(generate, e) for e in itertools.islice(remaining, len(done)))
+        except BaseException:
+            stopped.set()
+            for future in pending:
+                future.cancel()
+            raise
+    # Completion order never changes the frozen dataset/candidate order.
+    candidates = {e["example_id"]: records[e["example_id"]] for e in examples}
     artifact = {"writer_configuration_hash": config_hash, "writer_configuration": api.roles["writer"],
                 "candidates": candidates}
     write_json(Path(output) / "generations/candidates.json", artifact, immutable=True)

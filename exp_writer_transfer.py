@@ -43,7 +43,7 @@ def main():
         return
     with run_lock(args.output_dir):
         api = initialize_run(args, roles, "writer_transfer", {"source_hash": source["substantive_hash"], "freeze_hash": digest(freeze)})
-        candidates = writer_candidates(api, examples, args.output_dir, args.target_generations)
+        candidates = writer_candidates(api, examples, args.output_dir, args.target_generations, concurrency=args.concurrency)
         rows = {label: evaluate_checkpoint(api, examples, candidates, None, label, args.output_dir,
                 args.concurrency, frozen_rubrics=rubrics[label], namespace="writer_transfer") for label in args.checkpoints}
         summaries = {label: summarize(values, args.seed) for label, values in rows.items()}

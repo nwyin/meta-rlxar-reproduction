@@ -367,3 +367,100 @@ def test_factorial_comparisons_pair_baseline_adjusted_effects_and_interactions()
     del observed[("strong", "strong", "strong", 0)]
     partial = shared.matrix_effects(observed, design)
     assert len(partial) < len(effects)  # Missing cells never produce imputed contrasts.
+
+
+def test_parallel_writer_sampling_repairs_order_and_resume(tmp_path):
+    import threading
+
+    examples = [dummy_example('parallel' + str(i)) for i in range(4)]
+
+    class ParallelWriter:
+        def __init__(self):
+            self.roles = {'writer': shared.role_config(SimpleNamespace(), 'writer')}
+            self.calls = {}
+            self.lock = threading.Lock()
+            self.barrier = threading.Barrier(2)
+            self.active = self.peak = 0
+
+        def call(self, role, system, data, schema, identity):
+            eid = identity['example']
+            with self.lock:
+                self.calls.setdefault(eid, []).append((data, identity))
+                self.active += 1
+                self.peak = max(self.peak, self.active)
+            if identity['attempt'] == 0:
+                self.barrier.wait(timeout=5)
+            with self.lock:
+                self.active -= 1
+            count = 10 if identity['attempt'] == 0 else data['target_words']
+            return {'content': ' '.join(['word'] * count), 'finish_reason': 'stop',
+                    'response_id': eid, 'request_key': eid + str(identity['attempt'])}
+
+    api = ParallelWriter()
+    result = shared.writer_candidates(api, examples, tmp_path, concurrency=2)
+    assert api.peak == 2
+    assert list(result) == [e['example_id'] for e in examples]
+    for e in examples:
+        calls = api.calls[e['example_id']]
+        assert [identity['attempt'] for _, identity in calls] == [0, 1]
+        assert 'length_revision' not in calls[0][0]
+        assert calls[1][0]['previous_section'] == ' '.join(['word'] * 10)
+        assert result[e['example_id']]['accepted_attempt'] == 1
+        assert result[e['example_id']]['length_compliant']
+    before = shared.canonical(api.calls)
+    assert shared.writer_candidates(api, examples, tmp_path, concurrency=2) == result
+    assert shared.canonical(api.calls) == before
+
+
+def test_parallel_writer_failure_stops_new_dispatch_and_preserves_sections(tmp_path):
+    import threading
+
+    examples = [dummy_example('interrupted' + str(i)) for i in range(4)]
+
+    class InterruptedWriter:
+        def __init__(self, fail):
+            self.roles = {'writer': shared.role_config(SimpleNamespace(), 'writer')}
+            self.calls = []
+            self.fail = fail
+            self.barrier = threading.Barrier(2)
+
+        def call(self, role, system, data, schema, identity):
+            eid = identity['example']
+            self.calls.append(eid)
+            if self.fail:
+                self.barrier.wait(timeout=5)
+                if eid == examples[0]['example_id']:
+                    raise shared.BudgetStop('Budget exhausted before send')
+            return {'content': ' '.join(['word'] * data['target_words']), 'finish_reason': 'stop',
+                    'response_id': eid, 'request_key': eid}
+
+    failed = InterruptedWriter(True)
+    with pytest.raises(shared.BudgetStop, match='before send'):
+        shared.writer_candidates(failed, examples, tmp_path, concurrency=2)
+    assert set(failed.calls) == {e['example_id'] for e in examples[:2]}
+    assert (tmp_path / 'generations' / (examples[1]['example_id'] + '.json')).exists()
+    assert not (tmp_path / 'generations/candidates.json').exists()
+    resumed = InterruptedWriter(False)
+    candidates = shared.writer_candidates(resumed, examples, tmp_path, concurrency=2)
+    assert len(candidates) == 4
+    assert examples[1]['example_id'] not in resumed.calls
+    assert len(resumed.calls) == 3
+
+
+def test_parallel_reservations_share_one_budget(tmp_path):
+    import concurrent.futures
+
+    path = tmp_path / 'global_ledger.json'
+
+    def reserve(i):
+        ledger = shared.Ledger(path, str(i), 1, 1)
+        try:
+            ledger.reserve(str(i), .4)
+            return True
+        except shared.BudgetStop:
+            return False
+
+    with concurrent.futures.ThreadPoolExecutor(max_workers=8) as pool:
+        assert sum(pool.map(reserve, range(8))) == 2
+    entries = shared.read_json(path)['entries']
+    assert sum(e['charge'] for e in entries.values()) == .8

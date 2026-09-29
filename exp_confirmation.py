@@ -67,7 +67,7 @@ def main():
             "selected_checkpoint": freeze["selected"], "configuration": roles,
             "prompt_hashes": {label: digest(text) for label, text in prompts.items()},
             "frozen_before_confirmation_calls": True}, immutable=True)
-        candidates = writer_candidates(api, examples, args.output_dir, args.writer_generations)
+        candidates = writer_candidates(api, examples, args.output_dir, args.writer_generations, concurrency=args.concurrency)
         rows = {label: evaluate_checkpoint(api, examples, candidates, text, label, args.output_dir,
                         args.concurrency, namespace="confirmation") for label, text in prompts.items()}
         summaries = {label: summarize(values, args.seed) for label, values in rows.items()}

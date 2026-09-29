@@ -134,6 +134,15 @@ concurrency, ceilings, and resume/dry-run controls. `exp_scaling.py` distinguish
 XAR reoptimization for W/G/O from frozen-artifact regrading for J; paid scaling
 requires an extension-specific preregistration.
 
+`--concurrency` bounds independent writer sections and checkpoint evaluation
+workers within each run. Length repairs for a section remain sequential, and the
+first compliant completion is frozen. A generation failure stops new work;
+completed sections remain reusable on resume. Artifact order follows the frozen
+dataset order rather than completion timing. Optimizer updates remain sequential
+and validation waits for the training freeze. The batch driver currently runs
+trajectories sequentially; separate processes share a ceiling only when they use
+the same `--budget-ledger`, and their concurrency limits add together.
+
 ## Recovery and audit
 
 Use the same invocation with `--resume` after interruption. Completed requests

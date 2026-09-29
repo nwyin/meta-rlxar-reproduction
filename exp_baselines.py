@@ -48,7 +48,7 @@ def main():
         return
     with run_lock(args.output_dir):
         api = initialize_run(args, roles, "baselines")
-        candidates = writer_candidates(api, examples, args.output_dir, args.writer_generations)
+        candidates = writer_candidates(api, examples, args.output_dir, args.writer_generations, concurrency=args.concurrency)
         tables, pairwise = [], []
         if "pairwise" in args.baseline_methods:
             for e in examples:

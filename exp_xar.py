@@ -80,7 +80,7 @@ def main():
     with run_lock(args.output_dir):
         out = Path(args.output_dir)
         api = initialize_run(args, roles, "xar", {"initial_meta_prompt_hash": digest(initial)})
-        candidates = writer_candidates(api, examples, out, args.writer_generations)
+        candidates = writer_candidates(api, examples, out, args.writer_generations, concurrency=args.concurrency)
         checkpoints, training_rows = [initial], []
         for iteration in range(args.iterations+1):
             if iteration:
