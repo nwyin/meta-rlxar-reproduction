@@ -99,3 +99,14 @@ for all 24 primary trajectories, including 25% headroom. These are approximate
 uncached token estimates, not measured pilot projections, and exclude transfer
 and confirmation. See `current_cost_plan.json`. The authorized shared ceiling
 remains $100. No scope reduction or model substitution is inferred from it.
+
+### Live pilot transport and quota
+
+The first four Kimi sections and first Parasail Qwen9B section are frozen and
+length compliant. DeepInfra returned four upstream 429 errors before a weak
+candidate; its failed run and conservative reservations are retained. A
+separately declared Parasail BF16 competence pilot is running. Neither research
+nor confirmation papers have received requests. The API key reports a $50
+weekly provider limit ($49.88 remaining at the quota check), distinct from the
+user-authorized $100 shared ceiling. See `additional_pilot_checks.json` and
+`provider_quota.json`. Provider limits are not modified.
