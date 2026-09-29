@@ -83,6 +83,30 @@
     "gate_uses_score_gap": false,
     "concurrency": 1,
     "combined_concurrency_ceiling": 5,
-    "source_feedback": "runs/pilot-parallel-GG2/feedback/iter_01/training.json"
+    "source_feedback": "runs/pilot-parallel-GG2/feedback/iter_01/training.json",
+    "status": {
+      "state": "complete",
+      "rubric_status": "valid",
+      "optimizer_json_valid": true,
+      "proposal_accepted": true,
+      "gate_uses_score_gap": false,
+      "paid": true
+    },
+    "completed_at": "2026-09-29T23:11:36.055151+00:00",
+    "measured": {
+      "rubric": {
+        "latency_seconds": 98.38877212500665,
+        "prompt_tokens": 35768,
+        "completion_tokens": 5341,
+        "cost_usd": 0.00437795
+      },
+      "optimizer": {
+        "latency_seconds": 118.82182045798982,
+        "prompt_tokens": 154391,
+        "completion_tokens": 5434,
+        "cost_usd": 0.0162542
+      }
+    },
+    "active_trajectory_provider_changed": false
   }
 }
