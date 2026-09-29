@@ -1,0 +1,36 @@
+{
+  "at": "2026-09-29T20:22:48.682342+00:00",
+  "old_snapshots": "configs/snapshots/before-live-pilot-2026-09-29T20-22-48.392834+00-00",
+  "changes": [
+    {
+      "model": "deepseek/deepseek-v4-pro-0813",
+      "provider": "wafer",
+      "before": {
+        "prompt": 3.949e-07,
+        "completion": 3.49e-06,
+        "request": 0.0
+      },
+      "current": {
+        "prompt": 3.942e-07,
+        "completion": 2.44e-06,
+        "request": 0.0
+      }
+    },
+    {
+      "model": "z-ai/glm-5.2",
+      "provider": "wafer",
+      "before": {
+        "prompt": 2.807e-07,
+        "completion": 3.99e-06,
+        "request": 0.0
+      },
+      "current": {
+        "prompt": 2.339e-07,
+        "completion": 3.99e-06,
+        "request": 0.0
+      }
+    }
+  ],
+  "model_or_provider_changes": false,
+  "paid_calls_before_refresh": 0
+}
