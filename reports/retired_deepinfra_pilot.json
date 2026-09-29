@@ -1,0 +1,19 @@
+{
+  "declared_at": "2026-09-29T22:08:36.095276+00:00",
+  "run": "runs/pilot-digitalocean-GG2",
+  "state": "retired_operational",
+  "reason": "Repeated upstream DeepInfra rate limits and multi-minute rubric latency; Parasail BF16 already produced complete weak-writer candidates and a complete valid training baseline on separate pilot papers.",
+  "replacement": "pilot-parallel GG2/GG4, with Parasail weak-role endpoint and frozen original strong-writer candidates",
+  "scientific_outcomes_used_to_choose_provider": false,
+  "research_calls_made": false,
+  "writer_artifact": "runs/pilot-digitalocean-GG2/generations/candidates.json",
+  "pending_calls": "Retain full conservative reservations; do not resend unresolved old requests",
+  "stopped_processes": [
+    39390,
+    39391
+  ],
+  "unresolved_receipts": [
+    "runs/pilot-digitalocean-GG2/requests/e6c391c5f33916dffec8dbfe756f42af2a5cb576976b707ee4b38d38ca12a3b0/attempt_1.json"
+  ],
+  "process_terminal_verified": true
+}

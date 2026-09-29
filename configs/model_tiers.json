@@ -13,9 +13,9 @@
       "requested_reasoning": {
         "enabled": true
       },
-      "mode_match_status": "catalog_mapping_verified_pilot_pending",
-      "provider": "deepinfra/bf16",
-      "quantization_caveat": "Endpoint quantization may differ from AA evaluation; task competence not yet checked."
+      "mode_match_status": "writer_and_generator_format_validated_optimizer_and_weak_judge_pilot_pending",
+      "provider": "parasail/bf16",
+      "quantization_caveat": "BF16 alternative to upstream rate-limited DeepInfra chosen before research. AA precision may differ; valid pilot baseline is a format/coverage check, not general prose-quality evidence."
     },
     {
       "use": "strong",
@@ -30,7 +30,7 @@
       "requested_reasoning": {
         "enabled": true
       },
-      "mode_match_status": "catalog_reasoning_mapping_verified_provider_precision_unknown_pilot_pending",
+      "mode_match_status": "writer_length_validated_generator_and_optimizer_pilot_pending_provider_precision_unknown",
       "provider": "digitalocean",
       "quantization_caveat": "DigitalOcean endpoint reports unknown precision. Original Crusoe BF16 operational attempt was upstream rate-limited before any candidate or grade."
     },
@@ -47,7 +47,7 @@
       "requested_reasoning": {
         "effort": "max"
       },
-      "mode_match_status": "catalog_mapping_verified_pilot_pending",
+      "mode_match_status": "requested_max_mode_and_criterion_grading_validated_on_separate_pilot",
       "provider": "wafer",
       "quantization_caveat": "Endpoint quantization may differ from AA evaluation; task competence not yet checked."
     },

@@ -1,6 +1,6 @@
 models:
   qwen/qwen3.5-9b:
-    provider: deepinfra/bf16
+    provider: parasail/bf16
     reasoning:
       enabled: true
     max_tokens: 16384

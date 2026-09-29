@@ -189,6 +189,13 @@ def pricing_upper(endpoint):
             for k in ("prompt", "completion", "request")}
 
 
+PRICING_HEADROOM = 1.25
+
+
+def pricing_bound(endpoint):
+    return {key: value * PRICING_HEADROOM for key, value in pricing_upper(endpoint).items()}
+
+
 @functools.lru_cache(maxsize=4)
 def tokenizer(name):
     cfg = read_json(ROOT / "configs/tokenizers.json")[name]
@@ -232,7 +239,7 @@ def request_upper(payload, endpoint):
         raise ContractError("Conservative context bound exceeded; papers cannot be truncated")
     if endpoint.get("max_prompt_tokens") and tokens > endpoint["max_prompt_tokens"]:
         raise ContractError("Conservative prompt-token bound exceeded")
-    price = pricing_upper(endpoint)
+    price = pricing_bound(endpoint)
     return tokens * price["prompt"] + payload["max_tokens"] * price["completion"] + price["request"]
 
 
@@ -346,11 +353,14 @@ class OpenRouter:
             if current["context_length"] < prior["context_length"] or (
                 current.get("max_completion_tokens") or current["context_length"]) < cfg["max_tokens"]:
                 raise ContractError("Pinned endpoint limits changed; recheck whole payloads")
-            current_price, frozen_upper = pricing_upper(current), pricing_upper(prior)
+            current_price, frozen_upper = pricing_upper(current), pricing_bound(prior)
             if any(current_price[k] > frozen_upper[k] for k in frozen_upper):
                 raise ContractError("Endpoint pricing exceeds frozen upper rates; refresh evidence for a new batch")
             pricing_bounds[role] = {"observed": current_price, "frozen_upper": frozen_upper,
-                                   "lower_prices_within_bound": current_price != frozen_upper}
+                                   "pricing_headroom_multiplier": PRICING_HEADROOM,
+                                   "price_changed_within_bound": current_price != pricing_upper(prior),
+                                   "lower_prices_within_bound": all(current_price[k] <= pricing_upper(prior)[k]
+                                       for k in current_price) and current_price != pricing_upper(prior)}
             if current.get("quantization") != prior.get("quantization"):
                 raise ContractError("Pinned endpoint precision changed; declare a new batch")
             if "seed" in prior["supported_parameters"] and "seed" not in current["supported_parameters"]:

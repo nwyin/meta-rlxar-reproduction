@@ -84,8 +84,8 @@ artifacts. Transfer and confirmation dry runs need existing frozen source runs.
 
 Every live batch saves fresh read-only OpenRouter catalog and endpoint snapshots,
 rejecting changed releases, precision, unsupported decoding, or prices above the
-frozen upper rates. Lower prices are recorded and the higher reservation rates
-remain in force.
+frozen upper rates, including a declared 25% pricing reserve. Observed prices are
+recorded; reservations retain those higher rates even when quoted prices fall.
 Refresh the frozen evidence before a new batch if this check finds a change.
 Verify model identity, structured outputs, provider routing, and
 reasoning modes in the operational pilot. Changes before research must be
@@ -112,7 +112,7 @@ uv run python run_matrix.py --phase confirmation \
 ```
 
 For the currently declared replacement batch, add
-`--pilot-prefix pilot-digitalocean` to pilot, controls, and matrix invocations
+`--pilot-prefix pilot-parallel` to pilot, controls, and matrix invocations
 (or to `--phase all`). The configured `.env` total ceiling is $100; the current
 per-run ceiling is also $100, subordinate to the shared total.
 

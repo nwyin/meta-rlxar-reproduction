@@ -644,7 +644,7 @@
       "hugging_face_id": null,
       "name": "Z.ai: GLM 5.3 Prime",
       "created": 1790199651,
-      "description": "GLM-5.3-Prime is the high-speed variant of Z.ai's GLM-5.3, inheriting its full capabilities while delivering 1.5–2× the output throughput through inference acceleration. It supports text input and output with a 1M-token...",
+      "description": "GLM-5.3-Prime is the high-speed variant of Z.ai's GLM-5.3, inheriting its full capabilities while delivering 1.5\u20132\u00d7 the output throughput through inference acceleration. It supports text input and output with a 1M-token...",
       "context_length": 1000000,
       "architecture": {
         "modality": "text->text",
@@ -4232,7 +4232,7 @@
       "hugging_face_id": null,
       "name": "Meta: Muse Spark 1.3 Contributor",
       "created": 1788381519,
-      "description": "Muse Spark 1.3 Contributor is the cost-efficient contributor tier of Meta’s multimodal reasoning model for experimentation, learning, and early-stage agentic, multi-agent, and coding workflows. It is designed to track information...",
+      "description": "Muse Spark 1.3 Contributor is the cost-efficient contributor tier of Meta\u2019s multimodal reasoning model for experimentation, learning, and early-stage agentic, multi-agent, and coding workflows. It is designed to track information...",
       "context_length": 1048576,
       "architecture": {
         "modality": "text+image+file+video->text",
@@ -5788,7 +5788,7 @@
       "hugging_face_id": null,
       "name": "Meta: Muse Spark 1.2 Contributor",
       "created": 1787336476,
-      "description": "Muse Spark 1.2 contributor tier is a reasoning model from Meta designed for developers who want to start building at an even lower cost. It’s meaningfully cheaper than Muse Spark...",
+      "description": "Muse Spark 1.2 contributor tier is a reasoning model from Meta designed for developers who want to start building at an even lower cost. It\u2019s meaningfully cheaper than Muse Spark...",
       "context_length": 1048576,
       "architecture": {
         "modality": "text+image+file+video->text",
@@ -6032,9 +6032,9 @@
         "instruct_type": null
       },
       "pricing": {
-        "prompt": "0.00000012",
+        "prompt": "0.00000015",
         "completion": "0.000004",
-        "input_cache_read": "0.00000012"
+        "input_cache_read": "0.00000015"
       },
       "top_provider": {
         "context_length": 1048576,
@@ -6471,7 +6471,7 @@
       },
       "pricing": {
         "prompt": "0.0000000249",
-        "completion": "0.00000435",
+        "completion": "0.0000044",
         "input_cache_read": "0.0000000199"
       },
       "top_provider": {
@@ -7229,9 +7229,9 @@
         "instruct_type": null
       },
       "pricing": {
-        "prompt": "0.0000003929",
-        "completion": "0.00000349",
-        "input_cache_read": "0.0000003143"
+        "prompt": "0.0000003942",
+        "completion": "0.00000244",
+        "input_cache_read": "0.0000003153"
       },
       "top_provider": {
         "context_length": 1048576,
@@ -8586,7 +8586,7 @@
       "hugging_face_id": null,
       "name": "Anthropic: Claude Opus 5",
       "created": 1784912544,
-      "description": "Claude Opus 5 is Anthropic’s flagship model for demanding reasoning, coding, and long-horizon agentic work. It is particularly strong at end-to-end software tasks, code review and bug finding, visual analysis...",
+      "description": "Claude Opus 5 is Anthropic\u2019s flagship model for demanding reasoning, coding, and long-horizon agentic work. It is particularly strong at end-to-end software tasks, code review and bug finding, visual analysis...",
       "context_length": 1000000,
       "architecture": {
         "modality": "text+image+file->text",
@@ -8769,7 +8769,7 @@
       "hugging_face_id": null,
       "name": "Anthropic: Claude Opus 5 (batch)",
       "created": 1784912544,
-      "description": "Claude Opus 5 is Anthropic’s flagship model for demanding reasoning, coding, and long-horizon agentic work. It is particularly strong at end-to-end software tasks, code review and bug finding, visual analysis...",
+      "description": "Claude Opus 5 is Anthropic\u2019s flagship model for demanding reasoning, coding, and long-horizon agentic work. It is particularly strong at end-to-end software tasks, code review and bug finding, visual analysis...",
       "context_length": 1000000,
       "architecture": {
         "modality": "text+image+file->text",
@@ -12870,7 +12870,7 @@
       "hugging_face_id": null,
       "name": "Google: Nano Banana 2 (Gemini 3.1 Flash Image)",
       "created": 1781754065,
-      "description": "Gemini 3.1 Flash Image, a.k.a. \"Nano Banana 2,\" is Google’s latest state of the art image generation and editing model, delivering Pro-level visual quality at Flash speed. It combines advanced...",
+      "description": "Gemini 3.1 Flash Image, a.k.a. \"Nano Banana 2,\" is Google\u2019s latest state of the art image generation and editing model, delivering Pro-level visual quality at Flash speed. It combines advanced...",
       "context_length": 131072,
       "architecture": {
         "modality": "text+image->text+image",
@@ -12931,7 +12931,7 @@
       "hugging_face_id": null,
       "name": "Google: Nano Banana Pro (Gemini 3 Pro Image)",
       "created": 1781754054,
-      "description": "Nano Banana Pro is Google’s most advanced image-generation and editing model, built on Gemini 3 Pro. It extends the original Nano Banana with significantly improved multimodal reasoning, real-world grounding, and...",
+      "description": "Nano Banana Pro is Google\u2019s most advanced image-generation and editing model, built on Gemini 3 Pro. It extends the original Nano Banana with significantly improved multimodal reasoning, real-world grounding, and...",
       "context_length": 131072,
       "architecture": {
         "modality": "text+image->text+image",
@@ -13077,9 +13077,9 @@
         "instruct_type": null
       },
       "pricing": {
-        "prompt": "0.0000001949",
+        "prompt": "0.0000002339",
         "completion": "0.00000399",
-        "input_cache_read": "0.0000001559"
+        "input_cache_read": "0.0000001871"
       },
       "top_provider": {
         "context_length": 1048576,
@@ -15479,7 +15479,7 @@
       "hugging_face_id": null,
       "name": "SpaceXAI: Grok Build 0.1",
       "created": 1779298123,
-      "description": "Grok Build 0.1 is SpaceXAI’s fast coding model trained specifically for agentic software engineering workflows. It supports text and image inputs with text output, and is optimized for interactive coding...",
+      "description": "Grok Build 0.1 is SpaceXAI\u2019s fast coding model trained specifically for agentic software engineering workflows. It supports text and image inputs with text output, and is optimized for interactive coding...",
       "context_length": 256000,
       "architecture": {
         "modality": "text+image+file->text",
@@ -16091,7 +16091,7 @@
       "hugging_face_id": null,
       "name": "Google: Gemini 3.1 Flash Lite",
       "created": 1778168828,
-      "description": "Gemini 3.1 Flash Lite is Google’s GA high-efficiency multimodal model optimized for low-latency, high-volume workloads. It supports text, image, video, audio, and PDF inputs, and is designed for lightweight agentic...",
+      "description": "Gemini 3.1 Flash Lite is Google\u2019s GA high-efficiency multimodal model optimized for low-latency, high-volume workloads. It supports text, image, video, audio, and PDF inputs, and is designed for lightweight agentic...",
       "context_length": 1048576,
       "architecture": {
         "modality": "text+image+file+audio+video->text",
@@ -16171,7 +16171,7 @@
       "hugging_face_id": null,
       "name": "Google: Gemini 3.1 Flash Lite (batch)",
       "created": 1778168828,
-      "description": "Gemini 3.1 Flash Lite is Google’s GA high-efficiency multimodal model optimized for low-latency, high-volume workloads. It supports text, image, video, audio, and PDF inputs, and is designed for lightweight agentic...",
+      "description": "Gemini 3.1 Flash Lite is Google\u2019s GA high-efficiency multimodal model optimized for low-latency, high-volume workloads. It supports text, image, video, audio, and PDF inputs, and is designed for lightweight agentic...",
       "context_length": 1048576,
       "architecture": {
         "modality": "text+image+file+audio+video->text",
@@ -16938,7 +16938,7 @@
       "hugging_face_id": "nvidia/Nemotron-3-Nano-Omni-30B-A3B-Reasoning-BF16",
       "name": "NVIDIA: Nemotron 3 Nano Omni (free)",
       "created": 1777393095,
-      "description": "NVIDIA Nemotron™ 3 Nano Omni is a 30B-A3B open multimodal model designed to function as a perception and context sub-agent in enterprise agent systems. It accepts text, image, video, and...",
+      "description": "NVIDIA Nemotron\u2122 3 Nano Omni is a 30B-A3B open multimodal model designed to function as a perception and context sub-agent in enterprise agent systems. It accepts text, image, video, and...",
       "context_length": 256000,
       "architecture": {
         "modality": "text+image+audio+video->text",
@@ -17761,7 +17761,7 @@
       "hugging_face_id": "Qwen/Qwen3.6-27B",
       "name": "Qwen: Qwen3.6 27B",
       "created": 1777255064,
-      "description": "Qwen3.6 27B is a dense 27-billion-parameter language model from the Qwen Team at Alibaba, released in April 2026. It features hybrid multimodal capabilities — accepting text, image, and video inputs...",
+      "description": "Qwen3.6 27B is a dense 27-billion-parameter language model from the Qwen Team at Alibaba, released in April 2026. It features hybrid multimodal capabilities \u2014 accepting text, image, and video inputs...",
       "context_length": 262144,
       "architecture": {
         "modality": "text+image+video->text",
@@ -17840,7 +17840,7 @@
       "hugging_face_id": "",
       "name": "OpenAI: GPT-5.5 Pro",
       "created": 1777051896,
-      "description": "GPT-5.5 Pro is OpenAI’s high-capability model optimized for deep reasoning and accuracy on complex, high-stakes workloads. It features a 1M+ token context window (922K input, 128K output) with support for...",
+      "description": "GPT-5.5 Pro is OpenAI\u2019s high-capability model optimized for deep reasoning and accuracy on complex, high-stakes workloads. It features a 1M+ token context window (922K input, 128K output) with support for...",
       "context_length": 1050000,
       "architecture": {
         "modality": "text+image+file->text",
@@ -17914,7 +17914,7 @@
       "hugging_face_id": "",
       "name": "OpenAI: GPT-5.5 Pro (batch)",
       "created": 1777051896,
-      "description": "GPT-5.5 Pro is OpenAI’s high-capability model optimized for deep reasoning and accuracy on complex, high-stakes workloads. It features a 1M+ token context window (922K input, 128K output) with support for...",
+      "description": "GPT-5.5 Pro is OpenAI\u2019s high-capability model optimized for deep reasoning and accuracy on complex, high-stakes workloads. It features a 1M+ token context window (922K input, 128K output) with support for...",
       "context_length": 1050000,
       "architecture": {
         "modality": "text+image+file->text",
@@ -17988,7 +17988,7 @@
       "hugging_face_id": "",
       "name": "OpenAI: GPT-5.5",
       "created": 1777051893,
-      "description": "GPT-5.5 is OpenAI’s frontier model designed for complex professional workloads, building on GPT-5.4 with stronger reasoning, higher reliability, and improved token efficiency on hard tasks. It features a 1M+ token...",
+      "description": "GPT-5.5 is OpenAI\u2019s frontier model designed for complex professional workloads, building on GPT-5.4 with stronger reasoning, higher reliability, and improved token efficiency on hard tasks. It features a 1M+ token...",
       "context_length": 1050000,
       "architecture": {
         "modality": "text+image+file->text",
@@ -18224,7 +18224,7 @@
       "hugging_face_id": "",
       "name": "OpenAI: GPT-5.5 (batch)",
       "created": 1777051893,
-      "description": "GPT-5.5 is OpenAI’s frontier model designed for complex professional workloads, building on GPT-5.4 with stronger reasoning, higher reliability, and improved token efficiency on hard tasks. It features a 1M+ token...",
+      "description": "GPT-5.5 is OpenAI\u2019s frontier model designed for complex professional workloads, building on GPT-5.4 with stronger reasoning, higher reliability, and improved token efficiency on hard tasks. It features a 1M+ token...",
       "context_length": 1050000,
       "architecture": {
         "modality": "text+image+file->text",
@@ -18473,9 +18473,9 @@
         "instruct_type": null
       },
       "pricing": {
-        "prompt": "0.000000915936",
-        "completion": "0.000001831872",
-        "input_cache_read": "0.000000076328"
+        "prompt": "0.000000924462",
+        "completion": "0.000001848924",
+        "input_cache_read": "0.0000000770385"
       },
       "top_provider": {
         "context_length": 1024000,
@@ -18826,7 +18826,7 @@
       "hugging_face_id": "XiaomiMiMo/MiMo-V2.5-Pro",
       "name": "Xiaomi: MiMo-V2.5-Pro",
       "created": 1776874273,
-      "description": "MiMo-V2.5-Pro is Xiaomi’s flagship model, delivering strong performance in general agentic capabilities, complex software engineering, and long-horizon tasks, with top rankings on benchmarks such as ClawEval, GDPVal, and SWE-bench Pro....",
+      "description": "MiMo-V2.5-Pro is Xiaomi\u2019s flagship model, delivering strong performance in general agentic capabilities, complex software engineering, and long-horizon tasks, with top rankings on benchmarks such as ClawEval, GDPVal, and SWE-bench Pro....",
       "context_length": 1050000,
       "architecture": {
         "modality": "text->text",
@@ -19890,7 +19890,7 @@
       "hugging_face_id": "google/gemma-4-26B-A4B-it",
       "name": "Google: Gemma 4 26B A4B ",
       "created": 1775227989,
-      "description": "Gemma 4 26B A4B IT is an instruction-tuned Mixture-of-Experts (MoE) model from Google DeepMind. Despite 25.2B total parameters, only 3.8B activate per token during inference — delivering near-31B quality at...",
+      "description": "Gemma 4 26B A4B IT is an instruction-tuned Mixture-of-Experts (MoE) model from Google DeepMind. Despite 25.2B total parameters, only 3.8B activate per token during inference \u2014 delivering near-31B quality at...",
       "context_length": 262144,
       "architecture": {
         "modality": "text+image+video->text",
@@ -19906,9 +19906,9 @@
         "instruct_type": null
       },
       "pricing": {
-        "prompt": "0.0000000765",
-        "completion": "0.000000255",
-        "input_cache_read": "0.0000000425"
+        "prompt": "0.00000009",
+        "completion": "0.0000003",
+        "input_cache_read": "0.00000005"
       },
       "top_provider": {
         "context_length": 262144,
@@ -19967,7 +19967,7 @@
       "hugging_face_id": "google/gemma-4-26B-A4B-it",
       "name": "Google: Gemma 4 26B A4B  (free)",
       "created": 1775227989,
-      "description": "Gemma 4 26B A4B IT is an instruction-tuned Mixture-of-Experts (MoE) model from Google DeepMind. Despite 25.2B total parameters, only 3.8B activate per token during inference — delivering near-31B quality at...",
+      "description": "Gemma 4 26B A4B IT is an instruction-tuned Mixture-of-Experts (MoE) model from Google DeepMind. Despite 25.2B total parameters, only 3.8B activate per token during inference \u2014 delivering near-31B quality at...",
       "context_length": 262144,
       "architecture": {
         "modality": "text+image+video->text",
@@ -20323,7 +20323,7 @@
       "hugging_face_id": "",
       "name": "Z.ai: GLM 5V Turbo",
       "created": 1775061458,
-      "description": "GLM-5V-Turbo is Z.ai’s first native multimodal agent foundation model, built for vision-based coding and agent-driven tasks. It natively handles image, video, and text inputs, excels at long-horizon planning, complex coding,...",
+      "description": "GLM-5V-Turbo is Z.ai\u2019s first native multimodal agent foundation model, built for vision-based coding and agent-driven tasks. It natively handles image, video, and text inputs, excels at long-horizon planning, complex coding,...",
       "context_length": 202752,
       "architecture": {
         "modality": "text+image+video->text",
@@ -20659,7 +20659,7 @@
       "hugging_face_id": "",
       "name": "SpaceXAI: Grok 4.20 Multi-Agent",
       "created": 1774979158,
-      "description": "Grok 4.20 Multi-Agent is a variant of SpaceXAI’s Grok 4.20 designed for collaborative, agent-based workflows. Multiple agents operate in parallel to conduct deep research, coordinate tool use, and synthesize information...",
+      "description": "Grok 4.20 Multi-Agent is a variant of SpaceXAI\u2019s Grok 4.20 designed for collaborative, agent-based workflows. Multiple agents operate in parallel to conduct deep research, coordinate tool use, and synthesize information...",
       "context_length": 2000000,
       "architecture": {
         "modality": "text+image+file->text",
@@ -21974,7 +21974,7 @@
       "hugging_face_id": null,
       "name": "ByteDance Seed: Seed-2.0-Lite",
       "created": 1773157231,
-      "description": "Seed-2.0-Lite is a versatile, cost‑efficient enterprise workhorse that delivers strong multimodal and agent capabilities while offering noticeably lower latency, making it a practical default choice for most production workloads across...",
+      "description": "Seed-2.0-Lite is a versatile, cost\u2011efficient enterprise workhorse that delivers strong multimodal and agent capabilities while offering noticeably lower latency, making it a practical default choice for most production workloads across...",
       "context_length": 262144,
       "architecture": {
         "modality": "text+image+video->text",
@@ -22278,7 +22278,7 @@
       "hugging_face_id": "",
       "name": "OpenAI: GPT-5.4",
       "created": 1772734352,
-      "description": "GPT-5.4 is OpenAI’s latest frontier model, unifying the Codex and GPT lines into a single system. It features a 1M+ token context window (922K input, 128K output) with support for...",
+      "description": "GPT-5.4 is OpenAI\u2019s latest frontier model, unifying the Codex and GPT lines into a single system. It features a 1M+ token context window (922K input, 128K output) with support for...",
       "context_length": 1050000,
       "architecture": {
         "modality": "text+image+file->text",
@@ -22458,7 +22458,7 @@
       "hugging_face_id": "",
       "name": "OpenAI: GPT-5.4 (batch)",
       "created": 1772734352,
-      "description": "GPT-5.4 is OpenAI’s latest frontier model, unifying the Codex and GPT lines into a single system. It features a 1M+ token context window (922K input, 128K output) with support for...",
+      "description": "GPT-5.4 is OpenAI\u2019s latest frontier model, unifying the Codex and GPT lines into a single system. It features a 1M+ token context window (922K input, 128K output) with support for...",
       "context_length": 1050000,
       "architecture": {
         "modality": "text+image+file->text",
@@ -22988,7 +22988,7 @@
       "hugging_face_id": "",
       "name": "Google: Nano Banana 2 (Gemini 3.1 Flash Image Preview)",
       "created": 1772119558,
-      "description": "Gemini 3.1 Flash Image Preview, a.k.a. \"Nano Banana 2,\" is Google’s latest state of the art image generation and editing model, delivering Pro-level visual quality at Flash speed. It combines...",
+      "description": "Gemini 3.1 Flash Image Preview, a.k.a. \"Nano Banana 2,\" is Google\u2019s latest state of the art image generation and editing model, delivering Pro-level visual quality at Flash speed. It combines...",
       "context_length": 65536,
       "architecture": {
         "modality": "text+image->text+image",
@@ -23453,7 +23453,7 @@
       "hugging_face_id": "",
       "name": "OpenAI: GPT-5.3-Codex",
       "created": 1771959164,
-      "description": "GPT-5.3-Codex is OpenAI’s most advanced agentic coding model, combining the frontier software engineering performance of GPT-5.2-Codex with the broader reasoning and professional knowledge capabilities of GPT-5.2. It achieves state-of-the-art results...",
+      "description": "GPT-5.3-Codex is OpenAI\u2019s most advanced agentic coding model, combining the frontier software engineering performance of GPT-5.2-Codex with the broader reasoning and professional knowledge capabilities of GPT-5.2. It achieves state-of-the-art results...",
       "context_length": 400000,
       "architecture": {
         "modality": "text+image+file->text",
@@ -23674,7 +23674,7 @@
       "hugging_face_id": "",
       "name": "Google: Gemini 3.1 Pro Preview",
       "created": 1771509627,
-      "description": "Gemini 3.1 Pro Preview is Google’s frontier reasoning model, delivering enhanced software engineering performance, improved agentic reliability, and more efficient token usage across complex workflows. Building on the multimodal foundation...",
+      "description": "Gemini 3.1 Pro Preview is Google\u2019s frontier reasoning model, delivering enhanced software engineering performance, improved agentic reliability, and more efficient token usage across complex workflows. Building on the multimodal foundation...",
       "context_length": 1048576,
       "architecture": {
         "modality": "text+image+file+audio+video->text",
@@ -23918,7 +23918,7 @@
       "hugging_face_id": "",
       "name": "Google: Gemini 3.1 Pro Preview (batch)",
       "created": 1771509627,
-      "description": "Gemini 3.1 Pro Preview is Google’s frontier reasoning model, delivering enhanced software engineering performance, improved agentic reliability, and more efficient token usage across complex workflows. Building on the multimodal foundation...",
+      "description": "Gemini 3.1 Pro Preview is Google\u2019s frontier reasoning model, delivering enhanced software engineering performance, improved agentic reliability, and more efficient token usage across complex workflows. Building on the multimodal foundation...",
       "context_length": 1048576,
       "architecture": {
         "modality": "text+image+file+audio+video->text",
@@ -24889,7 +24889,7 @@
       "hugging_face_id": "zai-org/GLM-5",
       "name": "Z.ai: GLM 5",
       "created": 1770829182,
-      "description": "GLM-5 is Z.ai’s flagship open-source foundation model engineered for complex systems design and long-horizon agent workflows. Built for expert developers, it delivers production-grade performance on large-scale programming tasks, rivaling leading...",
+      "description": "GLM-5 is Z.ai\u2019s flagship open-source foundation model engineered for complex systems design and long-horizon agent workflows. Built for expert developers, it delivers production-grade performance on large-scale programming tasks, rivaling leading...",
       "context_length": 204800,
       "architecture": {
         "modality": "text->text",
@@ -25123,7 +25123,7 @@
       "hugging_face_id": "",
       "name": "Anthropic: Claude Opus 4.6",
       "created": 1770219050,
-      "description": "Opus 4.6 is Anthropic’s strongest model for coding and long-running professional tasks. It is built for agents that operate across entire workflows rather than single prompts, making it especially effective...",
+      "description": "Opus 4.6 is Anthropic\u2019s strongest model for coding and long-running professional tasks. It is built for agents that operate across entire workflows rather than single prompts, making it especially effective...",
       "context_length": 1000000,
       "architecture": {
         "modality": "text+image+file->text",
@@ -25289,7 +25289,7 @@
       "hugging_face_id": "",
       "name": "Anthropic: Claude Opus 4.6 (batch)",
       "created": 1770219050,
-      "description": "Opus 4.6 is Anthropic’s strongest model for coding and long-running professional tasks. It is built for agents that operate across entire workflows rather than single prompts, making it especially effective...",
+      "description": "Opus 4.6 is Anthropic\u2019s strongest model for coding and long-running professional tasks. It is built for agents that operate across entire workflows rather than single prompts, making it especially effective...",
       "context_length": 1000000,
       "architecture": {
         "modality": "text+image+file->text",
@@ -26583,7 +26583,7 @@
       "hugging_face_id": "zai-org/GLM-4.7",
       "name": "Z.ai: GLM 4.7",
       "created": 1766378014,
-      "description": "GLM-4.7 is Z.ai’s latest flagship model, featuring upgrades in two key areas: enhanced programming capabilities and more stable multi-step reasoning/execution. It demonstrates significant improvements in executing complex agent tasks while...",
+      "description": "GLM-4.7 is Z.ai\u2019s latest flagship model, featuring upgrades in two key areas: enhanced programming capabilities and more stable multi-step reasoning/execution. It demonstrates significant improvements in executing complex agent tasks while...",
       "context_length": 204800,
       "architecture": {
         "modality": "text->text",
@@ -27150,7 +27150,7 @@
       "hugging_face_id": "",
       "name": "OpenAI: GPT-5.2 Chat",
       "created": 1765389783,
-      "description": "GPT-5.2 Chat (AKA Instant) is the fast, lightweight member of the 5.2 family, optimized for low-latency chat while retaining strong general intelligence. It uses adaptive reasoning to selectively “think” on...",
+      "description": "GPT-5.2 Chat (AKA Instant) is the fast, lightweight member of the 5.2 family, optimized for low-latency chat while retaining strong general intelligence. It uses adaptive reasoning to selectively \u201cthink\u201d on...",
       "context_length": 128000,
       "architecture": {
         "modality": "text+image+file->text",
@@ -27203,7 +27203,7 @@
       "hugging_face_id": "",
       "name": "OpenAI: GPT-5.2 Pro",
       "created": 1765389780,
-      "description": "GPT-5.2 Pro is OpenAI’s most advanced model, offering major improvements in agentic coding and long context performance over GPT-5 Pro. It is optimized for complex tasks that require step-by-step reasoning,...",
+      "description": "GPT-5.2 Pro is OpenAI\u2019s most advanced model, offering major improvements in agentic coding and long context performance over GPT-5 Pro. It is optimized for complex tasks that require step-by-step reasoning,...",
       "context_length": 400000,
       "architecture": {
         "modality": "text+image+file->text",
@@ -27267,7 +27267,7 @@
       "hugging_face_id": "",
       "name": "OpenAI: GPT-5.2 Pro (batch)",
       "created": 1765389780,
-      "description": "GPT-5.2 Pro is OpenAI’s most advanced model, offering major improvements in agentic coding and long context performance over GPT-5 Pro. It is optimized for complex tasks that require step-by-step reasoning,...",
+      "description": "GPT-5.2 Pro is OpenAI\u2019s most advanced model, offering major improvements in agentic coding and long context performance over GPT-5 Pro. It is optimized for complex tasks that require step-by-step reasoning,...",
       "context_length": 400000,
       "architecture": {
         "modality": "text+image+file->text",
@@ -27882,7 +27882,7 @@
       "hugging_face_id": "",
       "name": "OpenAI: GPT-5.1-Codex-Max",
       "created": 1764878934,
-      "description": "GPT-5.1-Codex-Max is OpenAI’s latest agentic coding model, designed for long-running, high-context software development tasks. It is based on an updated version of the 5.1 reasoning stack and trained on agentic...",
+      "description": "GPT-5.1-Codex-Max is OpenAI\u2019s latest agentic coding model, designed for long-running, high-context software development tasks. It is based on an updated version of the 5.1 reasoning stack and trained on agentic...",
       "context_length": 400000,
       "architecture": {
         "modality": "text+image->text",
@@ -28388,7 +28388,7 @@
       "hugging_face_id": "",
       "name": "Mistral: Mistral Large 3 2512",
       "created": 1764624472,
-      "description": "Mistral Large 3 2512 is Mistral’s most capable model to date, featuring a sparse mixture-of-experts architecture with 41B active parameters (675B total), and released under the Apache 2.0 license.",
+      "description": "Mistral Large 3 2512 is Mistral\u2019s most capable model to date, featuring a sparse mixture-of-experts architecture with 41B active parameters (675B total), and released under the Apache 2.0 license.",
       "context_length": 262144,
       "architecture": {
         "modality": "text+image+file->text",
@@ -28510,7 +28510,7 @@
       "hugging_face_id": "",
       "name": "Mistral: Mistral Large 3 2512 (batch)",
       "created": 1764624472,
-      "description": "Mistral Large 3 2512 is Mistral’s most capable model to date, featuring a sparse mixture-of-experts architecture with 41B active parameters (675B total), and released under the Apache 2.0 license.",
+      "description": "Mistral Large 3 2512 is Mistral\u2019s most capable model to date, featuring a sparse mixture-of-experts architecture with 41B active parameters (675B total), and released under the Apache 2.0 license.",
       "context_length": 262144,
       "architecture": {
         "modality": "text+image+file->text",
@@ -28767,7 +28767,7 @@
       "hugging_face_id": "",
       "name": "Anthropic: Claude Opus 4.5",
       "created": 1764010580,
-      "description": "Claude Opus 4.5 is Anthropic’s frontier reasoning model optimized for complex software engineering, agentic workflows, and long-horizon computer use. It offers strong multimodal capabilities, competitive performance across real-world coding and...",
+      "description": "Claude Opus 4.5 is Anthropic\u2019s frontier reasoning model optimized for complex software engineering, agentic workflows, and long-horizon computer use. It offers strong multimodal capabilities, competitive performance across real-world coding and...",
       "context_length": 200000,
       "architecture": {
         "modality": "text+image+file->text",
@@ -28915,7 +28915,7 @@
       "hugging_face_id": "",
       "name": "Anthropic: Claude Opus 4.5 (batch)",
       "created": 1764010580,
-      "description": "Claude Opus 4.5 is Anthropic’s frontier reasoning model optimized for complex software engineering, agentic workflows, and long-horizon computer use. It offers strong multimodal capabilities, competitive performance across real-world coding and...",
+      "description": "Claude Opus 4.5 is Anthropic\u2019s frontier reasoning model optimized for complex software engineering, agentic workflows, and long-horizon computer use. It offers strong multimodal capabilities, competitive performance across real-world coding and...",
       "context_length": 200000,
       "architecture": {
         "modality": "text+image+file->text",
@@ -29061,7 +29061,7 @@
       "hugging_face_id": "",
       "name": "Google: Nano Banana Pro (Gemini 3 Pro Image Preview)",
       "created": 1763653797,
-      "description": "Nano Banana Pro is Google’s most advanced image-generation and editing model, built on Gemini 3 Pro. It extends the original Nano Banana with significantly improved multimodal reasoning, real-world grounding, and...",
+      "description": "Nano Banana Pro is Google\u2019s most advanced image-generation and editing model, built on Gemini 3 Pro. It extends the original Nano Banana with significantly improved multimodal reasoning, real-world grounding, and...",
       "context_length": 65536,
       "architecture": {
         "modality": "text+image->text+image",
@@ -29683,7 +29683,7 @@
       "hugging_face_id": "moonshotai/Kimi-K2-Thinking",
       "name": "MoonshotAI: Kimi K2 Thinking",
       "created": 1762440622,
-      "description": "Kimi K2 Thinking is Moonshot AI’s most advanced open reasoning model to date, extending the K2 series into agentic, long-horizon reasoning. Built on the trillion-parameter Mixture-of-Experts (MoE) architecture introduced in...",
+      "description": "Kimi K2 Thinking is Moonshot AI\u2019s most advanced open reasoning model to date, extending the K2 series into agentic, long-horizon reasoning. Built on the trillion-parameter Mixture-of-Experts (MoE) architecture introduced in...",
       "context_length": 262144,
       "architecture": {
         "modality": "text->text",
@@ -29767,7 +29767,7 @@
       "hugging_face_id": "",
       "name": "Amazon: Nova Premier 1.0",
       "created": 1761950332,
-      "description": "Amazon Nova Premier is the most capable of Amazon’s multimodal models for complex reasoning tasks and for use as the best teacher for distilling custom models.",
+      "description": "Amazon Nova Premier is the most capable of Amazon\u2019s multimodal models for complex reasoning tasks and for use as the best teacher for distilling custom models.",
       "context_length": 1000000,
       "architecture": {
         "modality": "text+image->text",
@@ -30324,7 +30324,7 @@
       "hugging_face_id": "",
       "name": "Anthropic: Claude Haiku 4.5",
       "created": 1760547638,
-      "description": "Claude Haiku 4.5 is Anthropic’s fastest and most efficient model, delivering near-frontier intelligence at a fraction of the cost and latency of larger Claude models. Matching Claude Sonnet 4’s performance...",
+      "description": "Claude Haiku 4.5 is Anthropic\u2019s fastest and most efficient model, delivering near-frontier intelligence at a fraction of the cost and latency of larger Claude models. Matching Claude Sonnet 4\u2019s performance...",
       "context_length": 200000,
       "architecture": {
         "modality": "text+image+file->text",
@@ -30456,7 +30456,7 @@
       "hugging_face_id": "",
       "name": "Anthropic: Claude Haiku 4.5 (batch)",
       "created": 1760547638,
-      "description": "Claude Haiku 4.5 is Anthropic’s fastest and most efficient model, delivering near-frontier intelligence at a fraction of the cost and latency of larger Claude models. Matching Claude Sonnet 4’s performance...",
+      "description": "Claude Haiku 4.5 is Anthropic\u2019s fastest and most efficient model, delivering near-frontier intelligence at a fraction of the cost and latency of larger Claude models. Matching Claude Sonnet 4\u2019s performance...",
       "context_length": 200000,
       "architecture": {
         "modality": "text+image+file->text",
@@ -31015,7 +31015,7 @@
       "hugging_face_id": "",
       "name": "OpenAI: GPT-5 Pro",
       "created": 1759776663,
-      "description": "GPT-5 Pro is OpenAI’s most advanced model, offering major improvements in reasoning, code quality, and user experience. It is optimized for complex tasks that require step-by-step reasoning, instruction following, and...",
+      "description": "GPT-5 Pro is OpenAI\u2019s most advanced model, offering major improvements in reasoning, code quality, and user experience. It is optimized for complex tasks that require step-by-step reasoning, instruction following, and...",
       "context_length": 400000,
       "architecture": {
         "modality": "text+image+file->text",
@@ -31077,7 +31077,7 @@
       "hugging_face_id": "",
       "name": "OpenAI: GPT-5 Pro (batch)",
       "created": 1759776663,
-      "description": "GPT-5 Pro is OpenAI’s most advanced model, offering major improvements in reasoning, code quality, and user experience. It is optimized for complex tasks that require step-by-step reasoning, instruction following, and...",
+      "description": "GPT-5 Pro is OpenAI\u2019s most advanced model, offering major improvements in reasoning, code quality, and user experience. It is optimized for complex tasks that require step-by-step reasoning, instruction following, and...",
       "context_length": 400000,
       "architecture": {
         "modality": "text+image+file->text",
@@ -31292,7 +31292,7 @@
       "hugging_face_id": "",
       "name": "Anthropic: Claude Sonnet 4.5",
       "created": 1759161676,
-      "description": "Claude Sonnet 4.5 is Anthropic’s most advanced Sonnet model to date, optimized for real-world agents and coding workflows. It delivers state-of-the-art performance on coding benchmarks such as SWE-bench Verified, with...",
+      "description": "Claude Sonnet 4.5 is Anthropic\u2019s most advanced Sonnet model to date, optimized for real-world agents and coding workflows. It delivers state-of-the-art performance on coding benchmarks such as SWE-bench Verified, with...",
       "context_length": 1000000,
       "architecture": {
         "modality": "text+image+file->text",
@@ -31455,7 +31455,7 @@
       "hugging_face_id": "",
       "name": "Anthropic: Claude Sonnet 4.5 (batch)",
       "created": 1759161676,
-      "description": "Claude Sonnet 4.5 is Anthropic’s most advanced Sonnet model to date, optimized for real-world agents and coding workflows. It delivers state-of-the-art performance on coding benchmarks such as SWE-bench Verified, with...",
+      "description": "Claude Sonnet 4.5 is Anthropic\u2019s most advanced Sonnet model to date, optimized for real-world agents and coding workflows. It delivers state-of-the-art performance on coding benchmarks such as SWE-bench Verified, with...",
       "context_length": 1000000,
       "architecture": {
         "modality": "text+image+file->text",
@@ -32377,7 +32377,7 @@
       "hugging_face_id": "Qwen/Qwen3-Next-80B-A3B-Thinking",
       "name": "Qwen: Qwen3 Next 80B A3B Thinking",
       "created": 1757612284,
-      "description": "Qwen3-Next-80B-A3B-Thinking is a reasoning-first chat model in the Qwen3-Next line that outputs structured “thinking” traces by default. It’s designed for hard multi-step problems; math proofs, code synthesis/debugging, logic, and agentic...",
+      "description": "Qwen3-Next-80B-A3B-Thinking is a reasoning-first chat model in the Qwen3-Next line that outputs structured \u201cthinking\u201d traces by default. It\u2019s designed for hard multi-step problems; math proofs, code synthesis/debugging, logic, and agentic...",
       "context_length": 262144,
       "architecture": {
         "modality": "text->text",
@@ -32448,7 +32448,7 @@
       "hugging_face_id": "Qwen/Qwen3-Next-80B-A3B-Instruct",
       "name": "Qwen: Qwen3 Next 80B A3B Instruct",
       "created": 1757612213,
-      "description": "Qwen3-Next-80B-A3B-Instruct is an instruction-tuned chat model in the Qwen3-Next series optimized for fast, stable responses without “thinking” traces. It targets complex tasks across reasoning, code generation, knowledge QA, and multilingual...",
+      "description": "Qwen3-Next-80B-A3B-Instruct is an instruction-tuned chat model in the Qwen3-Next series optimized for fast, stable responses without \u201cthinking\u201d traces. It targets complex tasks across reasoning, code generation, knowledge QA, and multilingual...",
       "context_length": 262144,
       "architecture": {
         "modality": "text->text",
@@ -32642,7 +32642,7 @@
       "hugging_face_id": "Qwen/Qwen3-30B-A3B-Thinking-2507",
       "name": "Qwen: Qwen3 30B A3B Thinking 2507",
       "created": 1756399192,
-      "description": "Qwen3-30B-A3B-Thinking-2507 is a 30B parameter Mixture-of-Experts reasoning model optimized for complex tasks requiring extended multi-step thinking. The model is designed specifically for “thinking mode,” where internal reasoning traces are separated...",
+      "description": "Qwen3-30B-A3B-Thinking-2507 is a 30B parameter Mixture-of-Experts reasoning model optimized for complex tasks requiring extended multi-step thinking. The model is designed specifically for \u201cthinking mode,\u201d where internal reasoning traces are separated...",
       "context_length": 81920,
       "architecture": {
         "modality": "text->text",
@@ -33189,7 +33189,7 @@
       "hugging_face_id": "",
       "name": "OpenAI: GPT-5",
       "created": 1754587413,
-      "description": "GPT-5 is OpenAI’s most advanced model, offering major improvements in reasoning, code quality, and user experience. It is optimized for complex tasks that require step-by-step reasoning, instruction following, and accuracy...",
+      "description": "GPT-5 is OpenAI\u2019s most advanced model, offering major improvements in reasoning, code quality, and user experience. It is optimized for complex tasks that require step-by-step reasoning, instruction following, and accuracy...",
       "context_length": 400000,
       "architecture": {
         "modality": "text+image+file->text",
@@ -33324,7 +33324,7 @@
       "hugging_face_id": "",
       "name": "OpenAI: GPT-5 (batch)",
       "created": 1754587413,
-      "description": "GPT-5 is OpenAI’s most advanced model, offering major improvements in reasoning, code quality, and user experience. It is optimized for complex tasks that require step-by-step reasoning, instruction following, and accuracy...",
+      "description": "GPT-5 is OpenAI\u2019s most advanced model, offering major improvements in reasoning, code quality, and user experience. It is optimized for complex tasks that require step-by-step reasoning, instruction following, and accuracy...",
       "context_length": 400000,
       "architecture": {
         "modality": "text+image+file->text",
@@ -34392,7 +34392,7 @@
       "hugging_face_id": "",
       "name": "Anthropic: Claude Opus 4.1",
       "created": 1754411591,
-      "description": "Claude Opus 4.1 is an updated version of Anthropic’s flagship model, offering improved performance in coding, reasoning, and agentic tasks. It achieves 74.5% on SWE-bench Verified and shows notable gains...",
+      "description": "Claude Opus 4.1 is an updated version of Anthropic\u2019s flagship model, offering improved performance in coding, reasoning, and agentic tasks. It achieves 74.5% on SWE-bench Verified and shows notable gains...",
       "context_length": 200000,
       "architecture": {
         "modality": "text+image+file->text",
@@ -34516,7 +34516,7 @@
       "hugging_face_id": "",
       "name": "Anthropic: Claude Opus 4.1 (batch)",
       "created": 1754411591,
-      "description": "Claude Opus 4.1 is an updated version of Anthropic’s flagship model, offering improved performance in coding, reasoning, and agentic tasks. It achieves 74.5% on SWE-bench Verified and shows notable gains...",
+      "description": "Claude Opus 4.1 is an updated version of Anthropic\u2019s flagship model, offering improved performance in coding, reasoning, and agentic tasks. It achieves 74.5% on SWE-bench Verified and shows notable gains...",
       "context_length": 200000,
       "architecture": {
         "modality": "text+image+file->text",
@@ -35788,7 +35788,7 @@
       "hugging_face_id": "cognitivecomputations/Dolphin-Mistral-24B-Venice-Edition",
       "name": "Venice: Uncensored",
       "created": 1752094966,
-      "description": "Venice Uncensored Dolphin Mistral 24B Venice Edition is a fine-tuned variant of Mistral-Small-24B-Instruct-2501, developed by dphn.ai in collaboration with Venice.ai. This model is designed as an “uncensored” instruct-tuned LLM, preserving...",
+      "description": "Venice Uncensored Dolphin Mistral 24B Venice Edition is a fine-tuned variant of Mistral-Small-24B-Instruct-2501, developed by dphn.ai in collaboration with Venice.ai. This model is designed as an \u201cuncensored\u201d instruct-tuned LLM, preserving...",
       "context_length": 128000,
       "architecture": {
         "modality": "text->text",
@@ -35982,7 +35982,7 @@
       "hugging_face_id": "baidu/ERNIE-4.5-VL-424B-A47B-PT",
       "name": "Baidu: ERNIE 4.5 VL 424B A47B ",
       "created": 1751300903,
-      "description": "ERNIE-4.5-VL-424B-A47B is a multimodal Mixture-of-Experts (MoE) model from Baidu’s ERNIE 4.5 series, featuring 424B total parameters with 47B active per token. It is trained jointly on text and image data...",
+      "description": "ERNIE-4.5-VL-424B-A47B is a multimodal Mixture-of-Experts (MoE) model from Baidu\u2019s ERNIE 4.5 series, featuring 424B total parameters with 47B active per token. It is trained jointly on text and image data...",
       "context_length": 123000,
       "architecture": {
         "modality": "text+image->text",
@@ -36440,7 +36440,7 @@
       "hugging_face_id": "",
       "name": "Google: Gemini 2.5 Pro",
       "created": 1750169544,
-      "description": "Gemini 2.5 Pro is Google’s state-of-the-art AI model designed for advanced reasoning, coding, mathematics, and scientific tasks. It employs “thinking” capabilities, enabling it to reason through responses with enhanced accuracy...",
+      "description": "Gemini 2.5 Pro is Google\u2019s state-of-the-art AI model designed for advanced reasoning, coding, mathematics, and scientific tasks. It employs \u201cthinking\u201d capabilities, enabling it to reason through responses with enhanced accuracy...",
       "context_length": 1048576,
       "architecture": {
         "modality": "text+image+file+audio+video->text",
@@ -36569,7 +36569,7 @@
       "hugging_face_id": "",
       "name": "Google: Gemini 2.5 Pro (batch)",
       "created": 1750169544,
-      "description": "Gemini 2.5 Pro is Google’s state-of-the-art AI model designed for advanced reasoning, coding, mathematics, and scientific tasks. It employs “thinking” capabilities, enabling it to reason through responses with enhanced accuracy...",
+      "description": "Gemini 2.5 Pro is Google\u2019s state-of-the-art AI model designed for advanced reasoning, coding, mathematics, and scientific tasks. It employs \u201cthinking\u201d capabilities, enabling it to reason through responses with enhanced accuracy...",
       "context_length": 1048576,
       "architecture": {
         "modality": "text+image+file+audio+video->text",
@@ -36754,7 +36754,7 @@
       "hugging_face_id": "",
       "name": "Google: Gemini 2.5 Pro Preview 06-05",
       "created": 1749137257,
-      "description": "Gemini 2.5 Pro is Google’s state-of-the-art AI model designed for advanced reasoning, coding, mathematics, and scientific tasks. It employs “thinking” capabilities, enabling it to reason through responses with enhanced accuracy...",
+      "description": "Gemini 2.5 Pro is Google\u2019s state-of-the-art AI model designed for advanced reasoning, coding, mathematics, and scientific tasks. It employs \u201cthinking\u201d capabilities, enabling it to reason through responses with enhanced accuracy...",
       "context_length": 1048576,
       "architecture": {
         "modality": "text+image+file+audio->text",
@@ -37078,7 +37078,7 @@
       "hugging_face_id": "",
       "name": "Mistral: Mistral Medium 3",
       "created": 1746627341,
-      "description": "Mistral Medium 3 is a high-performance enterprise-grade language model designed to deliver frontier-level capabilities at significantly reduced operational cost. It balances state-of-the-art reasoning and multimodal performance with 8× lower cost...",
+      "description": "Mistral Medium 3 is a high-performance enterprise-grade language model designed to deliver frontier-level capabilities at significantly reduced operational cost. It balances state-of-the-art reasoning and multimodal performance with 8\u00d7 lower cost...",
       "context_length": 131072,
       "architecture": {
         "modality": "text+image+file->text",
@@ -38490,7 +38490,7 @@
       "hugging_face_id": "",
       "name": "OpenAI: GPT-4.1 Nano",
       "created": 1744651369,
-      "description": "For tasks that demand low latency, GPT‑4.1 nano is the fastest and cheapest model in the GPT-4.1 series. It delivers exceptional performance at a small size with its 1 million...",
+      "description": "For tasks that demand low latency, GPT\u20114.1 nano is the fastest and cheapest model in the GPT-4.1 series. It delivers exceptional performance at a small size with its 1 million...",
       "context_length": 1047576,
       "architecture": {
         "modality": "text+image+file->text",
@@ -38593,7 +38593,7 @@
       "hugging_face_id": "",
       "name": "OpenAI: GPT-4.1 Nano (batch)",
       "created": 1744651369,
-      "description": "For tasks that demand low latency, GPT‑4.1 nano is the fastest and cheapest model in the GPT-4.1 series. It delivers exceptional performance at a small size with its 1 million...",
+      "description": "For tasks that demand low latency, GPT\u20114.1 nano is the fastest and cheapest model in the GPT-4.1 series. It delivers exceptional performance at a small size with its 1 million...",
       "context_length": 1047576,
       "architecture": {
         "modality": "text+image+file->text",
@@ -39715,7 +39715,7 @@
       "hugging_face_id": "",
       "name": "AionLabs: Aion-RP 1.0 (8B)",
       "created": 1738696718,
-      "description": "Aion-RP-Llama-3.1-8B ranks the highest in the character evaluation portion of the RPBench-Auto benchmark, a roleplaying-specific variant of Arena-Hard-Auto, where LLMs evaluate each other’s responses. It is a fine-tuned base model...",
+      "description": "Aion-RP-Llama-3.1-8B ranks the highest in the character evaluation portion of the RPBench-Auto benchmark, a roleplaying-specific variant of Arena-Hard-Auto, where LLMs evaluate each other\u2019s responses. It is a fine-tuned base model...",
       "context_length": 32768,
       "architecture": {
         "modality": "text->text",
@@ -40052,7 +40052,7 @@
       "hugging_face_id": "",
       "name": "Perplexity: Sonar",
       "created": 1738013808,
-      "description": "Sonar is lightweight, affordable, fast, and simple to use — now featuring citations and the ability to customize sources. It is designed for companies seeking to integrate lightweight question-and-answer features...",
+      "description": "Sonar is lightweight, affordable, fast, and simple to use \u2014 now featuring citations and the ability to customize sources. It is designed for companies seeking to integrate lightweight question-and-answer features...",
       "context_length": 127072,
       "architecture": {
         "modality": "text+image->text",
@@ -40758,7 +40758,7 @@
       "hugging_face_id": "",
       "name": "OpenAI: GPT-4o (2024-11-20)",
       "created": 1732127594,
-      "description": "The 2024-11-20 version of GPT-4o offers a leveled-up creative writing ability with more natural, engaging, and tailored writing to improve relevance & readability. It’s also better at working with uploaded...",
+      "description": "The 2024-11-20 version of GPT-4o offers a leveled-up creative writing ability with more natural, engaging, and tailored writing to improve relevance & readability. It\u2019s also better at working with uploaded...",
       "context_length": 128000,
       "architecture": {
         "modality": "text+image+file->text",

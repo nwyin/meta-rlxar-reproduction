@@ -110,3 +110,17 @@ nor confirmation papers have received requests. The API key reports a $50
 weekly provider limit ($49.88 remaining at the quota check), distinct from the
 user-authorized $100 shared ceiling. See `additional_pilot_checks.json` and
 `provider_quota.json`. Provider limits are not modified.
+
+### Parallel pilot batch
+
+Bounded writer, checkpoint, and pairwise workers now overlap independent examples.
+Per-section length repairs, presentation orders, and optimizer updates stay
+sequential. Fatal API failures halt new dispatch, and selected checkpoint aliases
+share evaluation artifacts. All 24 tests pass. The old DeepInfra operational
+batch is retired after rate limits and long rubric latency, with one unresolved
+receipt and its full reservation retained. A new `pilot-parallel` GG2/GG4 batch
+uses Parasail BF16 for Qwen9B, reuses eight frozen Kimi sections, and runs at
+concurrency four. A one-update weak-role competence trial reuses eight frozen
+Qwen sections at concurrency one. Fresh catalog/price evidence and a 25% pricing
+reserve are declared in `parallel_pilot_declaration.json`; all live work shares
+the original $100 ledger. Research and confirmation are still unopened.

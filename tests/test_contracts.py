@@ -127,7 +127,7 @@ class FakeProvider:
             assert "Write the missing section" in system
             value = " ".join("generated" for _ in range(data["target_words"]))
         provider = payload["provider"]["only"][0]
-        names = {"deepinfra/bf16": "DeepInfra", "crusoe/bf16": "Crusoe", "digitalocean": "DigitalOcean", "wafer": "Wafer"}
+        names = {"deepinfra/bf16": "DeepInfra", "parasail/bf16": "Parasail", "crusoe/bf16": "Crusoe", "digitalocean": "DigitalOcean", "wafer": "Wafer"}
         return httpx.Response(200, json={"model": payload["model"], "provider": names[provider],
             "id": f"fake-{len(self.payloads)}", "usage": {"cost": .0001, "prompt_tokens": 100, "completion_tokens": 100},
             "choices": [{"finish_reason": "stop", "message": {"content": json.dumps(value) if isinstance(value, dict) else value,
@@ -471,7 +471,7 @@ def test_parallel_reservations_share_one_budget(tmp_path):
     assert sum(e['charge'] for e in entries.values()) == .8
 
 
-@pytest.mark.parametrize('factor,accepted', [(.5, True), (1.1, False)])
+@pytest.mark.parametrize('factor,accepted', [(.5, True), (1.1, True), (1.3, False)])
 def test_preflight_pricing_changes_stay_within_frozen_bounds(tmp_path, factor, accepted):
     cfg = shared.role_config(SimpleNamespace(), 'judge')
     endpoint, _ = shared.endpoint_for(cfg)
@@ -491,8 +491,8 @@ def test_preflight_pricing_changes_stay_within_frozen_bounds(tmp_path, factor, a
     if accepted:
         directory = api.preflight()
         bounds = shared.read_json(directory / 'checks.json')['pricing_bounds']['judge']
-        assert bounds['lower_prices_within_bound'] is True
-        assert bounds['frozen_upper'] == shared.pricing_upper(endpoint)
+        assert bounds['lower_prices_within_bound'] is (factor < 1)
+        assert bounds['frozen_upper'] == shared.pricing_bound(endpoint)
         assert api.endpoints['judge'][0] == endpoint
     else:
         with pytest.raises(shared.ContractError, match='exceeds frozen upper'):
