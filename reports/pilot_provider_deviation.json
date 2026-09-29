@@ -1,0 +1,14 @@
+{
+  "at": "2026-09-29T20:24:58.475538+00:00",
+  "model": "moonshotai/kimi-k2.6",
+  "previous_provider": "crusoe/bf16",
+  "new_provider": "digitalocean",
+  "reason": "All allowed transport attempts rejected with upstream shared-pool rate limits. No writer section, rubric, or grade produced.",
+  "selection_policy": "Same model release; strict schemas, temperature and reasoning support; available endpoint with high measured catalog uptime. Declared before any grading.",
+  "precision": "unknown; record mismatch with original BF16 endpoint",
+  "old_run": "runs/pilot-GG2",
+  "new_prefix": "pilot-digitalocean",
+  "fallbacks_allowed": false,
+  "total_budget_ledger": "runs/budget_ledger.json",
+  "old_error_reservations_preserved_usd": 0.2754892
+}

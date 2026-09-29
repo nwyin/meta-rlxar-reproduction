@@ -8,13 +8,13 @@ models:
     release: qwen/qwen3.5-9b-20260310
     seed_supported: true
   moonshotai/kimi-k2.6:
-    provider: crusoe/bf16
+    provider: digitalocean
     reasoning:
       enabled: true
     max_tokens: 16384
     endpoint_snapshot: configs/snapshots/moonshotai_kimi-k2.6-endpoints.json
     release: moonshotai/kimi-k2.6-20260420
-    seed_supported: true
+    seed_supported: false
   deepseek/deepseek-v4-pro-0813:
     provider: wafer
     reasoning:

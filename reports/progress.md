@@ -83,3 +83,10 @@ User supplied an OpenRouter credential and a $100 total ceiling in ignored .env
 and requested continuation. Per-run ceiling is also $100, subordinate to the
 shared $100 global ledger. Begin the preregistered GG2/GG4 strong-writer pilots;
 the full objective is preserved even if the budget executes only a subset.
+
+Live preflight refreshed reduced judge pricing before dispatch. The first Kimi
+writer request through Crusoe received four upstream HTTP 429 rejections and no
+candidate. Its run and conservative reservations are retained. A separately
+named pilot-digitalocean batch uses the same Kimi release via DigitalOcean,
+which supports the required parameters; endpoint precision is unknown. This
+replacement was declared before any candidate grading or research generation.

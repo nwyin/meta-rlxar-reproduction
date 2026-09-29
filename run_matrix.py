@@ -17,6 +17,7 @@ def main():
     parser.add_argument("--dry-run", action="store_true")
     parser.add_argument("--resume", action="store_true")
     parser.add_argument("--runs-root", default="runs")
+    parser.add_argument("--pilot-prefix", default="pilot", help="Separate operational batch name after declared endpoint replacement")
     parser.add_argument("--concurrency", type=int, default=2)
     args = parser.parse_args()
     if not args.dry_run and (args.budget_usd is None or args.total_budget_usd is None):
@@ -42,7 +43,7 @@ def main():
         if args.dry_run:
             return
         for gg in (2, 4):
-            audit_xar_run(root / f"pilot-GG{gg}")
+            audit_xar_run(root / f"{args.pilot_prefix}-GG{gg}")
         write_json(root / "pilot_gate.json", {"operational_checks": "raw_verified", "research_allowed": True,
                                               "gap_sign_used_for_gate": False})
 
@@ -53,8 +54,8 @@ def main():
                 extra = ["--split", "pilot", "--writer-model", models["strong"], "--rubric-model", models[generator],
                          "--optimizer-model", models["strong"], "--judge-model", design["judge"], "--seed", "0"]
                 if gg == 4:
-                    extra += ["--writer-generations", str(root / "pilot-GG2/generations/candidates.json")]
-                execute("exp_xar.py", root / f"pilot-GG{gg}", extra)
+                    extra += ["--writer-generations", str(root / f"{args.pilot_prefix}-GG2/generations/candidates.json")]
+                execute("exp_xar.py", root / f"{args.pilot_prefix}-GG{gg}", extra)
         elif phase == "controls":
             pilot_gate()
             for writer, writer_model in models.items():

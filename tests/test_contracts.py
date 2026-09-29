@@ -127,7 +127,7 @@ class FakeProvider:
             assert "Write the missing section" in system
             value = " ".join("generated" for _ in range(data["target_words"]))
         provider = payload["provider"]["only"][0]
-        names = {"deepinfra/bf16": "DeepInfra", "crusoe/bf16": "Crusoe", "wafer": "Wafer"}
+        names = {"deepinfra/bf16": "DeepInfra", "crusoe/bf16": "Crusoe", "digitalocean": "DigitalOcean", "wafer": "Wafer"}
         return httpx.Response(200, json={"model": payload["model"], "provider": names[provider],
             "id": f"fake-{len(self.payloads)}", "usage": {"cost": .0001, "prompt_tokens": 100, "completion_tokens": 100},
             "choices": [{"finish_reason": "stop", "message": {"content": json.dumps(value) if isinstance(value, dict) else value,

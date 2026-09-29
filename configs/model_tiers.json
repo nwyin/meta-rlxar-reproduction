@@ -30,9 +30,9 @@
       "requested_reasoning": {
         "enabled": true
       },
-      "mode_match_status": "catalog_mapping_verified_pilot_pending",
-      "provider": "crusoe/bf16",
-      "quantization_caveat": "Endpoint quantization may differ from AA evaluation; task competence not yet checked."
+      "mode_match_status": "catalog_reasoning_mapping_verified_provider_precision_unknown_pilot_pending",
+      "provider": "digitalocean",
+      "quantization_caveat": "DigitalOcean endpoint reports unknown precision. Original Crusoe BF16 operational attempt was upstream rate-limited before any candidate or grade."
     },
     {
       "use": "main_judge",
