@@ -5,7 +5,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from shared import (  # noqa: E402
+from shared import (
     RUBRIC_SCHEMA,
     ContractError,
     audit_saved_output,
