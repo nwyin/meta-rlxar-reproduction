@@ -146,3 +146,12 @@ remaining pilots and past operational charges. These are provisional estimates,
 not additional authorization. The shared ceiling remains $100. The refreshed
 provider quota separately reports a $50 weekly key limit and $47.49 remaining.
 See current_cost_plan.json; source and scientific scope remain unchanged.
+
+The new four-worker GG2 pilot completed all four P0 training pairs after the
+allowed format repairs and reached optimizer update one. No validation has been
+opened. The separate Parasail weak optimizer probe produced valid rubric and
+proposal schemas and an accepted bounded proposal. Embedded provider errors
+identify Parasail upstream stream interruptions at about 301 seconds. A
+prospectively declared SiliconFlow FP8 probe uses the same failing conclusion
+context, unchanged reasoning/output limits, and fixed complete pilot feedback;
+this diagnostic does not use a gap sign to choose an endpoint.

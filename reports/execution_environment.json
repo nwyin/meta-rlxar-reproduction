@@ -34,7 +34,7 @@
   "frozen_recovery_source": "/tmp/xar-frozen-pilot-b2fb545",
   "frozen_recovery_software_hashes": "Verified exact matches for both existing pilot manifests",
   "latest_active_batch": {
-    "checked_at": "2026-09-29T22:59:31.289854+00:00",
+    "checked_at": "2026-09-29T23:03:05.557315+00:00",
     "driver": "runs/pilot-schema-driver.log",
     "prefix": "pilot-schema",
     "concurrency": 4,
@@ -44,6 +44,17 @@
     "source_commit": "89cb7aa",
     "shared_budget_usd": 100,
     "provider_schema_checks": "runs/probe-kimi-siliconflow/status.json",
-    "research_and_confirmation_dispatches": 0
+    "research_and_confirmation_dispatches": 0,
+    "pilot_GG2_progress": {
+      "completed_training_checkpoints": [
+        0
+      ],
+      "training_coverage": 4,
+      "required_training_examples": 4,
+      "current_stage": "optimizer update 1",
+      "validation_opened": false
+    },
+    "weak_optimizer_schema_status": "valid; accepted bounded proposal",
+    "weak_endpoint_diagnostic": "running; same failing pilot conclusion, prospective SiliconFlow FP8 check"
   }
 }
