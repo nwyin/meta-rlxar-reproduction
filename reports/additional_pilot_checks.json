@@ -15,5 +15,26 @@
   "combined_operational_concurrency_ceiling": 3,
   "concurrency_reason": "An additional one-request pilot overlaps the main pilot, whose writer stage is serial and has measured multi-minute latency. Main pilot evaluation remains at two in-flight requests.",
   "shared_budget_ledger": "runs/budget_ledger.json",
-  "total_ceiling_usd": 100
+  "total_ceiling_usd": 100,
+  "transport_attempts": [
+    {
+      "run": "runs/pilot-weak-competence",
+      "state": "transport_failed",
+      "provider": "deepinfra/bf16",
+      "http_status": 429,
+      "attempts": 4,
+      "writer_candidates": 0,
+      "rubrics": 0,
+      "grades": 0
+    },
+    {
+      "declared_at": "2026-09-29T20:35:12.113438+00:00",
+      "run": "runs/pilot-weak-parasail",
+      "provider": "parasail/bf16",
+      "reason": "Same Qwen9B release and BF16 precision, required strict parameters and reasoning supported; alternative to upstream rate-limited DeepInfra. Provider chosen before any candidate or grade in weak-role pilot.",
+      "automatic_fallbacks": false,
+      "scientific_parameters": "identical to initial one-update competence pilot",
+      "research_use": "pending operational check; no score gap used to choose endpoint"
+    }
+  ]
 }
