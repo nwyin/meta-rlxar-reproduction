@@ -2,8 +2,8 @@
 
 import argparse
 
-from xar.pipeline import ROLES, run_xar
-from xar.util import main_guard, parse_concurrency
+from xar.pipeline import run_xar
+from xar.util import ROLES, main_guard, parse_concurrency
 
 
 def parse_args():

@@ -10,11 +10,12 @@ from pathlib import Path
 
 import jsonschema
 
-from xar.data import contamination, selected_examples, task_data
+from xar.data import contamination, load_examples, run_examples, task_data
 from xar.openrouter import role_config
 from xar.runs import estimate, initialize_run, operational_summary
 from xar.stats import summarize
 from xar.util import (
+    ROLES,
     SCHEMA_VERSION,
     RunError,
     bounded_map,
@@ -28,8 +29,6 @@ from xar.util import (
     write_json,
     write_table,
 )
-
-ROLES = ("writer", "rubric", "optimizer", "judge")
 
 
 def object_schema(properties):
@@ -393,17 +392,31 @@ def build_feedback(examples, candidates, rows, current_prompt, failure_count):
     }
 
 
+def select_checkpoint(gaps):
+    """The checkpoint with the largest training gap; the earliest one wins a tie."""
+    return gaps.index(max(gaps))
+
+
+def checkpoint_row(iteration, train, validation, selected):
+    """One row of the checkpoint table, from the training and validation summaries."""
+    return {
+        "iteration": iteration,
+        "train_human": train["human"],
+        "train_model": train["model"],
+        "train_gap": train["gap"],
+        "val_human": validation["human"],
+        "val_model": validation["model"],
+        "val_gap": validation["gap"],
+        "selected_by_train": iteration == selected,
+    }
+
+
 def run_xar(args):
     """Run one trajectory: writer candidates, training updates, freeze, then validation."""
     initial = prompt("rubric_initial")
     if words(initial) > args.max_meta_prompt_words:
         raise RunError("Initial prompt exceeds bound")
-    examples = selected_examples(args)
-    if args.split == "pilot":
-        papers = sorted({e["paper_id"] for e in examples})
-        if len(papers) < 2:
-            raise RunError("Pilot needs two separate papers")
-        examples = [{**e, "split": "train" if e["paper_id"] == papers[0] else "validation"} for e in examples]
+    examples = run_examples(load_examples(args.dataset, args.splits), args.split)
     train, validation = (
         [e for e in examples if e["split"] == "train"],
         [e for e in examples if e["split"] == "validation"],
@@ -461,7 +474,7 @@ def run_xar(args):
                 write_json(out / "status.json", {"state": "incomplete"})
                 raise RunError("Training checkpoint incomplete; selection and validation remain unopened")
         gaps = [statistics.mean(r["gap"] for r in rows) for rows in training_rows]
-        selected = max(range(len(gaps)), key=lambda i: (gaps[i], -i))
+        selected = select_checkpoint(gaps)
         # Written before any validation request, so validation results cannot affect the choice.
         freeze = {
             "selected": selected,
@@ -480,17 +493,7 @@ def run_xar(args):
             validation_rows.append(rows)
             val, tr = summarize(rows, args.seed), summarize(training_rows[iteration], args.seed)
             table.append(
-                {
-                    "iteration": iteration,
-                    "train_human": tr["human"],
-                    "train_model": tr["model"],
-                    "train_gap": tr["gap"],
-                    "val_human": val["human"],
-                    "val_model": val["model"],
-                    "val_gap": val["gap"],
-                    "val_coverage": val["paired_coverage"],
-                    "selected_by_train": iteration == selected,
-                }
+                {**checkpoint_row(iteration, tr, val, selected), "val_coverage": val["paired_coverage"]}
             )
         complete = all(summarize(r)["complete"] for r in validation_rows)
         write_table(out / "scores/checkpoints.csv", table)

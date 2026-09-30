@@ -20,6 +20,7 @@ import jsonschema
 
 ROOT = Path(__file__).resolve().parents[1]
 SCHEMA_VERSION = 1
+ROLES = ("writer", "rubric", "optimizer", "judge")
 
 
 class RunError(RuntimeError):

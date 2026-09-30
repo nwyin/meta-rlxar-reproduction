@@ -19,7 +19,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from xar.audit import audit_request_contract, audit_saved_output, audit_xar_run
-from xar.data import contamination, load_examples, task_data
+from xar.data import contamination, load_examples, run_examples, task_data
 from xar.openrouter import ledger_key, max_request_cost
 from xar.pipeline import (
     GRADE_SCHEMA,
@@ -64,7 +64,7 @@ def main():
         )
     dataset = Path(manifest["dataset"])
     all_examples = load_examples(dataset, manifest["splits"])
-    examples = [e for e in all_examples if e["split"] in ("train", "validation")]
+    examples = run_examples(all_examples, run_args["split"])
     train = [e for e in examples if e["split"] == "train"]
     lookup = {e["example_id"]: e for e in examples}
     review = read_json(dataset.parent / "human_review.json")

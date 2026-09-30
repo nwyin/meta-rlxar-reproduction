@@ -7,11 +7,18 @@ from pathlib import Path
 
 import jsonschema
 
-from xar.data import load_examples, task_data
+from xar.data import load_examples, run_examples, task_data
 from xar.openrouter import FORMAT_REPAIR, json_schema_format, role_config, routing_fields
-from xar.pipeline import GRADE_SCHEMA, RUBRIC_SCHEMA, validate_grade, validate_rubric
+from xar.pipeline import (
+    GRADE_SCHEMA,
+    RUBRIC_SCHEMA,
+    checkpoint_row,
+    select_checkpoint,
+    validate_grade,
+    validate_rubric,
+)
 from xar.stats import summarize
-from xar.util import RunError, canonical, digest, file_hash, prompt, read_json
+from xar.util import ROLES, RunError, canonical, digest, file_hash, prompt, read_json
 
 
 def audit_request_contract(payload, cfg, schema, prompt_file):
@@ -64,22 +71,12 @@ def audit_xar_run(path):
     manifest, freeze = read_json(path / "manifest.json"), read_json(path / "freeze.json")
     if manifest["experiment"] != "xar":
         raise RunError("Expected XAR run")
-    examples = load_examples(manifest["dataset"], manifest["splits"])
-    pilot = manifest["arguments"]["split"] == "pilot"
-    if pilot:
-        papers = sorted({e["paper_id"] for e in examples if e["split"] == "pilot"})
-        examples = [
-            {**e, "split": "train" if e["paper_id"] == papers[0] else "validation"}
-            for e in examples
-            if e["split"] == "pilot"
-        ]
-    else:
-        examples = [e for e in examples if e["split"] in ("train", "validation")]
-        if {s: sum(e["split"] == s for e in examples) for s in ("train", "validation")} != {
-            "train": 32,
-            "validation": 20,
-        }:
-            raise RunError("Primary dataset must have 32 train and 20 validation examples")
+    run_split = manifest["arguments"]["split"]
+    pilot = run_split == "pilot"
+    examples = run_examples(load_examples(manifest["dataset"], manifest["splits"]), run_split)
+    counts = {s: sum(e["split"] == s for e in examples) for s in ("train", "validation")}
+    if not pilot and counts != {"train": 32, "validation": 20}:
+        raise RunError("Primary dataset must have 32 train and 20 validation examples")
     if (
         file_hash(manifest["dataset"]) != manifest["dataset_hash"]
         or file_hash(manifest["splits"]) != manifest["splits_hash"]
@@ -176,18 +173,9 @@ def audit_xar_run(path):
             all_rows[(iteration, split)] = rows
             summaries[split] = summarize(rows, manifest["arguments"]["seed"])
         table.append(
-            {
-                "iteration": iteration,
-                "train_human": summaries["train"]["human"],
-                "train_model": summaries["train"]["model"],
-                "train_gap": summaries["train"]["gap"],
-                "val_human": summaries["validation"]["human"],
-                "val_model": summaries["validation"]["model"],
-                "val_gap": summaries["validation"]["gap"],
-                "selected_by_train": iteration == freeze["selected"],
-            }
+            checkpoint_row(iteration, summaries["train"], summaries["validation"], freeze["selected"])
         )
-    selected = max(range(len(table)), key=lambda i: (table[i]["train_gap"], -i))
+    selected = select_checkpoint([r["train_gap"] for r in table])
     if selected != freeze["selected"]:
         raise RunError("Selection rule differs")
     if freeze["training_gaps"] != [r["train_gap"] for r in table]:
@@ -205,7 +193,7 @@ def validate_primary_manifest(manifest, design):
     if manifest["roles"]["judge"]["model"] != design["judge"]:
         raise RunError("Primary matrix must hold the preregistered main judge fixed")
     if design.get("scope") == "meta_blog_initial_empirical_investigation":
-        for role in ("writer", "rubric", "optimizer", "judge"):
+        for role in ROLES:
             if manifest["roles"][role]["model"] != design[role]:
                 raise RunError(f"Blog reproduction requires the declared {role} model")
     for field in ("iterations", "max_meta_prompt_words", "failure_examples"):

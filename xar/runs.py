@@ -8,7 +8,7 @@ import statistics
 import subprocess
 from pathlib import Path
 
-from xar.data import load_examples, task_data
+from xar.data import load_examples, run_examples, task_data
 from xar.openrouter import OpenRouter, endpoint_for, highest_prices, token_count
 from xar.util import (
     ROOT,
@@ -108,12 +108,8 @@ def initialize_run(args, roles, experiment, extra=None):
     review = read_json(review_path)
     if review.get("dataset_hash") != file_hash(args.dataset):
         raise RunError("Human review does not match the frozen dataset hash")
-    used_examples = load_examples(args.dataset, args.splits)
-    used_papers = {
-        e["paper_id"]
-        for e in used_examples
-        if (e["split"] in ("train", "validation") if args.split == "research" else e["split"] == args.split)
-    }
+    used_examples = run_examples(load_examples(args.dataset, args.splits), args.split)
+    used_papers = {e["paper_id"] for e in used_examples}
     if any(review.get("papers", {}).get(p, {}).get("decision") != "approved" for p in used_papers):
         raise RunError("Selected papers still need human review; see data/review.md")
     # Check for an existing run before any network call or write.

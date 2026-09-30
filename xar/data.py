@@ -87,13 +87,19 @@ def contamination(candidate, reference):
     }
 
 
-def selected_examples(args):
-    examples = load_examples(args.dataset, args.splits)
-    chosen = (
-        [e for e in examples if e["split"] in ("train", "validation")]
-        if args.split == "research"
-        else [e for e in examples if e["split"] == args.split]
-    )
+def run_examples(examples, split):
+    """The examples a run uses, labelled train or validation.
+
+    A research run uses the train and validation papers as saved. A pilot run uses the pilot
+    papers: the first (sorted by ID) becomes training and the rest become validation.
+    """
+    if split == "pilot":
+        pilot = [e for e in examples if e["split"] == "pilot"]
+        papers = sorted({e["paper_id"] for e in pilot})
+        if len(papers) < 2:
+            raise RunError("Pilot needs two separate papers")
+        return [{**e, "split": "train" if e["paper_id"] == papers[0] else "validation"} for e in pilot]
+    chosen = [e for e in examples if e["split"] in ("train", "validation")]
     if not chosen:
         raise RunError("Requested split has no examples")
     return chosen

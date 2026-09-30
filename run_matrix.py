@@ -9,7 +9,7 @@ import yaml
 
 from xar.audit import audit_xar_run, validate_primary_manifest
 from xar.report import render_report
-from xar.util import ROOT, RunError, main_guard, parse_concurrency, write_json
+from xar.util import ROLES, ROOT, RunError, main_guard, parse_concurrency, write_json
 
 
 def build_command(args, design, phase):
@@ -35,7 +35,7 @@ def build_command(args, design, phase):
         "--failure-examples",
         str(design["failure_examples"]),
     ]
-    for role in ("writer", "rubric", "optimizer", "judge"):
+    for role in ROLES:
         command += [f"--{role}-model", design[role]]
     for flag, value in (("--budget-usd", args.budget_usd), ("--total-budget-usd", args.total_budget_usd)):
         if value is not None:

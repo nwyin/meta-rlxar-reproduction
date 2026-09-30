@@ -7,13 +7,13 @@ import yaml
 
 from xar.audit import validate_primary_manifest
 from xar.openrouter import role_config
-from xar.util import ROOT, RunError, digest, prompt
+from xar.util import ROLES, ROOT, RunError, digest, prompt
 
 
 def test_primary_matrix_rejects_different_judge_and_protocol():
     design = yaml.safe_load((ROOT / "configs/experiments.yaml").read_text())
     manifest = {
-        "roles": {r: role_config(r) for r in ("writer", "rubric", "optimizer", "judge")},
+        "roles": {r: role_config(r) for r in ROLES},
         "arguments": {k: design[k] for k in ("iterations", "max_meta_prompt_words", "failure_examples")},
         "extra": {"initial_meta_prompt_hash": digest(prompt("rubric_initial"))},
     }
@@ -35,12 +35,12 @@ def test_primary_matrix_rejects_different_judge_and_protocol():
 def test_blog_model_contract_rejects_every_role_substitution():
     design = yaml.safe_load((ROOT / "configs/experiments.yaml").read_text())
     manifest = {
-        "roles": {r: role_config(r) for r in ("writer", "rubric", "optimizer", "judge")},
+        "roles": {r: role_config(r) for r in ROLES},
         "arguments": {k: design[k] for k in ("iterations", "max_meta_prompt_words", "failure_examples")},
         "extra": {"initial_meta_prompt_hash": digest(prompt("rubric_initial"))},
     }
     validate_primary_manifest(manifest, design)
-    for role in ("writer", "rubric", "optimizer", "judge"):
+    for role in ROLES:
         # Swap in the other model: Muse for the optimizer, Kimi everywhere else.
         other = "meta/muse-spark-1.1" if role == "optimizer" else "moonshotai/kimi-k2.6"
         changed = json.loads(json.dumps(manifest))
