@@ -8,7 +8,7 @@ from pathlib import Path
 import jsonschema
 
 from xar.data import load_examples, task_data
-from xar.openrouter import role_config
+from xar.openrouter import FORMAT_REPAIR, json_schema_format, role_config, routing_fields
 from xar.pipeline import GRADE_SCHEMA, RUBRIC_SCHEMA, validate_grade, validate_rubric
 from xar.stats import summarize
 from xar.util import RunError, canonical, digest, file_hash, prompt, read_json
@@ -16,33 +16,15 @@ from xar.util import RunError, canonical, digest, file_hash, prompt, read_json
 
 def audit_request_contract(payload, cfg, schema, prompt_file):
     """Check the actual sent request against the frozen role, scoring wrapper, and schema."""
-    expected = {
-        "model": cfg["model"],
-        "temperature": cfg["temperature"],
-        "reasoning": cfg["reasoning"],
-        "max_tokens": cfg["max_tokens"],
-        "stream": False,
-        "plugins": [],
-        "transforms": [],
-        "provider": {
-            "only": [cfg["provider"]],
-            "order": [cfg["provider"]],
-            "allow_fallbacks": False,
-            "require_parameters": True,
-        },
-    }
-    if any(payload.get(key) != value for key, value in expected.items()):
+    if any(payload.get(key) != value for key, value in routing_fields(cfg).items()):
         raise RunError("Saved request differs from frozen role/routing/decoding contract")
-    if payload.get("response_format") != {
-        "type": "json_schema",
-        "json_schema": {"name": "xar_output", "strict": True, "schema": schema},
-    }:
+    if payload.get("response_format") != json_schema_format(schema):
         raise RunError("Saved request differs from fixed output schema")
     messages = payload.get("messages", [])
     if len(messages) != 2 or [m.get("role") for m in messages] != ["system", "user"]:
         raise RunError("Saved request includes conversation history or unexpected message roles")
     system = messages[0]["content"]
-    base = system.split("\nFORMAT REPAIR: Return complete valid JSON matching the schema. ", 1)[0]
+    base = system.split(FORMAT_REPAIR, 1)[0]
     if digest(base) != prompt_file:
         raise RunError("Saved request changed the frozen grading/rubric wrapper")
 

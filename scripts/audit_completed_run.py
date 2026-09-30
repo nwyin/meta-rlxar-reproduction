@@ -20,8 +20,16 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from xar.audit import audit_request_contract, audit_saved_output, audit_xar_run
 from xar.data import contamination, load_examples, task_data
-from xar.openrouter import max_request_cost
-from xar.pipeline import GRADE_SCHEMA, PROPOSAL_SCHEMA, RUBRIC_SCHEMA, audit_proposal, build_feedback
+from xar.openrouter import ledger_key, max_request_cost
+from xar.pipeline import (
+    GRADE_SCHEMA,
+    PROPOSAL_SCHEMA,
+    RUBRIC_SCHEMA,
+    audit_proposal,
+    build_feedback,
+    length_revision_note,
+    length_window,
+)
 from xar.stats import paired_improvement, summarize
 from xar.util import ROOT, RunError, canonical, digest, now, read_json, words, write_json
 
@@ -68,7 +76,8 @@ def main():
     check(set(candidates) == set(lookup), "Writer candidates do not match the train and validation examples")
     ledger = read_json(run_args["budget_ledger"])["entries"]
     counts, latencies, ended = collections.Counter(), collections.defaultdict(list), {}
-    schemas = {"rubric": RUBRIC_SCHEMA, "judge": GRADE_SCHEMA, "optimizer": PROPOSAL_SCHEMA}
+    # The writer returns plain text, so its requests carry no response_format.
+    schemas = {"writer": None, "rubric": RUBRIC_SCHEMA, "judge": GRADE_SCHEMA, "optimizer": PROPOSAL_SCHEMA}
     total_cost = 0
     for path in root.glob("requests/*/request.json"):
         request = read_json(path)
@@ -81,36 +90,10 @@ def main():
             "schema_version": manifest["schema_version"],
         }
         check(request["key"] == digest(hashed), f"{path}: key does not match the request contents")
-        if role == "writer":
-            for key in ("model", "temperature", "reasoning", "max_tokens"):
-                check(
-                    payload[key] == cfg[key],
-                    f"{path}: writer {key} is {payload[key]!r}, expected {cfg[key]!r}",
-                )
-            routing = {
-                "only": [cfg["provider"]],
-                "order": [cfg["provider"]],
-                "allow_fallbacks": False,
-                "require_parameters": True,
-            }
-            check(payload["provider"] == routing, f"{path}: writer provider routing differs")
-            check(payload["plugins"] == [], f"{path}: writer request has plugins")
-            check(payload["transforms"] == [], f"{path}: writer request has transforms")
-            check(payload["stream"] is False, f"{path}: writer request is streamed")
-            check("response_format" not in payload, f"{path}: writer request has a response_format")
-            check(
-                len(payload["messages"]) == 2,
-                f"{path}: writer request has {len(payload['messages'])} messages",
-            )
-            check(
-                digest(payload["messages"][0]["content"]) == manifest["software_hashes"]["prompts/writer.md"],
-                f"{path}: writer system prompt differs from prompts/writer.md",
-            )
-        else:
-            wrapper = {"rubric": "rubric_wrapper", "judge": "judge", "optimizer": "optimizer"}[role]
-            audit_request_contract(
-                payload, cfg, schemas[role], manifest["software_hashes"][f"prompts/{wrapper}.md"]
-            )
+        wrapper = "rubric_wrapper" if role == "rubric" else role
+        audit_request_contract(
+            payload, cfg, schemas[role], manifest["software_hashes"][f"prompts/{wrapper}.md"]
+        )
         bound = max_request_cost(payload, endpoint["endpoint"])
         for receipt_path in path.parent.glob("attempt_*.json"):
             receipt = read_json(receipt_path)
@@ -127,7 +110,7 @@ def main():
             finish = raw["choices"][0]["finish_reason"]
             check(finish == "stop", f"{receipt_path}: finish reason is {finish}")
             index = receipt_path.stem.removeprefix("attempt_")
-            key = str(root.resolve()) + "/" + request["key"] + "/" + index
+            key = ledger_key(root, request["key"], index)
             entry = ledger[key]
             cost = raw["usage"]["cost"]
             check(entry["state"] == "complete", f"{key}: ledger entry is {entry['state']}")
@@ -169,9 +152,9 @@ def main():
             check(raw_text == attempt["text"], f"{eid} attempt {i}: saved text differs from the response")
             check(digest(raw_text) == attempt["text_hash"], f"{eid} attempt {i}: text hash differs")
             check(words(raw_text) == attempt["words"], f"{eid} attempt {i}: word count differs")
+            low, high = length_window(e["target_words"])
             check(
-                attempt["length_compliant"]
-                == (0.85 * e["target_words"] <= words(raw_text) <= 1.15 * e["target_words"]),
+                attempt["length_compliant"] == (low <= words(raw_text) <= high),
                 f"{eid} attempt {i}: length_compliant flag is wrong",
             )
             q = read_json(Path(attempt["response"]["raw_response"]).parent / "request.json")
@@ -179,7 +162,7 @@ def main():
             if i:
                 expected.update(
                     previous_section=attempts[i - 1]["text"],
-                    length_revision=f"Revise only to fit {math.ceil(0.85 * e['target_words'])}–{math.floor(1.15 * e['target_words'])} words. Preserve claims.",
+                    length_revision=length_revision_note(e["target_words"]),
                 )
             check(
                 canonical(expected) == q["payload"]["messages"][1]["content"],

@@ -84,6 +84,17 @@ def validate_grade(grade, rubric, supplied_text):
     return statistics.mean(s["score"] for s in grade["scores"])
 
 
+def length_window(target_words):
+    """The word counts, low to high, that count as meeting a section's length target."""
+    return 0.85 * target_words, 1.15 * target_words
+
+
+def length_revision_note(target_words):
+    """The instruction sent with a writer retry after a section missed its length target."""
+    low, high = length_window(target_words)
+    return f"Revise only to fit {math.ceil(low)}–{math.floor(high)} words. Preserve claims."
+
+
 def writer_candidates(api, examples, output, concurrency=1):
     config_hash = digest(
         {"writer": api.roles["writer"], "prompt": prompt("writer"), "schema_version": SCHEMA_VERSION}
@@ -101,8 +112,7 @@ def writer_candidates(api, examples, output, concurrency=1):
                 if attempt:
                     data.update(
                         previous_section=attempts[-1]["text"],
-                        length_revision=f"Revise only to fit {math.ceil(0.85 * e['target_words'])}–"
-                        f"{math.floor(1.15 * e['target_words'])} words. Preserve claims.",
+                        length_revision=length_revision_note(e["target_words"]),
                     )
                 if stopped.is_set():
                     raise RunError("Writer generation halted after another section failed")
@@ -115,7 +125,8 @@ def writer_candidates(api, examples, output, concurrency=1):
                 )
                 text = response["content"].strip()
                 count = words(text)
-                compliant = 0.85 * e["target_words"] <= count <= 1.15 * e["target_words"]
+                low, high = length_window(e["target_words"])
+                compliant = low <= count <= high
                 attempts.append(
                     {
                         "attempt_index": attempt,

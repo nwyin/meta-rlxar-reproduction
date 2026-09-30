@@ -161,6 +161,41 @@ def max_request_cost(payload, endpoint):
     return tokens * price["prompt"] + payload["max_tokens"] * price["completion"] + price["request"]
 
 
+def routing_fields(cfg):
+    """Request fields that pin one role's model, provider and decoding settings."""
+    return {
+        "model": cfg["model"],
+        "stream": False,
+        "plugins": [],
+        "transforms": [],
+        "temperature": cfg["temperature"],
+        "reasoning": cfg["reasoning"],
+        "max_tokens": cfg["max_tokens"],
+        "provider": {
+            "only": [cfg["provider"]],
+            "order": [cfg["provider"]],
+            "allow_fallbacks": False,
+            "require_parameters": True,
+        },
+    }
+
+
+def json_schema_format(schema):
+    """The response_format asking for JSON that matches schema, or None when there is no schema."""
+    if schema is None:
+        return None
+    return {"type": "json_schema", "json_schema": {"name": "xar_output", "strict": True, "schema": schema}}
+
+
+def ledger_key(output, request_key, attempt):
+    """The budget ledger entry for one send of one request in the run at output."""
+    return f"{Path(output).resolve()}/{request_key}/{attempt}"
+
+
+# Added to the system prompt when a structured reply is retried; the audit strips it off again.
+FORMAT_REPAIR = "\nFORMAT REPAIR: Return complete valid JSON matching the schema. "
+
+
 class Ledger:
     """Cross-process atomic reservations enforce both dollar ceilings, including uncertain sends."""
 
@@ -249,28 +284,13 @@ class OpenRouter:
         self.dispatch_stopped = threading.Event()
 
     def payload(self, role, system, data, schema):
-        cfg = self.roles[role]
         payload = {
-            "model": cfg["model"],
-            "stream": False,
-            "plugins": [],
-            "transforms": [],
+            **routing_fields(self.roles[role]),
             "messages": [{"role": "system", "content": system}, {"role": "user", "content": canonical(data)}],
-            "temperature": cfg["temperature"],
-            "reasoning": cfg["reasoning"],
-            "max_tokens": cfg["max_tokens"],
-            "provider": {
-                "only": [cfg["provider"]],
-                "order": [cfg["provider"]],
-                "allow_fallbacks": False,
-                "require_parameters": True,
-            },
         }
-        if schema:
-            payload["response_format"] = {
-                "type": "json_schema",
-                "json_schema": {"name": "xar_output", "strict": True, "schema": schema},
-            }
+        response_format = json_schema_format(schema)
+        if response_format:
+            payload["response_format"] = response_format
         return payload
 
     def preflight(self):
@@ -355,11 +375,11 @@ class OpenRouter:
         # One initial call plus three transport retries. Failed HTTP sends retain a reservation.
         for attempt in range(4):
             receipt = directory / f"attempt_{attempt}.json"
-            ledger_key = str(self.output.resolve()) + "/" + request_key + f"/{attempt}"
+            key = ledger_key(self.output, request_key, attempt)
             if receipt.exists():
                 prior = read_json(receipt)
                 if prior["status"] == "success":
-                    result = self.extract(prior["response"], request_key, ledger_key, directory)
+                    result = self.extract(prior["response"], request_key, key, directory)
                     write_json(cached, result)
                     return result
                 if prior["status"] == "uncertain":
@@ -371,7 +391,7 @@ class OpenRouter:
                 continue
             if self.dispatch_stopped.is_set():
                 raise RunError("Dispatch halted after another request failed")
-            self.ledger.reserve(ledger_key, bound)
+            self.ledger.reserve(key, bound)
             sent_at = now()
             write_json(receipt, {"status": "uncertain", "sent_at": sent_at, "upper_usd": bound})
             headers = {"X-OpenRouter-Title": "Independent XAR reproduction"}
@@ -403,18 +423,18 @@ class OpenRouter:
                     },
                 )
                 if success:
-                    result = self.extract(raw, request_key, ledger_key, directory)
+                    result = self.extract(raw, request_key, key, directory)
                     write_json(cached, result)
                     return result
-                self.ledger.settle(ledger_key, None, "http_error_reserved")
+                self.ledger.settle(key, None, "http_error_reserved")
                 if not retryable:
                     raise RunError(f"OpenRouter HTTP {response.status_code}; see {receipt}")
             except (httpx.ConnectError, httpx.ConnectTimeout):
                 # Connection was never established; no billable completion was sent.
-                self.ledger.settle(ledger_key, 0, "complete")
+                self.ledger.settle(key, 0, "complete")
                 write_json(receipt, {"status": "connect_error", "retryable": True, "timestamp": now()})
             except (httpx.ReadTimeout, httpx.WriteTimeout, httpx.RemoteProtocolError):
-                self.ledger.settle(ledger_key, None, "uncertain")
+                self.ledger.settle(key, None, "uncertain")
                 raise BudgetStop(
                     f"Send outcome unknown; preserve reservation and reconcile {receipt}"
                 ) from None
@@ -460,7 +480,7 @@ class OpenRouter:
         for i in range(2 if repair else 1):
             instructions = system
             if i:
-                instructions += "\nFORMAT REPAIR: Return complete valid JSON matching the schema. "
+                instructions += FORMAT_REPAIR
                 instructions += (
                     "Keep the substantive task inputs unchanged. Previous validation error: "
                     + attempts[-1]["error"]
