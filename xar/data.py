@@ -134,6 +134,8 @@ def run_examples(examples, split):
     A research run uses the train and validation papers as saved. A pilot run uses the pilot
     papers: the first (sorted by ID) becomes training and the rest become validation.
     """
+    if split not in ("pilot", "research"):
+        raise RunError(f"Unknown split {split!r}; expected 'pilot' or 'research'")
     if split == "pilot":
         pilot = [e for e in examples if e["split"] == "pilot"]
         papers = sorted({e["paper_id"] for e in pilot})
@@ -335,8 +337,10 @@ def prepare_data():
     """Build data/examples.jsonl and its split and source manifests from data/discovery.xml.
 
     Takes the first PAPERS_NEEDED eligible papers in discovery order (downloading any HTML missing
-    from data/raw), lists the rejected ones in data/exclusions.json, and refuses to replace
-    existing dataset files with different content.
+    from data/raw) and lists the rejected ones in data/exclusions.json. Refuses to replace an
+    existing examples.jsonl, splits.json or source_manifest.json with different content.
+    exclusions.json is rewritten only when the set of excluded papers changes, so rewording an
+    exclusion reason does not change the saved file.
     """
     policy = read_json(ROOT / "data/acquisition_policy.json")
     entries = ET.parse(ROOT / "data/discovery.xml").getroot().findall("a:entry", ATOM)
@@ -378,7 +382,10 @@ def prepare_data():
             except (RunError, httpx.HTTPError) as e:
                 exclusions.append({"paper_id": paper_id, "reason": str(e), "before_grading": True})
                 print(f"Excluded {paper_id}: {e}", flush=True)
-    write_json(ROOT / "data/exclusions.json", exclusions)
+    exclusions_path = ROOT / "data/exclusions.json"
+    excluded_ids = [x["paper_id"] for x in exclusions]
+    if not exclusions_path.exists() or [x["paper_id"] for x in read_json(exclusions_path)] != excluded_ids:
+        write_json(exclusions_path, exclusions)
     if len(accepted) != PAPERS_NEEDED:
         raise RunError(
             f"Only {len(accepted)} of {PAPERS_NEEDED} papers are eligible; see data/exclusions.json "
@@ -416,6 +423,7 @@ def prepare_data():
     source_manifest = {
         "source": policy["source"],
         "source_deviation": policy["source_deviation"],
+        # A digest of the parsed JSON, unlike splits.json's policy_hash, which hashes the file bytes.
         "policy_hash": digest(policy),
         "discovery_hash": file_hash(ROOT / "data/discovery.xml"),
         "dataset_hash": file_hash(path),
