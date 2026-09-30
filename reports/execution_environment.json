@@ -34,9 +34,9 @@
   "frozen_recovery_source": "/tmp/xar-frozen-pilot-b2fb545",
   "frozen_recovery_software_hashes": "Verified exact matches for both existing pilot manifests",
   "latest_active_batch": {
-    "checked_at": "2026-09-30T00:24:07.386622+00:00",
+    "checked_at": "2026-09-30T00:28:19.362586+00:00",
     "scope": "meta_blog_initial_empirical_investigation",
-    "state": "research_writer_generation",
+    "state": "research_initial_training_evaluation",
     "source_commit": "beeb812",
     "shared_budget_usd": 100,
     "model_roles": {
@@ -57,7 +57,11 @@
     "pilot_raw_verified": true,
     "pilot_actual_cost_usd": 2.42341762,
     "provider_key_limit_usd": 100,
-    "provider_key_remaining_usd": 90.197110611
+    "provider_key_remaining_usd": 90.197110611,
+    "writer_sections": 52,
+    "writer_length_compliant": 35,
+    "writer_attempts": 89,
+    "provider_quota_requirement_resolved": true
   },
   "prepared_initial_training_reuse": {
     "worktree": "/tmp/meta-rlxar-p0-reuse-20260929",

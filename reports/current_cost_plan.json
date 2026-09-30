@@ -148,8 +148,11 @@
   "total_uncached_estimate_with_retry_reserve_including_history": 104.54283954915714,
   "authorized_total_ceiling_usd": 100,
   "note": "Provisional uncached estimates use 5000 output tokens per call; measured pilot usage will refine them. Provider quota is independent.",
-  "access_check": "Four Muse HTTP 403 rejections; conservative upper holds preserved, no generated sections.",
-  "provider_key_limit_usd": 50,
+  "access_check": "Age confirmation resolved; complete raw-verified pilot, research running.",
+  "provider_key_limit_usd": 100,
   "provider_key_remaining_usd_before_rejected_access_check": 43.751254431,
-  "provider_limit_reset": "weekly"
+  "provider_limit_reset": "weekly",
+  "provider_key_limit_verified": true,
+  "measured_research_forecast_usd": 58.01175706888957,
+  "measured_research_forecast_usd_with_25pct_retry_reserve": 72.51469633611197
 }

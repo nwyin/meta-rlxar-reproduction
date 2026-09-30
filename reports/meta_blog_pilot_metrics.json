@@ -47,7 +47,7 @@
   "research_usd_with_25pct_retry_reserve": 72.51469633611197,
   "scope": "One same-model 52-section trajectory",
   "limitations": "First training checkpoint on one pilot paper; context-byte scaling, optimizer allowance provisional. Cached-token discounts are not guaranteed.",
-  "provider_weekly_key_limit_usd": 50,
+  "provider_weekly_key_limit_usd": 100,
   "provider_remaining_usd_before_pilot": 43.751254431,
   "shared_budget_usd": 100,
   "pilot_complete": true,
@@ -65,5 +65,8 @@
   },
   "pilot_writer_length_compliant": 4,
   "pilot_writer_sections": 8,
-  "optimizer_proposal_accepted": true
+  "optimizer_proposal_accepted": true,
+  "provider_key_limit_verified_after_user_change": true,
+  "provider_remaining_usd_after_change": 90.197110611,
+  "pilot_writer_noncompliant": 4
 }
