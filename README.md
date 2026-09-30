@@ -7,9 +7,8 @@ Kimi K2.6 optimizes the rubric meta-prompt. One trajectory uses 52 sections
 from eight training and five validation papers, with seven prompt updates.
 
 The active workflow runs a separate one-update operational pilot, then this
-single experiment. The former alternative-model sweep is archived in
-[docs/archive/alternative-model-study-20260929](docs/archive/alternative-model-study-20260929).
-Its raw outputs and unresolved cost reservations are preserved locally.
+single experiment. The earlier alternative-model study, which never ran beyond
+pilots, is kept at the git tag `alternative-model-study`. Its raw outputs and unresolved cost reservations are preserved locally.
 See [PLAN.md](PLAN.md) for the scientific contract and reconstruction choices.
 
 The blog does not publish its original paper IDs, exact prompts, or sampling
@@ -36,7 +35,7 @@ domains in the blog require separate work.
 - Research cost **$55.60** across 1,389 requests and took **75.4 minutes** at
   concurrency four. The separate operational pilot cost $2.42. Shared spending
   and retained historical reservations totaled $64.70, within the $100 cap.
-- All raw-response audits and 29 tests passed; no research requests remained
+- All raw-response audits and 24 tests passed; no research requests remained
   unresolved. Detailed reports, plots, the blog draft, and raw run artifacts
   remain local under `reports/` and `runs/`, both excluded from version control.
 

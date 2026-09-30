@@ -1,9 +1,8 @@
 # Meta blog same-model XAR reproduction
 
 Revised September 29, 2026 at the user's request, before research grading.
-The previous alternative-model study is archived in
-[docs/archive/alternative-model-study-20260929/PLAN.md](docs/archive/alternative-model-study-20260929/PLAN.md).
-Historical paid pilots are retained and excluded from this experiment.
+The previous alternative-model study is kept at the git tag
+`alternative-model-study`. Historical paid pilots are retained and excluded from this experiment.
 
 ## Target
 

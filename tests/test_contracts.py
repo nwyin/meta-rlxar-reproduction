@@ -6,10 +6,6 @@ from types import SimpleNamespace
 import httpx
 import pytest
 
-import exp_baselines
-import exp_confirmation
-import exp_judge_transfer
-import exp_writer_transfer
 import exp_xar
 import shared
 
@@ -189,8 +185,6 @@ class FakeProvider:
                     for i in range(4)
                 ]
             }
-        elif "winner" in properties:
-            value = {"winner": "tie", "evidence": "Both are clear."}
         elif "prompt" in properties:
             assert all(f["paper_id"].startswith("pilot0") for f in data["feedback"]["failures"])
             value = {
@@ -240,7 +234,6 @@ def install_fake(monkeypatch):
         return original(*args, **kwargs)
 
     monkeypatch.setattr(shared, "OpenRouter", factory)
-    monkeypatch.setattr(exp_baselines, "initialize_run", shared.initialize_run)
     monkeypatch.setattr(exp_xar, "initialize_run", shared.initialize_run)
     return fake
 
@@ -250,7 +243,7 @@ def invoke(monkeypatch, module, argv):
     module.main()
 
 
-def test_full_pilot_orchestration_resume_and_frozen_transfer(tmp_path, monkeypatch):
+def test_full_pilot_orchestration_and_resume(tmp_path, monkeypatch):
     fake = install_fake(monkeypatch)
     dataset, splits = tmp_path / "examples.jsonl", tmp_path / "splits.json"
     examples = [dummy_example("pilot" + str(p), s, "pilot") for p in range(2) for s in shared.SECTIONS]
@@ -287,38 +280,6 @@ def test_full_pilot_orchestration_resume_and_frozen_transfer(tmp_path, monkeypat
     n = len(fake.payloads)
     invoke(monkeypatch, exp_xar, [*argv, "--resume"])
     assert len(fake.payloads) == n
-    invoke(
-        monkeypatch,
-        exp_judge_transfer,
-        [*common, "--source-run", str(out), "--output-dir", str(tmp_path / "judge")],
-    )
-    assert all(
-        "scores" in p["response_format"]["json_schema"]["schema"]["properties"] for p in fake.payloads[n:]
-    )
-    assert len(fake.payloads) - n == 16  # Two judges, four examples, two candidates; selected aliases P0.
-    transferred = shared.read_json(tmp_path / "judge/results.json")
-    assert all(result["improvement"]["mean"] == 0 for result in transferred.values())
-    n = len(fake.payloads)
-    invoke(
-        monkeypatch,
-        exp_writer_transfer,
-        [
-            *common,
-            "--source-run",
-            str(out),
-            "--output-dir",
-            str(tmp_path / "writer"),
-            "--target-writer-model",
-            "qwen/qwen3.5-9b",
-        ],
-    )
-    assert all(
-        "criteria"
-        not in p.get("response_format", {}).get("json_schema", {}).get("schema", {}).get("properties", {})
-        for p in fake.payloads[n:]
-    )
-    assert len(fake.payloads) - n == 12  # Four new writers plus eight grades; selected aliases P0.
-    assert shared.read_json(tmp_path / "writer/results.json")["improvement"]["mean"] == 0
     response_path = next((out / "scores/main/0/train").glob("*/human.json"))
     response = shared.read_json(response_path)["attempts"][-1]["response"]
     request_path = shared.Path(response["raw_response"]).parent / "request.json"
@@ -336,46 +297,6 @@ def test_full_pilot_orchestration_resume_and_frozen_transfer(tmp_path, monkeypat
     shared.write_json(grade_path, grade)
     with pytest.raises(shared.ContractError, match="arithmetic"):
         shared.audit_xar_run(out)
-
-
-def test_baseline_repeats_are_fresh_and_length_repair_is_bounded(tmp_path, monkeypatch):
-    fake = install_fake(monkeypatch)
-    dataset, splits = tmp_path / "examples.jsonl", tmp_path / "splits.json"
-    examples = [dummy_example("paper", s, "validation") for s in shared.SECTIONS]
-    dataset.write_text("".join(shared.canonical(e) + "\n" for e in examples))
-    shared.write_json(splits, {"papers": {"validation": ["paper"]}})
-    shared.write_json(
-        tmp_path / "human_review.json",
-        {"dataset_hash": shared.file_hash(dataset), "papers": {"paper": {"decision": "approved"}}},
-    )
-    invoke(
-        monkeypatch,
-        exp_baselines,
-        [
-            "--dataset",
-            str(dataset),
-            "--splits",
-            str(splits),
-            "--output-dir",
-            str(tmp_path / "baseline"),
-            "--budget-usd",
-            "10",
-            "--total-budget-usd",
-            "10",
-            "--budget-ledger",
-            str(tmp_path / "ledger.json"),
-            "--split",
-            "validation",
-        ],
-    )
-    rubric_calls = [
-        p
-        for p in fake.payloads
-        if "criteria"
-        in p.get("response_format", {}).get("json_schema", {}).get("schema", {}).get("properties", {})
-    ]
-    assert len(rubric_calls) == 12
-    assert len(list((tmp_path / "baseline/requests").glob("*/request.json"))) == len(fake.payloads)
 
 
 def test_dataset_hash_and_cross_paper_split_guard(tmp_path):
@@ -497,98 +418,6 @@ def test_primary_matrix_rejects_different_judge_and_protocol():
     changed["roles"]["rubric"]["reasoning"] = {"enabled": False}
     with pytest.raises(shared.ContractError, match="decoding"):
         shared.validate_primary_manifest(changed, design)
-
-
-def test_confirmation_cannot_relabel_validation(monkeypatch, tmp_path):
-    with pytest.raises(shared.ContractError, match="reserved confirmation split"):
-        invoke(
-            monkeypatch,
-            exp_confirmation,
-            [
-                "--source-run",
-                str(tmp_path / "missing-source"),
-                "--output-dir",
-                str(tmp_path / "confirmation"),
-                "--split",
-                "validation",
-                "--dry-run",
-            ],
-        )
-
-
-def test_confirmation_rejects_changed_dataset_override(monkeypatch, tmp_path):
-    source = tmp_path / "source"
-    original = tmp_path / "original.jsonl"
-    original.write_text("original")
-    changed = tmp_path / "changed.jsonl"
-    changed.write_text("changed")
-    prereg = shared.read_json(shared.ROOT / "configs/confirmation.json")
-    manifest = {
-        "experiment": "xar",
-        "arguments": {"split": "research", "seed": 0},
-        "roles": {
-            r: shared.role_config(SimpleNamespace(), r, model=prereg[r])
-            for r in ("writer", "rubric", "optimizer", "judge")
-        },
-        "dataset": str(original),
-        "dataset_hash": shared.file_hash(original),
-    }
-    shared.write_json(source / "manifest.json", manifest)
-    shared.write_json(source / "freeze.json", {"selected": 0})
-    with pytest.raises(shared.ContractError, match="dataset differs"):
-        invoke(
-            monkeypatch,
-            exp_confirmation,
-            [
-                "--source-run",
-                str(source),
-                "--dataset",
-                str(changed),
-                "--output-dir",
-                str(tmp_path / "confirmation"),
-                "--dry-run",
-            ],
-        )
-
-
-def test_factorial_comparisons_pair_baseline_adjusted_effects_and_interactions():
-    design = {"weak": "weak", "strong": "strong", "seeds": [0]}
-    observed = {}
-    for w, g, o in shared.itertools.product((0, 1), repeat=3):
-        initial = 10 * g
-        improvement = w + 2 * g + 3 * o + 4 * g * o + 5 * w * o
-        key = tuple("strong" if v else "weak" for v in (w, g, o)) + (0,)
-        rows = {
-            checkpoint: [{"example_id": str(i), "paper_id": "paper", "gap": gap} for i in range(4)]
-            for checkpoint, gap in ((0, initial), (1, initial + improvement))
-        }
-        observed[key] = {"freeze": {"selected": 1}, "rows": {(i, "validation"): r for i, r in rows.items()}}
-    effects = shared.matrix_effects(observed, design)
-    assert len(effects) == 36
-    optimizer = next(
-        e
-        for e in effects
-        if e["kind"] == "main_effect"
-        and e["varied_role"] == "optimizer"
-        and e["fixed_roles"] == {"writer": "strong", "generator": "strong"}
-        and e["metric"] == "improvement"
-    )
-    assert optimizer["mean"] == 12 and optimizer["paper_interval"]["paper_clusters"] == 1
-    generator = [
-        e
-        for e in effects
-        if e["kind"] == "main_effect"
-        and e["varied_role"] == "generator"
-        and e["fixed_roles"] == {"writer": "weak", "optimizer": "weak"}
-    ]
-    assert {e["metric"]: e["mean"] for e in generator} == {"selected_gap": 12, "improvement": 2}
-    interaction = [
-        e for e in effects if e["kind"] == "interaction" and e["varied_roles"] == ["generator", "optimizer"]
-    ]
-    assert all(e["mean"] == 4 for e in interaction)
-    del observed[("strong", "strong", "strong", 0)]
-    partial = shared.matrix_effects(observed, design)
-    assert len(partial) < len(effects)  # Missing cells never produce imputed contrasts.
 
 
 def test_parallel_writer_sampling_repairs_order_and_resume(tmp_path):
@@ -757,85 +586,6 @@ def test_unknown_send_halts_dispatch_for_other_tasks(tmp_path):
         api.call("writer", "Instructions", {"paper": "second"}, None, "second")
     assert len(sends) == 1
     assert len(shared.read_json(tmp_path / "ledger.json")["entries"]) == 1
-
-
-def test_pairwise_examples_overlap_but_each_order_is_sent_once(tmp_path, monkeypatch):
-    import sys
-    import threading
-
-    original = FakeProvider
-
-    class ParallelPairwise(original):
-        def __init__(self):
-            super().__init__()
-            self.barrier = threading.Barrier(2)
-            self.lock = threading.Lock()
-            self.active = self.peak = 0
-
-        def handle(self, request):
-            if request.method != "POST":
-                return super().handle(request)
-            payload = json.loads(request.content)
-            properties = (
-                payload.get("response_format", {})
-                .get("json_schema", {})
-                .get("schema", {})
-                .get("properties", {})
-            )
-            if "winner" not in properties:
-                return super().handle(request)
-            data = json.loads(payload["messages"][1]["content"])
-            with self.lock:
-                self.active += 1
-                self.peak = max(self.peak, self.active)
-            if data["A"].startswith("Original"):
-                self.barrier.wait(timeout=5)
-            result = super().handle(request)
-            with self.lock:
-                self.active -= 1
-            return result
-
-    monkeypatch.setattr(sys.modules[__name__], "FakeProvider", ParallelPairwise)
-    fake = install_fake(monkeypatch)
-    examples = [dummy_example("pairwise", s, "validation") for s in shared.SECTIONS]
-    dataset, splits = tmp_path / "examples.jsonl", tmp_path / "splits.json"
-    dataset.write_text("".join(shared.canonical(e) + "\n" for e in examples))
-    shared.write_json(splits, {"papers": {"validation": ["pairwise"]}})
-    shared.write_json(
-        tmp_path / "human_review.json",
-        {"dataset_hash": shared.file_hash(dataset), "papers": {"pairwise": {"decision": "approved"}}},
-    )
-    out = tmp_path / "baseline"
-    invoke(
-        monkeypatch,
-        exp_baselines,
-        [
-            "--dataset",
-            str(dataset),
-            "--splits",
-            str(splits),
-            "--output-dir",
-            str(out),
-            "--budget-usd",
-            "10",
-            "--total-budget-usd",
-            "10",
-            "--budget-ledger",
-            str(tmp_path / "ledger.json"),
-            "--split",
-            "validation",
-            "--baseline-methods",
-            "pairwise",
-            "--concurrency",
-            "2",
-        ],
-    )
-    assert fake.peak == 2
-    assert shared.read_json(out / "scores/pairwise_summary.json")["coverage"] == 4
-    for p in (out / "scores/pairwise").glob("*.json"):
-        record = shared.read_json(p)
-        assert [r["order"] for r in record["orders"]] == [0, 1]
-    assert len(fake.payloads) == 12  # Four writers plus two orders for each example.
 
 
 def test_blog_model_contract_rejects_every_role_substitution():
