@@ -17,6 +17,7 @@ from xar.stats import summarize
 from xar.util import (
     ROLES,
     SCHEMA_VERSION,
+    InvalidOutput,
     RunError,
     bounded_map,
     digest,
@@ -64,22 +65,22 @@ def validate_rubric(rubric):
     jsonschema.validate(rubric, RUBRIC_SCHEMA)
     ids = [c["id"] for c in rubric["criteria"]]
     if len(ids) != len(set(ids)):
-        raise RunError("Duplicate rubric criterion IDs")
+        raise InvalidOutput("Duplicate rubric criterion IDs")
     if words(" ".join(str(v) for c in rubric["criteria"] for v in c.values())) > 1000:
-        raise RunError("Rubric exceeds 1000 words")
+        raise InvalidOutput("Rubric exceeds 1000 words")
 
 
 def validate_grade(grade, rubric, supplied_text):
     jsonschema.validate(grade, GRADE_SCHEMA)
     ids = [s["id"] for s in grade["scores"]]
     if len(ids) != len(set(ids)) or set(ids) != {c["id"] for c in rubric["criteria"]}:
-        raise RunError("Grade criterion coverage mismatch")
+        raise InvalidOutput("Grade criterion coverage mismatch")
     if any(not math.isfinite(s["score"]) or isinstance(s["score"], bool) for s in grade["scores"]):
-        raise RunError("Grade score must be a finite number")
+        raise InvalidOutput("Grade score must be a finite number")
     for score in grade["scores"]:
         for quoted in re.findall(r'["“]([^"”]+)["”]', score["evidence"]):
             if normalize(quoted).casefold() not in normalize(supplied_text).casefold():
-                raise RunError("Evidence quote does not occur in supplied text")
+                raise InvalidOutput("Evidence quote does not occur in supplied text")
     return statistics.mean(s["score"] for s in grade["scores"])
 
 

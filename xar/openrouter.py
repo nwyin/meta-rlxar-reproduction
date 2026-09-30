@@ -21,6 +21,7 @@ from xar.util import (
     ROOT,
     SCHEMA_VERSION,
     BudgetStop,
+    InvalidOutput,
     RunError,
     canonical,
     digest,
@@ -488,13 +489,13 @@ class OpenRouter:
             response = self.call(role, instructions, data, schema, {"task": identity, "format_attempt": i})
             try:
                 if response["finish_reason"] != "stop":
-                    raise RunError(f"Incomplete output: {response['finish_reason']}")
+                    raise InvalidOutput(f"Incomplete output: {response['finish_reason']}")
                 value = json.loads(response["content"])
                 jsonschema.validate(value, schema)
                 if validator:
                     validator(value)
                 attempts.append({"response": response, "status": "valid"})
                 return {"status": "valid", "value": value, "attempts": attempts}
-            except (ValueError, jsonschema.ValidationError, RunError) as e:
+            except (json.JSONDecodeError, jsonschema.ValidationError, InvalidOutput) as e:
                 attempts.append({"response": response, "status": "invalid", "error": str(e)[:500]})
         return {"status": "missing", "value": None, "attempts": attempts}

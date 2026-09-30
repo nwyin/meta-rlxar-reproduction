@@ -16,7 +16,6 @@ import threading
 from pathlib import Path
 
 import httpx
-import jsonschema
 
 ROOT = Path(__file__).resolve().parents[1]
 SCHEMA_VERSION = 1
@@ -32,7 +31,7 @@ class BudgetStop(RunError):
 
 
 class InvalidOutput(RunError):
-    pass
+    """A model reply failed validation; OpenRouter.structured() retries once with the error."""
 
 
 def canonical(value):
@@ -143,8 +142,12 @@ def run_lock(output):
 
 
 def main_guard(main):
+    """Run a command, turning an expected failure into a one-line STOP message and exit status 2.
+
+    Other exceptions keep their traceback, since they point at a bug.
+    """
     try:
         main()
-    except (RunError, FileNotFoundError, jsonschema.ValidationError, httpx.HTTPError) as e:
+    except (RunError, httpx.HTTPError) as e:
         print(f"STOP: {e}")
         raise SystemExit(2) from None
