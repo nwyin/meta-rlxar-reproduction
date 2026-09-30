@@ -179,3 +179,7 @@ The user requested only the blog initial experiment. Alternative-model pilots an
 Muse live access check: fresh read-only preflight passed, but the first four concurrent writer requests were rejected with HTTP 403 before generation because the OpenRouter account lacks age_18plus attestation. No Muse sections or research scores were produced. The rejected run and conservative reserves remain. Complete the account confirmation at https://openrouter.ai/settings/preferences; a new pilot-meta-blog-attested batch is declared because the original receipts are nonretryable. Do not resubmit the original run.
 
 Validation after the scope change: all 29 tests and lint pass. The mock-provider research test executes all 1,307 nominal requests using only Muse Spark 1.1 and Kimi K2.6, rebuilds all eight checkpoints across 52 sections, confirms training-only selection and five-paper bootstrap, and rejects a tampered held-out grade without leaving a stale plot. These are operational checks, not empirical evidence. No paid process remains running while awaiting the account attestation.
+
+## Attested Muse/Kimi setup started
+
+The user confirmed OpenRouter age attestation. The new all-phase driver started with concurrency 4 and the unchanged $100 shared ceiling. Fresh preflight passed, Muse writing calls succeeded, all eight pilot sections were saved, and candidate-independent rubric generation started. Research remains behind the raw-verified operational gate. Prior rejected receipts and conservative reserves are retained.

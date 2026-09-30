@@ -12,11 +12,11 @@ single experiment. The former alternative-model sweep is archived in
 Its raw outputs and unresolved cost reservations are preserved locally.
 See [PLAN.md](PLAN.md) for the scientific contract and reconstruction choices.
 
-**Live access:** read-only preflight passed, but Muse requests returned HTTP 403
-because the account needs 18+ confirmation at
-[OpenRouter preferences](https://openrouter.ai/settings/preferences).
-No Muse section or research score has been generated. See
-[the saved access check](reports/muse_access_check.json).
+**Execution:** the user completed the required OpenRouter age confirmation.
+Fresh Muse Spark 1.1 writing requests succeeded, and the Muse/Kimi operational
+pilot is running. The driver proceeds to research only after its raw-output
+audit passes. The earlier rejected access check remains preserved in
+[reports/muse_access_check.json](reports/muse_access_check.json).
 
 The blog does not publish its original paper IDs, exact prompts, or sampling
 settings. Our frozen arXiv split, prompts, criterion schema, and decoding are

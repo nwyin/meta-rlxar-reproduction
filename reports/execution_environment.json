@@ -34,9 +34,9 @@
   "frozen_recovery_source": "/tmp/xar-frozen-pilot-b2fb545",
   "frozen_recovery_software_hashes": "Verified exact matches for both existing pilot manifests",
   "latest_active_batch": {
-    "checked_at": "2026-09-30T00:13:57.964330+00:00",
+    "checked_at": "2026-09-30T00:18:24.832800+00:00",
     "scope": "meta_blog_initial_empirical_investigation",
-    "state": "account_access_required",
+    "state": "pilot_running",
     "source_commit": "beeb812",
     "shared_budget_usd": 100,
     "model_roles": {
@@ -47,8 +47,12 @@
     },
     "running_paid_processes": 0,
     "research_dispatches": 0,
-    "required_external_change": "Complete OpenRouter age_18plus attestation",
-    "next_pilot_run": "runs/pilot-meta-blog-attested"
+    "required_external_change": null,
+    "next_pilot_run": "runs/pilot-meta-blog-attested",
+    "driver_log": "runs/meta-blog-driver.log",
+    "active_pilot": "runs/pilot-meta-blog-attested",
+    "live_muse_access_verified": true,
+    "concurrency": 4
   },
   "prepared_initial_training_reuse": {
     "worktree": "/tmp/meta-rlxar-p0-reuse-20260929",

@@ -968,6 +968,10 @@
   "scope": "Initial Empirical Investigation",
   "exact_models_available": true,
   "catalog_available": true,
-  "live_access_verified": false,
-  "access_requirement": "OpenRouter requires age_18plus attestation for Muse Spark 1.1"
+  "live_access_verified": true,
+  "access_requirement": "OpenRouter requires age_18plus attestation for Muse Spark 1.1",
+  "age_confirmation_reported_by_user": true,
+  "access_requirement_resolved": true,
+  "verified_at": "2026-09-30T00:18:07.635444+00:00",
+  "active_run": "runs/pilot-meta-blog-attested"
 }
