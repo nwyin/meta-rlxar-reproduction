@@ -351,7 +351,7 @@ class OpenRouter:
         self.ledger = Ledger(ledger_path, str(self.output.resolve()), budget, total_budget)
         self.dispatch_stopped = threading.Event()
 
-    def payload(self, role, system, data, schema, identity):
+    def payload(self, role, system, data, schema):
         cfg = self.roles[role]
         payload = {
             "model": cfg["model"],
@@ -374,8 +374,6 @@ class OpenRouter:
                 "type": "json_schema",
                 "json_schema": {"name": "xar_output", "strict": True, "schema": schema},
             }
-        if "seed" in self.endpoints[role][0]["supported_parameters"]:
-            payload["seed"] = int(digest({"seed": self.seed, "identity": identity})[:8], 16) % (2**31)
         return payload
 
     def preflight(self):
@@ -430,8 +428,6 @@ class OpenRouter:
             }
             if current.get("quantization") != prior.get("quantization"):
                 raise ContractError("Pinned endpoint precision changed; declare a new batch")
-            if "seed" in prior["supported_parameters"] and "seed" not in current["supported_parameters"]:
-                raise ContractError("Pinned endpoint no longer supports the frozen seed parameter")
             efforts = models[model].get("reasoning", {}).get("supported_efforts", [])
             if efforts and cfg["reasoning"].get("effort", efforts[0]) not in efforts:
                 raise ContractError("Pinned reasoning mapping changed")
@@ -456,7 +452,7 @@ class OpenRouter:
             raise
 
     def _call(self, role, system, data, schema, identity):
-        payload = self.payload(role, system, data, schema, identity)
+        payload = self.payload(role, system, data, schema)
         request_key = digest({"payload": payload, "identity": identity, "schema_version": SCHEMA_VERSION})
         directory = self.output / "requests" / request_key
         directory.mkdir(parents=True, exist_ok=True)
@@ -741,7 +737,6 @@ def writer_candidates(api, examples, output, concurrency=1):
             record = {
                 "example_id": e["example_id"],
                 "context_hash": e["context_hash"],
-                "sampling_seed": getattr(api, "seed", 0),
                 "writer_configuration_hash": config_hash,
                 "writer_configuration": api.roles["writer"],
                 "attempts": attempts,
@@ -1172,7 +1167,7 @@ def estimate(args, roles, examples, counts):
     return result
 
 
-def audit_request_contract(payload, cfg, endpoint, schema, prompt_file):
+def audit_request_contract(payload, cfg, schema, prompt_file):
     """Check the actual sent request against the frozen role, scoring wrapper, and schema."""
     expected = {
         "model": cfg["model"],
@@ -1203,8 +1198,6 @@ def audit_request_contract(payload, cfg, endpoint, schema, prompt_file):
     base = system.split("\nFORMAT REPAIR: Return complete valid JSON matching the schema. ", 1)[0]
     if digest(base) != prompt_file:
         raise ContractError("Saved request changed the frozen grading/rubric wrapper")
-    if "seed" in payload and "seed" not in endpoint["endpoint"]["supported_parameters"]:
-        raise ContractError("Saved request used an unsupported seed")
 
 
 def audit_saved_output(record, schema, cfg=None, endpoint=None, prompt_file=None):
@@ -1226,7 +1219,7 @@ def audit_saved_output(record, schema, cfg=None, endpoint=None, prompt_file=None
         raise ContractError("Derived artifact differs from raw response")
     request = read_json(Path(response["raw_response"]).parent / "request.json")
     if cfg is not None:
-        audit_request_contract(request["payload"], cfg, endpoint, schema, prompt_file)
+        audit_request_contract(request["payload"], cfg, schema, prompt_file)
         raw = receipt["response"]
         if raw.get("model") not in {cfg["model"], endpoint["canonical_slug"]}:
             raise ContractError("Raw response used a different model from the frozen role")

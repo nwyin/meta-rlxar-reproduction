@@ -79,7 +79,7 @@ def main():
         else:
             wrapper = {"rubric": "rubric_wrapper", "judge": "judge", "optimizer": "optimizer"}[role]
             s.audit_request_contract(
-                payload, cfg, endpoint, schemas[role], manifest["software_hashes"][f"prompts/{wrapper}.md"]
+                payload, cfg, schemas[role], manifest["software_hashes"][f"prompts/{wrapper}.md"]
             )
         bound = s.request_upper(payload, endpoint["endpoint"])
         for receipt_path in path.parent.glob("attempt_*.json"):
