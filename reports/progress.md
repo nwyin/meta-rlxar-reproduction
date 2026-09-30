@@ -183,3 +183,5 @@ Validation after the scope change: all 29 tests and lint pass. The mock-provider
 ## Attested Muse/Kimi setup started
 
 The user confirmed OpenRouter age attestation. The new all-phase driver started with concurrency 4 and the unchanged $100 shared ceiling. Fresh preflight passed, Muse writing calls succeeded, all eight pilot sections were saved, and candidate-independent rubric generation started. Research remains behind the raw-verified operational gate. Prior rejected receipts and conservative reserves are retained.
+
+The attested operational pilot completed and passed the raw-output gate. All four roles worked with native structured outputs and complete paired training/validation coverage; one optimizer revision was accepted. Actual cost $2.42341762 across 65 requests (16 W, 16 G, 32 J, 1 O), no unresolved sends. Four of eight writer sections were length-compliant after bounded repairs; all remain retained and flagged. The driver started the declared 52-section research trajectory with the same role settings and shared ledger.

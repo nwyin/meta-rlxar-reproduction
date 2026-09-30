@@ -1,0 +1,69 @@
+{
+  "checked_at": "2026-09-30T00:24:07.386622+00:00",
+  "pilot_role_means": {
+    "judge": {
+      "cost_usd": 0.037333653125,
+      "input_tokens": 23452.25,
+      "output_tokens": 1957.8125,
+      "latency_seconds": 7.59680262231177
+    },
+    "rubric": {
+      "cost_usd": 0.034618028125,
+      "input_tokens": 21802.25,
+      "output_tokens": 1773.5625,
+      "latency_seconds": 9.59637721600302
+    },
+    "writer": {
+      "cost_usd": 0.03439813125,
+      "input_tokens": 22166.0625,
+      "output_tokens": 2333.3125,
+      "latency_seconds": 6.240002861939502
+    },
+    "optimizer": {
+      "cost_usd": 0.12448217,
+      "input_tokens": 143601,
+      "output_tokens": 4091,
+      "latency_seconds": 182.05635687499307
+    }
+  },
+  "research_forecast": {
+    "rubric": {
+      "requests": 416,
+      "estimated_usd": 17.01324249868006
+    },
+    "judge": {
+      "requests": 832,
+      "estimated_usd": 35.29384811211761
+    },
+    "writer": {
+      "estimated_usd": 4.304666458091901
+    },
+    "optimizer": {
+      "estimated_usd": 1.4000000000000001,
+      "note": "Provisional until first optimizer response"
+    }
+  },
+  "research_usd_without_retry_reserve": 58.01175706888957,
+  "research_usd_with_25pct_retry_reserve": 72.51469633611197,
+  "scope": "One same-model 52-section trajectory",
+  "limitations": "First training checkpoint on one pilot paper; context-byte scaling, optimizer allowance provisional. Cached-token discounts are not guaranteed.",
+  "provider_weekly_key_limit_usd": 50,
+  "provider_remaining_usd_before_pilot": 43.751254431,
+  "shared_budget_usd": 100,
+  "pilot_complete": true,
+  "pilot_costs": {
+    "charged_or_reserved_usd": 2.42341762,
+    "actual_complete_usd": 2.42341762,
+    "requests": 65,
+    "unresolved": 0
+  },
+  "pilot_request_counts": {
+    "judge": 32,
+    "rubric": 16,
+    "writer": 16,
+    "optimizer": 1
+  },
+  "pilot_writer_length_compliant": 4,
+  "pilot_writer_sections": 8,
+  "optimizer_proposal_accepted": true
+}

@@ -34,9 +34,9 @@
   "frozen_recovery_source": "/tmp/xar-frozen-pilot-b2fb545",
   "frozen_recovery_software_hashes": "Verified exact matches for both existing pilot manifests",
   "latest_active_batch": {
-    "checked_at": "2026-09-30T00:18:24.832800+00:00",
+    "checked_at": "2026-09-30T00:24:07.386622+00:00",
     "scope": "meta_blog_initial_empirical_investigation",
-    "state": "pilot_running",
+    "state": "research_writer_generation",
     "source_commit": "beeb812",
     "shared_budget_usd": 100,
     "model_roles": {
@@ -52,7 +52,12 @@
     "driver_log": "runs/meta-blog-driver.log",
     "active_pilot": "runs/pilot-meta-blog-attested",
     "live_muse_access_verified": true,
-    "concurrency": 4
+    "concurrency": 4,
+    "active_research": "runs/meta-blog-seed0",
+    "pilot_raw_verified": true,
+    "pilot_actual_cost_usd": 2.42341762,
+    "provider_key_limit_usd": 100,
+    "provider_key_remaining_usd": 90.197110611
   },
   "prepared_initial_training_reuse": {
     "worktree": "/tmp/meta-rlxar-p0-reuse-20260929",

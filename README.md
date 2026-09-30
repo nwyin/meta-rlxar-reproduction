@@ -13,9 +13,8 @@ Its raw outputs and unresolved cost reservations are preserved locally.
 See [PLAN.md](PLAN.md) for the scientific contract and reconstruction choices.
 
 **Execution:** the user completed the required OpenRouter age confirmation.
-Fresh Muse Spark 1.1 writing requests succeeded, and the Muse/Kimi operational
-pilot is running. The driver proceeds to research only after its raw-output
-audit passes. The earlier rejected access check remains preserved in
+The Muse/Kimi operational pilot passed its raw-output audit and cost $2.42.
+The 52-section research trajectory is running with concurrency 4. The earlier rejected access check remains preserved in
 [reports/muse_access_check.json](reports/muse_access_check.json).
 
 The blog does not publish its original paper IDs, exact prompts, or sampling
