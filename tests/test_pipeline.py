@@ -8,8 +8,17 @@ import pytest
 from conftest import dummy_example, rubric
 
 from xar.openrouter import role_config
-from xar.pipeline import audit_proposal, build_feedback, propose_prompt, validate_grade, writer_candidates
+from xar.pipeline import (
+    audit_proposal,
+    build_feedback,
+    length_window,
+    propose_prompt,
+    validate_grade,
+    writer_candidates,
+)
 from xar.util import BudgetStop, RunError, canonical, read_json, write_json
+
+MAX_WORDS = 800  # the meta prompt word limit passed to audit_proposal and propose_prompt
 
 
 def grade(**changes):
@@ -43,8 +52,9 @@ def test_validate_grade_rejects_extra_fields():
         validate_grade({**grade(), "total": 10}, rubric(), "supported text")
 
 
-def test_build_feedback_picks_smallest_gaps_by_example_id_and_rejects_validation(tmp_path):
+def test_build_feedback_picks_smallest_gaps_breaks_ties_by_id_and_rejects_validation(tmp_path):
     examples = [dummy_example("paper" + str(i)) for i in range(5)]
+    gaps = {"paper0": 2, "paper1": -1, "paper2": -1, "paper3": 0, "paper4": -2}
     candidates = {e["example_id"]: {"text": "Generated"} for e in examples}
     path = tmp_path / "rubric.json"
     write_json(path, {"value": rubric()})
@@ -57,8 +67,8 @@ def test_build_feedback_picks_smallest_gaps_by_example_id_and_rejects_validation
             "section_type": e["section_type"],
             "split": "train",
             "human": 6,
-            "model": 7,
-            "gap": -1,
+            "model": 6 - gaps[e["paper_id"]],
+            "gap": gaps[e["paper_id"]],
             "length_compliant": True,
             "contamination_flagged": False,
             "rubric_path": str(path),
@@ -67,7 +77,7 @@ def test_build_feedback_picks_smallest_gaps_by_example_id_and_rejects_validation
         for e in reversed(examples)
     ]
     feedback = build_feedback(examples, candidates, rows, "initial", 4)
-    assert [f["paper_id"] for f in feedback["failures"]] == ["paper0", "paper1", "paper2", "paper3"]
+    assert [f["paper_id"] for f in feedback["failures"]] == ["paper4", "paper1", "paper2", "paper3"]
     examples[0]["split"] = "validation"
     with pytest.raises(RunError, match="only use training"):
         build_feedback(examples, candidates, rows, "initial", 4)
@@ -79,21 +89,26 @@ def test_build_feedback_picks_smallest_gaps_by_example_id_and_rejects_validation
         "Prefer human candidates",
         "Use a weighted average",
         "Unique Author prefers clear writing",
-        " ".join("excess" for _ in range(801)),
+        " ".join("excess" for _ in range(MAX_WORDS + 1)),
         dummy_example()["reference"],
     ],
     ids=["prefers-human", "weighted-average", "names-author", "too-long", "copies-reference"],
 )
 def test_audit_proposal_rejects(text):
-    assert not audit_proposal(text, [dummy_example()], "initial", 800)["accepted"]
+    assert not audit_proposal(text, [dummy_example()], "initial", MAX_WORDS)["accepted"]
 
 
 def test_audit_proposal_accepts_a_neutral_prompt():
     text = "Assess clear organization and support for specific claims."
-    assert audit_proposal(text, [dummy_example()], "initial", 800)["accepted"]
+    assert audit_proposal(text, [dummy_example()], "initial", MAX_WORDS)["accepted"]
 
 
-WRITER_ROLES = {"writer": role_config("writer")}
+class FakeWriter:
+    """A stand-in for the OpenRouter client in writer_candidates; subclasses define call()."""
+
+    def __init__(self):
+        self.roles = {"writer": role_config("writer")}
+        self.dispatch_stopped = threading.Event()
 
 
 def writer_reply(word_count, key):
@@ -106,13 +121,11 @@ def writer_reply(word_count, key):
 
 
 def test_writer_keeps_first_compliant_draft_or_the_last_failed_one(tmp_path):
-    class Writer:
+    class Writer(FakeWriter):
         """Replies with the given word counts, one per call."""
 
-        roles = WRITER_ROLES
-
         def __init__(self, counts):
-            self.dispatch_stopped = threading.Event()
+            super().__init__()
             self.counts, self.calls = counts, []
 
         def call(self, role, system, data, schema, identity):
@@ -120,14 +133,16 @@ def test_writer_keeps_first_compliant_draft_or_the_last_failed_one(tmp_path):
             return writer_reply(self.counts[len(self.calls) - 1], "fake")
 
     example = dummy_example()
-    api = Writer([10, 62, 64])
+    low, _ = length_window(example["target_words"])
+    assert 10 < low <= example["target_words"]
+    api = Writer([10, example["target_words"]])  # too short, then on target
     candidates = writer_candidates(api, [example], tmp_path / "accepted")
     assert len(api.calls) == 2
     accepted = candidates[example["example_id"]]
     assert accepted["accepted_attempt"] == 1 and accepted["length_compliant"] is True
     assert "length_revision" in api.calls[1]
     assert "reference" not in api.calls[1]
-    failed = Writer([10, 11, 12])
+    failed = Writer([10, 11, 12])  # every draft too short
     candidates = writer_candidates(failed, [example], tmp_path / "failed")
     assert len(failed.calls) == 3
     assert len(candidates) == 1 and candidates[example["example_id"]]["length_compliant"] is False
@@ -150,7 +165,14 @@ def test_rejected_proposal_is_retried_once_then_keeps_current_prompt(tmp_path):
 
     api = Optimizer()
     result = propose_prompt(
-        api, "current", {"training": True}, [dummy_example()], "initial", 1, output=tmp_path, max_words=800
+        api,
+        "current",
+        {"training": True},
+        [dummy_example()],
+        "initial",
+        1,
+        output=tmp_path,
+        max_words=MAX_WORDS,
     )
     assert result == "current" and len(api.calls) == 2
     assert "previous_proposal" in api.calls[-1]
@@ -161,13 +183,11 @@ def test_rejected_proposal_is_retried_once_then_keeps_current_prompt(tmp_path):
 def test_parallel_writer_revises_each_section_keeps_order_and_resumes_without_calls(tmp_path):
     examples = [dummy_example("parallel" + str(i)) for i in range(4)]
 
-    class ParallelWriter:
+    class ParallelWriter(FakeWriter):
         """Makes every first draft too short, and holds it until two are in flight at once."""
 
-        roles = WRITER_ROLES
-
         def __init__(self):
-            self.dispatch_stopped = threading.Event()
+            super().__init__()
             self.calls = {}
             self.lock = threading.Lock()
             self.barrier = threading.Barrier(2)
@@ -205,13 +225,11 @@ def test_parallel_writer_revises_each_section_keeps_order_and_resumes_without_ca
 def test_parallel_writer_failure_stops_new_sections_and_keeps_finished_ones(tmp_path):
     examples = [dummy_example("interrupted" + str(i)) for i in range(4)]
 
-    class InterruptedWriter:
+    class InterruptedWriter(FakeWriter):
         """With fail=True, the first two sections start together and the first one raises."""
 
-        roles = WRITER_ROLES
-
         def __init__(self, fail):
-            self.dispatch_stopped = threading.Event()
+            super().__init__()
             self.calls = []
             self.fail = fail
             self.barrier = threading.Barrier(2)

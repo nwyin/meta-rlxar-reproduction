@@ -3,12 +3,13 @@
 from collections import Counter
 from dataclasses import replace
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 from conftest import call_kind, install_fake, write_dataset
 
 import run
-from xar.audit import audit_xar_run
+from xar.audit import RESEARCH_SPLIT_SIZES, audit_xar_run
 from xar.data import SECTIONS
 from xar.pipeline import run_xar
 from xar.report import render_report
@@ -37,15 +38,14 @@ def run_phase(tmp_path, design, phase, papers_by_split, *flags):
 
 @pytest.fixture
 def pilot(tmp_path, monkeypatch, design):
-    """A completed pilot run (design pilot_iterations updates), and the fake that served it."""
+    """A completed pilot run with its settings and output directory, and the fake that served it."""
     fake = install_fake(monkeypatch)
     settings = run_phase(tmp_path, design, "pilot", {"pilot": ["pilot0", "pilot1"]})
-    return fake, settings
+    return SimpleNamespace(fake=fake, settings=settings, out=Path(settings.output_dir))
 
 
 def test_pilot_run_completes_and_resume_makes_no_calls(pilot, design):
-    fake, settings = pilot
-    out = Path(settings.output_dir)
+    fake, settings, out = pilot.fake, pilot.settings, pilot.out
     freeze = read_json(out / "freeze.json")
     assert freeze["selected"] == 0  # every checkpoint ties on training, and the earliest wins
     assert len(freeze["prompt_hashes"]) == design["pilot_iterations"] + 1
@@ -63,18 +63,18 @@ def test_pilot_run_completes_and_resume_makes_no_calls(pilot, design):
 
 
 def test_audit_rejects_changed_request_temperature(pilot):
-    out = Path(pilot[1].output_dir)
+    out = pilot.out
     grade = read_json(next((out / "scores/main/0/train").glob("*/human.json")))
     request_path = Path(grade["attempts"][-1]["response"]["raw_response"]).parent / "request.json"
     request = read_json(request_path)
     request["payload"]["temperature"] = 0.9
     write_json(request_path, request)
-    with pytest.raises(RunError, match="decoding contract"):
+    with pytest.raises(RunError, match="temperature is 0.9"):
         audit_xar_run(out)
 
 
 def test_audit_rejects_wrong_grade_total(pilot):
-    out = Path(pilot[1].output_dir)
+    out = pilot.out
     grade_path = out / "scores/main/0/train/pilot0_abstract/human.json"
     grade = read_json(grade_path)
     grade["total"] = 10
@@ -84,15 +84,15 @@ def test_audit_rejects_wrong_grade_total(pilot):
 
 
 def test_check_pilot_records_the_audited_pilot(pilot, design):
-    runs_root = Path(pilot[1].output_dir).parent
+    runs_root = pilot.out.parent
     run.check_pilot(runs_root, design)
-    manifest = read_json(Path(pilot[1].output_dir) / "manifest.json")
+    manifest = read_json(pilot.out / "manifest.json")
     gate = read_json(runs_root / "meta_blog_pilot_gate.json")
     assert gate == {"pilot_substantive_hash": manifest["substantive_hash"]}
 
 
 def test_check_pilot_rejects_a_pilot_that_differs_from_the_design(pilot, design):
-    out = Path(pilot[1].output_dir)
+    out = pilot.out
     manifest = read_json(out / "manifest.json")
     manifest["arguments"]["failure_examples"] += 1
     write_json(out / "manifest.json", manifest)
@@ -114,15 +114,22 @@ def test_settings_follow_the_design(design, phase, split, iterations_key):
     for role in ROLES:
         assert getattr(settings, f"{role}_model") == design[role]
     assert settings.concurrency == 3 and settings.dry_run
-    assert run.settings_for(phase, design, run.parse_args([phase])).concurrency == design["concurrency"]
+    default = run.settings_for(phase, design, run.parse_args([phase, "--dry-run"]))
+    assert default.concurrency == design["concurrency"]
+
+
+@pytest.mark.parametrize("phase", ["pilot", "reproduce", "all"])
+def test_paid_runs_require_both_budgets(phase, capsys):
+    with pytest.raises(SystemExit):
+        run.parse_args([phase, "--budget-usd", "10"])
+    assert "--total-budget-usd are required unless --dry-run" in capsys.readouterr().err
 
 
 def test_report_from_research_run_and_after_tampering(tmp_path, monkeypatch, design):
     fake = install_fake(monkeypatch)
-    # The audit expects the real research size: 8 training and 5 validation papers.
     groups = {
-        "train": [f"train{i}" for i in range(8)],
-        "validation": [f"validation{i}" for i in range(5)],
+        split: [f"{split}{i}" for i in range(count // len(SECTIONS))]
+        for split, count in RESEARCH_SPLIT_SIZES.items()
     }
     settings = run_phase(tmp_path, design, "reproduce", groups, "--concurrency", "4")
     source, runs = Path(settings.output_dir), tmp_path / "runs"
@@ -142,7 +149,7 @@ def test_report_from_research_run_and_after_tampering(tmp_path, monkeypatch, des
     assert comparison["selected_iteration"] == 0
     assert comparison["initial_gap"] == 1 and comparison["selected_gap"] == 1
     assert comparison["reversed"] is False
-    assert comparison["paired_improvement"]["interval"]["paper_clusters"] == 5
+    assert comparison["paired_improvement"]["interval"]["paper_clusters"] == len(groups["validation"])
     assert (output / "gap_curves.svg").exists()
     grade_path = next((source / "scores/main/0/validation").glob("*/human.json"))
     grade = read_json(grade_path)

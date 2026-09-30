@@ -12,7 +12,7 @@ from xar.audit import audit_xar_run, validate_primary_manifest
 from xar.data import load_examples, prepare_data, prepare_tokenizers
 from xar.pipeline import RunSettings, run_xar
 from xar.report import render_report
-from xar.util import ROLES, ROOT, RunError, main_guard, parse_concurrency, write_json
+from xar.util import MAX_CONCURRENCY, ROLES, ROOT, RunError, main_guard, parse_concurrency, write_json
 
 # phase -> (run directory key, data split, iterations key) in experiments.yaml
 PHASES = {
@@ -49,8 +49,9 @@ def settings_for(phase, design, options):
 def check_pilot(runs_root, design):
     """Audit the pilot run and check that it used the settings in experiments.yaml.
 
-    reproduce calls this first. On success it saves the pilot's substantive hash to
-    meta_blog_pilot_gate.json. The pilot's scores are never looked at."""
+    reproduce calls this first. Only the pilot's settings and audit result are checked, not its
+    scores. On success it saves the pilot's substantive hash to meta_blog_pilot_gate.json; nothing
+    in the pipeline reads that file, it is a record for scripts/audit_completed_run.py."""
     run = audit_xar_run(Path(runs_root) / design["pilot_run"])
     manifest = run["manifest"]
     validate_primary_manifest(manifest, {**design, "iterations": design["pilot_iterations"]})
@@ -76,23 +77,33 @@ def run_phases(options):
         print(f"{action} the {phase} phase in {settings.output_dir}", flush=True)
         run_xar(settings)
     if "reproduce" in phases and not options.dry_run:
-        render_report(options.runs_root, ROOT / "reports")
+        render_report(options.runs_root, options.output_dir)
+
+
+EPILOG = """\
+Setup: copy .env.example to .env and set OPENROUTER_API_KEY.
+Order: prepare-tokenizers, prepare-data, validate-data, pilot, reproduce (or all), report."""
 
 
 def parse_args(argv=None):
+    design = load_design()
     parser = argparse.ArgumentParser(
-        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
+        description=__doc__, epilog=EPILOG, formatter_class=argparse.RawDescriptionHelpFormatter
     )
     commands = parser.add_subparsers(dest="command", required=True, metavar="command")
     run_options = argparse.ArgumentParser(add_help=False)
-    run_options.add_argument("--budget-usd", type=float, help="spending limit for this run")
     run_options.add_argument(
-        "--total-budget-usd", type=float, help="spending limit across all runs sharing the ledger"
+        "--budget-usd", type=float, help="USD limit for this run (required unless --dry-run)"
+    )
+    run_options.add_argument(
+        "--total-budget-usd",
+        type=float,
+        help="USD limit summed over every run in <runs-root>/budget_ledger.json (required unless --dry-run)",
     )
     run_options.add_argument(
         "--concurrency",
         type=parse_concurrency,
-        help="parallel requests, 1-32 (default: experiments.yaml)",
+        help=f"parallel requests, 1-{MAX_CONCURRENCY} (default: concurrency in experiments.yaml)",
     )
     run_options.add_argument(
         "--dry-run", action="store_true", help="print the cost estimate without sending requests"
@@ -101,28 +112,52 @@ def parse_args(argv=None):
         "--resume", action="store_true", help="continue an existing run whose settings are unchanged"
     )
     run_options.add_argument(
-        "--runs-root", default="runs", help="directory for the runs and the shared budget ledger"
+        "--runs-root",
+        default="runs",
+        help="directory for the runs and the shared budget ledger (default: runs/)",
+    )
+    report_options = argparse.ArgumentParser(add_help=False)
+    report_options.add_argument(
+        "--output-dir",
+        default="reports",
+        help="where to write results.md, audit.json and the figures (default: reports/)",
     )
     commands.add_parser(
         "pilot",
         parents=[run_options],
-        help="a short run on the two pilot papers (pilot_iterations updates) to check the pipeline",
+        help="a short run on the two pilot papers to check the pipeline "
+        f"(prompt updates: {design['pilot_iterations']})",
     )
     commands.add_parser(
         "reproduce",
-        parents=[run_options],
-        help="check the pilot, run the research trajectory, then write reports/",
+        parents=[run_options, report_options],
+        help="audit the completed pilot run (run `pilot` first), run the full experiment on the "
+        f"train/validation papers with {design['iterations']} prompt updates, then write the report",
     )
-    commands.add_parser("all", parents=[run_options], help="pilot, then reproduce")
-    report = commands.add_parser("report", help="audit the research run and write the report")
-    report.add_argument("--runs-root", default="runs")
-    report.add_argument("--output-dir", default="reports")
-    audit = commands.add_parser("audit-run", help="audit one saved run")
-    audit.add_argument("--source-run", required=True)
-    commands.add_parser("validate-data", help="check the dataset and splits")
-    commands.add_parser("prepare-data", help="rebuild the dataset from data/raw")
-    commands.add_parser("prepare-tokenizers", help="download the pinned tokenizers")
-    return parser.parse_args(argv)
+    commands.add_parser("all", parents=[run_options, report_options], help="pilot, then reproduce")
+    report = commands.add_parser(
+        "report", parents=[report_options], help="audit the research run and write the report"
+    )
+    report.add_argument(
+        "--runs-root", default="runs", help="directory holding the research run (default: runs/)"
+    )
+    audit = commands.add_parser(
+        "audit-run",
+        help="re-check a saved run's rubrics, grades and checkpoint table against its raw API responses "
+        "(no API calls)",
+    )
+    audit.add_argument("--source-run", required=True, help="a run directory, e.g. runs/meta-blog-seed0")
+    commands.add_parser("validate-data", help="check data/examples.jsonl against data/splits.json")
+    commands.add_parser("prepare-data", help="rebuild data/examples.jsonl from data/raw")
+    commands.add_parser(
+        "prepare-tokenizers",
+        help="download the tokenizers pinned in configs/tokenizers.json into data/tokenizers/",
+    )
+    options = parser.parse_args(argv)
+    is_run = options.command in PHASES or options.command == "all"
+    if is_run and not options.dry_run and None in (options.budget_usd, options.total_budget_usd):
+        parser.error("--budget-usd and --total-budget-usd are required unless --dry-run")
+    return options
 
 
 def main(argv=None):

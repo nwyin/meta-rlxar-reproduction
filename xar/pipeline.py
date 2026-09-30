@@ -100,6 +100,11 @@ def validate_grade(grade, rubric, supplied_text):
         for quoted in QUOTED_TEXT.findall(score["evidence"]):
             if normalize(quoted).casefold() not in normalize(supplied_text).casefold():
                 raise InvalidOutput("Evidence quote does not occur in supplied text")
+    return grade_total(grade)
+
+
+def grade_total(grade):
+    """The mean criterion score of a grade."""
     return statistics.mean(s["score"] for s in grade["scores"])
 
 
@@ -129,10 +134,9 @@ def writer_candidates(api, examples, output, concurrency=1):
     def write_section(example):
         eid = example["example_id"]
         path = Path(output) / "generations" / (eid + ".json")
-        if path.exists():
-            record = read_json(path)
-        else:
-            record = new_section(example, path)
+        if not path.exists():
+            return new_section(example, path)
+        record = read_json(path)
         if record["context_hash"] != example["context_hash"] or record["text_hash"] != digest(record["text"]):
             raise RunError(
                 f"{path} does not match example {eid} (its context or text hash differs); "
@@ -248,10 +252,7 @@ def grade_candidate(api, example, rubric_record, text, identity, output):
         "identity": identity,
         **result,
     }
-    if result["value"]:
-        record["total"] = statistics.mean(s["score"] for s in result["value"]["scores"])
-    else:
-        record["total"] = None
+    record["total"] = grade_total(result["value"]) if result["value"] else None
     write_json(output, record, write_once=True)
     return record
 
