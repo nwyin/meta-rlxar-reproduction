@@ -9,6 +9,7 @@ import argparse
 import collections
 import hashlib
 import math
+import os
 import statistics
 import subprocess
 import sys
@@ -34,8 +35,9 @@ def main():
     parser.add_argument("--source-run", default=s.ROOT / "runs/meta-blog-seed0")
     parser.add_argument("--output", default=s.ROOT / "reports/completion_audit.json")
     args = parser.parse_args()
-    root = Path(args.source_run)
-    runs = s.ROOT / "runs"
+    root, output = Path(args.source_run).resolve(), Path(args.output).resolve()
+    # Saved runs store file paths relative to the repo root, so work from there.
+    os.chdir(s.ROOT)
     run = s.audit_xar_run(root)
     manifest = run["manifest"]
     run_args = manifest["arguments"]
@@ -43,13 +45,13 @@ def main():
     commit = manifest["git_commit"]
     check(commit, "Run manifest has no git commit; cannot verify the code that produced it")
     for name, expected in manifest["software_hashes"].items():
-        blob = subprocess.check_output(["git", "show", f"{commit}:{name}"], cwd=s.ROOT)
+        blob = subprocess.check_output(["git", "show", f"{commit}:{name}"])
         check(
             hashlib.sha256(blob).hexdigest() == expected,
             f"{name} at {commit} does not match the run manifest",
         )
-    dataset = s.ROOT / manifest["dataset"]
-    all_examples = s.load_examples(dataset, s.ROOT / manifest["splits"])
+    dataset = Path(manifest["dataset"])
+    all_examples = s.load_examples(dataset, manifest["splits"])
     examples = [e for e in all_examples if e["split"] in ("train", "validation")]
     train = [e for e in examples if e["split"] == "train"]
     lookup = {e["example_id"]: e for e in examples}
@@ -60,7 +62,7 @@ def main():
         check(decision == "approved", f"{e['paper_id']}: human review decision is {decision!r}")
     candidates = run["candidates"]
     check(set(candidates) == set(lookup), "Writer candidates do not match the train and validation examples")
-    ledger = s.read_json(s.ROOT / run_args["budget_ledger"])["entries"]
+    ledger = s.read_json(run_args["budget_ledger"])["entries"]
     counts, latencies, ended = collections.Counter(), collections.defaultdict(list), {}
     schemas = {"rubric": s.RUBRIC_SCHEMA, "judge": s.GRADE_SCHEMA, "optimizer": s.PROPOSAL_SCHEMA}
     total_cost = 0
@@ -273,8 +275,8 @@ def main():
         shared_total <= run_args["total_budget_usd"],
         f"Ledger total {shared_total} is over the ${run_args['total_budget_usd']} budget",
     )
-    pilot = s.audit_xar_run(runs / "pilot-meta-blog-attested")
-    gate = s.read_json(runs / "meta_blog_pilot_gate.json")
+    pilot = s.audit_xar_run("runs/pilot-meta-blog-attested")
+    gate = s.read_json("runs/meta_blog_pilot_gate.json")
     check(
         gate["pilot_substantive_hash"] == pilot["manifest"]["substantive_hash"],
         "Pilot gate file does not match the pilot run",
@@ -302,7 +304,7 @@ def main():
         "proposals": proposals,
         "request_counts": dict(counts),
         "research_cost_usd": total_cost,
-        "pilot_cost_usd": s.read_json(runs / "pilot-meta-blog-attested/costs.json")["actual_complete_usd"],
+        "pilot_cost_usd": s.read_json("runs/pilot-meta-blog-attested/costs.json")["actual_complete_usd"],
         "shared_charged_or_reserved_usd": shared_total,
         "writer_length_compliant": sum(c["length_compliant"] for c in candidates.values()),
         "writer_contamination_flagged": sum(c["contamination"]["flagged"] for c in candidates.values()),
@@ -312,7 +314,7 @@ def main():
         "research_wallclock_seconds": wallclock.total_seconds(),
         "sensitivity": sensitivity,
     }
-    s.write_json(args.output, result)
+    s.write_json(output, result)
     print(
         "Completion audit passed; research USD:",
         round(total_cost, 2),
