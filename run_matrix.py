@@ -61,15 +61,9 @@ def pilot_gate(root, design):
     validate_primary_manifest(manifest, protocol)
     if manifest["arguments"]["split"] != "pilot":
         raise ContractError("Separate pilot papers required before research")
-    # Gap signs and proposal acceptance never select access to research.
+    # The pilot only has to pass the audit; its scores are never looked at.
     write_json(
-        Path(root) / "meta_blog_pilot_gate.json",
-        {
-            "operational_checks": "raw_verified",
-            "research_allowed": True,
-            "gap_sign_used_for_gate": False,
-            "pilot_substantive_hash": manifest["substantive_hash"],
-        },
+        Path(root) / "meta_blog_pilot_gate.json", {"pilot_substantive_hash": manifest["substantive_hash"]}
     )
 
 

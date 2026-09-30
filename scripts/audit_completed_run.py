@@ -1,12 +1,19 @@
-"""Re-audit the completed Muse/Kimi research run from its saved requests and outputs; makes no API calls."""
+"""Re-audit the completed Muse/Kimi research run from its saved requests and outputs.
+
+Makes no API calls and writes only the summary numbers to --output. The checks re-derive saved
+artifacts with the current code (build_feedback, task_data, audit_proposal, contamination,
+audit_request_contract, request_upper), so a refactor that changes their output fails here.
+"""
 
 import argparse
 import collections
 import hashlib
 import math
+import os
 import statistics
 import subprocess
 import sys
+from datetime import datetime
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
@@ -14,67 +21,87 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 import exp_xar
 import shared as s
 
+WRITER_ATTEMPTS = 3  # shared.writer_candidates tries each section at most three times
+
+
+def check(ok, message):
+    """Like assert, but not stripped by python -O."""
+    if not ok:
+        raise s.ContractError(message)
+
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--source-run", default="runs/meta-blog-seed0")
-    parser.add_argument("--output", default="reports/completion_audit.json")
+    parser.add_argument("--source-run", default=s.ROOT / "runs/meta-blog-seed0")
+    parser.add_argument("--output", default=s.ROOT / "reports/completion_audit.json")
     args = parser.parse_args()
-    root = Path(args.source_run)
+    root, output = Path(args.source_run).resolve(), Path(args.output).resolve()
+    # Saved runs store file paths relative to the repo root, so work from there.
+    os.chdir(s.ROOT)
     run = s.audit_xar_run(root)
     manifest = run["manifest"]
+    run_args = manifest["arguments"]
     # The code has changed since the run; check the recorded hashes against the commit that produced it.
     commit = manifest["git_commit"]
-    assert commit, "Run manifest has no git commit; cannot verify the code that produced it"
+    check(commit, "Run manifest has no git commit; cannot verify the code that produced it")
     for name, expected in manifest["software_hashes"].items():
-        blob = subprocess.check_output(["git", "show", f"{commit}:{name}"], cwd=s.ROOT)
-        assert hashlib.sha256(blob).hexdigest() == expected, (
-            f"{name} at {commit} does not match the run manifest"
+        blob = subprocess.check_output(["git", "show", f"{commit}:{name}"])
+        check(
+            hashlib.sha256(blob).hexdigest() == expected,
+            f"{name} at {commit} does not match the run manifest",
         )
-    all_examples = s.load_examples(manifest["dataset"], manifest["splits"])
+    dataset = Path(manifest["dataset"])
+    all_examples = s.load_examples(dataset, manifest["splits"])
     examples = [e for e in all_examples if e["split"] in ("train", "validation")]
     train = [e for e in examples if e["split"] == "train"]
     lookup = {e["example_id"]: e for e in examples}
-    review = s.read_json(Path(manifest["dataset"]).parent / "human_review.json")
-    assert review["dataset_hash"] == manifest["dataset_hash"]
-    assert all(review["papers"][e["paper_id"]]["decision"] == "approved" for e in examples)
+    review = s.read_json(dataset.parent / "human_review.json")
+    check(review["dataset_hash"] == manifest["dataset_hash"], "human_review.json is for a different dataset")
+    for e in examples:
+        decision = review["papers"][e["paper_id"]]["decision"]
+        check(decision == "approved", f"{e['paper_id']}: human review decision is {decision!r}")
     candidates = run["candidates"]
-    assert set(candidates) == set(lookup) and len(candidates) == 52
-    ledger = s.read_json(manifest["arguments"]["budget_ledger"])["entries"]
-    counts, latencies, sent, ended = collections.Counter(), collections.defaultdict(list), {}, {}
+    check(set(candidates) == set(lookup), "Writer candidates do not match the train and validation examples")
+    ledger = s.read_json(run_args["budget_ledger"])["entries"]
+    counts, latencies, ended = collections.Counter(), collections.defaultdict(list), {}
     schemas = {"rubric": s.RUBRIC_SCHEMA, "judge": s.GRADE_SCHEMA, "optimizer": s.PROPOSAL_SCHEMA}
     total_cost = 0
     for path in root.glob("requests/*/request.json"):
         request = s.read_json(path)
         role, payload = request["role"], request["payload"]
         cfg, endpoint = manifest["roles"][role], manifest["endpoints"][role]
-        assert role in ("writer", "rubric", "judge", "optimizer")
-        assert (
-            request["key"]
-            == path.parent.name
-            == s.digest(
-                {
-                    "payload": payload,
-                    "identity": request["identity"],
-                    "schema_version": manifest["schema_version"],
-                }
-            )
-        )
+        check(request["key"] == path.parent.name, f"{path}: key {request['key']} differs from its folder")
+        hashed = {
+            "payload": payload,
+            "identity": request["identity"],
+            "schema_version": manifest["schema_version"],
+        }
+        check(request["key"] == s.digest(hashed), f"{path}: key does not match the request contents")
         if role == "writer":
             for key in ("model", "temperature", "reasoning", "max_tokens"):
-                assert payload[key] == cfg[key]
-            assert payload["provider"] == {
+                check(
+                    payload[key] == cfg[key],
+                    f"{path}: writer {key} is {payload[key]!r}, expected {cfg[key]!r}",
+                )
+            routing = {
                 "only": [cfg["provider"]],
                 "order": [cfg["provider"]],
                 "allow_fallbacks": False,
                 "require_parameters": True,
             }
-            assert payload["plugins"] == payload["transforms"] == [] and payload["stream"] is False
-            assert "response_format" not in payload
-            assert len(payload["messages"]) == 2
-            assert (
+            check(payload["provider"] == routing, f"{path}: writer provider routing differs")
+            check(payload["plugins"] == [], f"{path}: writer request has plugins")
+            check(payload["transforms"] == [], f"{path}: writer request has transforms")
+            check(payload["stream"] is False, f"{path}: writer request is streamed")
+            check("response_format" not in payload, f"{path}: writer request has a response_format")
+            check(
+                len(payload["messages"]) == 2,
+                f"{path}: writer request has {len(payload['messages'])} messages",
+            )
+            check(
                 s.digest(payload["messages"][0]["content"])
-                == manifest["software_hashes"]["prompts/writer.md"]
+                == manifest["software_hashes"]["prompts/writer.md"],
+                f"{path}: writer system prompt differs from prompts/writer.md",
             )
         else:
             wrapper = {"rubric": "rubric_wrapper", "judge": "judge", "optimizer": "optimizer"}[role]
@@ -84,37 +111,65 @@ def main():
         bound = s.request_upper(payload, endpoint["endpoint"])
         for receipt_path in path.parent.glob("attempt_*.json"):
             receipt = s.read_json(receipt_path)
-            assert receipt["status"] == "success"
+            check(receipt["status"] == "success", f"{receipt_path}: status is {receipt['status']}")
             raw = receipt["response"]
-            assert raw["model"] in (cfg["model"], endpoint["canonical_slug"])
-            assert raw["provider"] in (cfg["provider"], endpoint["endpoint"]["provider_name"])
-            assert raw["choices"][0]["finish_reason"] == "stop"
+            check(
+                raw["model"] in (cfg["model"], endpoint["canonical_slug"]),
+                f"{receipt_path}: answered by model {raw['model']}",
+            )
+            check(
+                raw["provider"] in (cfg["provider"], endpoint["endpoint"]["provider_name"]),
+                f"{receipt_path}: answered by provider {raw['provider']}",
+            )
+            finish = raw["choices"][0]["finish_reason"]
+            check(finish == "stop", f"{receipt_path}: finish reason is {finish}")
             index = receipt_path.stem.removeprefix("attempt_")
             key = str(root.resolve()) + "/" + request["key"] + "/" + index
             entry = ledger[key]
             cost = raw["usage"]["cost"]
-            assert entry["state"] == "complete" and math.isclose(entry["charge"], cost)
-            assert math.isclose(entry["upper"], bound) and cost <= bound
-            assert entry["created_at"] <= receipt["sent_at"] <= receipt["timestamp"] <= entry["settled_at"]
+            check(entry["state"] == "complete", f"{key}: ledger entry is {entry['state']}")
+            check(
+                math.isclose(entry["charge"], cost), f"{key}: ledger charge {entry['charge']} != cost {cost}"
+            )
+            check(
+                math.isclose(entry["upper"], bound),
+                f"{key}: ledger reservation {entry['upper']} != bound {bound}",
+            )
+            check(cost <= bound, f"{key}: cost {cost} is more than its bound {bound}")
+            check(
+                entry["created_at"] <= receipt["sent_at"] <= receipt["timestamp"] <= entry["settled_at"],
+                f"{key}: reserve, send, receive and settle times are out of order",
+            )
             counts[role] += 1
             latencies[role].append(receipt["duration_seconds"])
             total_cost += cost
-            sent[str(receipt_path)] = receipt["sent_at"]
             ended[str(receipt_path)] = receipt["timestamp"]
     writer_times, training_times, validation_times = [], [], []
     for eid, candidate in candidates.items():
         e = lookup[eid]
         attempts = candidate["attempts"]
-        assert 1 <= len(attempts) <= 3 and candidate["accepted_attempt"] == len(attempts) - 1
-        assert not any(a["length_compliant"] for a in attempts[:-1])
-        assert candidate["length_compliant"] or len(attempts) == 3
+        check(1 <= len(attempts) <= WRITER_ATTEMPTS, f"{eid}: {len(attempts)} writer attempts")
+        check(
+            candidate["accepted_attempt"] == len(attempts) - 1, f"{eid}: accepted attempt is not the last one"
+        )
+        check(
+            not any(a["length_compliant"] for a in attempts[:-1]),
+            f"{eid}: writer retried after a section that met the length target",
+        )
+        check(
+            candidate["length_compliant"] or len(attempts) == WRITER_ATTEMPTS,
+            f"{eid}: writer stopped before meeting the length target or using every attempt",
+        )
         for i, attempt in enumerate(attempts):
             receipt = s.read_json(attempt["response"]["raw_response"])
             raw_text = receipt["response"]["choices"][0]["message"]["content"].strip()
-            assert raw_text == attempt["text"] and s.digest(raw_text) == attempt["text_hash"]
-            assert s.words(raw_text) == attempt["words"]
-            assert attempt["length_compliant"] == (
-                0.85 * e["target_words"] <= s.words(raw_text) <= 1.15 * e["target_words"]
+            check(raw_text == attempt["text"], f"{eid} attempt {i}: saved text differs from the response")
+            check(s.digest(raw_text) == attempt["text_hash"], f"{eid} attempt {i}: text hash differs")
+            check(s.words(raw_text) == attempt["words"], f"{eid} attempt {i}: word count differs")
+            check(
+                attempt["length_compliant"]
+                == (0.85 * e["target_words"] <= s.words(raw_text) <= 1.15 * e["target_words"]),
+                f"{eid} attempt {i}: length_compliant flag is wrong",
             )
             q = s.read_json(Path(attempt["response"]["raw_response"]).parent / "request.json")
             expected = s.task_data(e)
@@ -123,36 +178,66 @@ def main():
                     previous_section=attempts[i - 1]["text"],
                     length_revision=f"Revise only to fit {math.ceil(0.85 * e['target_words'])}–{math.floor(1.15 * e['target_words'])} words. Preserve claims.",
                 )
-            assert s.canonical(expected) == q["payload"]["messages"][1]["content"]
+            check(
+                s.canonical(expected) == q["payload"]["messages"][1]["content"],
+                f"{eid} attempt {i}: writer input differs from the task data",
+            )
             writer_times.append(receipt["timestamp"])
-        assert candidate["text"] == attempts[-1]["text"] and candidate["complete"]
-        assert candidate["contamination"] == s.contamination(candidate["text"], e["reference"])
+        check(candidate["text"] == attempts[-1]["text"], f"{eid}: candidate text is not the last attempt")
+        check(candidate["complete"], f"{eid}: candidate is incomplete")
+        check(
+            candidate["contamination"] == s.contamination(candidate["text"], e["reference"]),
+            f"{eid}: contamination check differs",
+        )
     initial = (root / "prompts/iter_00.md").read_text()
+    max_words = run_args["max_meta_prompt_words"]
     proposals = []
-    for iteration in range(1, 8):
+    for iteration in range(1, run_args["iterations"] + 1):
         previous = (root / f"prompts/iter_{iteration - 1:02d}.md").read_text()
         rows = s.read_json(root / f"scores/main/{iteration - 1}/train_rows.json")
-        expected = exp_xar.build_feedback(train, candidates, rows, previous, 4)
+        expected = exp_xar.build_feedback(train, candidates, rows, previous, run_args["failure_examples"])
         directory = root / f"feedback/iter_{iteration:02d}"
         feedback, proposal = (
             s.read_json(directory / "training.json"),
             s.read_json(directory / "proposal.json"),
         )
-        assert s.canonical(expected) == s.canonical(feedback)
-        assert proposal["parent_prompt_hash"] == s.digest(previous)
-        assert proposal["feedback_hash"] == s.digest(feedback) and proposal["update_consumed"]
-        assert 1 <= len(proposal["attempts"]) <= 2
+        check(s.canonical(expected) == s.canonical(feedback), f"iteration {iteration}: feedback differs")
+        check(
+            proposal["parent_prompt_hash"] == s.digest(previous),
+            f"iteration {iteration}: parent prompt differs",
+        )
+        check(
+            proposal["feedback_hash"] == s.digest(feedback), f"iteration {iteration}: feedback hash differs"
+        )
+        check(proposal["update_consumed"], f"iteration {iteration}: update not consumed")
+        check(
+            1 <= len(proposal["attempts"]) <= 2,
+            f"iteration {iteration}: {len(proposal['attempts'])} attempts",
+        )
         for attempt in proposal["attempts"]:
             payload = s.audit_saved_output(attempt, s.PROPOSAL_SCHEMA)
-            assert payload["messages"][1]["content"] == s.canonical(
-                {"feedback": feedback, "max_meta_prompt_words": 800}
+            check(
+                payload["messages"][1]["content"]
+                == s.canonical({"feedback": feedback, "max_meta_prompt_words": max_words}),
+                f"iteration {iteration}: optimizer input differs",
             )
-            assert attempt["audit"] == s.audit_proposal(attempt["value"]["prompt"], train, initial, 800)
-        assert proposal["accepted"] == proposal["attempts"][-1]["audit"]["accepted"]
-        assert proposal["prompt"] == (
-            proposal["attempts"][-1]["value"]["prompt"] if proposal["accepted"] else previous
+            check(
+                attempt["audit"] == s.audit_proposal(attempt["value"]["prompt"], train, initial, max_words),
+                f"iteration {iteration}: proposal audit differs",
+            )
+        check(
+            proposal["accepted"] == proposal["attempts"][-1]["audit"]["accepted"],
+            f"iteration {iteration}: accepted flag differs from the last audit",
         )
-        assert proposal["prompt_hash"] == run["freeze"]["prompt_hashes"][iteration]
+        check(
+            proposal["prompt"]
+            == (proposal["attempts"][-1]["value"]["prompt"] if proposal["accepted"] else previous),
+            f"iteration {iteration}: saved prompt is not the one the audit implies",
+        )
+        check(
+            proposal["prompt_hash"] == run["freeze"]["prompt_hashes"][iteration],
+            f"iteration {iteration}: prompt hash differs from freeze.json",
+        )
         proposals.append(
             {"iteration": iteration, "accepted": proposal["accepted"], "words": s.words(proposal["prompt"])}
         )
@@ -171,18 +256,30 @@ def main():
         for p in root.glob("requests/*/request.json")
         if s.read_json(p)["role"] == "rubric"
     )
-    assert max(writer_times) <= first_rubric
-    assert max(training_times) <= run["freeze"]["frozen_at"] <= min(validation_times)
+    frozen_at = run["freeze"]["frozen_at"]
+    check(max(writer_times) <= first_rubric, "A rubric request was sent before the writer finished")
+    check(max(training_times) <= frozen_at, "A training request finished after freeze.json was written")
+    check(frozen_at <= min(validation_times), "A validation request was sent before freeze.json was written")
     costs = s.read_json(root / "costs.json")
-    assert math.isclose(costs["actual_complete_usd"], total_cost) and costs["unresolved"] == 0
-    assert costs["requests"] == sum(counts.values()) == 1389
+    check(
+        math.isclose(costs["actual_complete_usd"], total_cost),
+        f"costs.json total {costs['actual_complete_usd']} != sum of responses {total_cost}",
+    )
+    check(costs["unresolved"] == 0, f"costs.json has {costs['unresolved']} unresolved requests")
+    check(
+        costs["requests"] == sum(counts.values()),
+        f"costs.json counts {costs['requests']} requests; found {sum(counts.values())}",
+    )
     shared_total = sum(e["charge"] for e in ledger.values())
-    assert shared_total <= 100
+    check(
+        shared_total <= run_args["total_budget_usd"],
+        f"Ledger total {shared_total} is over the ${run_args['total_budget_usd']} budget",
+    )
     pilot = s.audit_xar_run("runs/pilot-meta-blog-attested")
     gate = s.read_json("runs/meta_blog_pilot_gate.json")
-    assert (
-        gate["pilot_substantive_hash"] == pilot["manifest"]["substantive_hash"]
-        and gate["gap_sign_used_for_gate"] is False
+    check(
+        gate["pilot_substantive_hash"] == pilot["manifest"]["substantive_hash"],
+        "Pilot gate file does not match the pilot run",
     )
     selected = run["freeze"]["selected"]
     sensitivity = {}
@@ -200,35 +297,24 @@ def main():
                 "selected": s.summarize(bb),
                 "improvement": s.paired_improvement(aa, bb),
             }
+    wallclock = datetime.fromisoformat(max(ended.values())) - datetime.fromisoformat(manifest["created_at"])
     result = {
         "at": s.now(),
         "source_run": str(root),
-        "scientific_execution_complete": True,
-        "frozen_software_verified": True,
-        "writer_raw_inputs_outputs_and_repairs_verified": True,
-        "all_requests_routing_schema_identity_price_reservations_verified": True,
-        "seven_optimizer_proposals_feedback_and_static_audits_verified": proposals,
-        "selection_and_validation_order_verified": True,
-        "human_review_verified": True,
-        "pilot_raw_verified": True,
+        "proposals": proposals,
         "request_counts": dict(counts),
         "research_cost_usd": total_cost,
         "pilot_cost_usd": s.read_json("runs/pilot-meta-blog-attested/costs.json")["actual_complete_usd"],
         "shared_charged_or_reserved_usd": shared_total,
-        "research_unresolved_requests": 0,
         "writer_length_compliant": sum(c["length_compliant"] for c in candidates.values()),
         "writer_contamination_flagged": sum(c["contamination"]["flagged"] for c in candidates.values()),
         "latency_seconds": {
             r: {"median": statistics.median(v), "total": sum(v)} for r, v in latencies.items()
         },
-        "research_wallclock_seconds": (
-            s.dt.datetime.fromisoformat(max(ended.values()))
-            - s.dt.datetime.fromisoformat(manifest["created_at"])
-        ).total_seconds(),
+        "research_wallclock_seconds": wallclock.total_seconds(),
         "sensitivity": sensitivity,
-        "version_control_final_artifacts": "pending_commit",
     }
-    s.write_json(args.output, result)
+    s.write_json(output, result)
     print(
         "Completion audit passed; research USD:",
         round(total_cost, 2),

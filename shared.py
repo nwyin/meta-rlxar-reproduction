@@ -5,7 +5,6 @@ from __future__ import annotations
 import argparse
 import concurrent.futures
 import contextlib
-import copy
 import csv
 import datetime as dt
 import fcntl
@@ -386,7 +385,7 @@ class OpenRouter:
         write_json(directory / "models.json", catalog)
         models = {m["id"]: m for m in catalog["data"]}
         endpoints = {}
-        pricing_bounds = {}
+        observed_prices = {}
         for role, cfg in self.roles.items():
             model = cfg["model"]
             if (
@@ -416,16 +415,7 @@ class OpenRouter:
                 raise ContractError(
                     "Endpoint pricing exceeds frozen upper rates; refresh evidence for a new batch"
                 )
-            pricing_bounds[role] = {
-                "observed": current_price,
-                "frozen_upper": frozen_upper,
-                "pricing_headroom_multiplier": PRICING_HEADROOM,
-                "price_changed_within_bound": current_price != pricing_upper(prior),
-                "lower_prices_within_bound": all(
-                    current_price[k] <= pricing_upper(prior)[k] for k in current_price
-                )
-                and current_price != pricing_upper(prior),
-            }
+            observed_prices[role] = current_price
             if current.get("quantization") != prior.get("quantization"):
                 raise ContractError("Pinned endpoint precision changed; declare a new batch")
             efforts = models[model].get("reasoning", {}).get("supported_efforts", [])
@@ -433,14 +423,7 @@ class OpenRouter:
                 raise ContractError("Pinned reasoning mapping changed")
         write_json(
             directory / "checks.json",
-            {
-                "at": now(),
-                "roles": self.roles,
-                "passed": True,
-                "read_only": True,
-                "pricing_bounds": pricing_bounds,
-                "paid_capability_checks": "separate_operational_pilot",
-            },
+            {"at": now(), "roles": self.roles, "observed_prices": observed_prices},
         )
         return directory
 
@@ -1004,43 +987,25 @@ def operational_summary(output):
         counts["invalid_attempts"] += status == "invalid"
     for counts in role_rates.values():
         counts["invalid_fraction"] = counts["invalid_attempts"] / counts["structured_attempts"]
-    usage_rows = []
-    for request in (output / "requests").glob("*/request.json"):
-        metadata = read_json(request)
-        for receipt in request.parent.glob("attempt_*.json"):
-            data = read_json(receipt)
-            usage = data.get("response", {}).get("usage", {})
-            usage_rows.append(
-                {
-                    "role": metadata["role"],
-                    "status": data["status"],
-                    "prompt_tokens": usage.get("prompt_tokens"),
-                    "completion_tokens": usage.get("completion_tokens"),
-                    "cost_usd": usage.get("cost"),
-                    "latency_seconds": data.get("duration_seconds"),
-                }
-            )
+    statuses = [read_json(receipt)["status"] for receipt in (output / "requests").glob("*/attempt_*.json")]
     summary = {
         "format_validation": role_rates,
-        "transport_attempts": len(usage_rows),
-        "raw_usage_cost_usd": sum(r["cost_usd"] or 0 for r in usage_rows),
-        "unresolved_transport": sum(r["status"] == "uncertain" for r in usage_rows),
+        "transport_attempts": len(statuses),
+        "unresolved_transport": statuses.count("uncertain"),
     }
     write_json(output / "operational_summary.json", summary)
-    write_table(output / "scores/request_usage.csv", usage_rows)
     return summary
+
+
+BUDGET_ARGS = {"budget_usd", "total_budget_usd"}
 
 
 def resolved_manifest(args, roles, experiment, extra=None):
     arguments = {k: v for k, v in vars(args).items() if k not in {"dry_run", "resume", "output_dir"}}
     endpoints = {}
     for role, cfg in roles.items():
-        e, m = endpoint_for(cfg)
-        endpoints[role] = {
-            "endpoint": e,
-            "canonical_slug": m["canonical_slug"],
-            "unsupported_seed": "seed" not in e["supported_parameters"],
-        }
+        endpoint, catalog = endpoint_for(cfg)
+        endpoints[role] = {"endpoint": endpoint, "canonical_slug": catalog["canonical_slug"]}
     manifest = {
         "experiment": experiment,
         "arguments": arguments,
@@ -1054,10 +1019,9 @@ def resolved_manifest(args, roles, experiment, extra=None):
         "schema_version": SCHEMA_VERSION,
         "extra": extra or {},
     }
-    substantive = copy.deepcopy(manifest)
-    for k in ("budget_usd", "total_budget_usd"):
-        substantive["arguments"].pop(k, None)
-    manifest["substantive_hash"] = digest(substantive)
+    # Budgets may change on resume; everything else must match the saved run.
+    hashed = {**manifest, "arguments": {k: v for k, v in arguments.items() if k not in BUDGET_ARGS}}
+    manifest["substantive_hash"] = digest(hashed)
     return manifest
 
 
@@ -1081,7 +1045,6 @@ def initialize_run(args, roles, experiment, extra=None):
     }
     if any(review.get("papers", {}).get(p, {}).get("decision") != "approved" for p in used_papers):
         raise ContractError("Selected papers still need human review; see data/review.md")
-    manifest["human_review_hash"] = file_hash(review_path)
     # Check for an existing run before any network call or write.
     saved = read_json(path) if path.exists() else None
     if saved is not None:
@@ -1128,36 +1091,44 @@ def run_lock(output):
         yield
 
 
+# Rough numbers for the dry-run estimate. Live requests are priced exactly by request_upper.
+BYTES_PER_TOKEN = 3.5  # typical for English prose
+PROMPT_OVERHEAD_TOKENS = 1500  # instructions and JSON around the paper text
+TYPICAL_OUTPUT_TOKENS = 5000
+WORST_CASE_EXTRA_TOKENS = 12000  # added to the paper's byte count, which already over-counts tokens
+CONTEXT_HEADROOM = 1.25
+CONTEXT_EXTRA_TOKENS = 16000  # room for the rubric or meta prompt sent with the paper
+RETRY_RESERVE = 0.25
+
+
 def estimate(args, roles, examples, counts):
-    """Read-only planning; typical costs are estimates, not spending authorization."""
+    """Print a rough cost estimate and check that every example fits each role's context window."""
     contexts = [len(e["context"].encode()) for e in examples]
     estimates = {}
     for role, count in counts.items():
         endpoint, _ = endpoint_for(roles[role])
         if count:
             for e in examples:
-                tokens = math.ceil(1.25 * token_count(canonical(task_data(e)), roles[role]["model"])) + 16000
+                task_tokens = token_count(canonical(task_data(e)), roles[role]["model"])
+                tokens = math.ceil(CONTEXT_HEADROOM * task_tokens) + CONTEXT_EXTRA_TOKENS
                 if tokens + roles[role]["max_tokens"] > endpoint["context_length"]:
                     raise ContractError(f"{role} context does not fit {e['example_id']}")
         price = pricing_upper(endpoint)
-        typical_tokens = statistics.mean(contexts) / 3.5 + 1500
-        output_tokens = min(roles[role]["max_tokens"], 5000)
+        typical_tokens = statistics.mean(contexts) / BYTES_PER_TOKEN + PROMPT_OVERHEAD_TOKENS
+        output_tokens = min(roles[role]["max_tokens"], TYPICAL_OUTPUT_TOKENS)
         estimates[role] = {
             "requests": count,
             "typical_uncached_usd": count
             * (typical_tokens * price["prompt"] + output_tokens * price["completion"]),
-            "per_request_conservative_usd": (max(contexts) + 12000) * price["prompt"]
+            "per_request_conservative_usd": (max(contexts) + WORST_CASE_EXTRA_TOKENS) * price["prompt"]
             + roles[role]["max_tokens"] * price["completion"],
         }
+    typical_total = sum(e["typical_uncached_usd"] for e in estimates.values())
     result = {
-        "dry_run": True,
         "examples": len(examples),
         "roles": roles,
         "counts_and_costs": estimates,
-        "retry_reserve_fraction": 0.25,
-        "estimated_phase_usd_with_reserve": 1.25 * sum(e["typical_uncached_usd"] for e in estimates.values()),
-        "pricing_source": "saved_endpoint_snapshots",
-        "limitations": "Pilot token usage required; optimizer feedback may be larger.",
+        "estimated_usd_with_retry_reserve": typical_total * (1 + RETRY_RESERVE),
         "budget_usd": args.budget_usd,
         "total_budget_usd": args.total_budget_usd,
     }
@@ -1361,18 +1332,16 @@ def audit_xar_run(path):
             }
         )
     selected = max(range(len(table)), key=lambda i: (table[i]["train_gap"], -i))
-    if selected != freeze["selected"] or freeze["validation_used_for_selection"] is not False:
+    if selected != freeze["selected"]:
         raise ContractError("Selection rule differs")
     if freeze["training_gaps"] != [r["train_gap"] for r in table]:
         raise ContractError("Training-selection ledger differs")
-    write_table(path / "scores/rebuilt_checkpoints.csv", table)
     return {
         "manifest": manifest,
         "freeze": freeze,
         "table": table,
         "rows": all_rows,
         "candidates": candidates,
-        "raw_verified": True,
     }
 
 
@@ -1849,4 +1818,9 @@ if __name__ == "__main__":
             )
         )
     else:
-        main_guard(lambda: print("Raw-verified:", audit_xar_run(args.source_run)["raw_verified"]))
+
+        def audit_run():
+            audit_xar_run(args.source_run)
+            print(f"{args.source_run}: audit passed")
+
+        main_guard(audit_run)

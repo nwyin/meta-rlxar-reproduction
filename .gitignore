@@ -13,8 +13,5 @@ data/review.md
 data/tokenizers/
 runs/
 reports/
-*.lock.tmp
 .DS_Store
-
-# Local Git bundles used when the source checkout metadata is read-only.
 data/git-deliveries/

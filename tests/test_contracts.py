@@ -268,7 +268,7 @@ def test_full_pilot_orchestration_and_resume(tmp_path, monkeypatch):
     assert len(freeze["prompt_hashes"]) == 8
     assert shared.read_json(out / "status.json")["state"] == "complete"
     assert len(list((out / "prompts").glob("*.md"))) == 8
-    assert shared.audit_xar_run(out)["raw_verified"] is True
+    shared.audit_xar_run(out)  # raises if the saved run does not check out
     n = len(fake.payloads)
     invoke(monkeypatch, exp_xar, [*argv, "--resume"])
     assert len(fake.payloads) == n
@@ -553,9 +553,10 @@ def test_preflight_pricing_changes_stay_within_frozen_bounds(tmp_path, factor, a
     )
     if accepted:
         directory = api.preflight()
-        bounds = shared.read_json(directory / "checks.json")["pricing_bounds"]["judge"]
-        assert bounds["lower_prices_within_bound"] is (factor < 1)
-        assert bounds["frozen_upper"] == shared.pricing_bound(endpoint)
+        observed = shared.read_json(directory / "checks.json")["observed_prices"]["judge"]
+        pinned = shared.pricing_upper(endpoint)
+        assert observed["completion"] == pytest.approx(pinned["completion"] * factor)
+        assert observed["prompt"] == pinned["prompt"]
         assert api.endpoints["judge"][0] == endpoint
     else:
         with pytest.raises(shared.ContractError, match="exceeds frozen upper"):

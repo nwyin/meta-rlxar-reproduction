@@ -13,7 +13,6 @@ from shared import (
     main_guard,
     now,
     operational_summary,
-    paired_improvement,
     parse_concurrency,
     prompt,
     propose_prompt,
@@ -148,29 +147,22 @@ def main():
             )
             training_rows.append(rows)
             summary = summarize(rows, args.seed)
-            write_json(out / f"scores/main/{iteration}/train_summary.json", summary)
             print(
                 f"Checkpoint {iteration}: train gap {summary['gap']}, coverage {summary['paired_coverage']}/{len(train)}",
                 flush=True,
             )
             if not summary["complete"]:
-                write_json(
-                    out / "status.json",
-                    {"state": "incomplete", "reason": "missing_training_grades", "checkpoint": iteration},
-                )
+                write_json(out / "status.json", {"state": "incomplete"})
                 raise ContractError(
                     "Training checkpoint incomplete; selection and validation remain unopened"
                 )
         gaps = [statistics.mean(r["gap"] for r in rows) for rows in training_rows]
         selected = max(range(len(gaps)), key=lambda i: (gaps[i], -i))
-        # This immutable freeze MUST exist before the first held-out request is constructed.
+        # Written before any validation request, so validation results cannot affect the choice.
         freeze = {
             "selected": selected,
-            "terminal": args.iterations,
-            "selection": "highest_train_gap_then_earliest",
             "training_gaps": gaps,
             "prompt_hashes": [digest(p) for p in checkpoints],
-            "validation_used_for_selection": False,
         }
         freeze["frozen_at"] = (
             read_json(out / "freeze.json")["frozen_at"] if (out / "freeze.json").exists() else now()
@@ -183,7 +175,6 @@ def main():
             )
             validation_rows.append(rows)
             val, tr = summarize(rows, args.seed), summarize(training_rows[iteration], args.seed)
-            write_json(out / f"scores/main/{iteration}/validation_summary.json", val)
             table.append(
                 {
                     "iteration": iteration,
@@ -197,25 +188,11 @@ def main():
                     "selected_by_train": iteration == selected,
                 }
             )
-        baseline_gap, final_gap = table[0]["val_gap"], table[selected]["val_gap"]
         complete = all(summarize(r)["complete"] for r in validation_rows)
-        write_json(
-            out / "results.json",
-            {
-                "complete": complete,
-                "selected": selected,
-                "initial": summarize(validation_rows[0], args.seed),
-                "selected_summary": summarize(validation_rows[selected], args.seed),
-                "terminal": summarize(validation_rows[-1], args.seed),
-                "improvement": paired_improvement(validation_rows[0], validation_rows[selected], args.seed),
-                "descriptive_reversal": complete and baseline_gap < 0 < final_gap,
-                "baseline_already_favors_humans": baseline_gap is not None and baseline_gap > 0,
-            },
-        )
         write_table(out / "scores/checkpoints.csv", table)
         operational_summary(out)
         write_json(out / "costs.json", api.ledger.summary())
-        write_json(out / "status.json", {"state": "complete" if complete else "incomplete", "paid": True})
+        write_json(out / "status.json", {"state": "complete" if complete else "incomplete"})
 
 
 if __name__ == "__main__":
