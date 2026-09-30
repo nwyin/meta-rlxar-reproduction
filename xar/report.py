@@ -19,14 +19,7 @@ def render_report(runs_root, output):
         raise RunError("Reporting requires the active blog reproduction design")
     output, source = Path(output), Path(runs_root) / design["research_run"]
     output.mkdir(parents=True, exist_ok=True)
-    audit = {
-        "scope": design["scope"],
-        "expected_trajectories": 1,
-        "raw_verified_trajectories": 0,
-        "complete": False,
-        "source_run": str(source),
-        "failures": [],
-    }
+    audit = {"source_run": str(source), "state": "not_started", "error": None}
     lines = [
         "# Meta blog same-model reproduction",
         "",
@@ -43,10 +36,8 @@ def render_report(runs_root, output):
         "source_url": design["source"],
         "blog_reported": design["reported_validation"],
         "reproduction": None,
-        "exact_source_data_and_prompts_available": False,
     }
     if not (source / "manifest.json").exists():
-        audit["state"] = "not_started"
         lines += ["Research has not started. Historical alternative-model pilots are excluded.", ""]
     else:
         manifest = read_json(source / "manifest.json")
@@ -59,7 +50,7 @@ def render_report(runs_root, output):
                 raise RunError("Declared research split and trajectory required")
             run = audit_xar_run(source)
         except (RunError, FileNotFoundError, jsonschema.ValidationError, ValueError) as error:
-            audit.update(state="incomplete", failures=[str(error)])
+            audit.update(state="failed", error=str(error))
             lines += [
                 "Research is incomplete; no verified comparison is available.",
                 "",
@@ -68,6 +59,7 @@ def render_report(runs_root, output):
             ]
         else:
             table, selected = run["table"], run["freeze"]["selected"]
+            blog = design["reported_validation"]
             initial, final = table[0], table[selected]
             positives = [r["iteration"] for r in table if r["val_gap"] > 0]
             peak = max(table, key=lambda r: (r["val_gap"], -r["iteration"]))
@@ -77,9 +69,8 @@ def render_report(runs_root, output):
                 "selected_iteration": selected,
                 "terminal_gap": table[-1]["val_gap"],
                 "first_positive_iteration": positives[0] if positives else None,
-                "descriptive_validation_peak_gap": peak["val_gap"],
-                "descriptive_validation_peak_iteration": peak["iteration"],
-                "validation_peak_used_for_selection": False,
+                "validation_peak_gap": peak["val_gap"],
+                "validation_peak_iteration": peak["iteration"],
                 "initial_human": initial["val_human"],
                 "selected_human": final["val_human"],
                 "initial_model": initial["val_model"],
@@ -87,16 +78,19 @@ def render_report(runs_root, output):
                 "paired_improvement": paired_improvement(
                     run["rows"][(0, "validation")], run["rows"][(selected, "validation")], design["seed"]
                 ),
-                "descriptive_reversal": initial["val_gap"] < 0 < final["val_gap"],
+                "reversed": initial["val_gap"] < 0 < final["val_gap"],
             }
-            audit.update(state="raw_verified", complete=True, raw_verified_trajectories=1)
+            audit["state"] = "passed"
             write_table(output / "checkpoints.csv", table)
             lines += [
                 f"Raw-verified trajectory: 1/1. Training selected checkpoint {selected}.",
                 "",
                 f"Validation gap: {initial['val_gap']:.3f} → {final['val_gap']:.3f}.",
                 "",
-                "Blog reports −4.2 → +2.76; validation crossing at 4 and peak at 5.",
+                (
+                    f"Blog reports {blog['initial_gap']} → {blog['peak_gap']:+}; validation crossing at "
+                    f"{blog['first_positive_iteration']} and peak at {blog['peak_iteration']}."
+                ),
                 "",
                 "The entire checkpoint curve is reported; the validation maximum is descriptive only.",
                 "",
@@ -122,10 +116,10 @@ def render_report(runs_root, output):
             fig.savefig(output / "gap_curves.png", dpi=160)
             fig.savefig(output / "gap_curves.svg")
             plt.close(fig)
-    if not audit["complete"]:
+    if audit["state"] != "passed":
         for name in ("checkpoints.csv", "gap_curves.png", "gap_curves.svg"):
             (output / name).unlink(missing_ok=True)
     write_json(output / "audit.json", audit)
     write_json(output / "blog_comparison.json", comparison)
     (output / "results.md").write_text("\n".join(lines))
-    print(f"Report saved: {output}; blog trajectory verified {audit['raw_verified_trajectories']}/1")
+    print(f"Report written to {output} (audit {audit['state']})")

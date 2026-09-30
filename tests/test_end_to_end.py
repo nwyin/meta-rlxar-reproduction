@@ -141,12 +141,11 @@ def test_blog_research_report_rebuilds_all_52_sections_and_rejects_tampering(tmp
     assert {p["model"] for p in fake.payloads} == {"meta/muse-spark-1.1", "moonshotai/kimi-k2.6"}
     output = tmp_path / "report"
     render_report(runs, output)
-    assert read_json(output / "audit.json")["raw_verified_trajectories"] == 1
+    assert read_json(output / "audit.json")["state"] == "passed"
     comparison = read_json(output / "blog_comparison.json")["reproduction"]
     assert comparison["selected_iteration"] == 0
     assert comparison["initial_gap"] == 1 and comparison["selected_gap"] == 1
-    assert comparison["descriptive_reversal"] is False
-    assert comparison["validation_peak_used_for_selection"] is False
+    assert comparison["reversed"] is False
     assert comparison["paired_improvement"]["interval"]["paper_clusters"] == 5
     assert (output / "gap_curves.svg").exists()
     grade_path = next((source / "scores/main/0/validation").glob("*/human.json"))
@@ -155,6 +154,6 @@ def test_blog_research_report_rebuilds_all_52_sections_and_rejects_tampering(tmp
     write_json(grade_path, grade)
     render_report(runs, output)
     audit = read_json(output / "audit.json")
-    assert audit["raw_verified_trajectories"] == 0 and audit["complete"] is False
+    assert audit["state"] == "failed" and "arithmetic" in audit["error"]
     assert read_json(output / "blog_comparison.json")["reproduction"] is None
     assert not (output / "gap_curves.svg").exists()
