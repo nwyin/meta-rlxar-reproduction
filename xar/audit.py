@@ -20,15 +20,15 @@ from xar.pipeline import (
 from xar.stats import summarize
 from xar.util import ROLES, RunError, canonical, digest, file_hash, prompt, read_json
 
-# The research run's fixed size. A pilot run is smaller and is not held to these.
+# Sections per split in the research run (8 training and 5 validation papers). A pilot run is
+# smaller and is not held to these.
 RESEARCH_SPLIT_SIZES = {"train": 32, "validation": 20}
-RESEARCH_ITERATIONS = 7
 
 
-def audit_request_contract(payload, cfg, schema, prompt_file, where="saved request"):
+def check_request_settings(payload, cfg, schema, prompt_hash, where="saved request"):
     """Check that a saved request payload used the role's settings, schema and system prompt.
 
-    prompt_file is the manifest hash of the system prompt file. schema=None means a plain-text
+    prompt_hash is the system prompt file's hash from the manifest. schema=None means a plain-text
     request, which must have no response_format and is never retried with a format repair.
     """
     differences = [
@@ -38,7 +38,7 @@ def audit_request_contract(payload, cfg, schema, prompt_file, where="saved reque
     ]
     if differences:
         raise RunError(
-            f"{where}: request breaks the {cfg['model']} routing and decoding contract: "
+            f"{where}: request settings differ from configs/models.yaml for {cfg['model']}: "
             + "; ".join(differences)
         )
     if payload.get("response_format") != json_schema_format(schema):
@@ -51,14 +51,14 @@ def audit_request_contract(payload, cfg, schema, prompt_file, where="saved reque
     system = messages[0]["content"]
     if schema is not None:
         system = system.split(FORMAT_REPAIR, 1)[0]
-    if digest(system) != prompt_file:
-        raise RunError(f"{where}: system prompt differs from the prompt file recorded in the manifest")
+    if digest(system) != prompt_hash:
+        raise RunError(f"{where}: system prompt does not match the prompt file hash in the manifest")
 
 
-def audit_saved_output(record, schema, cfg=None, endpoint=None, prompt_file=None, where="saved output"):
+def audit_saved_output(record, schema, cfg=None, endpoint=None, prompt_hash=None, where="saved output"):
     """Check a saved structured-output record against the raw API response it came from.
 
-    With cfg, also check the request with audit_request_contract and that the response came from
+    With cfg, also check the request with check_request_settings and that the response came from
     the role's model and provider. Returns the request payload.
     """
     if record["status"] != "valid":
@@ -66,38 +66,38 @@ def audit_saved_output(record, schema, cfg=None, endpoint=None, prompt_file=None
     last = record["attempts"][-1]
     if last["status"] != "valid":
         raise RunError(f"{where}: marked valid, but its last attempt is {last['status']}")
-    receipt_path = last["response"]["raw_response"]
-    receipt = read_json(receipt_path)
-    if receipt["status"] != "success":
-        raise RunError(f"{receipt_path}: API call status is {receipt['status']}, not success")
-    response = receipt["response"]
+    attempt_path = last["response"]["raw_response"]
+    sent = read_json(attempt_path)
+    if sent["status"] != "success":
+        raise RunError(f"{attempt_path}: API call status is {sent['status']}, not success")
+    response = sent["response"]
     choice = response["choices"][0]
     if choice["finish_reason"] != "stop":
-        raise RunError(f"{receipt_path}: response finished with {choice['finish_reason']!r}, not 'stop'")
+        raise RunError(f"{attempt_path}: response finished with {choice['finish_reason']!r}, not 'stop'")
     parsed = json.loads(choice["message"]["content"])
     jsonschema.validate(parsed, schema)
     if canonical(parsed) != canonical(record["value"]):
-        raise RunError(f"{where}: saved value differs from the raw response in {receipt_path}")
-    request_path = Path(receipt_path).parent / "request.json"
+        raise RunError(f"{where}: saved value differs from the raw response in {attempt_path}")
+    request_path = Path(attempt_path).parent / "request.json"
     payload = read_json(request_path)["payload"]
     if cfg is not None:
-        audit_request_contract(payload, cfg, schema, prompt_file, where=request_path)
+        check_request_settings(payload, cfg, schema, prompt_hash, where=request_path)
         model = response.get("model")
         if model not in {cfg["model"], endpoint["canonical_slug"]}:
-            raise RunError(f"{receipt_path}: answered by model {model}; expected {cfg['model']}")
+            raise RunError(f"{attempt_path}: answered by model {model}; expected {cfg['model']}")
         provider = response.get("provider")
         if provider and provider not in {endpoint["endpoint"]["provider_name"], cfg["provider"]}:
-            raise RunError(f"{receipt_path}: answered by provider {provider}; expected {cfg['provider']}")
+            raise RunError(f"{attempt_path}: answered by provider {provider}; expected {cfg['provider']}")
     return payload
 
 
 def _check_sent_after_freeze(record, frozen_at, where):
     """Validation requests must be sent after freeze.json, so they cannot affect which checkpoint is selected."""
     for attempt in record["attempts"]:
-        receipt_path = attempt["response"]["raw_response"]
-        sent_at = read_json(receipt_path).get("sent_at")
+        attempt_path = attempt["response"]["raw_response"]
+        sent_at = read_json(attempt_path).get("sent_at")
         if not sent_at:
-            raise RunError(f"{where}: {receipt_path} has no sent_at time")
+            raise RunError(f"{where}: {attempt_path} has no sent_at time")
         if sent_at < frozen_at:
             raise RunError(f"{where}: validation request sent at {sent_at}, before freeze.json ({frozen_at})")
 
@@ -208,9 +208,7 @@ def audit_xar_run(path):
     if arguments["split"] != "pilot":
         sizes = {split: len(group) for split, group in by_split.items()}
         if sizes != RESEARCH_SPLIT_SIZES:
-            raise RunError(f"Research run has {sizes} examples; expected {RESEARCH_SPLIT_SIZES}")
-        if iterations != RESEARCH_ITERATIONS:
-            raise RunError(f"Research run has {iterations} iterations; expected {RESEARCH_ITERATIONS}")
+            raise RunError(f"Research run has {sizes} sections per split; expected {RESEARCH_SPLIT_SIZES}")
 
     candidates = read_json(run / "generations/candidates.json")["candidates"]
     for example in examples:
@@ -269,7 +267,7 @@ def audit_xar_run(path):
 
 
 def validate_primary_manifest(manifest, design):
-    """Check that a run used the models, protocol and starting prompt that the design specifies.
+    """Check that a run used the models, settings and starting prompt in configs/experiments.yaml.
 
     design is configs/experiments.yaml; for a pilot the caller puts pilot_iterations in place of
     iterations. Each role's full settings must also still match configs/models.yaml.
@@ -290,6 +288,6 @@ def validate_primary_manifest(manifest, design):
     for field in ("iterations", "max_meta_prompt_words", "failure_examples"):
         value = manifest["arguments"].get(field)
         if value != design[field]:
-            raise RunError(f"Run used {field}={value}; the design says {design[field]}")
+            raise RunError(f"Run used {field}={value}; configs/experiments.yaml expects {design[field]}")
     if manifest["extra"].get("initial_meta_prompt_hash") != digest(prompt("rubric_initial")):
         raise RunError("Run started from a different prompts/rubric_initial.md than the current file")

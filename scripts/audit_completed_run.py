@@ -2,7 +2,7 @@
 
 Makes no API calls and writes only the summary numbers to --output. The checks re-derive saved
 artifacts with the current code (build_feedback, task_data, audit_proposal, contamination,
-audit_request_contract, max_request_cost), so a refactor that changes their output fails here.
+check_request_settings, max_request_cost), so a refactor that changes their output fails here.
 """
 
 import argparse
@@ -19,7 +19,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from run import load_design
-from xar.audit import audit_request_contract, audit_saved_output, audit_xar_run
+from xar.audit import audit_saved_output, audit_xar_run, check_request_settings
 from xar.data import contamination, load_examples, run_examples, task_data
 from xar.openrouter import ledger_key, max_request_cost
 from xar.pipeline import (
@@ -82,7 +82,7 @@ def check_requests(source, manifest, ledger):
     """Check every saved request and response against the manifest and the budget ledger.
 
     Returns per-role request counts and latencies, the total cost, the time the last response
-    arrived, and each request's first send as (role, identity, receipt) for the timing checks.
+    arrived, and (role, identity, attempt_0.json contents) for each request, for the timing checks.
     """
     counts = collections.Counter()
     latencies = collections.defaultdict(list)
@@ -105,29 +105,29 @@ def check_requests(source, manifest, ledger):
 
         # Routing, decoding, schema and system prompt match the role.
         prompt_name = "rubric_wrapper" if role == "rubric" else role
-        audit_request_contract(
+        check_request_settings(
             payload, cfg, SCHEMAS[role], manifest["software_hashes"][f"prompts/{prompt_name}.md"], where=path
         )
 
         # Each send succeeded, came from the right model and provider, and was reserved and
         # settled in the ledger in order, at a cost within its reservation.
         max_cost = max_request_cost(payload, endpoint["endpoint"])
-        for receipt_path in path.parent.glob("attempt_*.json"):
-            receipt = read_json(receipt_path)
-            check(receipt["status"] == "success", f"{receipt_path}: status is {receipt['status']}")
-            response = receipt["response"]
+        for attempt_path in path.parent.glob("attempt_*.json"):
+            sent = read_json(attempt_path)
+            check(sent["status"] == "success", f"{attempt_path}: status is {sent['status']}")
+            response = sent["response"]
             check(
                 response["model"] in (cfg["model"], endpoint["canonical_slug"]),
-                f"{receipt_path}: answered by model {response['model']}",
+                f"{attempt_path}: answered by model {response['model']}",
             )
             check(
                 response["provider"] in (cfg["provider"], endpoint["endpoint"]["provider_name"]),
-                f"{receipt_path}: answered by provider {response['provider']}",
+                f"{attempt_path}: answered by provider {response['provider']}",
             )
             finish = response["choices"][0]["finish_reason"]
-            check(finish == "stop", f"{receipt_path}: finish reason is {finish}")
-            attempt = receipt_path.stem.removeprefix("attempt_")
-            key = ledger_key(source, request["key"], attempt)
+            check(finish == "stop", f"{attempt_path}: finish reason is {finish}")
+            attempt_number = attempt_path.stem.removeprefix("attempt_")
+            key = ledger_key(source, request["key"], attempt_number)
             entry = ledger[key]
             cost = response["usage"]["cost"]
             check(entry["state"] == "complete", f"{key}: ledger entry is {entry['state']}")
@@ -140,13 +140,13 @@ def check_requests(source, manifest, ledger):
             )
             check(cost <= max_cost, f"{key}: cost {cost} exceeds the maximum request cost {max_cost}")
             check(
-                entry["created_at"] <= receipt["sent_at"] <= receipt["timestamp"] <= entry["settled_at"],
+                entry["created_at"] <= sent["sent_at"] <= sent["timestamp"] <= entry["settled_at"],
                 f"{key}: reserve, send, receive and settle times are out of order",
             )
             counts[role] += 1
-            latencies[role].append(receipt["duration_seconds"])
+            latencies[role].append(sent["duration_seconds"])
             total_cost += cost
-            finished.append(receipt["timestamp"])
+            finished.append(sent["timestamp"])
         first_sends.append((role, canonical(request["identity"]), read_json(path.parent / "attempt_0.json")))
     return counts, latencies, total_cost, max(finished), first_sends
 
@@ -172,8 +172,8 @@ def check_writer(candidates, examples_by_id):
         low, high = length_window(example["target_words"])
         for index, attempt in enumerate(attempts):
             where = f"{eid} attempt {index}"
-            receipt = read_json(attempt["response"]["raw_response"])
-            text = receipt["response"]["choices"][0]["message"]["content"].strip()
+            sent = read_json(attempt["response"]["raw_response"])
+            text = sent["response"]["choices"][0]["message"]["content"].strip()
             check(text == attempt["text"], f"{where}: saved text differs from the response")
             check(digest(text) == attempt["text_hash"], f"{where}: text hash differs")
             check(words(text) == attempt["words"], f"{where}: word count differs")
@@ -193,7 +193,7 @@ def check_writer(candidates, examples_by_id):
                 canonical(expected_input) == request["payload"]["messages"][1]["content"],
                 f"{where}: writer input differs from the task data",
             )
-            finished.append(receipt["timestamp"])
+            finished.append(sent["timestamp"])
         check(candidate["text"] == attempts[-1]["text"], f"{eid}: candidate text is not the last attempt")
         check(candidate["complete"], f"{eid}: candidate is incomplete")
         check(
@@ -256,12 +256,10 @@ def check_proposals(source, run, train, candidates):
 def check_order(run, writer_finished, first_sends):
     """Check that the phases ran in order: writer, training, freeze.json, then validation."""
     frozen_at = run["freeze"]["frozen_at"]
-    first_rubric_sent = min(receipt["sent_at"] for role, _, receipt in first_sends if role == "rubric")
-    scoring = [(identity, receipt) for role, identity, receipt in first_sends if role != "writer"]
-    training_finished = [
-        receipt["timestamp"] for identity, receipt in scoring if "/validation/" not in identity
-    ]
-    validation_sent = [receipt["sent_at"] for identity, receipt in scoring if "/validation/" in identity]
+    first_rubric_sent = min(sent["sent_at"] for role, _, sent in first_sends if role == "rubric")
+    scoring = [(identity, sent) for role, identity, sent in first_sends if role != "writer"]
+    training_finished = [sent["timestamp"] for identity, sent in scoring if "/validation/" not in identity]
+    validation_sent = [sent["sent_at"] for identity, sent in scoring if "/validation/" in identity]
     check(max(writer_finished) <= first_rubric_sent, "A rubric request was sent before the writer finished")
     check(max(training_finished) <= frozen_at, "A training request finished after freeze.json was written")
     check(frozen_at <= min(validation_sent), "A validation request was sent before freeze.json was written")
