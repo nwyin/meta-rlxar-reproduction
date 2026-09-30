@@ -1,7 +1,7 @@
 [project]
 name = "meta-rlxar-reproduction"
 version = "0.1.0"
-description = "Independent OpenRouter XAR procedural reproduction"
+description = "Reproduction of Meta's XAR rubric-learning blog experiment through OpenRouter"
 requires-python = ">=3.11"
 dependencies = [
   "httpx>=0.28,<0.29",
@@ -10,8 +10,8 @@ dependencies = [
   "python-dotenv>=1,<2",
   "beautifulsoup4>=4.13,<5",
   "matplotlib>=3.10,<4",
-  "tokenizers>=0.23.2",
-  "tiktoken>=0.14.0",
+  "tokenizers>=0.23.2,<0.24",
+  "tiktoken>=0.14,<0.15",
 ]
 
 [dependency-groups]
