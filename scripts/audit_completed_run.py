@@ -2,7 +2,7 @@
 
 Makes no API calls and writes only the summary numbers to --output. The checks re-derive saved
 artifacts with the current code (build_feedback, task_data, audit_proposal, contamination,
-audit_request_contract, request_upper), so a refactor that changes their output fails here.
+audit_request_contract, max_request_cost), so a refactor that changes their output fails here.
 """
 
 import argparse
@@ -20,7 +20,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from xar.audit import audit_request_contract, audit_saved_output, audit_xar_run
 from xar.data import contamination, load_examples, task_data
-from xar.openrouter import request_upper
+from xar.openrouter import max_request_cost
 from xar.pipeline import GRADE_SCHEMA, PROPOSAL_SCHEMA, RUBRIC_SCHEMA, audit_proposal, build_feedback
 from xar.stats import paired_improvement, summarize
 from xar.util import ROOT, RunError, canonical, digest, now, read_json, words, write_json
@@ -111,7 +111,7 @@ def main():
             audit_request_contract(
                 payload, cfg, schemas[role], manifest["software_hashes"][f"prompts/{wrapper}.md"]
             )
-        bound = request_upper(payload, endpoint["endpoint"])
+        bound = max_request_cost(payload, endpoint["endpoint"])
         for receipt_path in path.parent.glob("attempt_*.json"):
             receipt = read_json(receipt_path)
             check(receipt["status"] == "success", f"{receipt_path}: status is {receipt['status']}")

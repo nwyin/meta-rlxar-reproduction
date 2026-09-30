@@ -82,7 +82,10 @@ def endpoint_for(cfg):
     return endpoint, catalog
 
 
-def pricing_upper(endpoint):
+PRICING_HEADROOM = 1.25
+
+
+def highest_prices(endpoint):
     base = endpoint["pricing"]
     return {
         k: max(float(x.get(k, base.get(k, 0))) for x in [base] + base.get("overrides", []))
@@ -90,11 +93,8 @@ def pricing_upper(endpoint):
     }
 
 
-PRICING_HEADROOM = 1.25
-
-
-def pricing_bound(endpoint):
-    return {key: value * PRICING_HEADROOM for key, value in pricing_upper(endpoint).items()}
+def budgeted_prices(endpoint):
+    return {key: value * PRICING_HEADROOM for key, value in highest_prices(endpoint).items()}
 
 
 @functools.lru_cache(maxsize=4)
@@ -144,15 +144,20 @@ def token_count(text, model):
     return len(tokenizer(name).encode(text, add_special_tokens=False).ids)
 
 
-def request_upper(payload, endpoint):
-    # Count the whole serialized payload, with 25% headroom plus chat-template overhead.
-    # Byte bound remains the fallback for unclassified model tokenizers.
-    tokens = math.ceil(1.25 * token_count(canonical(payload), payload["model"])) + 1024
+TOKEN_HEADROOM = 1.25
+CHAT_TEMPLATE_TOKENS = 1024
+
+
+def max_request_cost(payload, endpoint):
+    # Count the whole serialized payload, add headroom and room for the chat template.
+    # TOKEN_HEADROOM and PRICING_HEADROOM compound on purpose: each covers a different estimate.
+    counted = token_count(canonical(payload), payload["model"])
+    tokens = math.ceil(TOKEN_HEADROOM * counted) + CHAT_TEMPLATE_TOKENS
     if tokens + payload["max_tokens"] > endpoint["context_length"]:
         raise RunError("Conservative context bound exceeded; papers cannot be truncated")
     if endpoint.get("max_prompt_tokens") and tokens > endpoint["max_prompt_tokens"]:
         raise RunError("Conservative prompt-token bound exceeded")
-    price = pricing_bound(endpoint)
+    price = budgeted_prices(endpoint)
     return tokens * price["prompt"] + payload["max_tokens"] * price["completion"] + price["request"]
 
 
@@ -303,7 +308,7 @@ class OpenRouter:
                 or (current.get("max_completion_tokens") or current["context_length"]) < cfg["max_tokens"]
             ):
                 raise RunError("Pinned endpoint limits changed; recheck whole payloads")
-            current_price, frozen_upper = pricing_upper(current), pricing_bound(prior)
+            current_price, frozen_upper = highest_prices(current), budgeted_prices(prior)
             if any(current_price[k] > frozen_upper[k] for k in frozen_upper):
                 raise RunError(
                     "Endpoint pricing exceeds frozen upper rates; refresh evidence for a new batch"
@@ -344,9 +349,9 @@ class OpenRouter:
                 "role": role,
                 "schema_version": SCHEMA_VERSION,
             },
-            immutable=True,
+            write_once=True,
         )
-        bound = request_upper(payload, self.endpoints[role][0])
+        bound = max_request_cost(payload, self.endpoints[role][0])
         # One initial call plus three transport retries. Failed HTTP sends retain a reservation.
         for attempt in range(4):
             receipt = directory / f"attempt_{attempt}.json"

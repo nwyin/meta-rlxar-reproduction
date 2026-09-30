@@ -47,7 +47,7 @@ def build_command(args, design, phase):
     return command
 
 
-def pilot_gate(root, design):
+def check_pilot(root, design):
     run = audit_xar_run(Path(root) / design["pilot_run"])
     manifest = run["manifest"]
     protocol = {**design, "iterations": design["pilot_iterations"]}
@@ -79,7 +79,7 @@ def main():
     phases = ["pilot", "reproduction"] if args.phase == "all" else [args.phase]
     for phase in phases:
         if phase == "reproduction" and not args.dry_run:
-            pilot_gate(args.runs_root, design)
+            check_pilot(args.runs_root, design)
         command = build_command(args, design, phase)
         print("Executing:", " ".join(command), flush=True)
         try:

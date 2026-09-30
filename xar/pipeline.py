@@ -144,7 +144,7 @@ def writer_candidates(api, examples, output, concurrency=1):
                 "length_ratio": accepted["words"] / e["target_words"],
                 "contamination": contamination(accepted["text"], e["reference"]),
             }
-            write_json(path, record, immutable=True)
+            write_json(path, record, write_once=True)
         if record["context_hash"] != e["context_hash"] or record["text_hash"] != digest(record["text"]):
             raise RunError("Cached writer context or content differs")
         if record["writer_configuration_hash"] != config_hash:
@@ -159,7 +159,7 @@ def writer_candidates(api, examples, output, concurrency=1):
         "writer_configuration": api.roles["writer"],
         "candidates": candidates,
     }
-    write_json(Path(output) / "generations/candidates.json", artifact, immutable=True)
+    write_json(Path(output) / "generations/candidates.json", artifact, write_once=True)
     return candidates
 
 
@@ -181,7 +181,7 @@ def generate_rubric(api, example, meta_prompt, identity, output):
         **result,
     }
     record["rubric_hash"] = digest(result["value"]) if result["value"] else None
-    write_json(output, record, immutable=True)
+    write_json(output, record, write_once=True)
     return record
 
 
@@ -209,7 +209,7 @@ def grade_candidate(api, example, rubric_record, text, identity, output):
     record["total"] = (
         statistics.mean(s["score"] for s in result["value"]["scores"]) if result["value"] else None
     )
-    write_json(output, record, immutable=True)
+    write_json(output, record, write_once=True)
     return record
 
 
@@ -303,7 +303,7 @@ def audit_proposal(text, examples, initial_prompt, max_words):
 
 def propose_prompt(api, current, feedback, examples, initial, iteration, *, output, max_words):
     directory = Path(output) / "feedback" / f"iter_{iteration:02d}"
-    write_json(directory / "training.json", feedback, immutable=True)
+    write_json(directory / "training.json", feedback, write_once=True)
     data = {"feedback": feedback, "max_meta_prompt_words": max_words}
     attempts = []
     for attempt in range(2):
@@ -345,7 +345,7 @@ def propose_prompt(api, current, feedback, examples, initial, iteration, *, outp
         "prompt": proposal,
         "prompt_hash": digest(proposal),
     }
-    write_json(directory / "proposal.json", record, immutable=True)
+    write_json(directory / "proposal.json", record, write_once=True)
     return proposal
 
 
@@ -460,7 +460,7 @@ def run_xar(args):
         freeze["frozen_at"] = (
             read_json(out / "freeze.json")["frozen_at"] if (out / "freeze.json").exists() else now()
         )
-        write_json(out / "freeze.json", freeze, immutable=True)
+        write_json(out / "freeze.json", freeze, write_once=True)
         validation_rows, table = [], []
         for iteration, meta_prompt in enumerate(checkpoints):
             rows = evaluate_checkpoint(

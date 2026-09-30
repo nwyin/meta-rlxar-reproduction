@@ -266,7 +266,7 @@ def prepare_data():
     if path.exists() and path.read_text() != dataset:
         raise RunError("Frozen dataset differs; never silently replace splits")
     path.write_text(dataset)
-    write_json(ROOT / "data/splits.json", splits, immutable=True)
+    write_json(ROOT / "data/splits.json", splits, write_once=True)
     write_json(
         ROOT / "data/source_manifest.json",
         {
@@ -292,7 +292,7 @@ def prepare_data():
                 for e in records
             ],
         },
-        immutable=True,
+        write_once=True,
     )
     load_examples(path, ROOT / "data/splits.json")
     print("Frozen 80 examples: 8 pilot, 32 train, 20 validation, 20 confirmation")

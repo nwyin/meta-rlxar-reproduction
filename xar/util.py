@@ -63,10 +63,10 @@ def read_json(path):
     return json.loads(Path(path).read_text())
 
 
-def write_json(path, value, immutable=False):
+def write_json(path, value, write_once=False):
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
-    if immutable and path.exists():
+    if write_once and path.exists():
         if canonical(read_json(path)) != canonical(value):
             raise RunError(f"Immutable artifact differs: {path}")
         return

@@ -9,7 +9,7 @@ import subprocess
 from pathlib import Path
 
 from xar.data import load_examples, task_data
-from xar.openrouter import OpenRouter, endpoint_for, pricing_upper, token_count
+from xar.openrouter import OpenRouter, endpoint_for, highest_prices, token_count
 from xar.util import (
     ROOT,
     SCHEMA_VERSION,
@@ -147,11 +147,11 @@ def initialize_run(args, roles, experiment, extra=None):
             ).strip()
         except subprocess.CalledProcessError:
             manifest["git_commit"] = None
-        write_json(path, manifest, immutable=True)
+        write_json(path, manifest, write_once=True)
     return api
 
 
-# Rough numbers for the dry-run estimate. Live requests are priced exactly by request_upper.
+# Rough numbers for the dry-run estimate. Live requests are priced exactly by max_request_cost.
 BYTES_PER_TOKEN = 3.5  # typical for English prose
 PROMPT_OVERHEAD_TOKENS = 1500  # instructions and JSON around the paper text
 TYPICAL_OUTPUT_TOKENS = 5000
@@ -173,7 +173,7 @@ def estimate(args, roles, examples, counts):
                 tokens = math.ceil(CONTEXT_HEADROOM * task_tokens) + CONTEXT_EXTRA_TOKENS
                 if tokens + roles[role]["max_tokens"] > endpoint["context_length"]:
                     raise RunError(f"{role} context does not fit {e['example_id']}")
-        price = pricing_upper(endpoint)
+        price = highest_prices(endpoint)
         typical_tokens = statistics.mean(contexts) / BYTES_PER_TOKEN + PROMPT_OVERHEAD_TOKENS
         output_tokens = min(roles[role]["max_tokens"], TYPICAL_OUTPUT_TOKENS)
         estimates[role] = {

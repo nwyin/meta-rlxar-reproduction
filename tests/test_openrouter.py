@@ -3,7 +3,7 @@
 import httpx
 import pytest
 
-from xar.openrouter import Ledger, OpenRouter, endpoint_for, pricing_upper, role_config
+from xar.openrouter import Ledger, OpenRouter, endpoint_for, highest_prices, role_config
 from xar.util import ROOT, BudgetStop, RunError, read_json
 
 
@@ -108,7 +108,7 @@ def test_preflight_pricing_changes_stay_within_frozen_bounds(tmp_path, factor, a
     if accepted:
         directory = api.preflight()
         observed = read_json(directory / "checks.json")["observed_prices"]["judge"]
-        pinned = pricing_upper(endpoint)
+        pinned = highest_prices(endpoint)
         assert observed["completion"] == pytest.approx(pinned["completion"] * factor)
         assert observed["prompt"] == pinned["prompt"]
         assert api.endpoints["judge"][0] == endpoint
