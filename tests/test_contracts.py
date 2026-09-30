@@ -1,4 +1,5 @@
 """Scientific boundary and operational recovery tests; no external model calls."""
+
 import json
 from types import SimpleNamespace
 
@@ -16,21 +17,40 @@ import shared
 def dummy_example(paper="paper1", section="abstract", split="train"):
     reference = "Original section " + " ".join(f"fact{i}" for i in range(60))
     context = "Visible paper context. Bibliography: source one, source two. [Missing section]"
-    return {"example_id": paper + "_" + section, "paper_id": paper, "section_type": section,
-            "split": split, "context": context, "reference": reference,
-            "context_hash": shared.digest(context), "reference_hash": shared.digest(reference),
-            "target_words": shared.words(reference),
-            "provenance": {"title": "A distinctive research title", "authors": ["Unique Author"]}}
+    return {
+        "example_id": paper + "_" + section,
+        "paper_id": paper,
+        "section_type": section,
+        "split": split,
+        "context": context,
+        "reference": reference,
+        "context_hash": shared.digest(context),
+        "reference_hash": shared.digest(reference),
+        "target_words": shared.words(reference),
+        "provenance": {"title": "A distinctive research title", "authors": ["Unique Author"]},
+    }
 
 
 def rubric():
-    return {"criteria": [{"id": str(i), "description": "Supported claims", "low": "unsupported",
-                          "middle": "partially supported", "high": "fully supported"} for i in range(4)]}
+    return {
+        "criteria": [
+            {
+                "id": str(i),
+                "description": "Supported claims",
+                "low": "unsupported",
+                "middle": "partially supported",
+                "high": "fully supported",
+            }
+            for i in range(4)
+        ]
+    }
 
 
 def test_grade_arithmetic_and_coverage():
     r = rubric()
-    grade = {"scores": [{"id": str(i), "score": i+2, "evidence": 'Uses "supported text".'} for i in range(4)]}
+    grade = {
+        "scores": [{"id": str(i), "score": i + 2, "evidence": 'Uses "supported text".'} for i in range(4)]
+    }
     assert shared.validate_grade(grade, r, "supported text") == 3.5
     grade["scores"][0]["id"] = "1"
     with pytest.raises(shared.ContractError, match="coverage"):
@@ -61,7 +81,10 @@ def test_role_provider_defaults_and_explicit_override():
     assert shared.role_config(args, "rubric", model="qwen/qwen3.5-9b")["provider"] == "parasail/bf16"
     args.optimizer_provider = "explicit-provider"
     assert shared.role_config(args, "optimizer", model=model)["provider"] == "explicit-provider"
-    assert shared.role_config(args, "optimizer", model=model, provider="argument-provider")["provider"] == "argument-provider"
+    assert (
+        shared.role_config(args, "optimizer", model=model, provider="argument-provider")["provider"]
+        == "argument-provider"
+    )
 
 
 def test_feedback_rejects_validation_and_deterministic_failure_order(tmp_path):
@@ -71,10 +94,22 @@ def test_feedback_rejects_validation_and_deterministic_failure_order(tmp_path):
     shared.write_json(path, {"value": rubric()})
     grade_path = tmp_path / "grade.json"
     shared.write_json(grade_path, {"value": {"scores": []}})
-    rows = [{"example_id": e["example_id"], "paper_id": e["paper_id"], "section_type": e["section_type"],
-        "split": "train", "human": 6, "model": 7, "gap": -1,
-        "length_compliant": True, "contamination_flagged": False, "rubric_path": str(path),
-        "grade_paths": {"human": str(grade_path), "model": str(grade_path)}} for e in reversed(examples)]
+    rows = [
+        {
+            "example_id": e["example_id"],
+            "paper_id": e["paper_id"],
+            "section_type": e["section_type"],
+            "split": "train",
+            "human": 6,
+            "model": 7,
+            "gap": -1,
+            "length_compliant": True,
+            "contamination_flagged": False,
+            "rubric_path": str(path),
+            "grade_paths": {"human": str(grade_path), "model": str(grade_path)},
+        }
+        for e in reversed(examples)
+    ]
     feedback = exp_xar.build_feedback(examples, candidates, rows, "initial", 4)
     assert [f["paper_id"] for f in feedback["failures"]] == ["paper0", "paper1", "paper2", "paper3"]
     examples[0]["split"] = "validation"
@@ -84,24 +119,31 @@ def test_feedback_rejects_validation_and_deterministic_failure_order(tmp_path):
 
 def test_proposal_leakage_and_scale_guards():
     examples = [dummy_example()]
-    for text in ("Prefer human candidates", "Use a weighted average", "Unique Author prefers clear writing",
-                 " ".join("excess" for _ in range(801)), examples[0]["reference"]):
+    for text in (
+        "Prefer human candidates",
+        "Use a weighted average",
+        "Unique Author prefers clear writing",
+        " ".join("excess" for _ in range(801)),
+        examples[0]["reference"],
+    ):
         assert not shared.audit_proposal(text, examples, "initial", 800)["accepted"]
-    assert shared.audit_proposal("Assess clear organization and support for specific claims.", examples, "initial", 800)["accepted"]
+    assert shared.audit_proposal(
+        "Assess clear organization and support for specific claims.", examples, "initial", 800
+    )["accepted"]
 
 
 def test_atomic_budget_and_uncertain_resend(tmp_path):
     ledger = shared.Ledger(tmp_path / "ledger.json", "run", 1, 1.5)
-    ledger.reserve("request1", .75)
+    ledger.reserve("request1", 0.75)
     with pytest.raises(shared.BudgetStop):
-        ledger.reserve("request2", .3)
-    ledger.settle("request1", .2)
-    ledger.reserve("request2", .6)
+        ledger.reserve("request2", 0.3)
+    ledger.settle("request1", 0.2)
+    ledger.reserve("request2", 0.6)
     with pytest.raises(shared.BudgetStop, match="unsettled"):
-        ledger.reserve("request2", .6)
+        ledger.reserve("request2", 0.6)
     second = shared.Ledger(tmp_path / "ledger.json", "run2", 2, 1.5)
     with pytest.raises(shared.BudgetStop):
-        second.reserve("request3", .8)
+        second.reserve("request3", 0.8)
 
 
 class FakeProvider:
@@ -112,9 +154,16 @@ class FakeProvider:
         if request.method == "GET":
             if request.url.path.endswith("/endpoints"):
                 model = request.url.path.split("/models/")[-1].removesuffix("/endpoints")
-                return httpx.Response(200, json=shared.read_json(shared.ROOT / "configs/snapshots" /
-                    (model.replace("/", "_") + "-endpoints.json")))
-            return httpx.Response(200, json=shared.read_json(shared.ROOT / "configs/snapshots/openrouter-models-2026-09-29.json"))
+                return httpx.Response(
+                    200,
+                    json=shared.read_json(
+                        shared.ROOT / "configs/snapshots" / (model.replace("/", "_") + "-endpoints.json")
+                    ),
+                )
+            return httpx.Response(
+                200,
+                json=shared.read_json(shared.ROOT / "configs/snapshots/openrouter-models-2026-09-29.json"),
+            )
         payload = json.loads(request.content)
         self.payloads.append(payload)
         assert payload["provider"]["allow_fallbacks"] is False
@@ -122,29 +171,63 @@ class FakeProvider:
         assert len(payload["provider"]["only"]) == 1
         data = json.loads(payload["messages"][1]["content"])
         system = payload["messages"][0]["content"]
-        properties = payload.get("response_format", {}).get("json_schema", {}).get("schema", {}).get("properties", {})
+        properties = (
+            payload.get("response_format", {}).get("json_schema", {}).get("schema", {}).get("properties", {})
+        )
         if "criteria" in properties:
             assert "candidate" not in data and "reference" not in data and "feedback" not in data
             value = rubric()
         elif "scores" in properties:
             assert set(data) == {"visible_paper", "section_type", "target_words", "rubric", "candidate"}
-            value = {"scores": [{"id": str(i), "score": 7 if data["candidate"].startswith("Original") else 6,
-                                  "evidence": "The section gives supported claims."} for i in range(4)]}
+            value = {
+                "scores": [
+                    {
+                        "id": str(i),
+                        "score": 7 if data["candidate"].startswith("Original") else 6,
+                        "evidence": "The section gives supported claims.",
+                    }
+                    for i in range(4)
+                ]
+            }
         elif "winner" in properties:
             value = {"winner": "tie", "evidence": "Both are clear."}
         elif "prompt" in properties:
             assert all(f["paper_id"].startswith("pilot0") for f in data["feedback"]["failures"])
-            value = {"prompt": "Assess clear organization and support for specific claims.", "rationale": "Clarify criteria."}
+            value = {
+                "prompt": "Assess clear organization and support for specific claims.",
+                "rationale": "Clarify criteria.",
+            }
         else:
             assert "Write the missing section" in system
             value = " ".join("generated" for _ in range(data["target_words"]))
         provider = payload["provider"]["only"][0]
-        names = {"deepinfra/bf16": "DeepInfra", "parasail/bf16": "Parasail", "crusoe/bf16": "Crusoe",
-             "digitalocean": "DigitalOcean", "siliconflow/fp8": "SiliconFlow", "wafer": "Wafer", "meta": "Meta"}
-        return httpx.Response(200, json={"model": payload["model"], "provider": names[provider],
-            "id": f"fake-{len(self.payloads)}", "usage": {"cost": .0001, "prompt_tokens": 100, "completion_tokens": 100},
-            "choices": [{"finish_reason": "stop", "message": {"content": json.dumps(value) if isinstance(value, dict) else value,
-                                                                  "reasoning": "Not included in candidate text"}}]})
+        names = {
+            "deepinfra/bf16": "DeepInfra",
+            "parasail/bf16": "Parasail",
+            "crusoe/bf16": "Crusoe",
+            "digitalocean": "DigitalOcean",
+            "siliconflow/fp8": "SiliconFlow",
+            "wafer": "Wafer",
+            "meta": "Meta",
+        }
+        return httpx.Response(
+            200,
+            json={
+                "model": payload["model"],
+                "provider": names[provider],
+                "id": f"fake-{len(self.payloads)}",
+                "usage": {"cost": 0.0001, "prompt_tokens": 100, "completion_tokens": 100},
+                "choices": [
+                    {
+                        "finish_reason": "stop",
+                        "message": {
+                            "content": json.dumps(value) if isinstance(value, dict) else value,
+                            "reasoning": "Not included in candidate text",
+                        },
+                    }
+                ],
+            },
+        )
 
 
 def install_fake(monkeypatch):
@@ -171,13 +254,28 @@ def test_full_pilot_orchestration_resume_and_frozen_transfer(tmp_path, monkeypat
     fake = install_fake(monkeypatch)
     dataset, splits = tmp_path / "examples.jsonl", tmp_path / "splits.json"
     examples = [dummy_example("pilot" + str(p), s, "pilot") for p in range(2) for s in shared.SECTIONS]
-    dataset.write_text("".join(shared.canonical(e)+"\n" for e in examples))
+    dataset.write_text("".join(shared.canonical(e) + "\n" for e in examples))
     shared.write_json(splits, {"papers": {"pilot": ["pilot0", "pilot1"]}})
-    shared.write_json(tmp_path / "human_review.json", {"dataset_hash": shared.file_hash(dataset),
-        "papers": {p: {"decision": "approved"} for p in ("pilot0", "pilot1")}})
+    shared.write_json(
+        tmp_path / "human_review.json",
+        {
+            "dataset_hash": shared.file_hash(dataset),
+            "papers": {p: {"decision": "approved"} for p in ("pilot0", "pilot1")},
+        },
+    )
     ledger, out = tmp_path / "ledger.json", tmp_path / "xar"
-    common = ["--dataset", str(dataset), "--splits", str(splits), "--budget-usd", "10",
-              "--total-budget-usd", "30", "--budget-ledger", str(ledger)]
+    common = [
+        "--dataset",
+        str(dataset),
+        "--splits",
+        str(splits),
+        "--budget-usd",
+        "10",
+        "--total-budget-usd",
+        "30",
+        "--budget-ledger",
+        str(ledger),
+    ]
     argv = [*common, "--output-dir", str(out), "--split", "pilot"]
     invoke(monkeypatch, exp_xar, argv)
     freeze = shared.read_json(out / "freeze.json")
@@ -189,16 +287,36 @@ def test_full_pilot_orchestration_resume_and_frozen_transfer(tmp_path, monkeypat
     n = len(fake.payloads)
     invoke(monkeypatch, exp_xar, [*argv, "--resume"])
     assert len(fake.payloads) == n
-    invoke(monkeypatch, exp_judge_transfer, [*common, "--source-run", str(out), "--output-dir", str(tmp_path / "judge")])
-    assert all("scores" in p["response_format"]["json_schema"]["schema"]["properties"] for p in fake.payloads[n:])
+    invoke(
+        monkeypatch,
+        exp_judge_transfer,
+        [*common, "--source-run", str(out), "--output-dir", str(tmp_path / "judge")],
+    )
+    assert all(
+        "scores" in p["response_format"]["json_schema"]["schema"]["properties"] for p in fake.payloads[n:]
+    )
     assert len(fake.payloads) - n == 16  # Two judges, four examples, two candidates; selected aliases P0.
     transferred = shared.read_json(tmp_path / "judge/results.json")
     assert all(result["improvement"]["mean"] == 0 for result in transferred.values())
     n = len(fake.payloads)
-    invoke(monkeypatch, exp_writer_transfer, [*common, "--source-run", str(out), "--output-dir", str(tmp_path / "writer"),
-        "--target-writer-model", "qwen/qwen3.5-9b"])
-    assert all("criteria" not in p.get("response_format", {}).get("json_schema", {}).get("schema", {}).get("properties", {})
-               for p in fake.payloads[n:])
+    invoke(
+        monkeypatch,
+        exp_writer_transfer,
+        [
+            *common,
+            "--source-run",
+            str(out),
+            "--output-dir",
+            str(tmp_path / "writer"),
+            "--target-writer-model",
+            "qwen/qwen3.5-9b",
+        ],
+    )
+    assert all(
+        "criteria"
+        not in p.get("response_format", {}).get("json_schema", {}).get("schema", {}).get("properties", {})
+        for p in fake.payloads[n:]
+    )
     assert len(fake.payloads) - n == 12  # Four new writers plus eight grades; selected aliases P0.
     assert shared.read_json(tmp_path / "writer/results.json")["improvement"]["mean"] == 0
     response_path = next((out / "scores/main/0/train").glob("*/human.json"))
@@ -206,7 +324,7 @@ def test_full_pilot_orchestration_resume_and_frozen_transfer(tmp_path, monkeypat
     request_path = shared.Path(response["raw_response"]).parent / "request.json"
     request = shared.read_json(request_path)
     original = request["payload"]["temperature"]
-    request["payload"]["temperature"] = .9
+    request["payload"]["temperature"] = 0.9
     shared.write_json(request_path, request)
     with pytest.raises(shared.ContractError, match="decoding contract"):
         shared.audit_xar_run(out)
@@ -224,14 +342,38 @@ def test_baseline_repeats_are_fresh_and_length_repair_is_bounded(tmp_path, monke
     fake = install_fake(monkeypatch)
     dataset, splits = tmp_path / "examples.jsonl", tmp_path / "splits.json"
     examples = [dummy_example("paper", s, "validation") for s in shared.SECTIONS]
-    dataset.write_text("".join(shared.canonical(e)+"\n" for e in examples))
+    dataset.write_text("".join(shared.canonical(e) + "\n" for e in examples))
     shared.write_json(splits, {"papers": {"validation": ["paper"]}})
-    shared.write_json(tmp_path / "human_review.json", {"dataset_hash": shared.file_hash(dataset),
-        "papers": {"paper": {"decision": "approved"}}})
-    invoke(monkeypatch, exp_baselines, ["--dataset", str(dataset), "--splits", str(splits),
-        "--output-dir", str(tmp_path / "baseline"), "--budget-usd", "10", "--total-budget-usd", "10",
-        "--budget-ledger", str(tmp_path / "ledger.json"), "--split", "validation"])
-    rubric_calls = [p for p in fake.payloads if "criteria" in p.get("response_format", {}).get("json_schema", {}).get("schema", {}).get("properties", {})]
+    shared.write_json(
+        tmp_path / "human_review.json",
+        {"dataset_hash": shared.file_hash(dataset), "papers": {"paper": {"decision": "approved"}}},
+    )
+    invoke(
+        monkeypatch,
+        exp_baselines,
+        [
+            "--dataset",
+            str(dataset),
+            "--splits",
+            str(splits),
+            "--output-dir",
+            str(tmp_path / "baseline"),
+            "--budget-usd",
+            "10",
+            "--total-budget-usd",
+            "10",
+            "--budget-ledger",
+            str(tmp_path / "ledger.json"),
+            "--split",
+            "validation",
+        ],
+    )
+    rubric_calls = [
+        p
+        for p in fake.payloads
+        if "criteria"
+        in p.get("response_format", {}).get("json_schema", {}).get("schema", {}).get("properties", {})
+    ]
     assert len(rubric_calls) == 12
     assert len(list((tmp_path / "baseline/requests").glob("*/request.json"))) == len(fake.payloads)
 
@@ -239,7 +381,7 @@ def test_baseline_repeats_are_fresh_and_length_repair_is_bounded(tmp_path, monke
 def test_dataset_hash_and_cross_paper_split_guard(tmp_path):
     example = dummy_example()
     path = tmp_path / "examples.jsonl"
-    path.write_text(shared.canonical(example)+"\n")
+    path.write_text(shared.canonical(example) + "\n")
     splits = tmp_path / "splits.json"
     shared.write_json(splits, {"papers": {"train": ["paper1"], "validation": ["paper1"]}})
     with pytest.raises(shared.ContractError, match="overlap"):
@@ -251,7 +393,7 @@ def test_bootstrap_resamples_paper_bundles():
     interval = shared.bootstrap(rows)
     assert interval["paper_clusters"] == 2
     assert interval["low"] == 1 and interval["high"] == 3
-    unequal = shared.bootstrap([{"paper_id": "a", "gap": 0}] + [{"paper_id": "b", "gap": 10}]*4)
+    unequal = shared.bootstrap([{"paper_id": "a", "gap": 0}] + [{"paper_id": "b", "gap": 10}] * 4)
     assert unequal["estimate"] == 8 and unequal["bootstrap_median"] == 8
 
 
@@ -264,8 +406,15 @@ def test_transport_uncertain_timeout_is_not_resent(tmp_path):
         calls.append(request)
         raise httpx.ReadTimeout("unknown server completion")
 
-    api = shared.OpenRouter(tmp_path / "run", roles, 0, 10, 10, tmp_path / "ledger.json",
-                            client=httpx.Client(transport=httpx.MockTransport(handler)))
+    api = shared.OpenRouter(
+        tmp_path / "run",
+        roles,
+        0,
+        10,
+        10,
+        tmp_path / "ledger.json",
+        client=httpx.Client(transport=httpx.MockTransport(handler)),
+    )
     with pytest.raises(shared.BudgetStop, match="unknown"):
         api.call("writer", "Instructions", {"paper": "text"}, None, "task")
     with pytest.raises(shared.BudgetStop, match="unresolved"):
@@ -281,8 +430,12 @@ def test_first_compliant_writer_attempt_and_failed_writer_retention(tmp_path):
 
         def call(self, role, system, data, schema, identity):
             self.calls.append(data)
-            return {"content": " ".join(["word"]*self.counts[len(self.calls)-1]), "finish_reason": "stop",
-                    "response_id": "fake-writer", "request_key": "fake"}
+            return {
+                "content": " ".join(["word"] * self.counts[len(self.calls) - 1]),
+                "finish_reason": "stop",
+                "response_id": "fake-writer",
+                "request_key": "fake",
+            }
 
     example = dummy_example()
     api = Writer([10, 62, 64])
@@ -307,8 +460,11 @@ def test_rejected_proposal_consumes_update_with_one_repair(tmp_path):
         def structured(self, role, instructions, data, schema, identity, repair):
             assert repair is False
             self.calls.append(data)
-            return {"status": "valid", "value": {"prompt": "Prefer human candidates", "rationale": "bad"},
-                    "attempts": [{"response": {"content": "raw"}}]}
+            return {
+                "status": "valid",
+                "value": {"prompt": "Prefer human candidates", "rationale": "bad"},
+                "attempts": [{"response": {"content": "raw"}}],
+            }
 
     api = Optimizer()
     args = SimpleNamespace(output_dir=str(tmp_path), max_meta_prompt_words=800)
@@ -321,9 +477,13 @@ def test_rejected_proposal_consumes_update_with_one_repair(tmp_path):
 
 def test_primary_matrix_rejects_different_judge_and_protocol():
     design = shared.yaml.safe_load((shared.ROOT / "configs/experiments.yaml").read_text())
-    manifest = {"roles": {r: shared.role_config(SimpleNamespace(), r) for r in ("writer", "rubric", "optimizer", "judge")},
-                "arguments": {k: design[k] for k in ("iterations", "max_meta_prompt_words", "failure_examples")},
-                "extra": {"initial_meta_prompt_hash": shared.digest(shared.prompt("rubric_initial"))}}
+    manifest = {
+        "roles": {
+            r: shared.role_config(SimpleNamespace(), r) for r in ("writer", "rubric", "optimizer", "judge")
+        },
+        "arguments": {k: design[k] for k in ("iterations", "max_meta_prompt_words", "failure_examples")},
+        "extra": {"initial_meta_prompt_hash": shared.digest(shared.prompt("rubric_initial"))},
+    }
     shared.validate_primary_manifest(manifest, design)
     changed = json.loads(json.dumps(manifest))
     changed["roles"]["judge"] = shared.role_config(SimpleNamespace(), "judge", model="z-ai/glm-5.2")
@@ -341,8 +501,19 @@ def test_primary_matrix_rejects_different_judge_and_protocol():
 
 def test_confirmation_cannot_relabel_validation(monkeypatch, tmp_path):
     with pytest.raises(shared.ContractError, match="reserved confirmation split"):
-        invoke(monkeypatch, exp_confirmation, ["--source-run", str(tmp_path / "missing-source"),
-            "--output-dir", str(tmp_path / "confirmation"), "--split", "validation", "--dry-run"])
+        invoke(
+            monkeypatch,
+            exp_confirmation,
+            [
+                "--source-run",
+                str(tmp_path / "missing-source"),
+                "--output-dir",
+                str(tmp_path / "confirmation"),
+                "--split",
+                "validation",
+                "--dry-run",
+            ],
+        )
 
 
 def test_confirmation_rejects_changed_dataset_override(monkeypatch, tmp_path):
@@ -352,37 +523,68 @@ def test_confirmation_rejects_changed_dataset_override(monkeypatch, tmp_path):
     changed = tmp_path / "changed.jsonl"
     changed.write_text("changed")
     prereg = shared.read_json(shared.ROOT / "configs/confirmation.json")
-    manifest = {"experiment": "xar", "arguments": {"split": "research", "seed": 0},
-        "roles": {r: shared.role_config(SimpleNamespace(), r, model=prereg[r])
-                  for r in ("writer", "rubric", "optimizer", "judge")},
-        "dataset": str(original), "dataset_hash": shared.file_hash(original)}
+    manifest = {
+        "experiment": "xar",
+        "arguments": {"split": "research", "seed": 0},
+        "roles": {
+            r: shared.role_config(SimpleNamespace(), r, model=prereg[r])
+            for r in ("writer", "rubric", "optimizer", "judge")
+        },
+        "dataset": str(original),
+        "dataset_hash": shared.file_hash(original),
+    }
     shared.write_json(source / "manifest.json", manifest)
     shared.write_json(source / "freeze.json", {"selected": 0})
     with pytest.raises(shared.ContractError, match="dataset differs"):
-        invoke(monkeypatch, exp_confirmation, ["--source-run", str(source), "--dataset", str(changed),
-            "--output-dir", str(tmp_path / "confirmation"), "--dry-run"])
+        invoke(
+            monkeypatch,
+            exp_confirmation,
+            [
+                "--source-run",
+                str(source),
+                "--dataset",
+                str(changed),
+                "--output-dir",
+                str(tmp_path / "confirmation"),
+                "--dry-run",
+            ],
+        )
 
 
 def test_factorial_comparisons_pair_baseline_adjusted_effects_and_interactions():
     design = {"weak": "weak", "strong": "strong", "seeds": [0]}
     observed = {}
     for w, g, o in shared.itertools.product((0, 1), repeat=3):
-        initial = 10*g
-        improvement = w + 2*g + 3*o + 4*g*o + 5*w*o
+        initial = 10 * g
+        improvement = w + 2 * g + 3 * o + 4 * g * o + 5 * w * o
         key = tuple("strong" if v else "weak" for v in (w, g, o)) + (0,)
-        rows = {checkpoint: [{"example_id": str(i), "paper_id": "paper", "gap": gap} for i in range(4)]
-                for checkpoint, gap in ((0, initial), (1, initial+improvement))}
+        rows = {
+            checkpoint: [{"example_id": str(i), "paper_id": "paper", "gap": gap} for i in range(4)]
+            for checkpoint, gap in ((0, initial), (1, initial + improvement))
+        }
         observed[key] = {"freeze": {"selected": 1}, "rows": {(i, "validation"): r for i, r in rows.items()}}
     effects = shared.matrix_effects(observed, design)
     assert len(effects) == 36
-    optimizer = next(e for e in effects if e["kind"] == "main_effect" and e["varied_role"] == "optimizer"
-                     and e["fixed_roles"] == {"writer": "strong", "generator": "strong"}
-                     and e["metric"] == "improvement")
+    optimizer = next(
+        e
+        for e in effects
+        if e["kind"] == "main_effect"
+        and e["varied_role"] == "optimizer"
+        and e["fixed_roles"] == {"writer": "strong", "generator": "strong"}
+        and e["metric"] == "improvement"
+    )
     assert optimizer["mean"] == 12 and optimizer["paper_interval"]["paper_clusters"] == 1
-    generator = [e for e in effects if e["kind"] == "main_effect" and e["varied_role"] == "generator"
-                 and e["fixed_roles"] == {"writer": "weak", "optimizer": "weak"}]
+    generator = [
+        e
+        for e in effects
+        if e["kind"] == "main_effect"
+        and e["varied_role"] == "generator"
+        and e["fixed_roles"] == {"writer": "weak", "optimizer": "weak"}
+    ]
     assert {e["metric"]: e["mean"] for e in generator} == {"selected_gap": 12, "improvement": 2}
-    interaction = [e for e in effects if e["kind"] == "interaction" and e["varied_roles"] == ["generator", "optimizer"]]
+    interaction = [
+        e for e in effects if e["kind"] == "interaction" and e["varied_roles"] == ["generator", "optimizer"]
+    ]
     assert all(e["mean"] == 4 for e in interaction)
     del observed[("strong", "strong", "strong", 0)]
     partial = shared.matrix_effects(observed, design)
@@ -392,41 +594,45 @@ def test_factorial_comparisons_pair_baseline_adjusted_effects_and_interactions()
 def test_parallel_writer_sampling_repairs_order_and_resume(tmp_path):
     import threading
 
-    examples = [dummy_example('parallel' + str(i)) for i in range(4)]
+    examples = [dummy_example("parallel" + str(i)) for i in range(4)]
 
     class ParallelWriter:
         def __init__(self):
-            self.roles = {'writer': shared.role_config(SimpleNamespace(), 'writer')}
+            self.roles = {"writer": shared.role_config(SimpleNamespace(), "writer")}
             self.calls = {}
             self.lock = threading.Lock()
             self.barrier = threading.Barrier(2)
             self.active = self.peak = 0
 
         def call(self, role, system, data, schema, identity):
-            eid = identity['example']
+            eid = identity["example"]
             with self.lock:
                 self.calls.setdefault(eid, []).append((data, identity))
                 self.active += 1
                 self.peak = max(self.peak, self.active)
-            if identity['attempt'] == 0:
+            if identity["attempt"] == 0:
                 self.barrier.wait(timeout=5)
             with self.lock:
                 self.active -= 1
-            count = 10 if identity['attempt'] == 0 else data['target_words']
-            return {'content': ' '.join(['word'] * count), 'finish_reason': 'stop',
-                    'response_id': eid, 'request_key': eid + str(identity['attempt'])}
+            count = 10 if identity["attempt"] == 0 else data["target_words"]
+            return {
+                "content": " ".join(["word"] * count),
+                "finish_reason": "stop",
+                "response_id": eid,
+                "request_key": eid + str(identity["attempt"]),
+            }
 
     api = ParallelWriter()
     result = shared.writer_candidates(api, examples, tmp_path, concurrency=2)
     assert api.peak == 2
-    assert list(result) == [e['example_id'] for e in examples]
+    assert list(result) == [e["example_id"] for e in examples]
     for e in examples:
-        calls = api.calls[e['example_id']]
-        assert [identity['attempt'] for _, identity in calls] == [0, 1]
-        assert 'length_revision' not in calls[0][0]
-        assert calls[1][0]['previous_section'] == ' '.join(['word'] * 10)
-        assert result[e['example_id']]['accepted_attempt'] == 1
-        assert result[e['example_id']]['length_compliant']
+        calls = api.calls[e["example_id"]]
+        assert [identity["attempt"] for _, identity in calls] == [0, 1]
+        assert "length_revision" not in calls[0][0]
+        assert calls[1][0]["previous_section"] == " ".join(["word"] * 10)
+        assert result[e["example_id"]]["accepted_attempt"] == 1
+        assert result[e["example_id"]]["length_compliant"]
     before = shared.canonical(api.calls)
     assert shared.writer_candidates(api, examples, tmp_path, concurrency=2) == result
     assert shared.canonical(api.calls) == before
@@ -435,102 +641,122 @@ def test_parallel_writer_sampling_repairs_order_and_resume(tmp_path):
 def test_parallel_writer_failure_stops_new_dispatch_and_preserves_sections(tmp_path):
     import threading
 
-    examples = [dummy_example('interrupted' + str(i)) for i in range(4)]
+    examples = [dummy_example("interrupted" + str(i)) for i in range(4)]
 
     class InterruptedWriter:
         def __init__(self, fail):
-            self.roles = {'writer': shared.role_config(SimpleNamespace(), 'writer')}
+            self.roles = {"writer": shared.role_config(SimpleNamespace(), "writer")}
             self.calls = []
             self.fail = fail
             self.barrier = threading.Barrier(2)
 
         def call(self, role, system, data, schema, identity):
-            eid = identity['example']
+            eid = identity["example"]
             self.calls.append(eid)
             if self.fail:
                 self.barrier.wait(timeout=5)
-                if eid == examples[0]['example_id']:
-                    raise shared.BudgetStop('Budget exhausted before send')
-            return {'content': ' '.join(['word'] * data['target_words']), 'finish_reason': 'stop',
-                    'response_id': eid, 'request_key': eid}
+                if eid == examples[0]["example_id"]:
+                    raise shared.BudgetStop("Budget exhausted before send")
+            return {
+                "content": " ".join(["word"] * data["target_words"]),
+                "finish_reason": "stop",
+                "response_id": eid,
+                "request_key": eid,
+            }
 
     failed = InterruptedWriter(True)
-    with pytest.raises(shared.BudgetStop, match='before send'):
+    with pytest.raises(shared.BudgetStop, match="before send"):
         shared.writer_candidates(failed, examples, tmp_path, concurrency=2)
-    assert set(failed.calls) == {e['example_id'] for e in examples[:2]}
-    assert (tmp_path / 'generations' / (examples[1]['example_id'] + '.json')).exists()
-    assert not (tmp_path / 'generations/candidates.json').exists()
+    assert set(failed.calls) == {e["example_id"] for e in examples[:2]}
+    assert (tmp_path / "generations" / (examples[1]["example_id"] + ".json")).exists()
+    assert not (tmp_path / "generations/candidates.json").exists()
     resumed = InterruptedWriter(False)
     candidates = shared.writer_candidates(resumed, examples, tmp_path, concurrency=2)
     assert len(candidates) == 4
-    assert examples[1]['example_id'] not in resumed.calls
+    assert examples[1]["example_id"] not in resumed.calls
     assert len(resumed.calls) == 3
 
 
 def test_parallel_reservations_share_one_budget(tmp_path):
     import concurrent.futures
 
-    path = tmp_path / 'global_ledger.json'
+    path = tmp_path / "global_ledger.json"
 
     def reserve(i):
         ledger = shared.Ledger(path, str(i), 1, 1)
         try:
-            ledger.reserve(str(i), .4)
+            ledger.reserve(str(i), 0.4)
             return True
         except shared.BudgetStop:
             return False
 
     with concurrent.futures.ThreadPoolExecutor(max_workers=8) as pool:
         assert sum(pool.map(reserve, range(8))) == 2
-    entries = shared.read_json(path)['entries']
-    assert sum(e['charge'] for e in entries.values()) == .8
+    entries = shared.read_json(path)["entries"]
+    assert sum(e["charge"] for e in entries.values()) == 0.8
 
 
-@pytest.mark.parametrize('factor,accepted', [(.5, True), (1.1, True), (1.3, False)])
+@pytest.mark.parametrize("factor,accepted", [(0.5, True), (1.1, True), (1.3, False)])
 def test_preflight_pricing_changes_stay_within_frozen_bounds(tmp_path, factor, accepted):
-    cfg = shared.role_config(SimpleNamespace(), 'judge')
+    cfg = shared.role_config(SimpleNamespace(), "judge")
     endpoint, _ = shared.endpoint_for(cfg)
 
     def handler(request):
-        if request.url.path.endswith('/endpoints'):
-            data = shared.read_json(shared.ROOT / 'configs/snapshots' / (cfg['model'].replace('/', '_') + '-endpoints.json'))
-            for e in data['data']['endpoints']:
-                if e['tag'] == cfg['provider']:
-                    e['pricing']['completion'] = str(float(e['pricing']['completion']) * factor)
+        if request.url.path.endswith("/endpoints"):
+            data = shared.read_json(
+                shared.ROOT / "configs/snapshots" / (cfg["model"].replace("/", "_") + "-endpoints.json")
+            )
+            for e in data["data"]["endpoints"]:
+                if e["tag"] == cfg["provider"]:
+                    e["pricing"]["completion"] = str(float(e["pricing"]["completion"]) * factor)
         else:
-            data = shared.read_json(shared.ROOT / 'configs/snapshots/openrouter-models-2026-09-29.json')
+            data = shared.read_json(shared.ROOT / "configs/snapshots/openrouter-models-2026-09-29.json")
         return httpx.Response(200, json=data)
 
-    api = shared.OpenRouter(tmp_path / 'run', {'judge': cfg}, 0, 10, 10, tmp_path / 'ledger.json',
-                            client=httpx.Client(transport=httpx.MockTransport(handler)))
+    api = shared.OpenRouter(
+        tmp_path / "run",
+        {"judge": cfg},
+        0,
+        10,
+        10,
+        tmp_path / "ledger.json",
+        client=httpx.Client(transport=httpx.MockTransport(handler)),
+    )
     if accepted:
         directory = api.preflight()
-        bounds = shared.read_json(directory / 'checks.json')['pricing_bounds']['judge']
-        assert bounds['lower_prices_within_bound'] is (factor < 1)
-        assert bounds['frozen_upper'] == shared.pricing_bound(endpoint)
-        assert api.endpoints['judge'][0] == endpoint
+        bounds = shared.read_json(directory / "checks.json")["pricing_bounds"]["judge"]
+        assert bounds["lower_prices_within_bound"] is (factor < 1)
+        assert bounds["frozen_upper"] == shared.pricing_bound(endpoint)
+        assert api.endpoints["judge"][0] == endpoint
     else:
-        with pytest.raises(shared.ContractError, match='exceeds frozen upper'):
+        with pytest.raises(shared.ContractError, match="exceeds frozen upper"):
             api.preflight()
-    assert not (tmp_path / 'ledger.json').exists()
+    assert not (tmp_path / "ledger.json").exists()
 
 
 def test_unknown_send_halts_dispatch_for_other_tasks(tmp_path):
-    cfg = shared.role_config(SimpleNamespace(), 'writer')
+    cfg = shared.role_config(SimpleNamespace(), "writer")
     sends = []
 
     def handler(request):
         sends.append(request)
-        raise httpx.ReadTimeout('Completion outcome unknown')
+        raise httpx.ReadTimeout("Completion outcome unknown")
 
-    api = shared.OpenRouter(tmp_path / 'run', {'writer': cfg}, 0, 10, 10, tmp_path / 'ledger.json',
-                            client=httpx.Client(transport=httpx.MockTransport(handler)))
-    with pytest.raises(shared.BudgetStop, match='unknown'):
-        api.call('writer', 'Instructions', {'paper': 'first'}, None, 'first')
-    with pytest.raises(shared.ContractError, match='Dispatch halted'):
-        api.call('writer', 'Instructions', {'paper': 'second'}, None, 'second')
+    api = shared.OpenRouter(
+        tmp_path / "run",
+        {"writer": cfg},
+        0,
+        10,
+        10,
+        tmp_path / "ledger.json",
+        client=httpx.Client(transport=httpx.MockTransport(handler)),
+    )
+    with pytest.raises(shared.BudgetStop, match="unknown"):
+        api.call("writer", "Instructions", {"paper": "first"}, None, "first")
+    with pytest.raises(shared.ContractError, match="Dispatch halted"):
+        api.call("writer", "Instructions", {"paper": "second"}, None, "second")
     assert len(sends) == 1
-    assert len(shared.read_json(tmp_path / 'ledger.json')['entries']) == 1
+    assert len(shared.read_json(tmp_path / "ledger.json")["entries"]) == 1
 
 
 def test_pairwise_examples_overlap_but_each_order_is_sent_once(tmp_path, monkeypatch):
@@ -547,53 +773,84 @@ def test_pairwise_examples_overlap_but_each_order_is_sent_once(tmp_path, monkeyp
             self.active = self.peak = 0
 
         def handle(self, request):
-            if request.method != 'POST':
+            if request.method != "POST":
                 return super().handle(request)
             payload = json.loads(request.content)
-            properties = payload.get('response_format', {}).get('json_schema', {}).get('schema', {}).get('properties', {})
-            if 'winner' not in properties:
+            properties = (
+                payload.get("response_format", {})
+                .get("json_schema", {})
+                .get("schema", {})
+                .get("properties", {})
+            )
+            if "winner" not in properties:
                 return super().handle(request)
-            data = json.loads(payload['messages'][1]['content'])
+            data = json.loads(payload["messages"][1]["content"])
             with self.lock:
                 self.active += 1
                 self.peak = max(self.peak, self.active)
-            if data['A'].startswith('Original'):
+            if data["A"].startswith("Original"):
                 self.barrier.wait(timeout=5)
             result = super().handle(request)
             with self.lock:
                 self.active -= 1
             return result
 
-    monkeypatch.setattr(sys.modules[__name__], 'FakeProvider', ParallelPairwise)
+    monkeypatch.setattr(sys.modules[__name__], "FakeProvider", ParallelPairwise)
     fake = install_fake(monkeypatch)
-    examples = [dummy_example('pairwise', s, 'validation') for s in shared.SECTIONS]
-    dataset, splits = tmp_path / 'examples.jsonl', tmp_path / 'splits.json'
-    dataset.write_text(''.join(shared.canonical(e) + '\n' for e in examples))
-    shared.write_json(splits, {'papers': {'validation': ['pairwise']}})
-    shared.write_json(tmp_path / 'human_review.json', {'dataset_hash': shared.file_hash(dataset),
-        'papers': {'pairwise': {'decision': 'approved'}}})
-    out = tmp_path / 'baseline'
-    invoke(monkeypatch, exp_baselines, ['--dataset', str(dataset), '--splits', str(splits), '--output-dir', str(out),
-        '--budget-usd', '10', '--total-budget-usd', '10', '--budget-ledger', str(tmp_path / 'ledger.json'),
-        '--split', 'validation', '--baseline-methods', 'pairwise', '--concurrency', '2'])
+    examples = [dummy_example("pairwise", s, "validation") for s in shared.SECTIONS]
+    dataset, splits = tmp_path / "examples.jsonl", tmp_path / "splits.json"
+    dataset.write_text("".join(shared.canonical(e) + "\n" for e in examples))
+    shared.write_json(splits, {"papers": {"validation": ["pairwise"]}})
+    shared.write_json(
+        tmp_path / "human_review.json",
+        {"dataset_hash": shared.file_hash(dataset), "papers": {"pairwise": {"decision": "approved"}}},
+    )
+    out = tmp_path / "baseline"
+    invoke(
+        monkeypatch,
+        exp_baselines,
+        [
+            "--dataset",
+            str(dataset),
+            "--splits",
+            str(splits),
+            "--output-dir",
+            str(out),
+            "--budget-usd",
+            "10",
+            "--total-budget-usd",
+            "10",
+            "--budget-ledger",
+            str(tmp_path / "ledger.json"),
+            "--split",
+            "validation",
+            "--baseline-methods",
+            "pairwise",
+            "--concurrency",
+            "2",
+        ],
+    )
     assert fake.peak == 2
-    assert shared.read_json(out / 'scores/pairwise_summary.json')['coverage'] == 4
-    for p in (out / 'scores/pairwise').glob('*.json'):
+    assert shared.read_json(out / "scores/pairwise_summary.json")["coverage"] == 4
+    for p in (out / "scores/pairwise").glob("*.json"):
         record = shared.read_json(p)
-        assert [r['order'] for r in record['orders']] == [0, 1]
+        assert [r["order"] for r in record["orders"]] == [0, 1]
     assert len(fake.payloads) == 12  # Four writers plus two orders for each example.
 
 
 def test_blog_model_contract_rejects_every_role_substitution():
-    design = shared.yaml.safe_load((shared.ROOT / 'configs/experiments.yaml').read_text())
-    manifest = {'roles': {r: shared.role_config(SimpleNamespace(), r)
-                         for r in ('writer', 'rubric', 'optimizer', 'judge')},
-                'arguments': {k: design[k] for k in ('iterations', 'max_meta_prompt_words', 'failure_examples')},
-                'extra': {'initial_meta_prompt_hash': shared.digest(shared.prompt('rubric_initial'))}}
+    design = shared.yaml.safe_load((shared.ROOT / "configs/experiments.yaml").read_text())
+    manifest = {
+        "roles": {
+            r: shared.role_config(SimpleNamespace(), r) for r in ("writer", "rubric", "optimizer", "judge")
+        },
+        "arguments": {k: design[k] for k in ("iterations", "max_meta_prompt_words", "failure_examples")},
+        "extra": {"initial_meta_prompt_hash": shared.digest(shared.prompt("rubric_initial"))},
+    }
     shared.validate_primary_manifest(manifest, design)
-    for role in ('writer', 'rubric', 'optimizer', 'judge'):
+    for role in ("writer", "rubric", "optimizer", "judge"):
         changed = json.loads(json.dumps(manifest))
-        changed['roles'][role] = shared.role_config(SimpleNamespace(), role, model='qwen/qwen3.5-9b')
+        changed["roles"][role] = shared.role_config(SimpleNamespace(), role, model="qwen/qwen3.5-9b")
         with pytest.raises(shared.ContractError):
             shared.validate_primary_manifest(changed, design)
 
@@ -601,67 +858,96 @@ def test_blog_model_contract_rejects_every_role_substitution():
 def test_blog_driver_excludes_sweep_and_old_writer_cache():
     import run_matrix
 
-    design = shared.yaml.safe_load((shared.ROOT / 'configs/experiments.yaml').read_text())
-    args = SimpleNamespace(runs_root='runs', concurrency=4, budget_usd=100, total_budget_usd=100,
-                           dry_run=True, resume=False)
-    for phase, split, iterations in [('pilot', 'pilot', '1'), ('reproduction', 'research', '7')]:
+    design = shared.yaml.safe_load((shared.ROOT / "configs/experiments.yaml").read_text())
+    args = SimpleNamespace(
+        runs_root="runs", concurrency=4, budget_usd=100, total_budget_usd=100, dry_run=True, resume=False
+    )
+    for phase, split, iterations in [("pilot", "pilot", "1"), ("reproduction", "research", "7")]:
         command = run_matrix.build_command(args, design, phase)
-        assert command[command.index('--split')+1] == split
-        assert command[command.index('--iterations')+1] == iterations
-        assert command[command.index('--seed')+1] == '0'
-        assert '--writer-generations' not in command
-        for role in ('writer', 'rubric', 'judge'):
-            assert command[command.index(f'--{role}-model')+1] == 'meta/muse-spark-1.1'
-        assert command[command.index('--optimizer-model')+1] == 'moonshotai/kimi-k2.6'
+        assert command[command.index("--split") + 1] == split
+        assert command[command.index("--iterations") + 1] == iterations
+        assert command[command.index("--seed") + 1] == "0"
+        assert "--writer-generations" not in command
+        for role in ("writer", "rubric", "judge"):
+            assert command[command.index(f"--{role}-model") + 1] == "meta/muse-spark-1.1"
+        assert command[command.index("--optimizer-model") + 1] == "moonshotai/kimi-k2.6"
 
 
 def test_blog_report_does_not_count_historical_runs(tmp_path):
-    historical = tmp_path / 'runs/pilot-schema-GG2'
-    shared.write_json(historical / 'manifest.json', {'experiment': 'xar', 'arguments': {'split': 'pilot'}})
-    output = tmp_path / 'report'
-    shared.render_report(tmp_path / 'runs', output)
-    audit = shared.read_json(output / 'audit.json')
-    assert audit['expected_trajectories'] == 1
-    assert audit['raw_verified_trajectories'] == 0 and audit['state'] == 'not_started'
-    assert shared.read_json(output / 'blog_comparison.json')['reproduction'] is None
-    assert not (output / 'gap_curves.png').exists()
+    historical = tmp_path / "runs/pilot-schema-GG2"
+    shared.write_json(historical / "manifest.json", {"experiment": "xar", "arguments": {"split": "pilot"}})
+    output = tmp_path / "report"
+    shared.render_report(tmp_path / "runs", output)
+    audit = shared.read_json(output / "audit.json")
+    assert audit["expected_trajectories"] == 1
+    assert audit["raw_verified_trajectories"] == 0 and audit["state"] == "not_started"
+    assert shared.read_json(output / "blog_comparison.json")["reproduction"] is None
+    assert not (output / "gap_curves.png").exists()
 
 
 def test_blog_research_report_rebuilds_all_52_sections_and_rejects_tampering(tmp_path, monkeypatch):
     fake = install_fake(monkeypatch)
-    design = shared.yaml.safe_load((shared.ROOT / 'configs/experiments.yaml').read_text())
-    groups = {'train': [f'pilot0train{i}' for i in range(8)],
-              'validation': [f'validation{i}' for i in range(5)]}
-    examples = [dummy_example(p, section, split) for split, papers in groups.items()
-                for p in papers for section in shared.SECTIONS]
-    dataset, splits = tmp_path / 'examples.jsonl', tmp_path / 'splits.json'
-    dataset.write_text(''.join(shared.canonical(e)+'\n' for e in examples))
-    shared.write_json(splits, {'papers': groups})
-    shared.write_json(tmp_path / 'human_review.json', {'dataset_hash': shared.file_hash(dataset),
-        'papers': {e['paper_id']: {'decision': 'approved'} for e in examples}})
-    runs = tmp_path / 'runs'
-    source = runs / design['research_run']
-    invoke(monkeypatch, exp_xar, ['--dataset', str(dataset), '--splits', str(splits),
-        '--output-dir', str(source), '--budget-ledger', str(runs / 'ledger.json'),
-        '--budget-usd', '100', '--total-budget-usd', '100', '--concurrency', '4'])
+    design = shared.yaml.safe_load((shared.ROOT / "configs/experiments.yaml").read_text())
+    groups = {
+        "train": [f"pilot0train{i}" for i in range(8)],
+        "validation": [f"validation{i}" for i in range(5)],
+    }
+    examples = [
+        dummy_example(p, section, split)
+        for split, papers in groups.items()
+        for p in papers
+        for section in shared.SECTIONS
+    ]
+    dataset, splits = tmp_path / "examples.jsonl", tmp_path / "splits.json"
+    dataset.write_text("".join(shared.canonical(e) + "\n" for e in examples))
+    shared.write_json(splits, {"papers": groups})
+    shared.write_json(
+        tmp_path / "human_review.json",
+        {
+            "dataset_hash": shared.file_hash(dataset),
+            "papers": {e["paper_id"]: {"decision": "approved"} for e in examples},
+        },
+    )
+    runs = tmp_path / "runs"
+    source = runs / design["research_run"]
+    invoke(
+        monkeypatch,
+        exp_xar,
+        [
+            "--dataset",
+            str(dataset),
+            "--splits",
+            str(splits),
+            "--output-dir",
+            str(source),
+            "--budget-ledger",
+            str(runs / "ledger.json"),
+            "--budget-usd",
+            "100",
+            "--total-budget-usd",
+            "100",
+            "--concurrency",
+            "4",
+        ],
+    )
     assert len(fake.payloads) == 1307
-    assert {p['model'] for p in fake.payloads} == {'meta/muse-spark-1.1', 'moonshotai/kimi-k2.6'}
-    output = tmp_path / 'report'
+    assert {p["model"] for p in fake.payloads} == {"meta/muse-spark-1.1", "moonshotai/kimi-k2.6"}
+    output = tmp_path / "report"
     shared.render_report(runs, output)
-    assert shared.read_json(output / 'audit.json')['raw_verified_trajectories'] == 1
-    comparison = shared.read_json(output / 'blog_comparison.json')['reproduction']
-    assert comparison['selected_iteration'] == 0
-    assert comparison['initial_gap'] == 1 and comparison['selected_gap'] == 1
-    assert comparison['descriptive_reversal'] is False
-    assert comparison['validation_peak_used_for_selection'] is False
-    assert comparison['paired_improvement']['interval']['paper_clusters'] == 5
-    assert (output / 'gap_curves.svg').exists()
-    grade_path = next((source / 'scores/main/0/validation').glob('*/human.json'))
+    assert shared.read_json(output / "audit.json")["raw_verified_trajectories"] == 1
+    comparison = shared.read_json(output / "blog_comparison.json")["reproduction"]
+    assert comparison["selected_iteration"] == 0
+    assert comparison["initial_gap"] == 1 and comparison["selected_gap"] == 1
+    assert comparison["descriptive_reversal"] is False
+    assert comparison["validation_peak_used_for_selection"] is False
+    assert comparison["paired_improvement"]["interval"]["paper_clusters"] == 5
+    assert (output / "gap_curves.svg").exists()
+    grade_path = next((source / "scores/main/0/validation").glob("*/human.json"))
     grade = shared.read_json(grade_path)
-    grade['total'] = 10
+    grade["total"] = 10
     shared.write_json(grade_path, grade)
     shared.render_report(runs, output)
-    audit = shared.read_json(output / 'audit.json')
-    assert audit['raw_verified_trajectories'] == 0 and audit['complete'] is False
-    assert shared.read_json(output / 'blog_comparison.json')['reproduction'] is None
-    assert not (output / 'gap_curves.svg').exists()
+    audit = shared.read_json(output / "audit.json")
+    assert audit["raw_verified_trajectories"] == 0 and audit["complete"] is False
+    assert shared.read_json(output / "blog_comparison.json")["reproduction"] is None
+    assert not (output / "gap_curves.svg").exists()

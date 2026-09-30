@@ -1,4 +1,5 @@
 """Shared contracts for the XAR experiments. Scientific stage order lives in entrypoints."""
+
 from __future__ import annotations
 
 import argparse
@@ -99,19 +100,32 @@ def model_policy(model):
 
 
 def object_schema(properties, required=None):
-    return {"type": "object", "properties": properties,
-            "required": list(properties) if required is None else required, "additionalProperties": False}
+    return {
+        "type": "object",
+        "properties": properties,
+        "required": list(properties) if required is None else required,
+        "additionalProperties": False,
+    }
 
 
 TEXT = {"type": "string", "minLength": 1}
 CRITERION_SCHEMA = object_schema({k: TEXT for k in ("id", "description", "low", "middle", "high")})
-RUBRIC_SCHEMA = object_schema({"criteria": {"type": "array", "minItems": 4, "maxItems": 8,
-                                           "items": CRITERION_SCHEMA}})
-GRADE_SCHEMA = object_schema({"scores": {"type": "array", "minItems": 4, "maxItems": 8,
-    "items": object_schema({"id": TEXT, "score": {"type": "number", "minimum": 0, "maximum": 10},
-                            "evidence": TEXT})}})
-PAIRWISE_SCHEMA = object_schema({"winner": {"type": "string", "enum": ["A", "B", "tie"]},
-                                "evidence": TEXT})
+RUBRIC_SCHEMA = object_schema(
+    {"criteria": {"type": "array", "minItems": 4, "maxItems": 8, "items": CRITERION_SCHEMA}}
+)
+GRADE_SCHEMA = object_schema(
+    {
+        "scores": {
+            "type": "array",
+            "minItems": 4,
+            "maxItems": 8,
+            "items": object_schema(
+                {"id": TEXT, "score": {"type": "number", "minimum": 0, "maximum": 10}, "evidence": TEXT}
+            ),
+        }
+    }
+)
+PAIRWISE_SCHEMA = object_schema({"winner": {"type": "string", "enum": ["A", "B", "tie"]}, "evidence": TEXT})
 PROPOSAL_SCHEMA = object_schema({"prompt": TEXT, "rationale": TEXT})
 
 
@@ -144,8 +158,12 @@ def role_config(args, role, model=None, provider=None):
     model = model or getattr(args, f"{role}_model", None) or defaults["model"]
     model_policy(model)
     saved = cfg["models"].get(model, {})
-    provider = (provider or getattr(args, f"{role}_provider", None)
-                or defaults.get("providers", {}).get(model) or saved.get("provider"))
+    provider = (
+        provider
+        or getattr(args, f"{role}_provider", None)
+        or defaults.get("providers", {}).get(model)
+        or saved.get("provider")
+    )
     if not provider:
         raise ContractError(f"Explicit provider required for unclassified model {model}")
     reasoning = saved.get("reasoning", {"enabled": True})
@@ -157,9 +175,13 @@ def role_config(args, role, model=None, provider=None):
         reasoning = {"enabled": mode == "enabled"}
     temperature = getattr(args, f"{role}_temperature", None)
     max_tokens = getattr(args, f"{role}_max_output_tokens", None)
-    return {"model": model, "provider": provider,
-            "temperature": defaults["temperature"] if temperature is None else temperature,
-            "reasoning": reasoning, "max_tokens": max_tokens or saved.get("max_tokens", 16384)}
+    return {
+        "model": model,
+        "provider": provider,
+        "temperature": defaults["temperature"] if temperature is None else temperature,
+        "reasoning": reasoning,
+        "max_tokens": max_tokens or saved.get("max_tokens", 16384),
+    }
 
 
 def endpoint_for(cfg, snapshot=None):
@@ -186,8 +208,10 @@ def endpoint_for(cfg, snapshot=None):
 
 def pricing_upper(endpoint):
     base = endpoint["pricing"]
-    return {k: max(float(x.get(k, base.get(k, 0))) for x in [base] + base.get("overrides", []))
-            for k in ("prompt", "completion", "request")}
+    return {
+        k: max(float(x.get(k, base.get(k, 0))) for x in [base] + base.get("overrides", []))
+        for k in ("prompt", "completion", "request")
+    }
 
 
 PRICING_HEADROOM = 1.25
@@ -206,16 +230,28 @@ def tokenizer(name):
     if name == "kimi":
         import tiktoken
         from tiktoken.load import load_tiktoken_bpe
+
         # Pattern copied from the pinned official tokenization_kimi.py; no remote code execution.
-        pattern = "|".join([  # noqa: FLY002 -- preserve official tokenizer pattern construction
-            r"[\p{Han}]+",
-            r"[^\r\n\p{L}\p{N}]?[\p{Lu}\p{Lt}\p{Lm}\p{Lo}\p{M}&&[^\p{Han}]]*[\p{Ll}\p{Lm}\p{Lo}\p{M}&&[^\p{Han}]]+(?i:'s|'t|'re|'ve|'m|'ll|'d)?",
-            r"[^\r\n\p{L}\p{N}]?[\p{Lu}\p{Lt}\p{Lm}\p{Lo}\p{M}&&[^\p{Han}]]+[\p{Ll}\p{Lm}\p{Lo}\p{M}&&[^\p{Han}]]*(?i:'s|'t|'re|'ve|'m|'ll|'d)?",
-            r"\p{N}{1,3}", r" ?[^\s\p{L}\p{N}]+[\r\n]*", r"\s*[\r\n]+", r"\s+(?!\S)", r"\s+",
-        ])
-        return tiktoken.Encoding(name="kimi-k2.6", pat_str=pattern, special_tokens={},
-            mergeable_ranks=load_tiktoken_bpe(str(ROOT / "data/tokenizers/kimi/tiktoken.model")))
+        pattern = "|".join(  # noqa: FLY002 -- keep the official pattern's list form
+            [
+                r"[\p{Han}]+",
+                r"[^\r\n\p{L}\p{N}]?[\p{Lu}\p{Lt}\p{Lm}\p{Lo}\p{M}&&[^\p{Han}]]*[\p{Ll}\p{Lm}\p{Lo}\p{M}&&[^\p{Han}]]+(?i:'s|'t|'re|'ve|'m|'ll|'d)?",
+                r"[^\r\n\p{L}\p{N}]?[\p{Lu}\p{Lt}\p{Lm}\p{Lo}\p{M}&&[^\p{Han}]]+[\p{Ll}\p{Lm}\p{Lo}\p{M}&&[^\p{Han}]]*(?i:'s|'t|'re|'ve|'m|'ll|'d)?",
+                r"\p{N}{1,3}",
+                r" ?[^\s\p{L}\p{N}]+[\r\n]*",
+                r"\s*[\r\n]+",
+                r"\s+(?!\S)",
+                r"\s+",
+            ]
+        )
+        return tiktoken.Encoding(
+            name="kimi-k2.6",
+            pat_str=pattern,
+            special_tokens={},
+            mergeable_ranks=load_tiktoken_bpe(str(ROOT / "data/tokenizers/kimi/tiktoken.model")),
+        )
     from tokenizers import Tokenizer
+
     value = Tokenizer.from_file(str(ROOT / f"data/tokenizers/{name}/tokenizer.json"))
     value.no_truncation()
     value.no_padding()
@@ -223,8 +259,13 @@ def tokenizer(name):
 
 
 def token_count(text, model):
-    name = "qwen" if model.startswith("qwen/") else "kimi" if model.startswith("moonshotai/") else (
-        "deepseek" if model.startswith("deepseek/") else "glm" if model.startswith("z-ai/") else None)
+    name = (
+        "qwen"
+        if model.startswith("qwen/")
+        else "kimi"
+        if model.startswith("moonshotai/")
+        else ("deepseek" if model.startswith("deepseek/") else "glm" if model.startswith("z-ai/") else None)
+    )
     if name is None:
         return len(text.encode())
     if name == "kimi":
@@ -235,7 +276,7 @@ def token_count(text, model):
 def request_upper(payload, endpoint):
     # Count the whole serialized payload, with 25% headroom plus chat-template overhead.
     # Byte bound remains the fallback for unclassified model tokenizers.
-    tokens = math.ceil(1.25*token_count(canonical(payload), payload["model"])) + 1024
+    tokens = math.ceil(1.25 * token_count(canonical(payload), payload["model"])) + 1024
     if tokens + payload["max_tokens"] > endpoint["context_length"]:
         raise ContractError("Conservative context bound exceeded; papers cannot be truncated")
     if endpoint.get("max_prompt_tokens") and tokens > endpoint["max_prompt_tokens"]:
@@ -246,6 +287,7 @@ def request_upper(payload, endpoint):
 
 class Ledger:
     """Cross-process atomic reservations enforce both dollar ceilings, including uncertain sends."""
+
     def __init__(self, path, run_id, run_limit, total_limit):
         self.path, self.run_id = Path(path), run_id
         self.run_limit, self.total_limit = run_limit, total_limit
@@ -269,10 +311,17 @@ class Ledger:
             total = sum(e["charge"] for e in entries)
             local = sum(e["charge"] for e in entries if e["run_id"] == self.run_id)
             if total + amount > self.total_limit or local + amount > self.run_limit:
-                raise BudgetStop(f"Budget ceiling reached before dispatch (reserved/charged ${local:.4f} run, "
-                                 f"${total:.4f} total; next bound ${amount:.4f})")
-            data["entries"][key] = {"run_id": self.run_id, "charge": amount, "upper": amount,
-                                     "state": "reserved", "created_at": now()}
+                raise BudgetStop(
+                    f"Budget ceiling reached before dispatch (reserved/charged ${local:.4f} run, "
+                    f"${total:.4f} total; next bound ${amount:.4f})"
+                )
+            data["entries"][key] = {
+                "run_id": self.run_id,
+                "charge": amount,
+                "upper": amount,
+                "state": "reserved",
+                "created_at": now(),
+            }
 
     def settle(self, key, actual, state="complete"):
         with self.transaction() as data:
@@ -289,9 +338,12 @@ class Ledger:
     def summary(self):
         with self.transaction() as data:
             entries = [e for e in data["entries"].values() if e["run_id"] == self.run_id]
-            return {"charged_or_reserved_usd": sum(e["charge"] for e in entries),
-                    "actual_complete_usd": sum(e["charge"] for e in entries if e["state"] == "complete"),
-                    "requests": len(entries), "unresolved": sum(e["state"] != "complete" for e in entries)}
+            return {
+                "charged_or_reserved_usd": sum(e["charge"] for e in entries),
+                "actual_complete_usd": sum(e["charge"] for e in entries if e["state"] == "complete"),
+                "requests": len(entries),
+                "unresolved": sum(e["state"] != "complete" for e in entries),
+            }
 
 
 class OpenRouter:
@@ -311,15 +363,27 @@ class OpenRouter:
 
     def payload(self, role, system, data, schema, identity):
         cfg = self.roles[role]
-        payload = {"model": cfg["model"], "stream": False, "plugins": [], "transforms": [],
-                   "messages": [{"role": "system", "content": system},
-                                {"role": "user", "content": canonical(data)}],
-                   "temperature": cfg["temperature"], "reasoning": cfg["reasoning"],
-                   "max_tokens": cfg["max_tokens"], "provider": {"only": [cfg["provider"]],
-                   "order": [cfg["provider"]], "allow_fallbacks": False, "require_parameters": True}}
+        payload = {
+            "model": cfg["model"],
+            "stream": False,
+            "plugins": [],
+            "transforms": [],
+            "messages": [{"role": "system", "content": system}, {"role": "user", "content": canonical(data)}],
+            "temperature": cfg["temperature"],
+            "reasoning": cfg["reasoning"],
+            "max_tokens": cfg["max_tokens"],
+            "provider": {
+                "only": [cfg["provider"]],
+                "order": [cfg["provider"]],
+                "allow_fallbacks": False,
+                "require_parameters": True,
+            },
+        }
         if schema:
-            payload["response_format"] = {"type": "json_schema", "json_schema": {
-                "name": "xar_output", "strict": True, "schema": schema}}
+            payload["response_format"] = {
+                "type": "json_schema",
+                "json_schema": {"name": "xar_output", "strict": True, "schema": schema},
+            }
         if "seed" in self.endpoints[role][0]["supported_parameters"]:
             payload["seed"] = int(digest({"seed": self.seed, "identity": identity})[:8], 16) % (2**31)
         return payload
@@ -337,7 +401,10 @@ class OpenRouter:
         pricing_bounds = {}
         for role, cfg in self.roles.items():
             model = cfg["model"]
-            if model not in models or models[model]["canonical_slug"] != self.endpoints[role][1]["canonical_slug"]:
+            if (
+                model not in models
+                or models[model]["canonical_slug"] != self.endpoints[role][1]["canonical_slug"]
+            ):
                 raise ContractError("Pinned catalog release changed; declare a new batch")
             if model not in endpoints:
                 response = self.client.get(API_BASE + "/models/" + model + "/endpoints")
@@ -351,17 +418,26 @@ class OpenRouter:
             required = {"temperature", "reasoning", "max_tokens", "response_format", "structured_outputs"}
             if not required <= set(current["supported_parameters"]):
                 raise ContractError("Pinned endpoint no longer supports required parameters")
-            if current["context_length"] < prior["context_length"] or (
-                current.get("max_completion_tokens") or current["context_length"]) < cfg["max_tokens"]:
+            if (
+                current["context_length"] < prior["context_length"]
+                or (current.get("max_completion_tokens") or current["context_length"]) < cfg["max_tokens"]
+            ):
                 raise ContractError("Pinned endpoint limits changed; recheck whole payloads")
             current_price, frozen_upper = pricing_upper(current), pricing_bound(prior)
             if any(current_price[k] > frozen_upper[k] for k in frozen_upper):
-                raise ContractError("Endpoint pricing exceeds frozen upper rates; refresh evidence for a new batch")
-            pricing_bounds[role] = {"observed": current_price, "frozen_upper": frozen_upper,
-                                   "pricing_headroom_multiplier": PRICING_HEADROOM,
-                                   "price_changed_within_bound": current_price != pricing_upper(prior),
-                                   "lower_prices_within_bound": all(current_price[k] <= pricing_upper(prior)[k]
-                                       for k in current_price) and current_price != pricing_upper(prior)}
+                raise ContractError(
+                    "Endpoint pricing exceeds frozen upper rates; refresh evidence for a new batch"
+                )
+            pricing_bounds[role] = {
+                "observed": current_price,
+                "frozen_upper": frozen_upper,
+                "pricing_headroom_multiplier": PRICING_HEADROOM,
+                "price_changed_within_bound": current_price != pricing_upper(prior),
+                "lower_prices_within_bound": all(
+                    current_price[k] <= pricing_upper(prior)[k] for k in current_price
+                )
+                and current_price != pricing_upper(prior),
+            }
             if current.get("quantization") != prior.get("quantization"):
                 raise ContractError("Pinned endpoint precision changed; declare a new batch")
             if "seed" in prior["supported_parameters"] and "seed" not in current["supported_parameters"]:
@@ -369,9 +445,17 @@ class OpenRouter:
             efforts = models[model].get("reasoning", {}).get("supported_efforts", [])
             if efforts and cfg["reasoning"].get("effort", efforts[0]) not in efforts:
                 raise ContractError("Pinned reasoning mapping changed")
-        write_json(directory / "checks.json", {"at": now(), "roles": self.roles, "passed": True,
-                   "read_only": True, "pricing_bounds": pricing_bounds,
-                   "paid_capability_checks": "separate_operational_pilot"})
+        write_json(
+            directory / "checks.json",
+            {
+                "at": now(),
+                "roles": self.roles,
+                "passed": True,
+                "read_only": True,
+                "pricing_bounds": pricing_bounds,
+                "paid_capability_checks": "separate_operational_pilot",
+            },
+        )
         return directory
 
     def call(self, role, system, data, schema, identity):
@@ -389,8 +473,17 @@ class OpenRouter:
         cached = directory / "result.json"
         if cached.exists():
             return read_json(cached)
-        write_json(directory / "request.json", {"payload": payload, "identity": identity,
-                   "key": request_key, "role": role, "schema_version": SCHEMA_VERSION}, immutable=True)
+        write_json(
+            directory / "request.json",
+            {
+                "payload": payload,
+                "identity": identity,
+                "key": request_key,
+                "role": role,
+                "schema_version": SCHEMA_VERSION,
+            },
+            immutable=True,
+        )
         bound = request_upper(payload, self.endpoints[role][0])
         # One initial call plus three transport retries. Failed HTTP sends retain a reservation.
         for attempt in range(4):
@@ -403,7 +496,9 @@ class OpenRouter:
                     write_json(cached, result)
                     return result
                 if prior["status"] == "uncertain":
-                    raise BudgetStop(f"Prior send unresolved: {receipt}; inspect provider history before retry")
+                    raise BudgetStop(
+                        f"Prior send unresolved: {receipt}; inspect provider history before retry"
+                    )
                 if not prior.get("retryable"):
                     raise ContractError(f"Prior nonretryable transport failure: {receipt}")
                 continue
@@ -414,18 +509,32 @@ class OpenRouter:
             write_json(receipt, {"status": "uncertain", "sent_at": sent_at, "upper_usd": bound})
             started = time.monotonic()
             try:
-                response = self.client.post(API_BASE + "/chat/completions", json=payload,
-                    headers={"Authorization": "Bearer " + (self.key or "test"),
-                             "X-OpenRouter-Title": "Independent XAR reproduction"})
+                response = self.client.post(
+                    API_BASE + "/chat/completions",
+                    json=payload,
+                    headers={
+                        "Authorization": "Bearer " + (self.key or "test"),
+                        "X-OpenRouter-Title": "Independent XAR reproduction",
+                    },
+                )
                 try:
                     raw = response.json()
                 except ValueError:
                     raw = {"raw_body": response.text}
                 retryable = response.status_code in {408, 429, 500, 502, 503, 504}
                 success = response.status_code == 200 and "choices" in raw and not raw.get("error")
-                write_json(receipt, {"status": "success" if success else "http_error",
-                    "response": raw, "http_status": response.status_code, "retryable": retryable,
-                    "timestamp": now(), "sent_at": sent_at, "duration_seconds": time.monotonic() - started})
+                write_json(
+                    receipt,
+                    {
+                        "status": "success" if success else "http_error",
+                        "response": raw,
+                        "http_status": response.status_code,
+                        "retryable": retryable,
+                        "timestamp": now(),
+                        "sent_at": sent_at,
+                        "duration_seconds": time.monotonic() - started,
+                    },
+                )
                 if success:
                     result = self.extract(raw, request_key, ledger_key, directory)
                     write_json(cached, result)
@@ -439,7 +548,9 @@ class OpenRouter:
                 write_json(receipt, {"status": "connect_error", "retryable": True, "timestamp": now()})
             except (httpx.ReadTimeout, httpx.WriteTimeout, httpx.RemoteProtocolError):
                 self.ledger.settle(ledger_key, None, "uncertain")
-                raise BudgetStop(f"Send outcome unknown; preserve reservation and reconcile {receipt}") from None
+                raise BudgetStop(
+                    f"Send outcome unknown; preserve reservation and reconcile {receipt}"
+                ) from None
             if attempt < 3:
                 time.sleep(min(2**attempt, 8))
         raise ContractError(f"Transport retry allowance exhausted: {directory}")
@@ -447,8 +558,11 @@ class OpenRouter:
     def extract(self, raw, key, ledger_key, directory):
         usage = raw.get("usage", {})
         cost = usage.get("cost")
-        self.ledger.settle(ledger_key, float(cost) if cost is not None else None,
-                           "complete" if cost is not None else "cost_unknown")
+        self.ledger.settle(
+            ledger_key,
+            float(cost) if cost is not None else None,
+            "complete" if cost is not None else "cost_unknown",
+        )
         if cost is None:
             raise BudgetStop(f"Provider response lacks cost; reconcile usage before new calls: {directory}")
         choice = raw["choices"][0]
@@ -463,9 +577,16 @@ class OpenRouter:
         if provider and provider not in {endpoint["provider_name"], endpoint["tag"]}:
             raise ContractError(f"Returned provider differs: {provider}")
         receipt = directory / ("attempt_" + ledger_key.rsplit("/", 1)[-1] + ".json")
-        return {"content": choice["message"].get("content") or "", "finish_reason": choice.get("finish_reason"),
-                "request_key": key, "response_id": raw.get("id"), "usage": usage,
-                "model": returned, "provider": provider, "raw_response": str(receipt)}
+        return {
+            "content": choice["message"].get("content") or "",
+            "finish_reason": choice.get("finish_reason"),
+            "request_key": key,
+            "response_id": raw.get("id"),
+            "usage": usage,
+            "model": returned,
+            "provider": provider,
+            "raw_response": str(receipt),
+        }
 
     def structured(self, role, system, data, schema, identity, validator=None, repair=True):
         attempts = []
@@ -473,7 +594,10 @@ class OpenRouter:
             instructions = system
             if i:
                 instructions += "\nFORMAT REPAIR: Return complete valid JSON matching the schema. "
-                instructions += "Keep the substantive task inputs unchanged. Previous validation error: " + attempts[-1]["error"]
+                instructions += (
+                    "Keep the substantive task inputs unchanged. Previous validation error: "
+                    + attempts[-1]["error"]
+                )
             response = self.call(role, instructions, data, schema, {"task": identity, "format_attempt": i})
             try:
                 if response["finish_reason"] != "stop":
@@ -519,8 +643,11 @@ def load_examples(dataset, splits, selected_split=None):
 
 def task_data(example):
     # This allowlist prevents expert text, split labels, IDs, or prior feedback entering G/J.
-    return {"visible_paper": example["context"], "section_type": example["section_type"],
-            "target_words": example["target_words"]}
+    return {
+        "visible_paper": example["context"],
+        "section_type": example["section_type"],
+        "target_words": example["target_words"],
+    }
 
 
 def contamination(candidate, reference):
@@ -530,13 +657,17 @@ def contamination(candidate, reference):
         positions.setdefault(word, []).append(i)
     longest, prior = 0, {}
     for word in a:
-        current = {j: prior.get(j-1, 0) + 1 for j in positions.get(word, [])}
+        current = {j: prior.get(j - 1, 0) + 1 for j in positions.get(word, [])}
         longest = max(longest, max(current.values(), default=0))
         prior = current
-    reference_ngrams = {tuple(b[i:i+8]) for i in range(max(0, len(b)-7))}
-    overlap = sum(tuple(a[i:i+8]) in reference_ngrams for i in range(max(0, len(a)-7)))
-    return {"longest_verbatim_run_words": longest, "eightgram_overlap_fraction": overlap / max(1, len(a)-7),
-            "flagged": longest >= 30, "exclusion": False}
+    reference_ngrams = {tuple(b[i : i + 8]) for i in range(max(0, len(b) - 7))}
+    overlap = sum(tuple(a[i : i + 8]) in reference_ngrams for i in range(max(0, len(a) - 7)))
+    return {
+        "longest_verbatim_run_words": longest,
+        "eightgram_overlap_fraction": overlap / max(1, len(a) - 7),
+        "flagged": longest >= 30,
+        "exclusion": False,
+    }
 
 
 def bounded_map(function, items, concurrency, stopped=None):
@@ -563,8 +694,9 @@ def bounded_map(function, items, concurrency, stopped=None):
                 for future in done:
                     results[pending.pop(future)] = future.result()
                 if not stopped.is_set():
-                    pending.update({pool.submit(invoke, item): i
-                                    for i, item in itertools.islice(remaining, len(done))})
+                    pending.update(
+                        {pool.submit(invoke, item): i for i, item in itertools.islice(remaining, len(done))}
+                    )
         except BaseException:
             stopped.set()
             for future in pending:
@@ -576,8 +708,9 @@ def bounded_map(function, items, concurrency, stopped=None):
 def writer_candidates(api, examples, output, existing=None, concurrency=1):
     if not 1 <= concurrency <= 32:
         raise ContractError("Writer concurrency must be 1–32")
-    config_hash = digest({"writer": api.roles["writer"], "prompt": prompt("writer"),
-                          "schema_version": SCHEMA_VERSION})
+    config_hash = digest(
+        {"writer": api.roles["writer"], "prompt": prompt("writer"), "schema_version": SCHEMA_VERSION}
+    )
     frozen = read_json(existing) if existing else None
     if frozen and frozen["writer_configuration_hash"] != config_hash:
         raise ContractError("Cached writer configuration differs")
@@ -596,30 +729,52 @@ def writer_candidates(api, examples, output, existing=None, concurrency=1):
             for attempt in range(3):
                 data = task_data(e)
                 if attempt:
-                    data.update(previous_section=attempts[-1]["text"],
-                                length_revision=f"Revise only to fit {math.ceil(.85*e['target_words'])}–"
-                                                f"{math.floor(1.15*e['target_words'])} words. Preserve claims.")
+                    data.update(
+                        previous_section=attempts[-1]["text"],
+                        length_revision=f"Revise only to fit {math.ceil(0.85 * e['target_words'])}–"
+                        f"{math.floor(1.15 * e['target_words'])} words. Preserve claims.",
+                    )
                 if stopped.is_set():
                     raise ContractError("Writer generation halted after another section failed")
-                response = api.call("writer", prompt("writer"), data, None,
-                                    {"writer": config_hash, "example": e["example_id"], "attempt": attempt})
+                response = api.call(
+                    "writer",
+                    prompt("writer"),
+                    data,
+                    None,
+                    {"writer": config_hash, "example": e["example_id"], "attempt": attempt},
+                )
                 text = response["content"].strip()
                 count = words(text)
-                compliant = .85*e["target_words"] <= count <= 1.15*e["target_words"]
-                attempts.append({"attempt_index": attempt, "text": text, "text_hash": digest(text),
-                    "words": count, "length_compliant": compliant, "response": response})
+                compliant = 0.85 * e["target_words"] <= count <= 1.15 * e["target_words"]
+                attempts.append(
+                    {
+                        "attempt_index": attempt,
+                        "text": text,
+                        "text_hash": digest(text),
+                        "words": count,
+                        "length_compliant": compliant,
+                        "response": response,
+                    }
+                )
                 if compliant and response["finish_reason"] == "stop":
                     break
             accepted = attempts[-1]
-            record = {"example_id": e["example_id"], "context_hash": e["context_hash"],
-                      "sampling_seed": getattr(api, "seed", 0),
-                      "writer_configuration_hash": config_hash, "writer_configuration": api.roles["writer"],
-                      "attempts": attempts, "accepted_attempt": accepted["attempt_index"],
-                      "text": accepted["text"], "text_hash": accepted["text_hash"], "words": accepted["words"],
-                      "length_compliant": accepted["length_compliant"],
-                      "complete": accepted["response"]["finish_reason"] == "stop",
-                      "length_ratio": accepted["words"] / e["target_words"],
-                      "contamination": contamination(accepted["text"], e["reference"])}
+            record = {
+                "example_id": e["example_id"],
+                "context_hash": e["context_hash"],
+                "sampling_seed": getattr(api, "seed", 0),
+                "writer_configuration_hash": config_hash,
+                "writer_configuration": api.roles["writer"],
+                "attempts": attempts,
+                "accepted_attempt": accepted["attempt_index"],
+                "text": accepted["text"],
+                "text_hash": accepted["text_hash"],
+                "words": accepted["words"],
+                "length_compliant": accepted["length_compliant"],
+                "complete": accepted["response"]["finish_reason"] == "stop",
+                "length_ratio": accepted["words"] / e["target_words"],
+                "contamination": contamination(accepted["text"], e["reference"]),
+            }
             write_json(path, record, immutable=True)
         if record["context_hash"] != e["context_hash"] or record["text_hash"] != digest(record["text"]):
             raise ContractError("Cached writer context or content differs")
@@ -630,18 +785,32 @@ def writer_candidates(api, examples, output, existing=None, concurrency=1):
     records = bounded_map(generate_one, examples, concurrency, stopped)
     # Completion order never changes the frozen dataset/candidate order.
     candidates = {record["example_id"]: record for record in records}
-    artifact = {"writer_configuration_hash": config_hash, "writer_configuration": api.roles["writer"],
-                "candidates": candidates}
+    artifact = {
+        "writer_configuration_hash": config_hash,
+        "writer_configuration": api.roles["writer"],
+        "candidates": candidates,
+    }
     write_json(Path(output) / "generations/candidates.json", artifact, immutable=True)
     return candidates
 
 
 def generate_rubric(api, example, meta_prompt, identity, output):
-    result = api.structured("rubric", prompt("rubric_wrapper"),
-        {**task_data(example), "meta_prompt": meta_prompt}, RUBRIC_SCHEMA, identity, validate_rubric)
-    record = {"example_id": example["example_id"], "context_hash": example["context_hash"],
-              "meta_prompt_hash": digest(meta_prompt), "generator_configuration": api.roles["rubric"],
-              "identity": identity, **result}
+    result = api.structured(
+        "rubric",
+        prompt("rubric_wrapper"),
+        {**task_data(example), "meta_prompt": meta_prompt},
+        RUBRIC_SCHEMA,
+        identity,
+        validate_rubric,
+    )
+    record = {
+        "example_id": example["example_id"],
+        "context_hash": example["context_hash"],
+        "meta_prompt_hash": digest(meta_prompt),
+        "generator_configuration": api.roles["rubric"],
+        "identity": identity,
+        **result,
+    }
     record["rubric_hash"] = digest(result["value"]) if result["value"] else None
     write_json(output, record, immutable=True)
     return record
@@ -652,18 +821,41 @@ def grade_candidate(api, example, rubric_record, text, identity, output, role="j
         result = {"status": "missing", "value": None, "attempts": [], "reason": "invalid_rubric"}
     else:
         rubric = rubric_record["value"]
-        result = api.structured(role, prompt("judge"), {**task_data(example), "rubric": rubric, "candidate": text},
-            GRADE_SCHEMA, identity, lambda value: validate_grade(value, rubric, text + " " + example["context"]))
-    record = {"example_id": example["example_id"], "candidate_hash": digest(text),
-              "rubric_hash": rubric_record["rubric_hash"], "judge_configuration": api.roles[role],
-              "identity": identity, **result}
-    record["total"] = statistics.mean(s["score"] for s in result["value"]["scores"]) if result["value"] else None
+        result = api.structured(
+            role,
+            prompt("judge"),
+            {**task_data(example), "rubric": rubric, "candidate": text},
+            GRADE_SCHEMA,
+            identity,
+            lambda value: validate_grade(value, rubric, text + " " + example["context"]),
+        )
+    record = {
+        "example_id": example["example_id"],
+        "candidate_hash": digest(text),
+        "rubric_hash": rubric_record["rubric_hash"],
+        "judge_configuration": api.roles[role],
+        "identity": identity,
+        **result,
+    }
+    record["total"] = (
+        statistics.mean(s["score"] for s in result["value"]["scores"]) if result["value"] else None
+    )
     write_json(output, record, immutable=True)
     return record
 
 
-def evaluate_checkpoint(api, examples, candidates, meta_prompt, checkpoint, output, concurrency=2,
-                        frozen_rubrics=None, judge_role="judge", namespace="main"):
+def evaluate_checkpoint(
+    api,
+    examples,
+    candidates,
+    meta_prompt,
+    checkpoint,
+    output,
+    concurrency=2,
+    frozen_rubrics=None,
+    judge_role="judge",
+    namespace="main",
+):
     root = Path(output)
 
     def evaluate(e):
@@ -675,25 +867,40 @@ def evaluate_checkpoint(api, examples, candidates, meta_prompt, checkpoint, outp
                 raise ContractError("Frozen rubric context differs")
             write_json(root / "rubrics" / label / "rubric.json", rubric, immutable=True)
         else:
-            rubric = generate_rubric(api, e, meta_prompt, {"rubric": label},
-                                     root / "rubrics" / label / "rubric.json")
+            rubric = generate_rubric(
+                api, e, meta_prompt, {"rubric": label}, root / "rubrics" / label / "rubric.json"
+            )
         labels = ["human", "model"]
         random.Random(int(digest({"seed": api.seed, "label": label})[:16], 16)).shuffle(labels)
         grades = {}
         for slot, origin in enumerate(labels):
             text = e["reference"] if origin == "human" else candidates[eid]["text"]
             # Origin is in artifact paths only, never model inputs or seed identity.
-            grades[origin] = grade_candidate(api, e, rubric, text, {"grade": label, "slot": slot},
-                                             root / "scores" / label / (origin + ".json"), judge_role)
+            grades[origin] = grade_candidate(
+                api,
+                e,
+                rubric,
+                text,
+                {"grade": label, "slot": slot},
+                root / "scores" / label / (origin + ".json"),
+                judge_role,
+            )
         human, model = grades["human"]["total"], grades["model"]["total"]
-        return {"example_id": eid, "paper_id": e["paper_id"], "section_type": e["section_type"],
-                "split": e["split"], "checkpoint": checkpoint, "human": human, "model": model,
-                "gap": human-model if human is not None and model is not None else None,
-                "length_ratio": candidates[eid]["length_ratio"],
-                "length_compliant": candidates[eid]["length_compliant"],
-                "contamination_flagged": candidates[eid]["contamination"]["flagged"],
-                "rubric_path": str(root / "rubrics" / label / "rubric.json"),
-                "grade_paths": {o: str(root / "scores" / label / (o + ".json")) for o in labels}}
+        return {
+            "example_id": eid,
+            "paper_id": e["paper_id"],
+            "section_type": e["section_type"],
+            "split": e["split"],
+            "checkpoint": checkpoint,
+            "human": human,
+            "model": model,
+            "gap": human - model if human is not None and model is not None else None,
+            "length_ratio": candidates[eid]["length_ratio"],
+            "length_compliant": candidates[eid]["length_compliant"],
+            "contamination_flagged": candidates[eid]["contamination"]["flagged"],
+            "rubric_path": str(root / "rubrics" / label / "rubric.json"),
+            "grade_paths": {o: str(root / "scores" / label / (o + ".json")) for o in labels},
+        }
 
     rows = bounded_map(evaluate, examples, concurrency, getattr(api, "dispatch_stopped", None))
     write_json(root / "scores" / namespace / str(checkpoint) / f"{examples[0]['split']}_rows.json", rows)
@@ -709,38 +916,66 @@ def bootstrap(rows, seed=0, replicates=2000, field="gap"):
         return None
     rng = random.Random(seed)
     papers = sorted(bundles)
-    samples = sorted(statistics.mean(value for p in rng.choices(papers, k=len(papers)) for value in bundles[p])
-                     for _ in range(replicates))
-    return {"method": "paired_whole_paper_percentile_bootstrap", "paper_clusters": len(papers),
-            "replicates": replicates, "seed": seed,
-            "estimate": statistics.mean(value for values in bundles.values() for value in values),
-            "bootstrap_median": samples[replicates//2],
-            "low": samples[int(.025*replicates)], "high": samples[int(.975*replicates)]}
+    samples = sorted(
+        statistics.mean(value for p in rng.choices(papers, k=len(papers)) for value in bundles[p])
+        for _ in range(replicates)
+    )
+    return {
+        "method": "paired_whole_paper_percentile_bootstrap",
+        "paper_clusters": len(papers),
+        "replicates": replicates,
+        "seed": seed,
+        "estimate": statistics.mean(value for values in bundles.values() for value in values),
+        "bootstrap_median": samples[replicates // 2],
+        "low": samples[int(0.025 * replicates)],
+        "high": samples[int(0.975 * replicates)],
+    }
 
 
 def summarize(rows, seed=0):
     valid = [r for r in rows if r["gap"] is not None]
+
     def mean(key):
         return statistics.mean(r[key] for r in valid) if valid else None
-    return {"examples": len(rows), "paired_coverage": len(valid), "complete": len(valid) == len(rows),
-            "human": mean("human"), "model": mean("model"), "gap": mean("gap"),
-            "positive_gap_fraction": sum(r["gap"] > 0 for r in valid) / len(valid) if valid else None,
-            "ties": sum(r["gap"] == 0 for r in valid), "paper_interval": bootstrap(valid, seed),
-            "length_compliant": sum(r["length_compliant"] for r in rows),
-            "contamination_flagged": sum(r["contamination_flagged"] for r in rows),
-            "sections": {s: {"coverage": sum(r["section_type"] == s for r in valid),
-                        "gap": statistics.mean(r["gap"] for r in valid if r["section_type"] == s)
-                        if any(r["section_type"] == s for r in valid) else None} for s in SECTIONS},
-            "compliant_sensitivity": bootstrap([r for r in valid if r["length_compliant"]], seed),
-            "unflagged_sensitivity": bootstrap([r for r in valid if not r["contamination_flagged"]], seed)}
+
+    return {
+        "examples": len(rows),
+        "paired_coverage": len(valid),
+        "complete": len(valid) == len(rows),
+        "human": mean("human"),
+        "model": mean("model"),
+        "gap": mean("gap"),
+        "positive_gap_fraction": sum(r["gap"] > 0 for r in valid) / len(valid) if valid else None,
+        "ties": sum(r["gap"] == 0 for r in valid),
+        "paper_interval": bootstrap(valid, seed),
+        "length_compliant": sum(r["length_compliant"] for r in rows),
+        "contamination_flagged": sum(r["contamination_flagged"] for r in rows),
+        "sections": {
+            s: {
+                "coverage": sum(r["section_type"] == s for r in valid),
+                "gap": statistics.mean(r["gap"] for r in valid if r["section_type"] == s)
+                if any(r["section_type"] == s for r in valid)
+                else None,
+            }
+            for s in SECTIONS
+        },
+        "compliant_sensitivity": bootstrap([r for r in valid if r["length_compliant"]], seed),
+        "unflagged_sensitivity": bootstrap([r for r in valid if not r["contamination_flagged"]], seed),
+    }
 
 
 def paired_improvement(initial, selected, seed=0):
     base = {r["example_id"]: r for r in initial}
-    rows = [{"paper_id": r["paper_id"], "gap": r["gap"]-base[r["example_id"]]["gap"]}
-            for r in selected if r["gap"] is not None and base[r["example_id"]]["gap"] is not None]
-    return {"paired_coverage": len(rows), "mean": statistics.mean(r["gap"] for r in rows) if rows else None,
-            "interval": bootstrap(rows, seed)}
+    rows = [
+        {"paper_id": r["paper_id"], "gap": r["gap"] - base[r["example_id"]]["gap"]}
+        for r in selected
+        if r["gap"] is not None and base[r["example_id"]]["gap"] is not None
+    ]
+    return {
+        "paired_coverage": len(rows),
+        "mean": statistics.mean(r["gap"] for r in rows) if rows else None,
+        "interval": bootstrap(rows, seed),
+    }
 
 
 def write_table(path, rows):
@@ -767,7 +1002,9 @@ def common_parser(description, roles):
     p.add_argument("--concurrency", type=int, default=2)
     p.add_argument("--dry-run", action="store_true")
     p.add_argument("--resume", action="store_true")
-    p.add_argument("--split", choices=["train", "validation", "pilot", "confirmation", "research"], default="research")
+    p.add_argument(
+        "--split", choices=["train", "validation", "pilot", "confirmation", "research"], default="research"
+    )
     for role in roles:
         p.add_argument(f"--{role}-model")
         p.add_argument(f"--{role}-provider")
@@ -780,12 +1017,13 @@ def common_parser(description, roles):
 
 def parse_args(parser, argv=None):
     import sys
+
     argv = sys.argv[1:] if argv is None else argv
     known, _ = parser.parse_known_args(argv)
     if known.config:
         config = yaml.safe_load(Path(known.config).read_text()) or {}
         allowed = {a.dest for a in parser._actions}
-        invalid = set(config)-allowed
+        invalid = set(config) - allowed
         if invalid:
             raise ContractError(f"Unknown config keys: {sorted(invalid)}")
         parser.set_defaults(**config)
@@ -800,15 +1038,22 @@ def parse_args(parser, argv=None):
 
 def selected_examples(args):
     examples = load_examples(args.dataset, args.splits)
-    chosen = [e for e in examples if e["split"] in ("train", "validation")] if args.split == "research" else [
-        e for e in examples if e["split"] == args.split]
+    chosen = (
+        [e for e in examples if e["split"] in ("train", "validation")]
+        if args.split == "research"
+        else [e for e in examples if e["split"] == args.split]
+    )
     if not chosen:
         raise ContractError("Requested split has no examples")
     return chosen
 
 
 def software_hashes():
-    paths = list(ROOT.glob("*.py")) + list((ROOT / "prompts").glob("*.md")) + [ROOT / "uv.lock", ROOT / "configs/tokenizers.json"]
+    paths = (
+        list(ROOT.glob("*.py"))
+        + list((ROOT / "prompts").glob("*.md"))
+        + [ROOT / "uv.lock", ROOT / "configs/tokenizers.json"]
+    )
     return {str(p.relative_to(ROOT)): file_hash(p) for p in sorted(paths)}
 
 
@@ -850,30 +1095,54 @@ def operational_summary(output):
         for receipt in request.parent.glob("attempt_*.json"):
             data = read_json(receipt)
             usage = data.get("response", {}).get("usage", {})
-            usage_rows.append({"role": metadata["role"], "status": data["status"],
-                "prompt_tokens": usage.get("prompt_tokens"), "completion_tokens": usage.get("completion_tokens"),
-                "cost_usd": usage.get("cost"), "latency_seconds": data.get("duration_seconds")})
-    summary = {"format_validation": role_rates, "transport_attempts": len(usage_rows),
-               "inherited_frozen_responses": inherited,
-               "raw_usage_cost_usd": sum(r["cost_usd"] or 0 for r in usage_rows),
-               "unresolved_transport": sum(r["status"] == "uncertain" for r in usage_rows)}
+            usage_rows.append(
+                {
+                    "role": metadata["role"],
+                    "status": data["status"],
+                    "prompt_tokens": usage.get("prompt_tokens"),
+                    "completion_tokens": usage.get("completion_tokens"),
+                    "cost_usd": usage.get("cost"),
+                    "latency_seconds": data.get("duration_seconds"),
+                }
+            )
+    summary = {
+        "format_validation": role_rates,
+        "transport_attempts": len(usage_rows),
+        "inherited_frozen_responses": inherited,
+        "raw_usage_cost_usd": sum(r["cost_usd"] or 0 for r in usage_rows),
+        "unresolved_transport": sum(r["status"] == "uncertain" for r in usage_rows),
+    }
     write_json(output / "operational_summary.json", summary)
     write_table(output / "scores/request_usage.csv", usage_rows)
     return summary
 
 
 def resolved_manifest(args, roles, experiment, extra=None):
-    arguments = {k: v for k, v in vars(args).items() if k not in {"dry_run", "resume", "config", "output_dir"}}
+    arguments = {
+        k: v for k, v in vars(args).items() if k not in {"dry_run", "resume", "config", "output_dir"}
+    }
     endpoints = {}
     for role, cfg in roles.items():
         e, m = endpoint_for(cfg)
-        endpoints[role] = {"endpoint": e, "canonical_slug": m["canonical_slug"],
-                           "unsupported_seed": "seed" not in e["supported_parameters"]}
-    manifest = {"experiment": experiment, "arguments": arguments, "roles": roles, "endpoints": endpoints,
-                "dataset_hash": file_hash(args.dataset), "splits_hash": file_hash(args.splits),
-                "dataset": str(Path(args.dataset).resolve()), "splits": str(Path(args.splits).resolve()),
-                "software_hashes": software_hashes(), "model_tiers": read_json(ROOT / "configs/model_tiers.json"),
-                "schema_version": SCHEMA_VERSION, "extra": extra or {}}
+        endpoints[role] = {
+            "endpoint": e,
+            "canonical_slug": m["canonical_slug"],
+            "unsupported_seed": "seed" not in e["supported_parameters"],
+        }
+    manifest = {
+        "experiment": experiment,
+        "arguments": arguments,
+        "roles": roles,
+        "endpoints": endpoints,
+        "dataset_hash": file_hash(args.dataset),
+        "splits_hash": file_hash(args.splits),
+        "dataset": str(Path(args.dataset).resolve()),
+        "splits": str(Path(args.splits).resolve()),
+        "software_hashes": software_hashes(),
+        "model_tiers": read_json(ROOT / "configs/model_tiers.json"),
+        "schema_version": SCHEMA_VERSION,
+        "extra": extra or {},
+    }
     substantive = copy.deepcopy(manifest)
     for k in ("budget_usd", "total_budget_usd"):
         substantive["arguments"].pop(k, None)
@@ -887,14 +1156,19 @@ def initialize_run(args, roles, experiment, extra=None):
     path = out / "manifest.json"
     review_path = Path(args.dataset).parent / "human_review.json"
     if not review_path.exists():
-        raise ContractError("PLAN.md requires human extraction/suitability review; fill data/human_review.json")
+        raise ContractError(
+            "PLAN.md requires human extraction/suitability review; fill data/human_review.json"
+        )
     review = read_json(review_path)
     if review.get("dataset_hash") != file_hash(args.dataset):
         raise ContractError("Human review does not match the frozen dataset hash")
     used_examples = load_examples(args.dataset, args.splits)
     split = getattr(args, "split", "research")
-    used_papers = {e["paper_id"] for e in used_examples if
-                   (e["split"] in ("train", "validation") if split == "research" else e["split"] == split)}
+    used_papers = {
+        e["paper_id"]
+        for e in used_examples
+        if (e["split"] in ("train", "validation") if split == "research" else e["split"] == split)
+    }
     if any(review.get("papers", {}).get(p, {}).get("decision") != "approved" for p in used_papers):
         raise ContractError("Selected papers still need human review; see data/review.md")
     manifest["human_review_hash"] = file_hash(review_path)
@@ -906,8 +1180,15 @@ def initialize_run(args, roles, experiment, extra=None):
         saved = read_json(path)
         if saved["substantive_hash"] != manifest["substantive_hash"]:
             raise ContractError("Resume substantive configuration changed; create a new run")
-        if saved["arguments"].get("budget_usd") != args.budget_usd or saved["arguments"].get("total_budget_usd") != args.total_budget_usd:
-            history = read_json(out / "budget_continuations.json") if (out / "budget_continuations.json").exists() else []
+        if (
+            saved["arguments"].get("budget_usd") != args.budget_usd
+            or saved["arguments"].get("total_budget_usd") != args.total_budget_usd
+        ):
+            history = (
+                read_json(out / "budget_continuations.json")
+                if (out / "budget_continuations.json").exists()
+                else []
+            )
             change = {"budget_usd": args.budget_usd, "total_budget_usd": args.total_budget_usd}
             if not history or any(history[-1].get(k) != v for k, v in change.items()):
                 history.append({"at": now(), **change})
@@ -915,7 +1196,9 @@ def initialize_run(args, roles, experiment, extra=None):
     else:
         manifest["created_at"] = now()
         try:
-            manifest["git_commit"] = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip()
+            manifest["git_commit"] = subprocess.check_output(
+                ["git", "rev-parse", "HEAD"], cwd=ROOT, text=True
+            ).strip()
         except subprocess.CalledProcessError:
             manifest["git_commit"] = None
         write_json(path, manifest, immutable=True)
@@ -941,52 +1224,79 @@ def estimate(args, roles, examples, counts):
         endpoint, _ = endpoint_for(roles[role])
         if count:
             for e in examples:
-                tokens = math.ceil(1.25*token_count(canonical(task_data(e)), roles[role]["model"])) + 16000
+                tokens = math.ceil(1.25 * token_count(canonical(task_data(e)), roles[role]["model"])) + 16000
                 if tokens + roles[role]["max_tokens"] > endpoint["context_length"]:
                     raise ContractError(f"{role} context does not fit {e['example_id']}")
         price = pricing_upper(endpoint)
         typical_tokens = statistics.mean(contexts) / 3.5 + 1500
         output_tokens = min(roles[role]["max_tokens"], 5000)
-        estimates[role] = {"requests": count, "typical_uncached_usd": count * (
-            typical_tokens*price["prompt"] + output_tokens*price["completion"]),
-            "per_request_conservative_usd": (max(contexts)+12000)*price["prompt"] +
-                                            roles[role]["max_tokens"]*price["completion"]}
+        estimates[role] = {
+            "requests": count,
+            "typical_uncached_usd": count
+            * (typical_tokens * price["prompt"] + output_tokens * price["completion"]),
+            "per_request_conservative_usd": (max(contexts) + 12000) * price["prompt"]
+            + roles[role]["max_tokens"] * price["completion"],
+        }
     reuse = {}
     for field in ("writer_generations", "target_generations"):
         artifact = getattr(args, field, None)
         if artifact:
             path = Path(artifact)
-            reuse[field] = {"path": artifact, "status": "available" if path.exists() else "preceding_phase_prerequisite_missing"}
+            reuse[field] = {
+                "path": artifact,
+                "status": "available" if path.exists() else "preceding_phase_prerequisite_missing",
+            }
             if path.exists() and "writer" in roles:
                 saved = read_json(path)
-                expected_hash = digest({"writer": roles["writer"], "prompt": prompt("writer"), "schema_version": SCHEMA_VERSION})
+                expected_hash = digest(
+                    {"writer": roles["writer"], "prompt": prompt("writer"), "schema_version": SCHEMA_VERSION}
+                )
                 if saved["writer_configuration_hash"] != expected_hash:
                     raise ContractError("Planned cached writer artifact has incompatible settings")
                 for e in examples:
                     candidate = saved["candidates"].get(e["example_id"])
                     if not candidate or candidate["context_hash"] != e["context_hash"]:
                         raise ContractError("Planned cached writer artifact lacks matching example coverage")
-    result = {"dry_run": True, "examples": len(examples), "roles": roles, "counts_and_costs": estimates,
-              "artifact_reuse": reuse,
-              "retry_reserve_fraction": .25,
-              "estimated_phase_usd_with_reserve": 1.25*sum(e["typical_uncached_usd"] for e in estimates.values()),
-              "pricing_source": "saved_endpoint_snapshots", "limitations": "Pilot token usage required; optimizer feedback may be larger.",
-              "budget_usd": args.budget_usd, "total_budget_usd": args.total_budget_usd}
+    result = {
+        "dry_run": True,
+        "examples": len(examples),
+        "roles": roles,
+        "counts_and_costs": estimates,
+        "artifact_reuse": reuse,
+        "retry_reserve_fraction": 0.25,
+        "estimated_phase_usd_with_reserve": 1.25 * sum(e["typical_uncached_usd"] for e in estimates.values()),
+        "pricing_source": "saved_endpoint_snapshots",
+        "limitations": "Pilot token usage required; optimizer feedback may be larger.",
+        "budget_usd": args.budget_usd,
+        "total_budget_usd": args.total_budget_usd,
+    }
     print(json.dumps(result, indent=2))
     return result
 
 
 def audit_request_contract(payload, cfg, endpoint, schema, prompt_file):
     """Check the actual sent request against the frozen role, scoring wrapper, and schema."""
-    expected = {"model": cfg["model"], "temperature": cfg["temperature"],
-                "reasoning": cfg["reasoning"], "max_tokens": cfg["max_tokens"],
-                "stream": False, "plugins": [], "transforms": [],
-                "provider": {"only": [cfg["provider"]], "order": [cfg["provider"]],
-                             "allow_fallbacks": False, "require_parameters": True}}
+    expected = {
+        "model": cfg["model"],
+        "temperature": cfg["temperature"],
+        "reasoning": cfg["reasoning"],
+        "max_tokens": cfg["max_tokens"],
+        "stream": False,
+        "plugins": [],
+        "transforms": [],
+        "provider": {
+            "only": [cfg["provider"]],
+            "order": [cfg["provider"]],
+            "allow_fallbacks": False,
+            "require_parameters": True,
+        },
+    }
     if any(payload.get(key) != value for key, value in expected.items()):
         raise ContractError("Saved request differs from frozen role/routing/decoding contract")
-    if payload.get("response_format") != {"type": "json_schema", "json_schema": {
-            "name": "xar_output", "strict": True, "schema": schema}}:
+    if payload.get("response_format") != {
+        "type": "json_schema",
+        "json_schema": {"name": "xar_output", "strict": True, "schema": schema},
+    }:
         raise ContractError("Saved request differs from fixed output schema")
     messages = payload.get("messages", [])
     if len(messages) != 2 or [m.get("role") for m in messages] != ["system", "user"]:
@@ -1038,20 +1348,29 @@ def audit_xar_run(path):
     pilot = manifest["arguments"]["split"] == "pilot"
     if pilot:
         papers = sorted({e["paper_id"] for e in examples if e["split"] == "pilot"})
-        examples = [{**e, "split": "train" if e["paper_id"] == papers[0] else "validation"}
-                    for e in examples if e["split"] == "pilot"]
+        examples = [
+            {**e, "split": "train" if e["paper_id"] == papers[0] else "validation"}
+            for e in examples
+            if e["split"] == "pilot"
+        ]
     else:
         examples = [e for e in examples if e["split"] in ("train", "validation")]
-        if {s: sum(e["split"] == s for e in examples) for s in ("train", "validation")} != {"train": 32, "validation": 20}:
+        if {s: sum(e["split"] == s for e in examples) for s in ("train", "validation")} != {
+            "train": 32,
+            "validation": 20,
+        }:
             raise ContractError("Primary dataset must have 32 train and 20 validation examples")
-    if file_hash(manifest["dataset"]) != manifest["dataset_hash"] or file_hash(manifest["splits"]) != manifest["splits_hash"]:
+    if (
+        file_hash(manifest["dataset"]) != manifest["dataset_hash"]
+        or file_hash(manifest["splits"]) != manifest["splits_hash"]
+    ):
         raise ContractError("Run data changed")
     candidates = read_json(path / "generations/candidates.json")["candidates"]
     all_rows, table = {}, []
     iterations = manifest["arguments"]["iterations"]
     if not pilot and iterations != 7:
         raise ContractError("Primary trajectory lacks seven updates")
-    for iteration in range(iterations+1):
+    for iteration in range(iterations + 1):
         checkpoint = (path / f"prompts/iter_{iteration:02d}.md").read_text()
         if digest(checkpoint) != freeze["prompt_hashes"][iteration]:
             raise ContractError("Frozen checkpoint differs")
@@ -1068,59 +1387,104 @@ def audit_xar_run(path):
             for e in [e for e in examples if e["split"] == split]:
                 eid = e["example_id"]
                 candidate = candidates[eid]
-                if candidate["context_hash"] != e["context_hash"] or candidate["text_hash"] != digest(candidate["text"]):
+                if candidate["context_hash"] != e["context_hash"] or candidate["text_hash"] != digest(
+                    candidate["text"]
+                ):
                     raise ContractError("Writer candidate integrity failed")
                 rubric = read_json(path / f"rubrics/main/{iteration}/{split}/{eid}/rubric.json")
                 if rubric["generator_configuration"] != manifest["roles"]["rubric"]:
                     raise ContractError("Rubric artifact configuration differs from the frozen generator")
-                rubric_payload = audit_saved_output(rubric, RUBRIC_SCHEMA, manifest["roles"]["rubric"],
-                    manifest["endpoints"]["rubric"], manifest["software_hashes"]["prompts/rubric_wrapper.md"])
+                rubric_payload = audit_saved_output(
+                    rubric,
+                    RUBRIC_SCHEMA,
+                    manifest["roles"]["rubric"],
+                    manifest["endpoints"]["rubric"],
+                    manifest["software_hashes"]["prompts/rubric_wrapper.md"],
+                )
                 if split == "validation":
                     if not freeze.get("frozen_at"):
-                        raise ContractError("Freeze lacks timestamp evidence for held-out evaluation ordering")
+                        raise ContractError(
+                            "Freeze lacks timestamp evidence for held-out evaluation ordering"
+                        )
                     for record in rubric["attempts"]:
                         receipt = read_json(record["response"]["raw_response"])
                         if not receipt.get("sent_at") or receipt["sent_at"] < freeze["frozen_at"]:
                             raise ContractError("Validation rubric was dispatched before trajectory freeze")
                 validate_rubric(rubric["value"])
-                if json.loads(rubric_payload["messages"][1]["content"]) != {**task_data(e), "meta_prompt": checkpoint}:
+                if json.loads(rubric_payload["messages"][1]["content"]) != {
+                    **task_data(e),
+                    "meta_prompt": checkpoint,
+                }:
                     raise ContractError("Rubric inputs contain an unexpected field or changed context")
                 totals = {}
                 for origin, text in (("human", e["reference"]), ("model", candidate["text"])):
                     grade = read_json(path / f"scores/main/{iteration}/{split}/{eid}/{origin}.json")
                     if grade["judge_configuration"] != manifest["roles"]["judge"]:
                         raise ContractError("Grade artifact configuration differs from the frozen judge")
-                    grade_payload = audit_saved_output(grade, GRADE_SCHEMA, manifest["roles"]["judge"],
-                        manifest["endpoints"]["judge"], manifest["software_hashes"]["prompts/judge.md"])
+                    grade_payload = audit_saved_output(
+                        grade,
+                        GRADE_SCHEMA,
+                        manifest["roles"]["judge"],
+                        manifest["endpoints"]["judge"],
+                        manifest["software_hashes"]["prompts/judge.md"],
+                    )
                     if split == "validation":
                         for attempt in grade["attempts"]:
                             receipt = read_json(attempt["response"]["raw_response"])
                             if not receipt.get("sent_at") or receipt["sent_at"] < freeze["frozen_at"]:
-                                raise ContractError("Validation grade was dispatched before trajectory freeze")
+                                raise ContractError(
+                                    "Validation grade was dispatched before trajectory freeze"
+                                )
                     expected = {**task_data(e), "rubric": rubric["value"], "candidate": text}
                     if json.loads(grade_payload["messages"][1]["content"]) != expected:
                         raise ContractError("Anonymous grade payload violates input contract")
-                    totals[origin] = validate_grade(grade["value"], rubric["value"], text + " " + e["context"])
+                    totals[origin] = validate_grade(
+                        grade["value"], rubric["value"], text + " " + e["context"]
+                    )
                     if grade["total"] != totals[origin] or grade["candidate_hash"] != digest(text):
                         raise ContractError("Grade arithmetic or candidate hash differs")
-                rows.append({"example_id": eid, "paper_id": e["paper_id"], "section_type": e["section_type"],
-                    "split": split, "checkpoint": iteration, **totals, "gap": totals["human"]-totals["model"],
-                    "length_compliant": candidate["length_compliant"], "length_ratio": candidate["length_ratio"],
-                    "contamination_flagged": candidate["contamination"]["flagged"]})
+                rows.append(
+                    {
+                        "example_id": eid,
+                        "paper_id": e["paper_id"],
+                        "section_type": e["section_type"],
+                        "split": split,
+                        "checkpoint": iteration,
+                        **totals,
+                        "gap": totals["human"] - totals["model"],
+                        "length_compliant": candidate["length_compliant"],
+                        "length_ratio": candidate["length_ratio"],
+                        "contamination_flagged": candidate["contamination"]["flagged"],
+                    }
+                )
             all_rows[(iteration, split)] = rows
             summaries[split] = summarize(rows, manifest["arguments"]["seed"])
-        table.append({"iteration": iteration, "train_human": summaries["train"]["human"],
-                      "train_model": summaries["train"]["model"], "train_gap": summaries["train"]["gap"],
-                      "val_human": summaries["validation"]["human"], "val_model": summaries["validation"]["model"],
-                      "val_gap": summaries["validation"]["gap"], "selected_by_train": iteration == freeze["selected"]})
+        table.append(
+            {
+                "iteration": iteration,
+                "train_human": summaries["train"]["human"],
+                "train_model": summaries["train"]["model"],
+                "train_gap": summaries["train"]["gap"],
+                "val_human": summaries["validation"]["human"],
+                "val_model": summaries["validation"]["model"],
+                "val_gap": summaries["validation"]["gap"],
+                "selected_by_train": iteration == freeze["selected"],
+            }
+        )
     selected = max(range(len(table)), key=lambda i: (table[i]["train_gap"], -i))
     if selected != freeze["selected"] or freeze["validation_used_for_selection"] is not False:
         raise ContractError("Selection rule differs")
     if freeze["training_gaps"] != [r["train_gap"] for r in table]:
         raise ContractError("Training-selection ledger differs")
     write_table(path / "scores/rebuilt_checkpoints.csv", table)
-    return {"manifest": manifest, "freeze": freeze, "table": table, "rows": all_rows,
-            "candidates": candidates, "raw_verified": True}
+    return {
+        "manifest": manifest,
+        "freeze": freeze,
+        "table": table,
+        "rows": all_rows,
+        "candidates": candidates,
+        "raw_verified": True,
+    }
 
 
 def validate_primary_manifest(manifest, design):
@@ -1156,45 +1520,80 @@ def matrix_effects(observed, design):
             initial = {r["example_id"]: r for r in run["rows"][(0, "validation")]}
             if set(selected) != set(initial):
                 raise ContractError("Factorial comparison has incomplete paired baseline coverage")
-            values.append({eid: {"paper_id": row["paper_id"], "selected_gap": row["gap"],
-                                "improvement": row["gap"]-initial[eid]["gap"]} for eid, row in selected.items()})
+            values.append(
+                {
+                    eid: {
+                        "paper_id": row["paper_id"],
+                        "selected_gap": row["gap"],
+                        "improvement": row["gap"] - initial[eid]["gap"],
+                    }
+                    for eid, row in selected.items()
+                }
+            )
         ids = set(values[0])
         if any(set(v) != ids for v in values[1:]):
             effects.append({**metadata, "status": "incompatible_example_sets"})
             return
         for metric in ("selected_gap", "improvement"):
-            rows = [{"paper_id": values[0][eid]["paper_id"],
-                     "gap": sum(weight * v[eid][metric] for weight, v in zip(weights, values))}
-                    for eid in sorted(ids)]
-            effects.append({**metadata, "metric": metric, "status": "paired_complete",
-                            "paired_examples": len(rows), "mean": statistics.mean(r["gap"] for r in rows),
-                            "paper_interval": bootstrap(rows, metadata["seed"])})
+            rows = [
+                {
+                    "paper_id": values[0][eid]["paper_id"],
+                    "gap": sum(weight * v[eid][metric] for weight, v in zip(weights, values)),
+                }
+                for eid in sorted(ids)
+            ]
+            effects.append(
+                {
+                    **metadata,
+                    "metric": metric,
+                    "status": "paired_complete",
+                    "paired_examples": len(rows),
+                    "mean": statistics.mean(r["gap"] for r in rows),
+                    "paper_interval": bootstrap(rows, metadata["seed"]),
+                }
+            )
 
     for axis in range(3):
         fixed_axes = [i for i in range(3) if i != axis]
         for fixed in itertools.product((weak, strong), repeat=2):
             for seed in design["seeds"]:
-                low = [None]*3
+                low = [None] * 3
                 for index, model in zip(fixed_axes, fixed):
                     low[index] = model
                 low[axis] = weak
                 high = low.copy()
                 high[axis] = strong
-                contrast([(*low, seed), (*high, seed)], [-1, 1], {"kind": "main_effect",
-                    "varied_role": axes[axis], "direction": "strong_minus_weak", "seed": seed,
-                    "fixed_roles": {axes[index]: model for index, model in zip(fixed_axes, fixed)}})
+                contrast(
+                    [(*low, seed), (*high, seed)],
+                    [-1, 1],
+                    {
+                        "kind": "main_effect",
+                        "varied_role": axes[axis],
+                        "direction": "strong_minus_weak",
+                        "seed": seed,
+                        "fixed_roles": {axes[index]: model for index, model in zip(fixed_axes, fixed)},
+                    },
+                )
     for a, b in itertools.combinations(range(3), 2):
         fixed_axis = next(i for i in range(3) if i not in (a, b))
         for fixed in (weak, strong):
             for seed in design["seeds"]:
                 keys = []
                 for amodel, bmodel in ((weak, weak), (weak, strong), (strong, weak), (strong, strong)):
-                    roles = [None]*3
+                    roles = [None] * 3
                     roles[a], roles[b], roles[fixed_axis] = amodel, bmodel, fixed
                     keys.append((*roles, seed))
-                contrast(keys, [1, -1, -1, 1], {"kind": "interaction", "varied_roles": [axes[a], axes[b]],
-                    "direction": "strong_strong-minus-strong_weak-minus-weak_strong-plus-weak_weak", "seed": seed,
-                    "fixed_roles": {axes[fixed_axis]: fixed}})
+                contrast(
+                    keys,
+                    [1, -1, -1, 1],
+                    {
+                        "kind": "interaction",
+                        "varied_roles": [axes[a], axes[b]],
+                        "direction": "strong_strong-minus-strong_weak-minus-weak_strong-plus-weak_weak",
+                        "seed": seed,
+                        "fixed_roles": {axes[fixed_axis]: fixed},
+                    },
+                )
     return effects
 
 
@@ -1205,16 +1604,32 @@ def render_report(runs_root, output):
         raise ContractError("Reporting requires the active blog reproduction design")
     output, source = Path(output), Path(runs_root) / design["research_run"]
     output.mkdir(parents=True, exist_ok=True)
-    audit = {"scope": design["scope"], "expected_trajectories": 1, "raw_verified_trajectories": 0,
-             "complete": False, "source_run": str(source), "failures": []}
-    lines = ["# Meta blog same-model reproduction", "",
-             "Muse Spark 1.1: writer, rubric generator, judge. Kimi K2.6: optimizer.", "",
-             "One trajectory; 52 sections from 8 training and 5 validation papers; seven updates.", "",
-             "The paper IDs, original prompts, and decoding settings were not published in the blog.",
-             "This reconstruction uses frozen arXiv author sections and declared prompts/settings.",
-             "A reversal measures optimized judging preferences, not objective writing quality.", ""]
-    comparison = {"source_url": design["source"], "blog_reported": design["reported_validation"],
-                  "reproduction": None, "exact_source_data_and_prompts_available": False}
+    audit = {
+        "scope": design["scope"],
+        "expected_trajectories": 1,
+        "raw_verified_trajectories": 0,
+        "complete": False,
+        "source_run": str(source),
+        "failures": [],
+    }
+    lines = [
+        "# Meta blog same-model reproduction",
+        "",
+        "Muse Spark 1.1: writer, rubric generator, judge. Kimi K2.6: optimizer.",
+        "",
+        "One trajectory; 52 sections from 8 training and 5 validation papers; seven updates.",
+        "",
+        "The paper IDs, original prompts, and decoding settings were not published in the blog.",
+        "This reconstruction uses frozen arXiv author sections and declared prompts/settings.",
+        "A reversal measures optimized judging preferences, not objective writing quality.",
+        "",
+    ]
+    comparison = {
+        "source_url": design["source"],
+        "blog_reported": design["reported_validation"],
+        "reproduction": None,
+        "exact_source_data_and_prompts_available": False,
+    }
     if not (source / "manifest.json").exists():
         audit["state"] = "not_started"
         lines += ["Research has not started. Historical alternative-model pilots are excluded.", ""]
@@ -1222,43 +1637,65 @@ def render_report(runs_root, output):
         manifest = read_json(source / "manifest.json")
         try:
             validate_primary_manifest(manifest, design)
-            if manifest["arguments"]["split"] != "research" or manifest["arguments"]["seed"] != design["seeds"][0]:
+            if (
+                manifest["arguments"]["split"] != "research"
+                or manifest["arguments"]["seed"] != design["seeds"][0]
+            ):
                 raise ContractError("Declared research split and trajectory required")
             run = audit_xar_run(source)
         except (ContractError, FileNotFoundError, jsonschema.ValidationError, ValueError) as error:
             audit.update(state="incomplete", failures=[str(error)])
-            lines += ["Research is incomplete; no verified comparison is available.", "", f"Audit: {error}", ""]
+            lines += [
+                "Research is incomplete; no verified comparison is available.",
+                "",
+                f"Audit: {error}",
+                "",
+            ]
         else:
             table, selected = run["table"], run["freeze"]["selected"]
             initial, final = table[0], table[selected]
             positives = [r["iteration"] for r in table if r["val_gap"] > 0]
             peak = max(table, key=lambda r: (r["val_gap"], -r["iteration"]))
             comparison["reproduction"] = {
-                "initial_gap": initial["val_gap"], "selected_gap": final["val_gap"],
-                "selected_iteration": selected, "terminal_gap": table[-1]["val_gap"],
+                "initial_gap": initial["val_gap"],
+                "selected_gap": final["val_gap"],
+                "selected_iteration": selected,
+                "terminal_gap": table[-1]["val_gap"],
                 "first_positive_iteration": positives[0] if positives else None,
                 "descriptive_validation_peak_gap": peak["val_gap"],
                 "descriptive_validation_peak_iteration": peak["iteration"],
                 "validation_peak_used_for_selection": False,
-                "initial_human": initial["val_human"], "selected_human": final["val_human"],
-                "initial_model": initial["val_model"], "selected_model": final["val_model"],
-                "paired_improvement": paired_improvement(run["rows"][(0, "validation")],
-                    run["rows"][(selected, "validation")], design["seeds"][0]),
-                "descriptive_reversal": initial["val_gap"] < 0 < final["val_gap"]}
+                "initial_human": initial["val_human"],
+                "selected_human": final["val_human"],
+                "initial_model": initial["val_model"],
+                "selected_model": final["val_model"],
+                "paired_improvement": paired_improvement(
+                    run["rows"][(0, "validation")], run["rows"][(selected, "validation")], design["seeds"][0]
+                ),
+                "descriptive_reversal": initial["val_gap"] < 0 < final["val_gap"],
+            }
             audit.update(state="raw_verified", complete=True, raw_verified_trajectories=1)
             write_table(output / "checkpoints.csv", table)
-            lines += [f"Raw-verified trajectory: 1/1. Training selected checkpoint {selected}.", "",
-                      f"Validation gap: {initial['val_gap']:.3f} → {final['val_gap']:.3f}.", "",
-                      "Blog reports −4.2 → +2.76; validation crossing at 4 and peak at 5.", "",
-                      "The entire checkpoint curve is reported; the validation maximum is descriptive only.", ""]
+            lines += [
+                f"Raw-verified trajectory: 1/1. Training selected checkpoint {selected}.",
+                "",
+                f"Validation gap: {initial['val_gap']:.3f} → {final['val_gap']:.3f}.",
+                "",
+                "Blog reports −4.2 → +2.76; validation crossing at 4 and peak at 5.",
+                "",
+                "The entire checkpoint curve is reported; the validation maximum is descriptive only.",
+                "",
+            ]
             import matplotlib
+
             matplotlib.use("Agg")
             import matplotlib.pyplot as plt
+
             fig, axes = plt.subplots(1, 2, figsize=(10, 4))
             xs = [r["iteration"] for r in table]
             axes[0].plot(xs, [r["train_gap"] for r in table], "--o", label="Train")
             axes[0].plot(xs, [r["val_gap"] for r in table], "-o", label="Validation")
-            axes[0].axhline(0, color="black", linewidth=.7)
+            axes[0].axhline(0, color="black", linewidth=0.7)
             axes[0].set_title("Human minus model score")
             axes[1].plot(xs, [r["val_human"] for r in table], "-o", label="Author")
             axes[1].plot(xs, [r["val_model"] for r in table], "-o", label="Muse Spark 1.1")
@@ -1285,14 +1722,25 @@ def render_matrix_report(runs_root, output):
     output.mkdir(parents=True, exist_ok=True)
     design = yaml.safe_load((ROOT / "configs/experiments.yaml").read_text())
     model_labels = {design["weak"]: "weak", design["strong"]: "strong"}
-    expected = {(w, g, o, s) for w in model_labels for g in model_labels for o in model_labels for s in design["seeds"]}
+    expected = {
+        (w, g, o, s)
+        for w in model_labels
+        for g in model_labels
+        for o in model_labels
+        for s in design["seeds"]
+    }
     observed, failures = {}, []
     for path in sorted(Path(runs_root).glob("*/manifest.json")):
         manifest = read_json(path)
         if manifest["experiment"] != "xar" or manifest["arguments"]["split"] != "research":
             continue
         roles = manifest["roles"]
-        key = (roles["writer"]["model"], roles["rubric"]["model"], roles["optimizer"]["model"], manifest["arguments"]["seed"])
+        key = (
+            roles["writer"]["model"],
+            roles["rubric"]["model"],
+            roles["optimizer"]["model"],
+            manifest["arguments"]["seed"],
+        )
         try:
             if key not in expected:
                 raise ContractError("Run is outside primary preregistered matrix")
@@ -1306,23 +1754,49 @@ def render_matrix_report(runs_root, output):
     writer_hashes, shared_contract = {}, None
     for key in sorted(expected):
         w, g, o, seed = key
-        row = {"writer": model_labels[w], "generator": model_labels[g], "optimizer": model_labels[o], "seed": seed,
-               "status": "missing", "selected_checkpoint": None, "initial_gap": None, "selected_gap": None,
-               "terminal_gap": None, "improvement": None, "reversal": None}
+        row = {
+            "writer": model_labels[w],
+            "generator": model_labels[g],
+            "optimizer": model_labels[o],
+            "seed": seed,
+            "status": "missing",
+            "selected_checkpoint": None,
+            "initial_gap": None,
+            "selected_gap": None,
+            "terminal_gap": None,
+            "improvement": None,
+            "reversal": None,
+        }
         if key in observed:
             run = observed[key]
-            contract = {k: run["manifest"][k] for k in ("dataset_hash", "splits_hash", "software_hashes", "schema_version")}
+            contract = {
+                k: run["manifest"][k]
+                for k in ("dataset_hash", "splits_hash", "software_hashes", "schema_version")
+            }
             if shared_contract is not None and shared_contract != contract:
-                failures.append({"condition": key, "error": "Primary matrix data/software/scoring contracts differ"})
+                failures.append(
+                    {"condition": key, "error": "Primary matrix data/software/scoring contracts differ"}
+                )
             shared_contract = contract
             selected = run["freeze"]["selected"]
             initial, final = run["table"][0]["val_gap"], run["table"][selected]["val_gap"]
-            row.update(status="raw_verified", selected_checkpoint=selected, initial_gap=initial,
-                       selected_gap=final, terminal_gap=run["table"][-1]["val_gap"], improvement=final-initial,
-                       reversal=initial < 0 < final)
+            row.update(
+                status="raw_verified",
+                selected_checkpoint=selected,
+                initial_gap=initial,
+                selected_gap=final,
+                terminal_gap=run["table"][-1]["val_gap"],
+                improvement=final - initial,
+                reversal=initial < 0 < final,
+            )
             signatures = {eid: c["text_hash"] for eid, c in run["candidates"].items()}
             if w in writer_hashes and writer_hashes[w] != signatures:
-                failures.append({"condition": key, "error": "Writer candidates were not shared across conditions/trajectories"})
+                failures.append(
+                    {
+                        "condition": key,
+                        "error": "Writer candidates were not shared across conditions/trajectories",
+                    }
+                )
             writer_hashes[w] = signatures
         summaries.append(row)
     comparisons = []
@@ -1333,47 +1807,85 @@ def render_matrix_report(runs_root, output):
                 weak_key, strong_key = (w, g, design["weak"], seed), (w, g, design["strong"], seed)
                 if weak_key in observed and strong_key in observed:
                     a, b = observed[weak_key], observed[strong_key]
-                    paired = paired_improvement(a["rows"][(a["freeze"]["selected"], "validation")],
-                                                b["rows"][(b["freeze"]["selected"], "validation")], seed)
-                    comparisons.append({"writer": writer_label, "generator": generator_label, "seed": seed,
-                                        "comparison": "strong_minus_weak_optimizer_selected_gap", **paired})
+                    paired = paired_improvement(
+                        a["rows"][(a["freeze"]["selected"], "validation")],
+                        b["rows"][(b["freeze"]["selected"], "validation")],
+                        seed,
+                    )
+                    comparisons.append(
+                        {
+                            "writer": writer_label,
+                            "generator": generator_label,
+                            "seed": seed,
+                            "comparison": "strong_minus_weak_optimizer_selected_gap",
+                            **paired,
+                        }
+                    )
     write_table(output / "matrix.csv", summaries)
     if writer_hashes:
-        shared_compliant = set.intersection(*[
-            {eid for eid, candidate in run["candidates"].items() if candidate["length_compliant"]}
-            for run in observed.values()])
+        shared_compliant = set.intersection(
+            *[
+                {eid for eid, candidate in run["candidates"].items() if candidate["length_compliant"]}
+                for run in observed.values()
+            ]
+        )
         sensitivities = []
         for key, run in observed.items():
             selected = run["freeze"]["selected"]
-            selected_rows = [r for r in run["rows"][(selected, "validation")] if r["example_id"] in shared_compliant]
+            selected_rows = [
+                r for r in run["rows"][(selected, "validation")] if r["example_id"] in shared_compliant
+            ]
             initial_rows = [r for r in run["rows"][(0, "validation")] if r["example_id"] in shared_compliant]
-            sensitivities.append({"condition": key, "shared_compliant_examples": len(selected_rows),
-                "selected": summarize(selected_rows), "improvement": paired_improvement(initial_rows, selected_rows)})
+            sensitivities.append(
+                {
+                    "condition": key,
+                    "shared_compliant_examples": len(selected_rows),
+                    "selected": summarize(selected_rows),
+                    "improvement": paired_improvement(initial_rows, selected_rows),
+                }
+            )
         write_json(output / "shared_compliance_sensitivity.json", sensitivities)
     write_json(output / "paired_comparisons.json", comparisons)
     write_json(output / "factorial_effects.json", matrix_effects(observed, design))
     complete = len(observed) == len(expected) and not failures
-    write_json(output / "audit.json", {"expected_trajectories": len(expected), "raw_verified_trajectories": len(observed),
-        "primary_matrix_complete": complete, "failures": failures,
-        "controls_transfers_confirmation": "Require separate audited artifacts; matrix completion alone is not milestone completion"})
-    lines = ["# Independent XAR reproduction results", "",
-        f"Primary matrix: {len(observed)}/{len(expected)} trajectories verified against raw outputs.", "",
-        "No empirical inversion or improvement claim is supported by unexecuted or incomplete cells.", "",
+    write_json(
+        output / "audit.json",
+        {
+            "expected_trajectories": len(expected),
+            "raw_verified_trajectories": len(observed),
+            "primary_matrix_complete": complete,
+            "failures": failures,
+            "controls_transfers_confirmation": "Require separate audited artifacts; matrix completion alone is not milestone completion",
+        },
+    )
+    lines = [
+        "# Independent XAR reproduction results",
+        "",
+        f"Primary matrix: {len(observed)}/{len(expected)} trajectories verified against raw outputs.",
+        "",
+        "No empirical inversion or improvement claim is supported by unexecuted or incomplete cells.",
+        "",
         "Recent arXiv preprints replace the intended S2ORC source. Original author sections are a proxy",
         "for human writing; peer review and absence of AI assistance are not guaranteed. The dataset",
-        "has only five validation paper clusters. Model family and capability are confounded.", "",
+        "has only five validation paper clusters. Model family and capability are confounded.",
+        "",
         "Static prompt audits cannot exclude every provenance heuristic or memorization. Provider",
-        "pins reduce routing changes but do not guarantee immutable weights or determinism.", "",
+        "pins reduce routing changes but do not guarantee immutable weights or determinism.",
+        "",
         "Null and adverse results must remain in the matrix. A descriptive reversal is an optimized",
         "grading preference, not proof of objective writing quality. Confirmation, transfer, and",
-        "controls must be inspected before any stronger claim.", ""]
+        "controls must be inspected before any stronger claim.",
+        "",
+    ]
     if failures:
         lines += ["Audit failures:", "", *[f"- {f}" for f in failures], ""]
     (output / "results.md").write_text("\n".join(lines))
     if observed:
         import matplotlib
+
         matplotlib.use("Agg")
         import matplotlib.pyplot as plt
+
         fig, axes = plt.subplots(2, 2, figsize=(12, 8), sharex=True)
         for key, run in observed.items():
             w, g, o, seed = key
@@ -1383,12 +1895,14 @@ def render_matrix_report(runs_root, output):
             axes[0, 1].plot(xs, [r["val_gap"] for r in run["table"]], label=label)
             axes[1, 0].plot(xs, [r["val_human"] for r in run["table"]], label=label)
             axes[1, 1].plot(xs, [r["val_model"] for r in run["table"]], label=label)
-        for ax, title in zip(axes.flat, ["Training gap", "Validation gap", "Validation author score", "Validation model score"]):
+        for ax, title in zip(
+            axes.flat, ["Training gap", "Validation gap", "Validation author score", "Validation model score"]
+        ):
             ax.set_title(title)
             ax.set_xlabel("Iteration")
-            ax.axhline(0, color="black", linewidth=.7)
+            ax.axhline(0, color="black", linewidth=0.7)
         fig.legend(*axes[0, 0].get_legend_handles_labels(), loc="outside lower center", ncol=3, fontsize=6)
-        fig.tight_layout(rect=(0, .15, 1, 1))
+        fig.tight_layout(rect=(0, 0.15, 1, 1))
         fig.savefig(output / "gap_curves.png", dpi=160)
         fig.savefig(output / "gap_curves.svg")
         plt.close(fig)
@@ -1398,11 +1912,11 @@ def render_matrix_report(runs_root, output):
             for i, (g, o) in enumerate([(g, o) for g in ["weak", "strong"] for o in ["weak", "strong"]]):
                 values = [r["selected_gap"] for r in cells if r["generator"] == g and r["optimizer"] == o]
                 if values:
-                    ax.scatter([i]*len(values), values)
-                    ax.plot([i-.15, i+.15], [statistics.mean(values)]*2, color="black")
+                    ax.scatter([i] * len(values), values)
+                    ax.plot([i - 0.15, i + 0.15], [statistics.mean(values)] * 2, color="black")
             ax.set_xticks(range(4), ["Gw/Ow", "Gw/Os", "Gs/Ow", "Gs/Os"])
             ax.set_title(f"{writer.title()} writer: selected validation gap")
-            ax.axhline(0, color="black", linewidth=.7)
+            ax.axhline(0, color="black", linewidth=0.7)
         fig.tight_layout()
         fig.savefig(output / "generator_optimizer_matrix.png", dpi=160)
         fig.savefig(output / "generator_optimizer_matrix.svg")
@@ -1425,11 +1939,11 @@ def audit_proposal(text, examples, initial_prompt, max_words):
     lower = text.casefold()
     patterns = {
         "origin_preference": r"(?:prefer|reward|favor|favour|boost)\s+(?:the\s+)?(?:human|expert|original)|"
-                             r"(?:penaliz|penalis|punish|downscore)\w*\s+(?:the\s+)?(?:model|ai|generated)",
+        r"(?:penaliz|penalis|punish|downscore)\w*\s+(?:the\s+)?(?:model|ai|generated)",
         "origin_detection": r"(?:detect|guess|infer|identify|determine)\s+(?:the\s+)?(?:authorship|origin|provenance)|"
-                            r"(?:human.written|ai.generated|model.generated)\s+(?:tells|markers|signals)",
+        r"(?:human.written|ai.generated|model.generated)\s+(?:tells|markers|signals)",
         "wrapper_override": r"(?:ignore|override|replace)\s+(?:the\s+)?(?:wrapper|system|grading|schema)|"
-                            r"(?:weighted\s+(?:mean|average)|unequal\s+weight|score\s+(?:from\s+)?0\s*(?:to|[-–])\s*100)"
+        r"(?:weighted\s+(?:mean|average)|unequal\s+weight|score\s+(?:from\s+)?0\s*(?:to|[-–])\s*100)",
     }
     for name, pattern in patterns.items():
         if re.search(pattern, lower):
@@ -1442,16 +1956,22 @@ def audit_proposal(text, examples, initial_prompt, max_words):
         a = lower.split()
         for field in ("reference", "context"):
             b = e[field].casefold().split()
-            spans = {tuple(b[i:i+12]) for i in range(max(0, len(b)-11))}
-            for i in range(max(0, len(a)-11)):
-                span = " ".join(a[i:i+12])
-                if tuple(a[i:i+12]) in spans and span not in initial_prompt.casefold():
+            spans = {tuple(b[i : i + 12]) for i in range(max(0, len(b) - 11))}
+            for i in range(max(0, len(a) - 11)):
+                span = " ".join(a[i : i + 12])
+                if tuple(a[i : i + 12]) in spans and span not in initial_prompt.casefold():
                     flags.append({"type": "copied_training_span", "paper_id": e["paper_id"], "match": span})
                     break
     if flags:
         reasons.append("training_leakage")
-    return {"accepted": not reasons, "reasons": sorted(set(reasons)), "flags": flags,
-            "words": words(text), "policy": "fixed_static_scan_v1", "limitation": "Static scan cannot prove semantic absence of provenance heuristics"}
+    return {
+        "accepted": not reasons,
+        "reasons": sorted(set(reasons)),
+        "flags": flags,
+        "words": words(text),
+        "policy": "fixed_static_scan_v1",
+        "limitation": "Static scan cannot prove semantic absence of provenance heuristics",
+    }
 
 
 def propose_prompt(api, current, feedback, examples, initial, args, iteration):
@@ -1462,23 +1982,45 @@ def propose_prompt(api, current, feedback, examples, initial, args, iteration):
     for attempt in range(2):
         instruction = prompt("optimizer")
         if attempt:
-            instruction += "\nBOUNDED REPAIR: Fix these proposal violations: " + ", ".join(attempts[-1]["audit"]["reasons"])
-            data = {**data, "previous_proposal": attempts[-1]["value"] or attempts[-1]["attempts"][-1]["response"]["content"]}
-        result = api.structured("optimizer", instruction, data, PROPOSAL_SCHEMA,
-            {"proposal": iteration, "bounded_attempt": attempt}, repair=False)
-        audit = audit_proposal(result["value"]["prompt"], examples, initial, args.max_meta_prompt_words) if result["value"] else {
-            "accepted": False, "reasons": ["invalid_format"], "flags": []}
+            instruction += "\nBOUNDED REPAIR: Fix these proposal violations: " + ", ".join(
+                attempts[-1]["audit"]["reasons"]
+            )
+            data = {
+                **data,
+                "previous_proposal": attempts[-1]["value"]
+                or attempts[-1]["attempts"][-1]["response"]["content"],
+            }
+        result = api.structured(
+            "optimizer",
+            instruction,
+            data,
+            PROPOSAL_SCHEMA,
+            {"proposal": iteration, "bounded_attempt": attempt},
+            repair=False,
+        )
+        audit = (
+            audit_proposal(result["value"]["prompt"], examples, initial, args.max_meta_prompt_words)
+            if result["value"]
+            else {"accepted": False, "reasons": ["invalid_format"], "flags": []}
+        )
         attempts.append({"attempt": attempt, "audit": audit, **result})
         if audit["accepted"]:
             break
     accepted = attempts[-1]["audit"]["accepted"]
     proposal = attempts[-1]["value"]["prompt"] if accepted else current
-    record = {"iteration": iteration, "parent_prompt_hash": digest(current), "feedback_hash": digest(feedback),
-              "optimizer_configuration": api.roles["optimizer"], "attempts": attempts,
-              "accepted": accepted, "update_consumed": True, "prompt": proposal, "prompt_hash": digest(proposal)}
+    record = {
+        "iteration": iteration,
+        "parent_prompt_hash": digest(current),
+        "feedback_hash": digest(feedback),
+        "optimizer_configuration": api.roles["optimizer"],
+        "attempts": attempts,
+        "accepted": accepted,
+        "update_consumed": True,
+        "prompt": proposal,
+        "prompt_hash": digest(proposal),
+    }
     write_json(directory / "proposal.json", record, immutable=True)
     return proposal
-
 
 
 def checkpoint_indices(freeze, labels):
@@ -1493,7 +2035,8 @@ def source_artifacts(args):
         raise ContractError("Transfer source must be a frozen XAR run with explicit coverage status")
     if manifest["schema_version"] != SCHEMA_VERSION or any(
         manifest["software_hashes"].get("prompts/" + p + ".md") != file_hash(ROOT / "prompts" / (p + ".md"))
-        for p in ("judge", "rubric_wrapper")):
+        for p in ("judge", "rubric_wrapper")
+    ):
         raise ContractError("Transfer scoring contract differs from source")
     for name in ("dataset", "splits"):
         given = getattr(args, name)
@@ -1505,8 +2048,11 @@ def source_artifacts(args):
     examples = load_examples(args.dataset, args.splits)
     if manifest["arguments"]["split"] == "pilot":
         papers = sorted({e["paper_id"] for e in examples if e["split"] == "pilot"})
-        examples = [{**e, "split": "train" if e["paper_id"] == papers[0] else "validation"}
-                    for e in examples if e["split"] == "pilot"]
+        examples = [
+            {**e, "split": "train" if e["paper_id"] == papers[0] else "validation"}
+            for e in examples
+            if e["split"] == "pilot"
+        ]
     examples = [e for e in examples if e["split"] == args.split]
     if not examples:
         raise ContractError("No source examples in transfer split")
@@ -1514,7 +2060,9 @@ def source_artifacts(args):
     candidates = saved["candidates"]
     rubrics = {}
     for label in args.checkpoints:
-        checkpoint = 0 if label == "initial" else freeze["selected"] if label == "selected" else freeze["terminal"]
+        checkpoint = (
+            0 if label == "initial" else freeze["selected"] if label == "selected" else freeze["terminal"]
+        )
         meta_prompt = (source / "prompts" / f"iter_{checkpoint:02d}.md").read_text()
         if digest(meta_prompt) != freeze["prompt_hashes"][checkpoint]:
             raise ContractError("Source checkpoint hash changed")
@@ -1522,13 +2070,18 @@ def source_artifacts(args):
         for e in examples:
             path = source / f"rubrics/main/{checkpoint}/{args.split}/{e['example_id']}/rubric.json"
             record = read_json(path)
-            if record["meta_prompt_hash"] != digest(meta_prompt) or record["context_hash"] != e["context_hash"]:
+            if (
+                record["meta_prompt_hash"] != digest(meta_prompt)
+                or record["context_hash"] != e["context_hash"]
+            ):
                 raise ContractError("Source rubric identity differs")
             if record["rubric_hash"] != (digest(record["value"]) if record["value"] else None):
                 raise ContractError("Source rubric content hash differs")
             rubrics[label][e["example_id"]] = record
             candidate = candidates[e["example_id"]]
-            if candidate["context_hash"] != e["context_hash"] or candidate["text_hash"] != digest(candidate["text"]):
+            if candidate["context_hash"] != e["context_hash"] or candidate["text_hash"] != digest(
+                candidate["text"]
+            ):
                 raise ContractError("Source candidate identity differs")
     return manifest, freeze, examples, candidates, rubrics
 
@@ -1541,7 +2094,9 @@ def html_text(node, strip_heading=False):
             head.decompose()
     for math_node in clone.find_all("math"):
         annotation = math_node.find("annotation", attrs={"encoding": "application/x-tex"})
-        math_node.replace_with(annotation.get_text() if annotation else math_node.get("alttext", math_node.get_text(" ")))
+        math_node.replace_with(
+            annotation.get_text() if annotation else math_node.get("alttext", math_node.get_text(" "))
+        )
     for n in clone.select("script, style, nav, footer, .ltx_ERROR"):
         n.decompose()
     return normalize(clone.get_text(" ", strip=True))
@@ -1556,8 +2111,11 @@ def extract_paper(html, metadata):
     if len(abstracts) != 1:
         raise ContractError("Missing or duplicated abstract")
     targets = {"abstract": abstracts[0]}
-    patterns = {"introduction": r"^introduction$", "related_work": r"^(related work|related works)$",
-                "conclusion": r"^(conclusion|conclusions|conclusion and future work|conclusions and future work)$"}
+    patterns = {
+        "introduction": r"^introduction$",
+        "related_work": r"^(related work|related works)$",
+        "conclusion": r"^(conclusion|conclusions|conclusion and future work|conclusions and future work)$",
+    }
     for section in document.select(".ltx_section"):
         if section.find_parent(class_="ltx_section"):
             continue
@@ -1590,13 +2148,27 @@ def extract_paper(html, metadata):
         # Largest optimizer payload uses four full failure papers, candidate pairs, rubrics, evidence.
         count = max(token_count(context, m) for m in ("qwen/qwen3.5-9b", "moonshotai/kimi-k2.6"))
         reference_count = max(token_count(reference, m) for m in ("qwen/qwen3.5-9b", "moonshotai/kimi-k2.6"))
-        if math.ceil(1.25*(4*count + 8*reference_count + 16000)) + 16384 > 262144:
+        if math.ceil(1.25 * (4 * count + 8 * reference_count + 16000)) + 16384 > 262144:
             raise ContractError("Conservative four-failure optimizer context bound exceeded")
-        examples.append({"example_id": metadata["paper_id"] + "_" + kind, "paper_id": metadata["paper_id"],
-            "section_type": kind, "context": context, "reference": reference,
-            "context_hash": digest(context), "reference_hash": digest(reference), "target_words": words(reference),
-            "provenance": metadata, "extraction_checks": {"unique_target": True, "reference_removed": True,
-            "bibliography_items": len(document.select('.ltx_bibitem')), "ocr_debris": False}})
+        examples.append(
+            {
+                "example_id": metadata["paper_id"] + "_" + kind,
+                "paper_id": metadata["paper_id"],
+                "section_type": kind,
+                "context": context,
+                "reference": reference,
+                "context_hash": digest(context),
+                "reference_hash": digest(reference),
+                "target_words": words(reference),
+                "provenance": metadata,
+                "extraction_checks": {
+                    "unique_target": True,
+                    "reference_removed": True,
+                    "bibliography_items": len(document.select(".ltx_bibitem")),
+                    "ocr_debris": False,
+                },
+            }
+        )
     return examples
 
 
@@ -1613,13 +2185,18 @@ def prepare_data(args):
             title = normalize(entry.find("a:title", ns).text)
             authors = [normalize(a.find("a:name", ns).text) for a in entry.findall("a:author", ns)]
             ref = entry.find("x:journal_ref", ns)
-            metadata = {"paper_id": paper_id, "title": title, "authors": authors,
+            metadata = {
+                "paper_id": paper_id,
+                "title": title,
+                "authors": authors,
                 "source_url": "https://arxiv.org/html/" + paper_id,
                 "abstract_url": "https://arxiv.org/abs/" + paper_id,
                 "year": int(entry.find("a:published", ns).text[:4]),
                 "venue": ref.text if ref is not None else "arXiv preprint; peer review not verified",
-                "extraction_version": "latexhtml-v1", "retrieved_at": "2026-09-29",
-                "redistribution": "not verified; text stays local"}
+                "extraction_version": "latexhtml-v1",
+                "retrieved_at": "2026-09-29",
+                "redistribution": "not verified; text stays local",
+            }
             try:
                 if set(authors) & seen_authors or title.casefold() in seen_titles:
                     raise ContractError("Author or manuscript overlap with prior selected paper")
@@ -1630,7 +2207,7 @@ def prepare_data(args):
                     response = client.get(metadata["source_url"])
                     response.raise_for_status()
                     path.write_text(response.text)
-                    time.sleep(.25)
+                    time.sleep(0.25)
                 metadata["html_hash"] = file_hash(path)
                 extracted = extract_paper(path.read_text(), metadata)
                 metadata["inspection"] = {"agent_extraction_check": "passed", "human_review": "pending"}
@@ -1646,12 +2223,22 @@ def prepare_data(args):
     write_json(ROOT / "data/exclusions.json", exclusions)
     if len(accepted) != 20:
         write_json(ROOT / "data/acquisition_incomplete.json", {"eligible": len(accepted), "policy": policy})
-        raise ContractError("Fewer than 20 eligible papers; extend discovery under documented policy before grading")
+        raise ContractError(
+            "Fewer than 20 eligible papers; extend discovery under documented policy before grading"
+        )
     research = accepted[2:15]
     random.Random(20260929).shuffle(research)
-    groups = {"pilot": accepted[:2], "train": research[:8], "validation": research[8:], "confirmation": accepted[15:]}
-    splits = {"seed": 20260929, "policy_hash": file_hash(ROOT / "data/acquisition_policy.json"),
-              "papers": {s: [p["metadata"]["paper_id"] for p in papers] for s, papers in groups.items()}}
+    groups = {
+        "pilot": accepted[:2],
+        "train": research[:8],
+        "validation": research[8:],
+        "confirmation": accepted[15:],
+    }
+    splits = {
+        "seed": 20260929,
+        "policy_hash": file_hash(ROOT / "data/acquisition_policy.json"),
+        "papers": {s: [p["metadata"]["paper_id"] for p in papers] for s, papers in groups.items()},
+    }
     records = []
     for split, papers in groups.items():
         for paper in papers:
@@ -1664,11 +2251,33 @@ def prepare_data(args):
         raise ContractError("Frozen dataset differs; never silently replace splits")
     path.write_text(dataset)
     write_json(ROOT / "data/splits.json", splits, immutable=True)
-    write_json(ROOT / "data/source_manifest.json", {"source": policy["source"], "source_deviation": policy["source_deviation"],
-        "policy_hash": digest(policy), "discovery_hash": file_hash(ROOT / "data/discovery.xml"),
-        "dataset_hash": file_hash(path), "papers": [p["metadata"] for p in accepted],
-        "examples": [{k: e[k] for k in ("example_id", "paper_id", "section_type", "split", "context_hash",
-                                       "reference_hash", "target_words")} for e in records]}, immutable=True)
+    write_json(
+        ROOT / "data/source_manifest.json",
+        {
+            "source": policy["source"],
+            "source_deviation": policy["source_deviation"],
+            "policy_hash": digest(policy),
+            "discovery_hash": file_hash(ROOT / "data/discovery.xml"),
+            "dataset_hash": file_hash(path),
+            "papers": [p["metadata"] for p in accepted],
+            "examples": [
+                {
+                    k: e[k]
+                    for k in (
+                        "example_id",
+                        "paper_id",
+                        "section_type",
+                        "split",
+                        "context_hash",
+                        "reference_hash",
+                        "target_words",
+                    )
+                }
+                for e in records
+            ],
+        },
+        immutable=True,
+    )
     load_examples(path, ROOT / "data/splits.json")
     print("Frozen 80 examples: 8 pilot, 32 train, 20 validation, 20 confirmation")
 
@@ -1676,8 +2285,19 @@ def prepare_data(args):
 def prepare_tokenizers():
     manifest = read_json(ROOT / "configs/tokenizers.json")
     for name, cfg in manifest.items():
-        subprocess.run(["hf", "download", cfg["repo"], *cfg["files"], "--revision", cfg["revision"],
-                        "--local-dir", str(ROOT / "data/tokenizers" / name)], check=True)
+        subprocess.run(
+            [
+                "hf",
+                "download",
+                cfg["repo"],
+                *cfg["files"],
+                "--revision",
+                cfg["revision"],
+                "--local-dir",
+                str(ROOT / "data/tokenizers" / name),
+            ],
+            check=True,
+        )
         for filename, checksum in cfg["checksums"].items():
             if file_hash(ROOT / "data/tokenizers" / name / filename) != checksum:
                 raise ContractError(f"Pinned tokenizer checksum differs: {name}/{filename}")
@@ -1686,7 +2306,9 @@ def prepare_tokenizers():
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="XAR input preparation and read-only preflight")
-    parser.add_argument("command", choices=["prepare-data", "prepare-tokenizers", "validate-data", "report", "audit-run"])
+    parser.add_argument(
+        "command", choices=["prepare-data", "prepare-tokenizers", "validate-data", "report", "audit-run"]
+    )
     parser.add_argument("--runs-root", default="runs")
     parser.add_argument("--output-dir", default="reports")
     parser.add_argument("--source-run")
@@ -1696,7 +2318,11 @@ if __name__ == "__main__":
     elif args.command == "prepare-tokenizers":
         main_guard(prepare_tokenizers)
     elif args.command == "validate-data":
-        main_guard(lambda: print(f"Validated {len(load_examples(ROOT / 'data/examples.jsonl', ROOT / 'data/splits.json'))} examples"))
+        main_guard(
+            lambda: print(
+                f"Validated {len(load_examples(ROOT / 'data/examples.jsonl', ROOT / 'data/splits.json'))} examples"
+            )
+        )
     elif args.command == "report":
         main_guard(lambda: render_report(args.runs_root, args.output_dir))
     else:
