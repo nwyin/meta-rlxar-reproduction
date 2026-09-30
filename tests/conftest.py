@@ -4,7 +4,7 @@ import json
 
 import httpx
 
-from xar import pipeline, runs
+from xar import runs
 from xar.util import ROOT, digest, read_json, words
 
 
@@ -123,8 +123,8 @@ def install_fake(monkeypatch):
         kwargs["client"] = client
         return original(*args, **kwargs)
 
+    # initialize_run looks OpenRouter up in xar.runs, so patch it there.
     monkeypatch.setattr(runs, "OpenRouter", factory)
-    monkeypatch.setattr(pipeline, "initialize_run", runs.initialize_run)
     return fake
 
 
