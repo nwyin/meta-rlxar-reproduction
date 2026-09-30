@@ -189,3 +189,5 @@ The attested operational pilot completed and passed the raw-output gate. All fou
 Read-only account verification shows the OpenRouter key weekly limit is now $100; the former $50 constraint is resolved. All 52 research writer sections are frozen after 89 attempts, with 35 length-compliant and 17 retained/flagged. The initial training rubric evaluation is running; no research validation grades have been requested. The shared total cap remains $100.
 
 Research checkpoint P0 has 32/32 paired training grades: author mean 7.99375, Muse mean 8.7875, gap -0.79375. The first Kimi revision is pending. These are training measurements, not a held-out replication result; research validation remains unopened. All 52 writer candidates are frozen.
+
+Research P1 completed with 32/32 paired training grades and mean gap -0.2479166667, up from P0 -0.79375. Kimi accepted the first bounded prompt revision; update 2 is pending. The writer set remains frozen and research validation remains unopened.

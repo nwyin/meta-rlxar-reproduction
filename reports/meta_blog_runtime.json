@@ -1,9 +1,10 @@
 {
-  "checked_at": "2026-09-30T00:31:25.569977+00:00",
+  "checked_at": "2026-09-30T00:37:49.911578+00:00",
   "run": "runs/meta-blog-seed0",
   "state": "training_prompt_optimization",
   "training_checkpoints_complete": [
-    0
+    0,
+    1
   ],
   "training_checkpoint0": {
     "examples": 32,
@@ -106,5 +107,130 @@
       },
       "max_tokens": 16384
     }
-  }
+  },
+  "training_summaries": [
+    {
+      "checkpoint": 0,
+      "examples": 32,
+      "paired_coverage": 32,
+      "complete": true,
+      "human": 7.99375,
+      "model": 8.7875,
+      "gap": -0.7937500000000001,
+      "positive_gap_fraction": 0.28125,
+      "ties": 4,
+      "paper_interval": {
+        "method": "paired_whole_paper_percentile_bootstrap",
+        "paper_clusters": 8,
+        "replicates": 2000,
+        "seed": 0,
+        "estimate": -0.7937500000000001,
+        "bootstrap_median": -0.7958333333333334,
+        "low": -1.1020833333333337,
+        "high": -0.4947916666666666
+      },
+      "length_compliant": 23,
+      "contamination_flagged": 0,
+      "sections": {
+        "abstract": {
+          "coverage": 8,
+          "gap": -0.8375000000000001
+        },
+        "introduction": {
+          "coverage": 8,
+          "gap": -0.12916666666666654
+        },
+        "related_work": {
+          "coverage": 8,
+          "gap": -0.9166666666666666
+        },
+        "conclusion": {
+          "coverage": 8,
+          "gap": -1.291666666666667
+        }
+      },
+      "compliant_sensitivity": {
+        "method": "paired_whole_paper_percentile_bootstrap",
+        "paper_clusters": 8,
+        "replicates": 2000,
+        "seed": 0,
+        "estimate": -0.8173913043478261,
+        "bootstrap_median": -0.8047619047619049,
+        "low": -1.4111111111111112,
+        "high": -0.4126984126984126
+      },
+      "unflagged_sensitivity": {
+        "method": "paired_whole_paper_percentile_bootstrap",
+        "paper_clusters": 8,
+        "replicates": 2000,
+        "seed": 0,
+        "estimate": -0.7937500000000001,
+        "bootstrap_median": -0.7958333333333334,
+        "low": -1.1020833333333337,
+        "high": -0.4947916666666666
+      }
+    },
+    {
+      "checkpoint": 1,
+      "examples": 32,
+      "paired_coverage": 32,
+      "complete": true,
+      "human": 8.248958333333333,
+      "model": 8.496875,
+      "gap": -0.24791666666666667,
+      "positive_gap_fraction": 0.375,
+      "ties": 10,
+      "paper_interval": {
+        "method": "paired_whole_paper_percentile_bootstrap",
+        "paper_clusters": 8,
+        "replicates": 2000,
+        "seed": 0,
+        "estimate": -0.24791666666666667,
+        "bootstrap_median": -0.2510416666666667,
+        "low": -0.6510416666666666,
+        "high": 0.13124999999999998
+      },
+      "length_compliant": 23,
+      "contamination_flagged": 0,
+      "sections": {
+        "abstract": {
+          "coverage": 8,
+          "gap": 0.2583333333333333
+        },
+        "introduction": {
+          "coverage": 8,
+          "gap": 0.11666666666666659
+        },
+        "related_work": {
+          "coverage": 8,
+          "gap": -0.22083333333333344
+        },
+        "conclusion": {
+          "coverage": 8,
+          "gap": -1.145833333333333
+        }
+      },
+      "compliant_sensitivity": {
+        "method": "paired_whole_paper_percentile_bootstrap",
+        "paper_clusters": 8,
+        "replicates": 2000,
+        "seed": 0,
+        "estimate": -0.40144927536231884,
+        "bootstrap_median": -0.40289855072463776,
+        "low": -0.9971014492753624,
+        "high": 0.06923076923076926
+      },
+      "unflagged_sensitivity": {
+        "method": "paired_whole_paper_percentile_bootstrap",
+        "paper_clusters": 8,
+        "replicates": 2000,
+        "seed": 0,
+        "estimate": -0.24791666666666667,
+        "bootstrap_median": -0.2510416666666667,
+        "low": -0.6510416666666666,
+        "high": 0.13124999999999998
+      }
+    }
+  ],
+  "optimizer_update_in_progress": 2
 }
