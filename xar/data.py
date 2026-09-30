@@ -1,4 +1,4 @@
-"""The frozen dataset: loading and checking examples, model inputs, and paper extraction."""
+"""The paper dataset: building it from arXiv HTML, loading and checking it, and what models see of it."""
 
 from __future__ import annotations
 
@@ -9,6 +9,7 @@ import re
 import subprocess
 import time
 import xml.etree.ElementTree as ET
+from collections import Counter
 from pathlib import Path
 
 import httpx
@@ -29,37 +30,60 @@ from xar.util import (
 
 SECTIONS = ("abstract", "introduction", "related_work", "conclusion")
 
+# contamination() measures overlap in 8-word n-grams and flags a candidate that copies a run of
+# 30 or more consecutive words from the author's section.
+NGRAM = 8
+VERBATIM_FLAG_WORDS = 30
+
 
 def load_examples(dataset, splits):
-    split_data = read_json(splits)
-    groups = split_data["papers"]
-    flat = [p for papers in groups.values() for p in papers]
-    if len(flat) != len(set(flat)):
-        raise RunError("Paper splits overlap")
+    """Read the examples from `dataset` (JSON lines) and check them against `splits`.
+
+    Checks that no paper is in two splits, each example's split and content hashes match, the
+    withheld section is absent from the visible paper, and every paper has each section once.
+    """
+    papers_by_split = read_json(splits)["papers"]
+    split_counts = Counter(paper for papers in papers_by_split.values() for paper in papers)
+    repeated = sorted(paper for paper, count in split_counts.items() if count > 1)
+    if repeated:
+        raise RunError(f"Paper splits overlap in {splits}: {', '.join(repeated)} listed more than once")
     examples = [json.loads(line) for line in Path(dataset).read_text().splitlines() if line.strip()]
-    ids = [e["example_id"] for e in examples]
-    if len(ids) != len(set(ids)):
-        raise RunError("Duplicate example IDs")
-    counts = {}
+    id_counts = Counter(e["example_id"] for e in examples)
+    duplicates = sorted(eid for eid, count in id_counts.items() if count > 1)
+    if duplicates:
+        raise RunError(f"{dataset} repeats example IDs: {', '.join(duplicates)}")
+    sections_by_paper = {}
     for e in examples:
-        matching = [s for s, papers in groups.items() if e["paper_id"] in papers]
-        if matching != [e["split"]]:
-            raise RunError("Paper/example split mismatch")
+        eid = e["example_id"]
+        listed_in = [split for split, papers in papers_by_split.items() if e["paper_id"] in papers]
+        if listed_in != [e["split"]]:
+            raise RunError(
+                f"{eid} is labelled {e['split']}, but {splits} lists paper {e['paper_id']} "
+                f"under {listed_in or 'no split'}"
+            )
         if e["context_hash"] != digest(e["context"]) or e["reference_hash"] != digest(e["reference"]):
-            raise RunError("Example content hash mismatch")
+            raise RunError(f"{eid}: context or reference text does not match its stored hash")
         if e["target_words"] != words(e["reference"]) or not e["target_words"]:
-            raise RunError("Target word count mismatch")
+            raise RunError(
+                f"{eid}: target_words is {e['target_words']}, but the reference has "
+                f"{words(e['reference'])} words"
+            )
         if normalize(e["reference"]) in normalize(e["context"]):
-            raise RunError("Withheld reference remains in visible context")
-        counts.setdefault(e["paper_id"], []).append(e["section_type"])
-    for p, sections in counts.items():
+            raise RunError(f"{eid}: the withheld reference still appears in the visible paper")
+        sections_by_paper.setdefault(e["paper_id"], []).append(e["section_type"])
+    for paper, sections in sections_by_paper.items():
         if sorted(sections) != sorted(SECTIONS):
-            raise RunError(f"Missing/duplicate target sections: {p}")
+            raise RunError(
+                f"Paper {paper} has sections {sorted(sections)}; expected one each of {list(SECTIONS)}"
+            )
     return examples
 
 
 def task_data(example):
-    # This allowlist prevents expert text, split labels, IDs, or prior feedback entering G/J.
+    """The only example fields that go into writer, rubric and judge prompts.
+
+    Everything else (the author's section, split labels, IDs, earlier feedback) stays out.
+    """
     return {
         "visible_paper": example["context"],
         "section_type": example["section_type"],
@@ -68,21 +92,34 @@ def task_data(example):
 
 
 def contamination(candidate, reference):
-    a, b = normalize(candidate).split(), normalize(reference).split()
-    positions = {}
-    for i, word in enumerate(b):
-        positions.setdefault(word, []).append(i)
-    longest, prior = 0, {}
-    for word in a:
-        current = {j: prior.get(j - 1, 0) + 1 for j in positions.get(word, [])}
-        longest = max(longest, max(current.values(), default=0))
-        prior = current
-    reference_ngrams = {tuple(b[i : i + 8]) for i in range(max(0, len(b) - 7))}
-    overlap = sum(tuple(a[i : i + 8]) in reference_ngrams for i in range(max(0, len(a) - 7)))
+    """Measure how much of the author's withheld section a candidate reproduces word for word.
+
+    Reports the longest run of consecutive shared words and the fraction of the candidate's
+    8-grams that also occur in the reference, and flags runs of VERBATIM_FLAG_WORDS or more.
+    """
+    candidate_words = normalize(candidate).split()
+    reference_words = normalize(reference).split()
+    reference_positions = {}
+    for position, word in enumerate(reference_words):
+        reference_positions.setdefault(word, []).append(position)
+    # Longest common run by dynamic programming: run_ending_at[j] is the length of the shared run
+    # that ends at the current candidate word and at reference word j.
+    longest, run_ending_at = 0, {}
+    for word in candidate_words:
+        run_ending_at = {j: run_ending_at.get(j - 1, 0) + 1 for j in reference_positions.get(word, [])}
+        longest = max(longest, max(run_ending_at.values(), default=0))
+    reference_ngrams = {
+        tuple(reference_words[i : i + NGRAM]) for i in range(len(reference_words) - NGRAM + 1)
+    }
+    candidate_ngrams = [
+        tuple(candidate_words[i : i + NGRAM]) for i in range(len(candidate_words) - NGRAM + 1)
+    ]
+    shared = sum(ngram in reference_ngrams for ngram in candidate_ngrams)
     return {
         "longest_verbatim_run_words": longest,
-        "eightgram_overlap_fraction": overlap / max(1, len(a) - 7),
-        "flagged": longest >= 30,
+        "eightgram_overlap_fraction": shared / max(1, len(candidate_ngrams)),
+        "flagged": longest >= VERBATIM_FLAG_WORDS,
+        # Always False: flagged candidates are reported, not dropped. Saved runs include the key.
         "exclusion": False,
     }
 
@@ -97,11 +134,14 @@ def run_examples(examples, split):
         pilot = [e for e in examples if e["split"] == "pilot"]
         papers = sorted({e["paper_id"] for e in pilot})
         if len(papers) < 2:
-            raise RunError("Pilot needs two separate papers")
+            raise RunError(
+                f"The pilot needs at least 2 papers (one to train on, one to validate), "
+                f"but the dataset has {len(papers)}"
+            )
         return [{**e, "split": "train" if e["paper_id"] == papers[0] else "validation"} for e in pilot]
     chosen = [e for e in examples if e["split"] in ("train", "validation")]
     if not chosen:
-        raise RunError("Requested split has no examples")
+        raise RunError("The dataset has no train or validation examples")
     return chosen
 
 
