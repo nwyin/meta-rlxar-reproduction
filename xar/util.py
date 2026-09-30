@@ -9,7 +9,6 @@ import csv
 import datetime as dt
 import fcntl
 import hashlib
-import itertools
 import json
 import os
 import threading
@@ -23,22 +22,31 @@ ROLES = ("writer", "rubric", "optimizer", "judge")
 
 
 class RunError(RuntimeError):
-    pass
+    """The run cannot continue: bad settings, bad saved data, or an unexpected API result."""
 
 
 class BudgetStop(RunError):
-    pass
+    """Continuing could exceed a budget or pay twice for the same request."""
 
 
 class InvalidOutput(RunError):
     """A model reply failed validation; OpenRouter.structured() retries once with the error."""
 
 
+class Skipped(RunError):
+    """Work was not started because another task had already failed."""
+
+
 def canonical(value):
+    """Deterministic JSON (sorted keys, no whitespace) used for hashing and request bodies."""
     return json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(",", ":"), allow_nan=False)
 
 
 def digest(value):
+    """SHA-256 hex of a string as-is, or of any other value's canonical JSON.
+
+    Strings are hashed raw so that digest(prompt text) equals file_hash of the prompt file.
+    """
     return hashlib.sha256((value if isinstance(value, str) else canonical(value)).encode()).hexdigest()
 
 
@@ -51,7 +59,7 @@ def now():
 
 
 def words(text):
-    """Whitespace words; internal headings/citation markers count; outer target heading excluded."""
+    """Count whitespace-separated words; headings and citation markers count as words too."""
     return len(text.split())
 
 
@@ -64,12 +72,14 @@ def read_json(path):
 
 
 def write_json(path, value, write_once=False):
+    """Write JSON atomically. With write_once, an existing file must already hold the same value."""
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
     if write_once and path.exists():
         if canonical(read_json(path)) != canonical(value):
-            raise RunError(f"Immutable artifact differs: {path}")
+            raise RunError(f"Refusing to overwrite {path}: it already exists with different content")
         return
+    # A temp name per process and thread, so concurrent writers never share a temp file.
     tmp = path.with_suffix(path.suffix + f".{os.getpid()}.{threading.get_ident()}.tmp")
     tmp.write_text(json.dumps(value, indent=2, ensure_ascii=False, allow_nan=False) + "\n")
     os.replace(tmp, path)
@@ -80,35 +90,32 @@ def prompt(name):
 
 
 def bounded_map(function, items, concurrency, stopped):
-    """Keep at most concurrency tasks active; retain input order and stop refilling on errors."""
+    """Run function over items on up to `concurrency` threads; return the results in input order.
+
+    A failure sets `stopped`, and items that start after that raise Skipped instead of running.
+    The error raised is the original failure, not a Skipped error from an item that was cut short.
+    """
 
     def invoke(item):
         if stopped.is_set():
-            raise RunError("Parallel work halted after another task failed")
+            raise Skipped("Skipped because another task failed")
         try:
             return function(item)
         except BaseException:
             stopped.set()
             raise
 
-    remaining, results = iter(enumerate(items)), {}
     with concurrent.futures.ThreadPoolExecutor(max_workers=concurrency) as pool:
-        pending = {pool.submit(invoke, item): i for i, item in itertools.islice(remaining, concurrency)}
+        futures = [pool.submit(invoke, item) for item in items]
         try:
-            while pending:
-                done, _ = concurrent.futures.wait(pending, return_when=concurrent.futures.FIRST_COMPLETED)
-                for future in done:
-                    results[pending.pop(future)] = future.result()
-                if not stopped.is_set():
-                    pending.update(
-                        {pool.submit(invoke, item): i for i, item in itertools.islice(remaining, len(done))}
-                    )
+            finished = list(concurrent.futures.as_completed(futures))
         except BaseException:
-            stopped.set()
-            for future in pending:
-                future.cancel()
+            stopped.set()  # interrupted while waiting: items that have not started will skip themselves
             raise
-    return [results[i] for i in sorted(results)]
+    failures = [future.exception() for future in finished if future.exception() is not None]
+    if failures:
+        raise next((error for error in failures if not isinstance(error, Skipped)), failures[0])
+    return [future.result() for future in futures]
 
 
 def write_table(path, rows):
@@ -122,22 +129,26 @@ def write_table(path, rows):
         writer.writerows(rows)
 
 
+MAX_CONCURRENCY = 32
+
+
 def parse_concurrency(value):
-    """argparse type for --concurrency: an integer from 1 to 32."""
+    """argparse type for --concurrency: an integer from 1 to MAX_CONCURRENCY."""
     number = int(value)
-    if not 1 <= number <= 32:
-        raise argparse.ArgumentTypeError("must be between 1 and 32")
+    if not 1 <= number <= MAX_CONCURRENCY:
+        raise argparse.ArgumentTypeError(f"must be between 1 and {MAX_CONCURRENCY}")
     return number
 
 
 @contextlib.contextmanager
 def run_lock(output):
+    """Hold an exclusive lock on the run directory so two processes never work on one run."""
     Path(output).mkdir(parents=True, exist_ok=True)
     with (Path(output) / ".run.lock").open("a+") as lock:
         try:
             fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
         except BlockingIOError:
-            raise RunError("Another process holds this run") from None
+            raise RunError(f"Another process is already working on {output}") from None
         yield
 
 

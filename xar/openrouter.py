@@ -23,6 +23,7 @@ from xar.util import (
     BudgetStop,
     InvalidOutput,
     RunError,
+    Skipped,
     canonical,
     digest,
     file_hash,
@@ -391,7 +392,7 @@ class OpenRouter:
                     raise RunError(f"Prior nonretryable transport failure: {receipt}")
                 continue
             if self.dispatch_stopped.is_set():
-                raise RunError("Dispatch halted after another request failed")
+                raise Skipped("Dispatch halted after another request failed")
             self.ledger.reserve(key, bound)
             sent_at = now()
             write_json(receipt, {"status": "uncertain", "sent_at": sent_at, "upper_usd": bound})
