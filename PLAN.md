@@ -1,9 +1,9 @@
 # Meta blog same-model XAR reproduction
 
 Revised September 29, 2026 at the user's request, before research grading.
-The previous alternative-model study is archived in
-[docs/archive/alternative-model-study-20260929/PLAN.md](docs/archive/alternative-model-study-20260929/PLAN.md).
-Historical paid pilots are retained and excluded from this experiment.
+The previous alternative-model study is kept at the git tag
+`alternative-model-study`. Historical paid pilots are retained and excluded
+from this experiment.
 
 ## Target
 
@@ -23,8 +23,7 @@ One trajectory, local seed 0, checkpoints P0 through P7. The default batch has
 no other-model sweep, repeated-seed matrix, additional controls, transfers,
 confirmation evaluation, scaling, or reinforcement learning. The later Qwen RL
 experiments and other writing domains in the blog are outside this target.
-Other endpoint configurations remain available only for historical artifacts
-and explicit utility invocations; the active batch selects only the two models above.
+The active batch uses only the two models above.
 
 The blog reports validation gap -4.2 to +2.76, crossing zero at update 4 and
 peaking at update 5. Rounded absolute validation means move from 3.4 to 5.0 for
@@ -51,11 +50,16 @@ manual inspection was not separately documented. Keep discovery, split, source,
 license, and content hashes unchanged. Raw paper text and run artifacts stay local.
 
 Use the existing neutral initial meta-prompt and wrappers under prompts/.
-Temperatures: W 0.7, G 0.2, O 0.7, J 0. Muse uses explicit medium reasoning;
-Kimi uses enabled reasoning. Both have output limits of 16,384 tokens. Neither
-selected endpoint advertises seed support; record that local seed 0 does not
-make hosted completions deterministic. The blog does not disclose these settings.
-Kimi's hosted FP8 precision and Meta's unknown precision are provider caveats.
+Temperatures: W 0.7, G 0.2, O 0.7, J 0. Both models have output limits of
+16,384 tokens. The blog does not say which reasoning effort or sampling settings
+it used, so these are our choices: Muse runs with medium reasoning effort, and
+Kimi with reasoning enabled. Neither selected endpoint lists seed support, so local
+seed 0 does not make hosted completions deterministic.
+
+Kimi is served by SiliconFlow in FP8. It is the same named model the blog used,
+but the blog does not give the precision or exact weights behind its runs, so
+results can differ for that reason alone. Meta does not publish the precision
+of its Muse endpoint.
 
 Muse's tokenizer is unpublished. Bound its entire payload by UTF-8 byte count,
 plus 25% headroom and chat/schema overhead. Use the pinned official Kimi tokenizer

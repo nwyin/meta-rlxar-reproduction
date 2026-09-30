@@ -1,30 +1,17 @@
-design_version: 2
 scope: meta_blog_initial_empirical_investigation
 source: https://facebookresearch.github.io/RAM/blogs/unslop/
 writer: meta/muse-spark-1.1
 rubric: meta/muse-spark-1.1
 optimizer: moonshotai/kimi-k2.6
 judge: meta/muse-spark-1.1
-seeds:
-- 0
+seed: 0
 iterations: 7
 pilot_iterations: 1
 max_meta_prompt_words: 800
 failure_examples: 4
 concurrency: 4
-split_seed: 20260929
-selection: highest_complete_training_mean_gap_then_earliest_checkpoint
-failure_selection: smallest_gap_then_example_id
-proposal_policy: one_proposal_one_repair_rejection_consumes_update
-budget_usd: 100.0
-total_budget_usd: 100.0
 pilot_run: pilot-meta-blog-attested
 research_run: meta-blog-seed0
-extra_model_sweep: false
-controls: false
-transfers: false
-confirmation: false
-scaling: false
 reported_validation:
   initial_gap: -4.2
   peak_gap: 2.76
