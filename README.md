@@ -87,6 +87,11 @@ the current code, and writes the cost, request, latency and length-subset number
 `reports/completion_audit.json`. Neither makes API calls. `report` repeats the `audit-run` checks on the research run and then
 writes the report; it does not run `scripts/audit_completed_run.py`.
 
+## Browsing runs
+
+`uv run python tools/data-viewer/serve.py` starts a local viewer for runs, sections, rubrics,
+prompt history and criteria; see [tools/data-viewer](tools/data-viewer/README.md).
+
 ## Outputs
 
 | Path | Contents |
