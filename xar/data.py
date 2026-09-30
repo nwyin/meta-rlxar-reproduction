@@ -160,14 +160,14 @@ TARGET_HEADINGS = {
 MIN_BIBLIOGRAPHY_ITEMS = 10
 MIN_SECTION_WORDS = 60
 
-# A paper is only usable if the optimizer's largest possible request fits Kimi K2.6's context. That
-# request holds FAILURE_EXAMPLES failures, each with the visible paper plus the author's and the
-# model's version of the withheld section (the model's assumed as long as the author's).
+# A paper is usable only if the optimizer's largest request fits Kimi K2.6's context window. That
+# request holds FAILURE_EXAMPLES failures, each with the visible paper, the author's withheld
+# section and the model's version of it (assumed to be the same length as the author's).
 OPTIMIZER_CONTEXT = 262_144
 OPTIMIZER_MAX_OUTPUT = 16_384
 PROMPT_OVERHEAD = 16_000  # instructions, rubrics and grades
 SAFETY_MARGIN = 1.25
-FAILURE_EXAMPLES = 4  # failure_examples in configs/experiments.yaml
+FAILURE_EXAMPLES = 4  # same as failure_examples in configs/experiments.yaml
 # Papers are sized with the larger of these two token counts. Qwen is left over from the earlier
 # multi-model study; it stays so that the set of eligible papers cannot change.
 SIZING_MODELS = ("qwen/qwen3.5-9b", "moonshotai/kimi-k2.6")
@@ -195,7 +195,7 @@ def html_text(node, strip_heading=False):
     return normalize(fragment.get_text(" ", strip=True))
 
 
-def max_tokens(text):
+def largest_token_count(text):
     return max(token_count(text, model) for model in SIZING_MODELS)
 
 
@@ -222,7 +222,7 @@ def extract_paper(html, metadata):
         for kind, pattern in TARGET_HEADINGS.items():
             if re.fullmatch(pattern, heading):
                 if kind in targets:
-                    raise RunError(f"More than one top-level section is headed like {kind}")
+                    raise RunError(f"Found a second top-level {kind} section, headed {heading!r}")
                 targets[kind] = section
     missing = [kind for kind in SECTIONS if kind not in targets]
     if missing:
@@ -232,8 +232,12 @@ def extract_paper(html, metadata):
         raise RunError(
             f"Bibliography has {bibliography_items} entries; at least {MIN_BIBLIOGRAPHY_ITEMS} required"
         )
-    if document.select(".ltx_ERROR") or "�" in document.get_text():
-        raise RunError("Page contains LaTeXML errors or U+FFFD replacement characters")
+    latexml_errors = len(document.select(".ltx_ERROR"))
+    replacement_chars = document.get_text().count("\ufffd")
+    if latexml_errors or replacement_chars:
+        raise RunError(
+            f"Page has {latexml_errors} LaTeXML error node(s) and {replacement_chars} U+FFFD character(s)"
+        )
     examples = []
     for kind, target in targets.items():
         reference = html_text(target, strip_heading=True)
@@ -252,7 +256,8 @@ def extract_paper(html, metadata):
             raise RunError(
                 f"{kind} text also appears elsewhere in the paper, so removing it does not hide it"
             )
-        worst_case_prompt = FAILURE_EXAMPLES * (max_tokens(context) + 2 * max_tokens(reference))
+        failure_tokens = largest_token_count(context) + 2 * largest_token_count(reference)
+        worst_case_prompt = FAILURE_EXAMPLES * failure_tokens
         needed = math.ceil(SAFETY_MARGIN * (worst_case_prompt + PROMPT_OVERHEAD)) + OPTIMIZER_MAX_OUTPUT
         if needed > OPTIMIZER_CONTEXT:
             raise RunError(
