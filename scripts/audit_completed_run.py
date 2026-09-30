@@ -18,7 +18,6 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from run import load_design
 from xar.audit import audit_saved_output, audit_xar_run, check_request_settings
 from xar.data import contamination, load_examples, run_examples, task_data
 from xar.openrouter import ledger_key, max_request_cost
@@ -34,7 +33,7 @@ from xar.pipeline import (
     length_window,
 )
 from xar.stats import paired_improvement, summarize
-from xar.util import ROOT, RunError, canonical, digest, now, read_json, words, write_json
+from xar.util import ROOT, RunError, canonical, digest, load_design, now, read_json, words, write_json
 
 DESIGN = load_design()
 PILOT_RUN = ROOT / "runs" / DESIGN["pilot_run"]

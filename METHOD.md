@@ -22,7 +22,8 @@ it in order and keeps the first 20 papers that:
 - share no authors and no title with a paper already kept;
 - are not about rubric optimization;
 - fit Kimi K2.6's 262,144-token context in the largest optimizer request (four failure
-  examples, each with the whole paper and both versions of the section).
+  examples, each with the whole paper and both versions of the section), counting tokens
+  with both the Kimi and the Qwen3.5 tokenizer and using the larger count.
 
 Rejected papers and the reason are listed in `data/exclusions.json`.
 
@@ -43,9 +44,9 @@ The split, in `data/splits.json`:
 The research run therefore has 32 training and 20 validation sections, 52 in all.
 
 `data/source_manifest.json` records each paper's URL, metadata and hashes, and the hash of
-`data/examples.jsonl`. The paper text is not in the repository. The user approved the review
-packet for all 20 papers at once; `data/human_review.json` records that approval against the
-dataset hash, and a run will not start unless every paper it uses is approved there.
+`data/examples.jsonl`. The paper text is not in the repository. The repository owner reviewed
+the 20 extracted papers together and approved them all at once; `data/human_review.json`
+records that approval against the dataset hash, and a run will not start unless every paper it uses is approved there.
 
 ## Roles
 
@@ -155,7 +156,7 @@ sends, the context shrank, the quantization changed or a price rose by more than
 Each request names a single provider with fallbacks turned off, and a response from any other
 model or provider stops the run. Every request, response and cost is saved in the run
 directory. `--resume` reuses saved responses, and refuses to continue if the code, prompts,
-data or settings other than the budgets have changed.
+data or any setting other than the budgets and concurrency has changed.
 
 ## Differences from the blog
 

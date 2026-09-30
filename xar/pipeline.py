@@ -488,7 +488,7 @@ class RunSettings:
     the command-line options.
 
     The manifest saves every field except output_dir, dry_run and resume under "arguments". All
-    of those except the budgets, concurrency and budget_ledger (runs.RESUMABLE_ARGS) go into the
+    of those except the budgets and concurrency (runs.RESUMABLE_ARGS) go into the
     manifest's settings hash (substantive_hash), which --resume checks."""
 
     output_dir: str

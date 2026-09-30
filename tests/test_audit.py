@@ -4,7 +4,7 @@ import json
 
 import pytest
 
-from xar.audit import validate_primary_manifest
+from xar.audit import check_manifest_matches_design
 from xar.openrouter import role_config
 from xar.util import ROLES, RunError, digest, prompt
 
@@ -17,7 +17,7 @@ def manifest(design):
         "arguments": {k: design[k] for k in ("iterations", "max_meta_prompt_words", "failure_examples")},
         "extra": {"initial_meta_prompt_hash": digest(prompt("rubric_initial"))},
     }
-    validate_primary_manifest(manifest, design)
+    check_manifest_matches_design(manifest, design)
     return manifest
 
 
@@ -25,11 +25,11 @@ def test_manifest_check_rejects_changed_iterations_or_role_settings(manifest, de
     changed = json.loads(json.dumps(manifest))
     changed["arguments"]["iterations"] = 6
     with pytest.raises(RunError, match="iterations=6"):
-        validate_primary_manifest(changed, design)
+        check_manifest_matches_design(changed, design)
     changed = json.loads(json.dumps(manifest))
     changed["roles"]["rubric"]["reasoning"] = {"enabled": False}
     with pytest.raises(RunError, match="rubric settings differ from configs/models.yaml in reasoning"):
-        validate_primary_manifest(changed, design)
+        check_manifest_matches_design(changed, design)
 
 
 def test_manifest_check_rejects_every_role_substitution(manifest, design):
@@ -38,5 +38,5 @@ def test_manifest_check_rejects_every_role_substitution(manifest, design):
         other = "meta/muse-spark-1.1" if role == "optimizer" else "moonshotai/kimi-k2.6"
         changed = json.loads(json.dumps(manifest))
         changed["roles"][role] = role_config(role, other)
-        with pytest.raises(RunError, match=f"{role} model is {other}"):
-            validate_primary_manifest(changed, design)
+        with pytest.raises(RunError, match=f"{role} settings differ from configs/models.yaml in .*model"):
+            check_manifest_matches_design(changed, design)

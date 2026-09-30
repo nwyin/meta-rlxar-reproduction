@@ -8,7 +8,7 @@ from pathlib import Path
 
 import jsonschema
 
-from xar.audit import audit_xar_run, validate_primary_manifest
+from xar.audit import audit_xar_run, check_manifest_matches_design
 from xar.pipeline import WRITER_ATTEMPTS, length_window
 from xar.stats import paired_improvement
 from xar.util import ROLES, RunError, load_design, read_json, write_json, write_table
@@ -65,7 +65,7 @@ def render_report(runs_root, output):
 def audit_research_run(run_dir, design):
     """Check the run is the research run experiments.yaml describes, then re-audit it from its saved files."""
     manifest = read_json(run_dir / "manifest.json")
-    validate_primary_manifest(manifest, design)
+    check_manifest_matches_design(manifest, design)
     split, seed = manifest["arguments"]["split"], manifest["arguments"]["seed"]
     if split != "research" or seed != design["seed"]:
         raise RunError(
@@ -359,10 +359,20 @@ def cost_sentence(costs, run_dir, manifest, pilot, ledger):
     """Cost and time of the research run, the pilot's cost, and the total over all runs in the ledger."""
     minutes = wallclock_seconds(run_dir, manifest) / 60
     optimizer_calls, optimizer_seconds = optimizer_time(run_dir)
+    # A resume may raise the concurrency; budget_continuations.json logs each change.
+    log = run_dir / "budget_continuations.json"
+    concurrency = max(
+        [manifest["arguments"]["concurrency"]]
+        + [
+            entry["concurrency"]
+            for entry in (read_json(log) if log.exists() else [])
+            if "concurrency" in entry
+        ]
+    )
     sentence = (
         f"The research run made {costs['requests']:,} paid requests, cost "
         f"${costs['actual_complete_usd']:,.2f} and took {minutes:.0f} minutes with up to "
-        f"{manifest['arguments']['concurrency']} requests in parallel. The {optimizer_calls} optimizer "
+        f"{concurrency} requests in parallel. The {optimizer_calls} optimizer "
         f"requests ran one after another and took {optimizer_seconds / 60:.0f} of those minutes."
     )
     if (pilot / "costs.json").exists():

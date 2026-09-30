@@ -266,16 +266,15 @@ def audit_xar_run(path):
     }
 
 
-def validate_primary_manifest(manifest, design):
-    """Check that a run used the models, settings and starting prompt in configs/experiments.yaml.
+def check_manifest_matches_design(manifest, design):
+    """Check that a run used the role settings in configs/models.yaml, and the iterations, word
+    limit, failure count and starting prompt in configs/experiments.yaml.
 
-    design is configs/experiments.yaml; for a pilot the caller puts pilot_iterations in place of
-    iterations. Each role's full settings must also still match configs/models.yaml.
+    design comes from util.load_design; for a pilot the caller puts pilot_iterations in place of
+    iterations.
     """
     for role in ROLES:
         actual = manifest["roles"][role]
-        if actual["model"] != design[role]:
-            raise RunError(f"{role} model is {actual['model']}; configs/experiments.yaml says {design[role]}")
         expected = role_config(role)
         changed = sorted(
             key for key in expected.keys() | actual.keys() if actual.get(key) != expected.get(key)

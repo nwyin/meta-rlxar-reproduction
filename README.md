@@ -2,8 +2,8 @@
 
 This repository reproduces the Initial Empirical Investigation in
 [Meta's Unslopping AI blog](https://facebookresearch.github.io/RAM/blogs/unslop/).
-Muse Spark 1.1 writes missing paper sections, generates rubrics and judges; Kimi K2.6 rewrites
-the rubric meta prompt. One run covers 52 sections from 8 training and 5 validation papers,
+Muse Spark 1.1 writes the missing paper sections, generates the rubrics and grades the sections;
+Kimi K2.6 rewrites the rubric meta prompt. One run covers 52 sections from 8 training and 5 validation papers,
 with 7 prompt updates. [METHOD.md](METHOD.md) describes the data, the procedure, how
 this differs from the blog, and the limitations.
 
@@ -38,10 +38,12 @@ uv run pytest -q
 ```
 
 `prepare-tokenizers` downloads the Kimi and Qwen tokenizers pinned in
-`configs/tokenizers.json` into `data/tokenizers/`. `prepare-data` downloads the 20 arXiv HTML
-papers listed in `data/source_manifest.json` into `data/raw/` and rebuilds
-`data/examples.jsonl`. It fails if the result does not match the saved split and manifest,
-for example because arXiv changed a page.
+`configs/tokenizers.json` into `data/tokenizers/`. No run uses Qwen; `prepare-data` sizes
+papers with both tokenizers, as the original selection did, so the same papers qualify.
+`prepare-data` goes through the arXiv results saved in `data/discovery.xml`, downloads any
+missing HTML into `data/raw/`, and rebuilds `data/examples.jsonl` from the first 20 eligible
+papers. It fails if the result does not match the saved split and manifest, for example
+because arXiv changed a page.
 
 Copy `.env.example` to `.env` and set `OPENROUTER_API_KEY`.
 
@@ -61,8 +63,8 @@ uv run python run.py all --budget-usd 100 --total-budget-usd 100
 
 Paid runs need both limits: `--budget-usd` for this run and `--total-budget-usd` for all runs
 that share `runs/budget_ledger.json`. `--concurrency` sets the number of parallel requests
-(default 4, from `configs/experiments.yaml`). `--resume` continues an interrupted run; it
-stops if anything other than the budgets has changed since the run started. `--runs-root`
+(default 4, from `configs/experiments.yaml`). `--resume` continues an interrupted run; only the
+budgets and `--concurrency` may differ from the saved run, and any other change stops it. `--runs-root`
 (default `runs/`) sets where the runs and the ledger are kept, and `--output-dir` (default
 `reports/`) where `reproduce`, `all` and `report` write the report. `uv run python run.py
 --help` lists every command and option.
@@ -76,12 +78,14 @@ uv run python run.py report
 ```
 
 `audit-run` rebuilds a run's checkpoint table from its saved raw responses and checks the
-request settings, the anonymous grading inputs, the scoring arithmetic, the training-only
-selection and that validation came after it. `scripts/audit_completed_run.py` goes further on
+request settings, that judge requests do not say which section is the author's, the scoring
+arithmetic, that the checkpoint was selected on training data only, and that every validation
+request came after that selection. `scripts/audit_completed_run.py` goes further on
 the completed research run: it checks the manifest's code hashes against the commit that
 produced the run, re-derives the writer inputs, optimizer feedback and proposal checks with
 the current code, and writes the cost, request, latency and length-subset numbers to
-`reports/completion_audit.json`. Neither makes API calls. `report` runs the audit and then writes the report.
+`reports/completion_audit.json`. Neither makes API calls. `report` repeats the `audit-run` checks on the research run and then
+writes the report; it does not run `scripts/audit_completed_run.py`.
 
 ## Outputs
 
@@ -90,7 +94,7 @@ the current code, and writes the cost, request, latency and length-subset number
 | `runs/pilot-meta-blog-attested/` | the pilot run |
 | `runs/meta-blog-seed0/` | the research run: `manifest.json`, every request and response under `requests/`, sections in `generations/`, `rubrics/`, `scores/`, optimizer `feedback/`, `prompts/`, `freeze.json`, `costs.json` |
 | `runs/budget_ledger.json` | reservations and charges for every run |
-| `reports/` | `results.md`, `checkpoints.csv`, `gap_curves.png` and `.svg`, `blog_comparison.json`, `audit.json` |
+| `reports/` | `results.md`, `checkpoints.csv`, `gap_curves.png` and `.svg`, `blog_comparison.json`, `audit.json`, and `completion_audit.json` from the audit script |
 
 `runs/`, `reports/`, the paper text and the tokenizers are not in git.
 

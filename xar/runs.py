@@ -62,9 +62,9 @@ def operational_summary(output):
     send_statuses = [read_json(path)["status"] for path in (output / "requests").glob("*/attempt_*.json")]
     summary = {
         "format_validation": format_validation,
-        "sends": len(send_statuses),
+        "transport_attempts": len(send_statuses),
         # "uncertain": the request was sent but no response was recorded.
-        "sends_without_response": send_statuses.count("uncertain"),
+        "unresolved_transport": send_statuses.count("uncertain"),
     }
     write_json(output / "operational_summary.json", summary)
     return summary
@@ -72,7 +72,7 @@ def operational_summary(output):
 
 # These may change on --resume, because they do not change the results; every other argument
 # must match the saved run.
-RESUMABLE_ARGS = {"budget_usd", "total_budget_usd", "concurrency", "budget_ledger"}
+RESUMABLE_ARGS = {"budget_usd", "total_budget_usd", "concurrency"}
 # Manifest keys added after substantive_hash is computed.
 UNHASHED_KEYS = {"substantive_hash", "created_at", "git_commit"}
 
@@ -107,9 +107,7 @@ def _changed_settings(saved, manifest):
 
 def resolved_manifest(settings, roles, experiment, extra=None):
     """The run's manifest: settings, role settings, pinned endpoints and hashes of data and code."""
-    arguments = {
-        k: v for k, v in asdict(settings).items() if k not in {"dry_run", "resume", "output_dir"}
-    }
+    arguments = {k: v for k, v in asdict(settings).items() if k not in {"dry_run", "resume", "output_dir"}}
     endpoints = {}
     for role, cfg in roles.items():
         endpoint, catalog = endpoint_for(cfg)
@@ -156,13 +154,16 @@ def _git_commit():
 
 
 def _record_budget_change(output, saved, settings):
-    """Log the budgets to budget_continuations.json when they differ from the ones last used.
-
-    The ones last used are the log's last entry, or the saved manifest's if nothing is logged yet.
+    """Log the budgets and concurrency to budget_continuations.json when they differ from the
+    ones last used: the log's last entry, or the saved manifest's if nothing is logged yet.
     """
     path = output / "budget_continuations.json"
     history = read_json(path) if path.exists() else []
-    limits = {"budget_usd": settings.budget_usd, "total_budget_usd": settings.total_budget_usd}
+    limits = {
+        "budget_usd": settings.budget_usd,
+        "total_budget_usd": settings.total_budget_usd,
+        "concurrency": settings.concurrency,
+    }
     last = history[-1] if history else saved["arguments"]
     if {key: last.get(key) for key in limits} != limits:
         history.append({"at": now(), **limits})

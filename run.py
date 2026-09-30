@@ -7,7 +7,7 @@ their settings from configs/models.yaml.
 import argparse
 from pathlib import Path
 
-from xar.audit import audit_xar_run, validate_primary_manifest
+from xar.audit import audit_xar_run, check_manifest_matches_design
 from xar.data import load_examples, prepare_data, prepare_tokenizers
 from xar.pipeline import RunSettings, run_xar
 from xar.report import render_report
@@ -59,7 +59,7 @@ def check_pilot(runs_root, design):
     scripts/audit_completed_run.py."""
     run = audit_xar_run(Path(runs_root) / design["pilot_run"])
     manifest = run["manifest"]
-    validate_primary_manifest(manifest, {**design, "iterations": design["pilot_iterations"]})
+    check_manifest_matches_design(manifest, {**design, "iterations": design["pilot_iterations"]})
     split = manifest["arguments"]["split"]
     if split != "pilot":
         raise RunError(
@@ -116,7 +116,7 @@ def parse_args(argv=None):
     run_options.add_argument(
         "--resume",
         action="store_true",
-        help="continue an existing run; only budgets, concurrency and the ledger path may change",
+        help="continue an existing run; only the budgets and --concurrency may change",
     )
     run_options.add_argument(
         "--runs-root",
