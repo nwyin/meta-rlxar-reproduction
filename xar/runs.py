@@ -48,18 +48,13 @@ def operational_summary(output):
         for proposal_attempt in read_json(path)["attempts"]:
             records.append(("optimizer", proposal_attempt))
 
-    # Keyed by request, so an attempt that two records share is counted once.
-    attempts = {}
-    for role, record in records:
-        for attempt in record["attempts"]:
-            attempts[attempt["response"]["request_key"]] = (role, attempt["status"])
-
     format_validation = {}
-    for role, status in attempts.values():
+    for role, record in records:
         counts = format_validation.setdefault(role, {"structured_attempts": 0, "invalid_attempts": 0})
-        counts["structured_attempts"] += 1
-        if status == "invalid":
-            counts["invalid_attempts"] += 1
+        for attempt in record["attempts"]:
+            counts["structured_attempts"] += 1
+            if attempt["status"] == "invalid":
+                counts["invalid_attempts"] += 1
     for counts in format_validation.values():
         counts["invalid_fraction"] = counts["invalid_attempts"] / counts["structured_attempts"]
 
