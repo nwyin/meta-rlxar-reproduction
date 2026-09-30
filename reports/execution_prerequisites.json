@@ -1,9 +1,0 @@
-{
-  "checked_at": "2026-09-29T20:21:58.253331+00:00",
-  "execution_ready": true,
-  "credential_available": true,
-  "per_run_ceiling_usd": 100.0,
-  "total_ceiling_usd": 100.0,
-  "authorization": "User configured XAR_TOTAL_BUDGET_USD in local .env and requested continuation. Each run ceiling equals, and cannot enlarge, the global ceiling.",
-  "full_scope_funded": "Unproven; measure pilot usage before estimating remaining costs."
-}

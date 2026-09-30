@@ -12,16 +12,33 @@ single experiment. The former alternative-model sweep is archived in
 Its raw outputs and unresolved cost reservations are preserved locally.
 See [PLAN.md](PLAN.md) for the scientific contract and reconstruction choices.
 
-**Execution:** the user completed the required OpenRouter age confirmation.
-The Muse/Kimi operational pilot passed its raw-output audit and cost $2.42.
-The 52-section research trajectory is running with concurrency 4. The earlier rejected access check remains preserved in
-[reports/muse_access_check.json](reports/muse_access_check.json).
-
 The blog does not publish its original paper IDs, exact prompts, or sampling
 settings. Our frozen arXiv split, prompts, criterion schema, and decoding are
 explicit reconstruction choices. Matching the numerical result is not guaranteed.
 This target covers rubric optimization; later RL training and other writing
 domains in the blog require separate work.
+
+## Completed run: September 29, 2026
+
+- All 52 sections, seven rubric updates, and eight train/validation checkpoints
+  completed using Muse Spark 1.1 and Kimi K2.6. No additional-model sweep or RL
+  training was performed; the writing samples stayed fixed while rubrics changed.
+- Training selected P1 before any validation evaluation. The held-out
+  human-minus-model gap improved from **-1.04 to -0.16**; every validation
+  checkpoint remained negative. The blog's reported **-4.2 to +2.76** reversal
+  was not reproduced on this reconstruction. Terminal P7 was -0.37.
+- Paired validation improvement was **0.88 points**, with a 95% whole-paper
+  bootstrap interval of **[0.37, 1.35]** over five validation papers. Author
+  scores moved from 7.91 to 8.38, and model scores from 8.95 to 8.53.
+- Seventeen generated sections missed the +/-15% length tolerance after bounded
+  repairs. The length-compliant validation subset also retained a negative gap.
+  Human reference quality was not independently established by expert comparison.
+- Research cost **$55.60** across 1,389 requests and took **75.4 minutes** at
+  concurrency four. The separate operational pilot cost $2.42. Shared spending
+  and retained historical reservations totaled $64.70, within the $100 cap.
+- All raw-response audits and 29 tests passed; no research requests remained
+  unresolved. Detailed reports, plots, the blog draft, and raw run artifacts
+  remain local under `reports/` and `runs/`, both excluded from version control.
 
 ## Setup
 
@@ -75,7 +92,8 @@ uv run python run_matrix.py --phase report
 The report compares the complete checkpoint curves with the blog's reported
 validation gap -4.2 to +2.76, crossing at update 4 and peaking at update 5.
 Checkpoint selection uses training only; the validation maximum is descriptive.
-Incomplete runs cannot support a result claim. See [reports/results.md](reports/results.md).
+Incomplete runs cannot support a result claim. The local detailed report is
+`reports/results.md`; reports are generated artifacts and are not committed.
 
 Independent writer sections and checkpoint evaluations run concurrently.
 Within-example repairs and the seven optimizer updates remain sequential.
