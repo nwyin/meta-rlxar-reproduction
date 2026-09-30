@@ -31,7 +31,8 @@ def audit_request_contract(payload, cfg, schema, prompt_file):
     if len(messages) != 2 or [m.get("role") for m in messages] != ["system", "user"]:
         raise RunError("Saved request includes conversation history or unexpected message roles")
     system = messages[0]["content"]
-    base = system.split(FORMAT_REPAIR, 1)[0]
+    # Only structured requests are retried with a format repair; plain-text ones must match exactly.
+    base = system.split(FORMAT_REPAIR, 1)[0] if schema is not None else system
     if digest(base) != prompt_file:
         raise RunError("Saved request changed the frozen grading/rubric wrapper")
 
