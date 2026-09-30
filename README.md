@@ -92,6 +92,59 @@ writes the report; it does not run `scripts/audit_completed_run.py`.
 `uv run python tools/data-viewer/serve.py` starts a local viewer for runs, sections, rubrics,
 prompt history and criteria; see [tools/data-viewer](tools/data-viewer/README.md).
 
+## Repository layout
+
+```
+.
+├── run.py                        CLI: pilot, reproduce, all, report, validate-data,
+│                                 prepare-data, prepare-tokenizers, audit-run
+├── xar/                          the pipeline, as a package
+│   ├── pipeline.py               the method: write sections, generate rubrics, grade,
+│   │                             build optimizer feedback, rewrite the prompt, select P*
+│   ├── openrouter.py             model settings, endpoint checks, pricing, token counts,
+│   │                             the budget ledger and the OpenRouter client
+│   ├── data.py                   builds the dataset from arXiv HTML; loads and splits it
+│   ├── runs.py                   run directories: manifest, resume checks, cost estimate
+│   ├── audit.py                  re-checks a saved run against its raw API responses
+│   ├── stats.py                  checkpoint means and paired whole-paper bootstrap
+│   ├── report.py                 writes reports/ (results.md, checkpoints.csv, figure)
+│   └── util.py                   paths, errors, hashing, JSON I/O, parallel map
+├── scripts/
+│   └── audit_completed_run.py    deep re-audit of runs/meta-blog-seed0 against the commit
+│                                 that produced it; writes reports/completion_audit.json
+├── tools/data-viewer/            local browser viewer for runs (serve.py + HTML/JS)
+├── tests/                        pytest suite; one file per module, fakes in conftest.py,
+│                                 full pilot and research runs in test_end_to_end.py
+├── prompts/                      model prompts (hashed into each run's manifest)
+│   ├── writer.md                 Muse writes the missing section
+│   ├── rubric_initial.md         P0, the starting rubric meta prompt
+│   ├── rubric_wrapper.md         wraps the meta prompt when Muse generates a rubric
+│   ├── judge.md                  Muse grades one anonymous section against a rubric
+│   └── optimizer.md              Kimi rewrites the meta prompt from training feedback
+├── configs/
+│   ├── experiments.yaml          run names, iterations, seed, concurrency, blog numbers
+│   ├── models.yaml               each role's model, provider, temperature, reasoning
+│   ├── tokenizers.json           pinned tokenizer revisions and checksums
+│   └── snapshots/                saved OpenRouter catalog and endpoint listings that
+│                                 preflight compares against
+├── data/
+│   ├── discovery.xml             the saved arXiv query results papers were chosen from
+│   ├── acquisition_policy.json   selection rules, fixed before any grading
+│   ├── exclusions.json           papers rejected during selection, with reasons
+│   ├── source_manifest.json      URL, metadata and hashes for each selected paper
+│   ├── splits.json               paper IDs for pilot, train, validation, confirmation
+│   ├── human_review.json         approval of the extracted papers, by dataset hash
+│   ├── license_inventory.json    license label of each paper
+│   ├── examples.jsonl            the 80 sections with paper context (not in git)
+│   ├── raw/                      downloaded arXiv HTML (not in git)
+│   └── tokenizers/               downloaded tokenizers (not in git)
+├── runs/                         run outputs and the shared budget ledger (not in git)
+├── reports/                      generated report (not in git)
+├── METHOD.md                     method, reconstruction choices and limitations
+├── pyproject.toml, uv.lock       dependencies
+└── .env.example                  OPENROUTER_API_KEY goes in .env
+```
+
 ## Outputs
 
 | Path | Contents |
