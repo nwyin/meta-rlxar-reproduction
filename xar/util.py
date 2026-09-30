@@ -1,4 +1,4 @@
-"""Paths, errors, hashing, JSON I/O and small concurrency helpers shared by every module."""
+"""Paths, errors, the experiment settings, hashing, JSON I/O and small concurrency helpers."""
 
 from __future__ import annotations
 
@@ -15,6 +15,7 @@ import threading
 from pathlib import Path
 
 import httpx
+import yaml
 
 ROOT = Path(__file__).resolve().parents[1]
 SCHEMA_VERSION = 1
@@ -80,6 +81,18 @@ def write_json(path, value, write_once=False):
     tmp = path.with_suffix(path.suffix + f".{os.getpid()}.{threading.get_ident()}.tmp")
     tmp.write_text(json.dumps(value, indent=2, ensure_ascii=False, allow_nan=False) + "\n")
     os.replace(tmp, path)
+
+
+def load_design():
+    """The experiment settings in configs/experiments.yaml, plus each role's model.
+
+    The models are set once, in configs/models.yaml under roles.<role>.model; they are copied in
+    under the role's name (design["writer"] and so on) so that code can compare a run against
+    one dict.
+    """
+    design = yaml.safe_load((ROOT / "configs/experiments.yaml").read_text())
+    roles = yaml.safe_load((ROOT / "configs/models.yaml").read_text())["roles"]
+    return {**design, **{role: roles[role]["model"] for role in ROLES}}
 
 
 def prompt(name):

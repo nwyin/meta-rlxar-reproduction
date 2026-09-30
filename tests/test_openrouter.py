@@ -12,6 +12,7 @@ from xar.openrouter import (
     SNAPSHOTS,
     Ledger,
     OpenRouter,
+    check_model_allowed,
     endpoint_for,
     endpoints_filename,
     highest_prices,
@@ -31,6 +32,12 @@ def mock_api(tmp_path, role, handler):
         ledger_path=tmp_path / "ledger.json",
         client=httpx.Client(transport=httpx.MockTransport(handler)),
     )
+
+
+def test_check_model_allowed_rejects_excluded_families_and_routers():
+    for model in ("anthropic/claude-test", "google/gemini-test", "openrouter/auto", "qwen/qwen3.5-9b:free"):
+        with pytest.raises(RunError):
+            check_model_allowed(model)
 
 
 def test_reservations_stop_at_run_and_total_budgets(tmp_path):

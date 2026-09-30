@@ -56,8 +56,9 @@ dataset hash, and a run will not start unless every paper it uses is approved th
 | Judge | Muse Spark 1.1 | meta/muse-spark-1.1-20260709 | meta | 0 | effort medium | 16,384 |
 | Optimizer | Kimi K2.6 | moonshotai/kimi-k2.6-20260420 | siliconflow/fp8 | 0.7 | enabled | 16,384 |
 
-All requests go through OpenRouter. The settings are in `configs/models.yaml`, the trajectory
-(models, seed, number of updates, word limits) in `configs/experiments.yaml`, and the prompts
+All requests go through OpenRouter. The models and their settings are in `configs/models.yaml`,
+the rest of the experiment (seed, number of updates, word limits, run names) in
+`configs/experiments.yaml`, and the prompts
 in `prompts/`: `writer.md`, `rubric_initial.md` (the initial meta prompt), `rubric_wrapper.md`
 (the fixed instructions around the meta prompt), `judge.md` and `optimizer.md`.
 
@@ -128,8 +129,9 @@ The report gives, for training and validation at every checkpoint, the author me
 mean and the gap. The paired improvement is the mean, over validation sections, of the gap at
 the selected checkpoint minus the gap at P0. Its 95% interval is a percentile bootstrap that
 resamples whole papers (2,000 replicates, seed 0), so on validation it rests on five papers.
-The same numbers are also given for two subsets: the sections that met the length target, and
-the sections not flagged for copying.
+`results.md` also gives the validation gap on the sections that met the length target, and
+`reports/completion_audit.json` gives the numbers for two subsets: the sections that met the
+length target, and the sections not flagged for copying.
 
 ## Budget and request handling
 

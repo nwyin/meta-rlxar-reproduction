@@ -41,7 +41,7 @@ MODEL_CATALOG = SNAPSHOTS / "openrouter-models-2026-09-29.json"
 REQUIRED_PARAMETERS = {"temperature", "reasoning", "max_tokens", "response_format", "structured_outputs"}
 
 
-def model_policy(model):
+def check_model_allowed(model):
     """Reject anything but a specific OpenRouter model release from an allowed family."""
     if not isinstance(model, str) or "/" not in model:
         raise RunError(f"Model {model!r} is not an OpenRouter slug of the form vendor/model")
@@ -56,7 +56,7 @@ def role_config(role, model=None):
     """Model, provider and decoding settings for one role, read from configs/models.yaml."""
     config = yaml.safe_load((ROOT / "configs/models.yaml").read_text())
     model = model or config["roles"][role]["model"]
-    model_policy(model)
+    check_model_allowed(model)
     if model not in config["models"]:
         raise RunError(f"{model} has no entry in configs/models.yaml")
     settings = config["models"][model]

@@ -1,28 +1,32 @@
 """Run the Meta blog XAR reproduction, and prepare, check and report on its data.
 
-Run from the repository root. The experiment's settings come from configs/experiments.yaml.
+Run from the repository root. The experiment's settings come from configs/experiments.yaml, and the models and
+their settings from configs/models.yaml.
 """
 
 import argparse
 from pathlib import Path
 
-import yaml
-
 from xar.audit import audit_xar_run, validate_primary_manifest
 from xar.data import load_examples, prepare_data, prepare_tokenizers
 from xar.pipeline import RunSettings, run_xar
 from xar.report import render_report
-from xar.util import MAX_CONCURRENCY, ROLES, ROOT, RunError, main_guard, parse_concurrency, write_json
+from xar.util import (
+    MAX_CONCURRENCY,
+    ROLES,
+    ROOT,
+    RunError,
+    load_design,
+    main_guard,
+    parse_concurrency,
+    write_json,
+)
 
 # phase -> (run directory key, data split, iterations key) in experiments.yaml
 PHASES = {
     "pilot": ("pilot_run", "pilot", "pilot_iterations"),
     "reproduce": ("research_run", "research", "iterations"),
 }
-
-
-def load_design():
-    return yaml.safe_load((ROOT / "configs/experiments.yaml").read_text())
 
 
 def settings_for(phase, design, options):
@@ -50,8 +54,9 @@ def check_pilot(runs_root, design):
     """Audit the pilot run and check that it used the settings in experiments.yaml.
 
     reproduce calls this first. Only the pilot's settings and audit result are checked, not its
-    scores. On success it saves the pilot's substantive hash to meta_blog_pilot_gate.json; nothing
-    in the pipeline reads that file, it is a record for scripts/audit_completed_run.py."""
+    scores. On success it saves the hash of the pilot's settings (the manifest's substantive_hash)
+    to meta_blog_pilot_gate.json. Nothing in the pipeline reads that file; it is a record for
+    scripts/audit_completed_run.py."""
     run = audit_xar_run(Path(runs_root) / design["pilot_run"])
     manifest = run["manifest"]
     validate_primary_manifest(manifest, {**design, "iterations": design["pilot_iterations"]})
@@ -146,7 +151,7 @@ def parse_args(argv=None):
         help="re-check a saved run's rubrics, grades and checkpoint table against its raw API responses "
         "(no API calls)",
     )
-    audit.add_argument("--source-run", required=True, help="a run directory, e.g. runs/meta-blog-seed0")
+    audit.add_argument("run_dir", help="a run directory, e.g. runs/meta-blog-seed0")
     commands.add_parser("validate-data", help="check data/examples.jsonl against data/splits.json")
     commands.add_parser("prepare-data", help="rebuild data/examples.jsonl from data/raw")
     commands.add_parser(
@@ -167,8 +172,8 @@ def main(argv=None):
     elif options.command == "report":
         render_report(options.runs_root, options.output_dir)
     elif options.command == "audit-run":
-        audit_xar_run(options.source_run)
-        print(f"{options.source_run}: audit passed")
+        audit_xar_run(options.run_dir)
+        print(f"{options.run_dir}: audit passed")
     elif options.command == "validate-data":
         examples = load_examples(ROOT / "data/examples.jsonl", ROOT / "data/splits.json")
         print(f"Validated {len(examples)} examples")

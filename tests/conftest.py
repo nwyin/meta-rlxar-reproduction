@@ -5,10 +5,10 @@ import json
 import httpx
 import pytest
 
-from run import load_design
 from xar import runs
 from xar.data import SECTIONS
-from xar.util import ROOT, canonical, digest, file_hash, read_json, words, write_json
+from xar.openrouter import MODEL_CATALOG, SNAPSHOTS, endpoints_filename
+from xar.util import canonical, digest, file_hash, load_design, read_json, words, write_json
 
 
 @pytest.fixture
@@ -80,8 +80,8 @@ def snapshot_response(request):
     """Serve the saved OpenRouter catalog, or a model's saved endpoint list."""
     if request.url.path.endswith("/endpoints"):
         model = request.url.path.split("/models/")[-1].removesuffix("/endpoints")
-        return read_json(ROOT / "configs/snapshots" / (model.replace("/", "_") + "-endpoints.json"))
-    return read_json(ROOT / "configs/snapshots/openrouter-models-2026-09-29.json")
+        return read_json(SNAPSHOTS / endpoints_filename(model))
+    return read_json(MODEL_CATALOG)
 
 
 # Provider tags from configs/models.yaml and the names OpenRouter reports for them.
