@@ -340,9 +340,12 @@ def test_transport_uncertain_timeout_is_not_resent(tmp_path):
 
 
 def test_first_compliant_writer_attempt_and_failed_writer_retention(tmp_path):
+    import threading
+
     class Writer:
         def __init__(self, counts):
             self.roles = {"writer": shared.role_config("writer")}
+            self.dispatch_stopped = threading.Event()
             self.counts, self.calls = counts, []
 
         def call(self, role, system, data, schema, identity):
@@ -423,6 +426,7 @@ def test_parallel_writer_sampling_repairs_order_and_resume(tmp_path):
     class ParallelWriter:
         def __init__(self):
             self.roles = {"writer": shared.role_config("writer")}
+            self.dispatch_stopped = threading.Event()
             self.calls = {}
             self.lock = threading.Lock()
             self.barrier = threading.Barrier(2)
@@ -470,6 +474,7 @@ def test_parallel_writer_failure_stops_new_dispatch_and_preserves_sections(tmp_p
     class InterruptedWriter:
         def __init__(self, fail):
             self.roles = {"writer": shared.role_config("writer")}
+            self.dispatch_stopped = threading.Event()
             self.calls = []
             self.fail = fail
             self.barrier = threading.Barrier(2)

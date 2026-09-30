@@ -493,15 +493,15 @@ class OpenRouter:
             self.ledger.reserve(ledger_key, bound)
             sent_at = now()
             write_json(receipt, {"status": "uncertain", "sent_at": sent_at, "upper_usd": bound})
+            headers = {"X-OpenRouter-Title": "Independent XAR reproduction"}
+            if self.key:
+                headers["Authorization"] = "Bearer " + self.key
             started = time.monotonic()
             try:
                 response = self.client.post(
                     API_BASE + "/chat/completions",
                     json=payload,
-                    headers={
-                        "Authorization": "Bearer " + (self.key or "test"),
-                        "X-OpenRouter-Title": "Independent XAR reproduction",
-                    },
+                    headers=headers,
                 )
                 try:
                     raw = response.json()
@@ -693,7 +693,7 @@ def writer_candidates(api, examples, output, concurrency=1):
     config_hash = digest(
         {"writer": api.roles["writer"], "prompt": prompt("writer"), "schema_version": SCHEMA_VERSION}
     )
-    stopped = getattr(api, "dispatch_stopped", threading.Event())
+    stopped = api.dispatch_stopped
 
     def generate_one(e):
         path = Path(output) / "generations" / (e["example_id"] + ".json")
@@ -859,7 +859,7 @@ def evaluate_checkpoint(api, examples, candidates, meta_prompt, checkpoint, outp
             "grade_paths": {o: str(root / "scores" / label / (o + ".json")) for o in labels},
         }
 
-    rows = bounded_map(evaluate, examples, concurrency, getattr(api, "dispatch_stopped", None))
+    rows = bounded_map(evaluate, examples, concurrency, api.dispatch_stopped)
     write_json(root / "scores" / "main" / str(checkpoint) / f"{examples[0]['split']}_rows.json", rows)
     return rows
 
@@ -1075,11 +1075,10 @@ def initialize_run(args, roles, experiment, extra=None):
     if review.get("dataset_hash") != file_hash(args.dataset):
         raise ContractError("Human review does not match the frozen dataset hash")
     used_examples = load_examples(args.dataset, args.splits)
-    split = getattr(args, "split", "research")
     used_papers = {
         e["paper_id"]
         for e in used_examples
-        if (e["split"] in ("train", "validation") if split == "research" else e["split"] == split)
+        if (e["split"] in ("train", "validation") if args.split == "research" else e["split"] == args.split)
     }
     if any(review.get("papers", {}).get(p, {}).get("decision") != "approved" for p in used_papers):
         raise ContractError("Selected papers still need human review; see data/review.md")
@@ -1834,12 +1833,10 @@ def prepare_tokenizers():
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="XAR input preparation and read-only preflight")
+    parser = argparse.ArgumentParser(description="XAR data preparation, validation and run audit")
     parser.add_argument(
-        "command", choices=["prepare-data", "prepare-tokenizers", "validate-data", "report", "audit-run"]
+        "command", choices=["prepare-data", "prepare-tokenizers", "validate-data", "audit-run"]
     )
-    parser.add_argument("--runs-root", default="runs")
-    parser.add_argument("--output-dir", default="reports")
     parser.add_argument("--source-run")
     args = parser.parse_args()
     if args.command == "prepare-data":
@@ -1852,7 +1849,5 @@ if __name__ == "__main__":
                 f"Validated {len(load_examples(ROOT / 'data/examples.jsonl', ROOT / 'data/splits.json'))} examples"
             )
         )
-    elif args.command == "report":
-        main_guard(lambda: render_report(args.runs_root, args.output_dir))
     else:
         main_guard(lambda: print("Raw-verified:", audit_xar_run(args.source_run)["raw_verified"]))
