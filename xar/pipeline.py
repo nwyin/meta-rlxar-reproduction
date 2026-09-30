@@ -24,6 +24,7 @@ from xar.util import (
     SCHEMA_VERSION,
     InvalidOutput,
     RunError,
+    Skipped,
     bounded_map,
     digest,
     normalize,
@@ -155,7 +156,7 @@ def writer_candidates(api, examples, output, concurrency=1):
                     length_revision=length_revision_note(example["target_words"]),
                 )
             if stopped.is_set():
-                raise RunError(f"Stopped writing {eid} because another section failed")
+                raise Skipped(f"Stopped writing {eid} because another section failed")
             identity = {"writer": config_hash, "example": eid, "attempt": attempt}
             response = api.call("writer", prompt("writer"), data, None, identity)
             text = response["content"].strip()
