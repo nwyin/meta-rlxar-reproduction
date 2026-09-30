@@ -1,11 +1,11 @@
 """One independent W x G x O trajectory, training selection, then held-out curves."""
 
+import argparse
 import statistics
 from pathlib import Path
 
 from shared import (
     ContractError,
-    common_parser,
     digest,
     estimate,
     evaluate_checkpoint,
@@ -14,7 +14,8 @@ from shared import (
     now,
     operational_summary,
     paired_improvement,
-    parse_args,
+    parse_concurrency,
+    prompt,
     propose_prompt,
     read_json,
     role_config,
@@ -26,6 +27,8 @@ from shared import (
     write_table,
     writer_candidates,
 )
+
+ROLES = ("writer", "rubric", "optimizer", "judge")
 
 
 def build_feedback(examples, candidates, rows, current_prompt, failure_count):
@@ -61,17 +64,33 @@ def build_feedback(examples, candidates, rows, current_prompt, failure_count):
     }
 
 
-def main():
-    parser = common_parser(__doc__, ["writer", "rubric", "optimizer", "judge"])
+def parse_args():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--dataset", default="data/examples.jsonl")
+    parser.add_argument("--splits", default="data/splits.json")
+    parser.add_argument("--output-dir", required=True)
+    parser.add_argument("--seed", type=int, default=0)
+    parser.add_argument("--budget-usd", type=float)
+    parser.add_argument("--total-budget-usd", type=float)
+    parser.add_argument("--budget-ledger", default="runs/budget_ledger.json")
+    parser.add_argument("--concurrency", type=parse_concurrency, default=2)
+    parser.add_argument("--dry-run", action="store_true")
+    parser.add_argument("--resume", action="store_true")
+    parser.add_argument("--split", choices=["pilot", "research"], default="research")
+    for role in ROLES:
+        parser.add_argument(f"--{role}-model")
     parser.add_argument("--iterations", type=int, default=7)
-    parser.add_argument("--initial-meta-prompt", default="prompts/rubric_initial.md")
     parser.add_argument("--max-meta-prompt-words", type=int, default=800)
     parser.add_argument("--failure-examples", type=int, default=4)
-    parser.add_argument("--writer-generations")
-    args = parse_args(parser)
+    args = parser.parse_args()
     if not 0 <= args.iterations <= 7 or args.failure_examples < 1:
         parser.error("0–7 iterations and a positive failure count required")
-    initial = Path(args.initial_meta_prompt).read_text()
+    return args
+
+
+def main():
+    args = parse_args()
+    initial = prompt("rubric_initial")
     if words(initial) > args.max_meta_prompt_words:
         raise ContractError("Initial prompt exceeds bound")
     examples = selected_examples(args)
@@ -80,20 +99,18 @@ def main():
         if len(papers) < 2:
             raise ContractError("Pilot needs two separate papers")
         examples = [{**e, "split": "train" if e["paper_id"] == papers[0] else "validation"} for e in examples]
-    elif args.split != "research":
-        raise ContractError("XAR requires research train/validation or separate pilots")
     train, validation = (
         [e for e in examples if e["split"] == "train"],
         [e for e in examples if e["split"] == "validation"],
     )
-    roles = {r: role_config(args, r) for r in ("writer", "rubric", "optimizer", "judge")}
+    roles = {role: role_config(role, getattr(args, f"{role}_model")) for role in ROLES}
     if args.dry_run:
         estimate(
             args,
             roles,
             examples,
             {
-                "writer": 0 if args.writer_generations else len(examples),
+                "writer": len(examples),
                 "rubric": len(examples) * (args.iterations + 1),
                 "judge": 2 * len(examples) * (args.iterations + 1),
                 "optimizer": args.iterations,
@@ -103,9 +120,7 @@ def main():
     with run_lock(args.output_dir):
         out = Path(args.output_dir)
         api = initialize_run(args, roles, "xar", {"initial_meta_prompt_hash": digest(initial)})
-        candidates = writer_candidates(
-            api, examples, out, args.writer_generations, concurrency=args.concurrency
-        )
+        candidates = writer_candidates(api, examples, out, args.concurrency)
         checkpoints, training_rows = [initial], []
         for iteration in range(args.iterations + 1):
             if iteration:

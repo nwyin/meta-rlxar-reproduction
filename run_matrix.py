@@ -12,6 +12,7 @@ from shared import (
     ContractError,
     audit_xar_run,
     main_guard,
+    parse_concurrency,
     render_report,
     validate_primary_manifest,
     write_json,
@@ -80,16 +81,8 @@ def main():
     parser.add_argument("--dry-run", action="store_true")
     parser.add_argument("--resume", action="store_true")
     parser.add_argument("--runs-root", default="runs")
-    parser.add_argument("--concurrency", type=int)
+    parser.add_argument("--concurrency", type=parse_concurrency)
     args = parser.parse_args()
-    if args.concurrency is not None and not 1 <= args.concurrency <= 32:
-        parser.error("Concurrency must be 1–32")
-    if (
-        args.phase != "report"
-        and not args.dry_run
-        and (args.budget_usd is None or args.total_budget_usd is None)
-    ):
-        raise ContractError("Explicit per-run and total dollar ceilings required for a batch")
     design = yaml.safe_load((ROOT / "configs/experiments.yaml").read_text())
     if design["scope"] != "meta_blog_initial_empirical_investigation":
         raise ContractError("Active driver requires the single declared blog reproduction")

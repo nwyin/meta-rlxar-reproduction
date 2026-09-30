@@ -68,21 +68,6 @@ def test_input_allowlist_and_model_policy():
             shared.model_policy(model)
 
 
-def test_role_provider_defaults_and_explicit_override():
-    model = "moonshotai/kimi-k2.6"
-    args = SimpleNamespace()
-    assert shared.role_config(args, "writer", model=model)["provider"] == "digitalocean"
-    for role in ("rubric", "optimizer"):
-        assert shared.role_config(args, role, model=model)["provider"] == "siliconflow/fp8"
-    assert shared.role_config(args, "rubric", model="qwen/qwen3.5-9b")["provider"] == "parasail/bf16"
-    args.optimizer_provider = "explicit-provider"
-    assert shared.role_config(args, "optimizer", model=model)["provider"] == "explicit-provider"
-    assert (
-        shared.role_config(args, "optimizer", model=model, provider="argument-provider")["provider"]
-        == "argument-provider"
-    )
-
-
 def test_feedback_rejects_validation_and_deterministic_failure_order(tmp_path):
     examples = [dummy_example("paper" + str(i)) for i in range(5)]
     candidates = {e["example_id"]: {"text": "Generated"} for e in examples}
@@ -210,15 +195,7 @@ class FakeProvider:
             assert "Write the missing section" in system
             value = " ".join("generated" for _ in range(data["target_words"]))
         provider = payload["provider"]["only"][0]
-        names = {
-            "deepinfra/bf16": "DeepInfra",
-            "parasail/bf16": "Parasail",
-            "crusoe/bf16": "Crusoe",
-            "digitalocean": "DigitalOcean",
-            "siliconflow/fp8": "SiliconFlow",
-            "wafer": "Wafer",
-            "meta": "Meta",
-        }
+        names = {"siliconflow/fp8": "SiliconFlow", "meta": "Meta"}
         return httpx.Response(
             200,
             json={
@@ -339,8 +316,7 @@ def test_bootstrap_resamples_paper_bundles():
 
 
 def test_transport_uncertain_timeout_is_not_resent(tmp_path):
-    args = SimpleNamespace()
-    roles = {"writer": shared.role_config(args, "writer")}
+    roles = {"writer": shared.role_config("writer")}
     calls = []
 
     def handler(request):
@@ -366,7 +342,7 @@ def test_transport_uncertain_timeout_is_not_resent(tmp_path):
 def test_first_compliant_writer_attempt_and_failed_writer_retention(tmp_path):
     class Writer:
         def __init__(self, counts):
-            self.roles = {"writer": shared.role_config(SimpleNamespace(), "writer")}
+            self.roles = {"writer": shared.role_config("writer")}
             self.counts, self.calls = counts, []
 
         def call(self, role, system, data, schema, identity):
@@ -395,7 +371,7 @@ def test_first_compliant_writer_attempt_and_failed_writer_retention(tmp_path):
 def test_rejected_proposal_consumes_update_with_one_repair(tmp_path):
     class Optimizer:
         def __init__(self):
-            self.roles = {"optimizer": shared.role_config(SimpleNamespace(), "optimizer")}
+            self.roles = {"optimizer": shared.role_config("optimizer")}
             self.calls = []
 
         def structured(self, role, instructions, data, schema, identity, repair):
@@ -419,15 +395,13 @@ def test_rejected_proposal_consumes_update_with_one_repair(tmp_path):
 def test_primary_matrix_rejects_different_judge_and_protocol():
     design = shared.yaml.safe_load((shared.ROOT / "configs/experiments.yaml").read_text())
     manifest = {
-        "roles": {
-            r: shared.role_config(SimpleNamespace(), r) for r in ("writer", "rubric", "optimizer", "judge")
-        },
+        "roles": {r: shared.role_config(r) for r in ("writer", "rubric", "optimizer", "judge")},
         "arguments": {k: design[k] for k in ("iterations", "max_meta_prompt_words", "failure_examples")},
         "extra": {"initial_meta_prompt_hash": shared.digest(shared.prompt("rubric_initial"))},
     }
     shared.validate_primary_manifest(manifest, design)
     changed = json.loads(json.dumps(manifest))
-    changed["roles"]["judge"] = shared.role_config(SimpleNamespace(), "judge", model="z-ai/glm-5.2")
+    changed["roles"]["judge"] = shared.role_config("judge", "moonshotai/kimi-k2.6")
     with pytest.raises(shared.ContractError, match="main judge fixed"):
         shared.validate_primary_manifest(changed, design)
     changed = json.loads(json.dumps(manifest))
@@ -447,7 +421,7 @@ def test_parallel_writer_sampling_repairs_order_and_resume(tmp_path):
 
     class ParallelWriter:
         def __init__(self):
-            self.roles = {"writer": shared.role_config(SimpleNamespace(), "writer")}
+            self.roles = {"writer": shared.role_config("writer")}
             self.calls = {}
             self.lock = threading.Lock()
             self.barrier = threading.Barrier(2)
@@ -494,7 +468,7 @@ def test_parallel_writer_failure_stops_new_dispatch_and_preserves_sections(tmp_p
 
     class InterruptedWriter:
         def __init__(self, fail):
-            self.roles = {"writer": shared.role_config(SimpleNamespace(), "writer")}
+            self.roles = {"writer": shared.role_config("writer")}
             self.calls = []
             self.fail = fail
             self.barrier = threading.Barrier(2)
@@ -547,7 +521,7 @@ def test_parallel_reservations_share_one_budget(tmp_path):
 
 @pytest.mark.parametrize("factor,accepted", [(0.5, True), (1.1, True), (1.3, False)])
 def test_preflight_pricing_changes_stay_within_frozen_bounds(tmp_path, factor, accepted):
-    cfg = shared.role_config(SimpleNamespace(), "judge")
+    cfg = shared.role_config("judge")
     endpoint, _ = shared.endpoint_for(cfg)
 
     def handler(request):
@@ -584,7 +558,7 @@ def test_preflight_pricing_changes_stay_within_frozen_bounds(tmp_path, factor, a
 
 
 def test_unknown_send_halts_dispatch_for_other_tasks(tmp_path):
-    cfg = shared.role_config(SimpleNamespace(), "writer")
+    cfg = shared.role_config("writer")
     sends = []
 
     def handler(request):
@@ -611,16 +585,16 @@ def test_unknown_send_halts_dispatch_for_other_tasks(tmp_path):
 def test_blog_model_contract_rejects_every_role_substitution():
     design = shared.yaml.safe_load((shared.ROOT / "configs/experiments.yaml").read_text())
     manifest = {
-        "roles": {
-            r: shared.role_config(SimpleNamespace(), r) for r in ("writer", "rubric", "optimizer", "judge")
-        },
+        "roles": {r: shared.role_config(r) for r in ("writer", "rubric", "optimizer", "judge")},
         "arguments": {k: design[k] for k in ("iterations", "max_meta_prompt_words", "failure_examples")},
         "extra": {"initial_meta_prompt_hash": shared.digest(shared.prompt("rubric_initial"))},
     }
     shared.validate_primary_manifest(manifest, design)
     for role in ("writer", "rubric", "optimizer", "judge"):
+        # Swap in the other model: Muse for the optimizer, Kimi everywhere else.
+        other = "meta/muse-spark-1.1" if role == "optimizer" else "moonshotai/kimi-k2.6"
         changed = json.loads(json.dumps(manifest))
-        changed["roles"][role] = shared.role_config(SimpleNamespace(), role, model="qwen/qwen3.5-9b")
+        changed["roles"][role] = shared.role_config(role, other)
         with pytest.raises(shared.ContractError):
             shared.validate_primary_manifest(changed, design)
 
@@ -637,7 +611,6 @@ def test_blog_driver_excludes_sweep_and_old_writer_cache():
         assert command[command.index("--split") + 1] == split
         assert command[command.index("--iterations") + 1] == iterations
         assert command[command.index("--seed") + 1] == "0"
-        assert "--writer-generations" not in command
         for role in ("writer", "rubric", "judge"):
             assert command[command.index(f"--{role}-model") + 1] == "meta/muse-spark-1.1"
         assert command[command.index("--optimizer-model") + 1] == "moonshotai/kimi-k2.6"

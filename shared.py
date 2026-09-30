@@ -151,35 +151,20 @@ def validate_grade(grade, rubric, supplied_text):
     return statistics.mean(s["score"] for s in grade["scores"])
 
 
-def role_config(args, role, model=None, provider=None):
-    cfg = yaml.safe_load((ROOT / "configs/models.yaml").read_text())
-    defaults = cfg["roles"].get(role, cfg["roles"]["judge"])
-    model = model or getattr(args, f"{role}_model", None) or defaults["model"]
+def role_config(role, model=None):
+    """Model, provider and decoding settings for one role, read from configs/models.yaml."""
+    config = yaml.safe_load((ROOT / "configs/models.yaml").read_text())
+    model = model or config["roles"][role]["model"]
     model_policy(model)
-    saved = cfg["models"].get(model, {})
-    provider = (
-        provider
-        or getattr(args, f"{role}_provider", None)
-        or defaults.get("providers", {}).get(model)
-        or saved.get("provider")
-    )
-    if not provider:
-        raise ContractError(f"Explicit provider required for unclassified model {model}")
-    reasoning = saved.get("reasoning", {"enabled": True})
-    effort = getattr(args, f"{role}_reasoning_effort", None)
-    mode = getattr(args, f"{role}_reasoning_mode", None)
-    if effort:
-        reasoning = {"effort": effort}
-    if mode:
-        reasoning = {"enabled": mode == "enabled"}
-    temperature = getattr(args, f"{role}_temperature", None)
-    max_tokens = getattr(args, f"{role}_max_output_tokens", None)
+    if model not in config["models"]:
+        raise ContractError(f"{model} has no entry in configs/models.yaml")
+    settings = config["models"][model]
     return {
         "model": model,
-        "provider": provider,
-        "temperature": defaults["temperature"] if temperature is None else temperature,
-        "reasoning": reasoning,
-        "max_tokens": max_tokens or saved.get("max_tokens", 16384),
+        "provider": settings["provider"],
+        "temperature": config["roles"][role]["temperature"],
+        "reasoning": settings["reasoning"],
+        "max_tokens": settings["max_tokens"],
     }
 
 
@@ -258,14 +243,9 @@ def tokenizer(name):
 
 
 def token_count(text, model):
-    name = (
-        "qwen"
-        if model.startswith("qwen/")
-        else "kimi"
-        if model.startswith("moonshotai/")
-        else ("deepseek" if model.startswith("deepseek/") else "glm" if model.startswith("z-ai/") else None)
-    )
+    name = {"qwen": "qwen", "moonshotai": "kimi"}.get(model.split("/")[0])
     if name is None:
+        # No public tokenizer (Muse Spark): the UTF-8 byte length over-estimates the token count.
         return len(text.encode())
     if name == "kimi":
         return len(tokenizer(name).encode(text, disallowed_special=()))
@@ -682,8 +662,6 @@ def contamination(candidate, reference):
 
 def bounded_map(function, items, concurrency, stopped=None):
     """Keep at most concurrency tasks active; retain input order and stop refilling on errors."""
-    if not 1 <= concurrency <= 32:
-        raise ContractError("Concurrency must be 1–32")
     stopped = stopped if stopped is not None else threading.Event()
 
     def invoke(item):
@@ -715,24 +693,15 @@ def bounded_map(function, items, concurrency, stopped=None):
     return [results[i] for i in sorted(results)]
 
 
-def writer_candidates(api, examples, output, existing=None, concurrency=1):
-    if not 1 <= concurrency <= 32:
-        raise ContractError("Writer concurrency must be 1–32")
+def writer_candidates(api, examples, output, concurrency=1):
     config_hash = digest(
         {"writer": api.roles["writer"], "prompt": prompt("writer"), "schema_version": SCHEMA_VERSION}
     )
-    frozen = read_json(existing) if existing else None
-    if frozen and frozen["writer_configuration_hash"] != config_hash:
-        raise ContractError("Cached writer configuration differs")
     stopped = getattr(api, "dispatch_stopped", threading.Event())
 
     def generate_one(e):
         path = Path(output) / "generations" / (e["example_id"] + ".json")
-        if frozen:
-            record = frozen["candidates"].get(e["example_id"])
-            if not record:
-                raise ContractError("Cached writer candidate coverage incomplete")
-        elif path.exists():
+        if path.exists():
             record = read_json(path)
         else:
             attempts = []
@@ -999,51 +968,12 @@ def write_table(path, rows):
         writer.writerows(rows)
 
 
-def common_parser(description, roles):
-    p = argparse.ArgumentParser(description=description)
-    p.add_argument("--config")
-    p.add_argument("--dataset", default="data/examples.jsonl")
-    p.add_argument("--splits", default="data/splits.json")
-    p.add_argument("--output-dir", required=True)
-    p.add_argument("--seed", type=int, default=0)
-    p.add_argument("--budget-usd", type=float)
-    p.add_argument("--total-budget-usd", type=float)
-    p.add_argument("--budget-ledger", default="runs/budget_ledger.json")
-    p.add_argument("--concurrency", type=int, default=2)
-    p.add_argument("--dry-run", action="store_true")
-    p.add_argument("--resume", action="store_true")
-    p.add_argument(
-        "--split", choices=["train", "validation", "pilot", "confirmation", "research"], default="research"
-    )
-    for role in roles:
-        p.add_argument(f"--{role}-model")
-        p.add_argument(f"--{role}-provider")
-        p.add_argument(f"--{role}-temperature", type=float)
-        p.add_argument(f"--{role}-reasoning-mode", choices=["enabled", "disabled"])
-        p.add_argument(f"--{role}-reasoning-effort")
-        p.add_argument(f"--{role}-max-output-tokens", type=int)
-    return p
-
-
-def parse_args(parser, argv=None):
-    import sys
-
-    argv = sys.argv[1:] if argv is None else argv
-    known, _ = parser.parse_known_args(argv)
-    if known.config:
-        config = yaml.safe_load(Path(known.config).read_text()) or {}
-        allowed = {a.dest for a in parser._actions}
-        invalid = set(config) - allowed
-        if invalid:
-            raise ContractError(f"Unknown config keys: {sorted(invalid)}")
-        parser.set_defaults(**config)
-    args = parser.parse_args(argv)
-    load_dotenv(ROOT / ".env")
-    if args.total_budget_usd is None and os.getenv("XAR_TOTAL_BUDGET_USD"):
-        args.total_budget_usd = float(os.getenv("XAR_TOTAL_BUDGET_USD"))
-    if args.concurrency < 1 or args.concurrency > 32:
-        raise ContractError("Concurrency must be 1–32")
-    return args
+def parse_concurrency(value):
+    """argparse type for --concurrency: an integer from 1 to 32."""
+    number = int(value)
+    if not 1 <= number <= 32:
+        raise argparse.ArgumentTypeError("must be between 1 and 32")
+    return number
 
 
 def selected_examples(args):
@@ -1128,9 +1058,7 @@ def operational_summary(output):
 
 
 def resolved_manifest(args, roles, experiment, extra=None):
-    arguments = {
-        k: v for k, v in vars(args).items() if k not in {"dry_run", "resume", "config", "output_dir"}
-    }
+    arguments = {k: v for k, v in vars(args).items() if k not in {"dry_run", "resume", "output_dir"}}
     endpoints = {}
     for role, cfg in roles.items():
         e, m = endpoint_for(cfg)
@@ -1248,32 +1176,11 @@ def estimate(args, roles, examples, counts):
             "per_request_conservative_usd": (max(contexts) + 12000) * price["prompt"]
             + roles[role]["max_tokens"] * price["completion"],
         }
-    reuse = {}
-    for field in ("writer_generations", "target_generations"):
-        artifact = getattr(args, field, None)
-        if artifact:
-            path = Path(artifact)
-            reuse[field] = {
-                "path": artifact,
-                "status": "available" if path.exists() else "preceding_phase_prerequisite_missing",
-            }
-            if path.exists() and "writer" in roles:
-                saved = read_json(path)
-                expected_hash = digest(
-                    {"writer": roles["writer"], "prompt": prompt("writer"), "schema_version": SCHEMA_VERSION}
-                )
-                if saved["writer_configuration_hash"] != expected_hash:
-                    raise ContractError("Planned cached writer artifact has incompatible settings")
-                for e in examples:
-                    candidate = saved["candidates"].get(e["example_id"])
-                    if not candidate or candidate["context_hash"] != e["context_hash"]:
-                        raise ContractError("Planned cached writer artifact lacks matching example coverage")
     result = {
         "dry_run": True,
         "examples": len(examples),
         "roles": roles,
         "counts_and_costs": estimates,
-        "artifact_reuse": reuse,
         "retry_reserve_fraction": 0.25,
         "estimated_phase_usd_with_reserve": 1.25 * sum(e["typical_uncached_usd"] for e in estimates.values()),
         "pricing_source": "saved_endpoint_snapshots",
@@ -1511,7 +1418,7 @@ def validate_primary_manifest(manifest, design):
     if manifest["extra"].get("initial_meta_prompt_hash") != digest(prompt("rubric_initial")):
         raise ContractError("Primary matrix differs from the frozen neutral starting prompt")
     for role, cfg in manifest["roles"].items():
-        if cfg != role_config(argparse.Namespace(), role, model=cfg["model"]):
+        if cfg != role_config(role, cfg["model"]):
             raise ContractError(f"Primary {role} provider/decoding differs from the frozen configuration")
 
 

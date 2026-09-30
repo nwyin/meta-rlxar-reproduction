@@ -1,38 +1,14 @@
-# Only Muse Spark 1.1 and Kimi K2.6 are used by the active reproduction.
-# Other saved models support historical artifacts and explicit utility invocations.
 models:
-  qwen/qwen3.5-9b:
-    provider: parasail/bf16
-    reasoning:
-      enabled: true
-    max_tokens: 16384
-    endpoint_snapshot: configs/snapshots/qwen_qwen3.5-9b-endpoints.json
-    release: qwen/qwen3.5-9b-20260310
-    seed_supported: true
-  moonshotai/kimi-k2.6:
-    provider: digitalocean
-    reasoning:
-      enabled: true
-    max_tokens: 16384
-    endpoint_snapshot: configs/snapshots/moonshotai_kimi-k2.6-endpoints.json
-    release: moonshotai/kimi-k2.6-20260420
-    seed_supported: false
-  z-ai/glm-5.2:
-    provider: wafer
-    reasoning:
-      effort: xhigh
-    max_tokens: 16384
-    endpoint_snapshot: configs/snapshots/z-ai_glm-5.2-endpoints.json
-    release: z-ai/glm-5.2-20260616
-    seed_supported: true
   meta/muse-spark-1.1:
     provider: meta
     reasoning:
       effort: medium
     max_tokens: 16384
-    endpoint_snapshot: configs/snapshots/meta_muse-spark-1.1-endpoints.json
-    release: meta/muse-spark-1.1-20260709
-    seed_supported: false
+  moonshotai/kimi-k2.6:
+    provider: siliconflow/fp8
+    reasoning:
+      enabled: true
+    max_tokens: 16384
 roles:
   writer:
     model: meta/muse-spark-1.1
@@ -40,13 +16,9 @@ roles:
   rubric:
     model: meta/muse-spark-1.1
     temperature: 0.2
-    providers:
-      moonshotai/kimi-k2.6: siliconflow/fp8
   optimizer:
     model: moonshotai/kimi-k2.6
     temperature: 0.7
-    providers:
-      moonshotai/kimi-k2.6: siliconflow/fp8
   judge:
     model: meta/muse-spark-1.1
     temperature: 0

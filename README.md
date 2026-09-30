@@ -43,7 +43,7 @@ domains in the blog require separate work.
 ## Setup
 
 Requires Python 3.11+, `uv`, and the Hugging Face `hf` CLI for the pinned Kimi
-and historical tokenizers. Raw text, tokenizers, credentials, and runs stay local.
+and Qwen tokenizers. Raw text, tokenizers, credentials, and runs stay local.
 
 ```sh
 uv sync --locked
@@ -62,8 +62,10 @@ only the eight train and five validation papers enter the research trajectory.
 These are author-written reference proxies from recent preprints, not the blog's
 original S2ORC examples. Paper text is not publicly redistributed.
 
-Set OPENROUTER_API_KEY and XAR_TOTAL_BUDGET_USD in the ignored .env file.
-The currently authorized shared total is $100, including previous pilots.
+Set OPENROUTER_API_KEY in the ignored .env file. Paid runs need both dollar
+limits on the command line: --budget-usd for the run and --total-budget-usd for
+the ledger shared by all runs. The currently authorized shared total is $100,
+including previous pilots.
 Credentials are excluded from artifacts. The provider's own quota also applies.
 Muse uses the pinned Meta endpoint; Kimi optimization uses SiliconFlow FP8,
 which passed native JSON capability checks in an earlier operational probe.
