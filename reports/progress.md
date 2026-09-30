@@ -191,3 +191,5 @@ Read-only account verification shows the OpenRouter key weekly limit is now $100
 Research checkpoint P0 has 32/32 paired training grades: author mean 7.99375, Muse mean 8.7875, gap -0.79375. The first Kimi revision is pending. These are training measurements, not a held-out replication result; research validation remains unopened. All 52 writer candidates are frozen.
 
 Research P1 completed with 32/32 paired training grades and mean gap -0.2479166667, up from P0 -0.79375. Kimi accepted the first bounded prompt revision; update 2 is pending. The writer set remains frozen and research validation remains unopened.
+
+Research P2 completed with 32/32 paired training grades: author mean 8.3052083333, Muse mean 8.640625, gap -0.3354166667. This is worse than P1 and remains retained. Revision 2 was accepted after a 397.4-second optimizer call (9,584 completion tokens); revision 3 is now pending. No research validation scores have been requested.

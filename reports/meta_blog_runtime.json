@@ -1,10 +1,11 @@
 {
-  "checked_at": "2026-09-30T00:37:49.911578+00:00",
+  "checked_at": "2026-09-30T00:46:06.177863+00:00",
   "run": "runs/meta-blog-seed0",
   "state": "training_prompt_optimization",
   "training_checkpoints_complete": [
     0,
-    1
+    1,
+    2
   ],
   "training_checkpoint0": {
     "examples": 32,
@@ -230,7 +231,68 @@
         "low": -0.6510416666666666,
         "high": 0.13124999999999998
       }
+    },
+    {
+      "checkpoint": 2,
+      "examples": 32,
+      "paired_coverage": 32,
+      "complete": true,
+      "human": 8.305208333333333,
+      "model": 8.640625,
+      "gap": -0.3354166666666668,
+      "positive_gap_fraction": 0.25,
+      "ties": 9,
+      "paper_interval": {
+        "method": "paired_whole_paper_percentile_bootstrap",
+        "paper_clusters": 8,
+        "replicates": 2000,
+        "seed": 0,
+        "estimate": -0.3354166666666668,
+        "bootstrap_median": -0.32395833333333346,
+        "low": -0.8614583333333334,
+        "high": 0.1281249999999999
+      },
+      "length_compliant": 23,
+      "contamination_flagged": 0,
+      "sections": {
+        "abstract": {
+          "coverage": 8,
+          "gap": 0.33333333333333304
+        },
+        "introduction": {
+          "coverage": 8,
+          "gap": -0.17500000000000016
+        },
+        "related_work": {
+          "coverage": 8,
+          "gap": -0.125
+        },
+        "conclusion": {
+          "coverage": 8,
+          "gap": -1.375
+        }
+      },
+      "compliant_sensitivity": {
+        "method": "paired_whole_paper_percentile_bootstrap",
+        "paper_clusters": 8,
+        "replicates": 2000,
+        "seed": 0,
+        "estimate": -0.42898550724637685,
+        "bootstrap_median": -0.4181818181818182,
+        "low": -1.218840579710145,
+        "high": 0.20317460317460334
+      },
+      "unflagged_sensitivity": {
+        "method": "paired_whole_paper_percentile_bootstrap",
+        "paper_clusters": 8,
+        "replicates": 2000,
+        "seed": 0,
+        "estimate": -0.3354166666666668,
+        "bootstrap_median": -0.32395833333333346,
+        "low": -0.8614583333333334,
+        "high": 0.1281249999999999
+      }
     }
   ],
-  "optimizer_update_in_progress": 2
+  "optimizer_update_in_progress": 3
 }
