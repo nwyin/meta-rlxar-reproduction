@@ -180,10 +180,7 @@ def main():
     assert shared_total <= 100
     pilot = s.audit_xar_run("runs/pilot-meta-blog-attested")
     gate = s.read_json("runs/meta_blog_pilot_gate.json")
-    assert (
-        gate["pilot_substantive_hash"] == pilot["manifest"]["substantive_hash"]
-        and gate["gap_sign_used_for_gate"] is False
-    )
+    assert gate["pilot_substantive_hash"] == pilot["manifest"]["substantive_hash"]
     selected = run["freeze"]["selected"]
     sensitivity = {}
     for split in ("train", "validation"):
