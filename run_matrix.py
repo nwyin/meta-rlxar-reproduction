@@ -7,16 +7,9 @@ from pathlib import Path
 
 import yaml
 
-from shared import (
-    ROOT,
-    ContractError,
-    audit_xar_run,
-    main_guard,
-    parse_concurrency,
-    render_report,
-    validate_primary_manifest,
-    write_json,
-)
+from xar.audit import audit_xar_run, validate_primary_manifest
+from xar.report import render_report
+from xar.util import ROOT, RunError, main_guard, parse_concurrency, write_json
 
 
 def build_command(args, design, phase):
@@ -60,7 +53,7 @@ def pilot_gate(root, design):
     protocol = {**design, "iterations": design["pilot_iterations"]}
     validate_primary_manifest(manifest, protocol)
     if manifest["arguments"]["split"] != "pilot":
-        raise ContractError("Separate pilot papers required before research")
+        raise RunError("Separate pilot papers required before research")
     # The pilot only has to pass the audit; its scores are never looked at.
     write_json(
         Path(root) / "meta_blog_pilot_gate.json", {"pilot_substantive_hash": manifest["substantive_hash"]}
@@ -79,7 +72,7 @@ def main():
     args = parser.parse_args()
     design = yaml.safe_load((ROOT / "configs/experiments.yaml").read_text())
     if design["scope"] != "meta_blog_initial_empirical_investigation":
-        raise ContractError("Active driver requires the single declared blog reproduction")
+        raise RunError("Active driver requires the single declared blog reproduction")
     if args.phase == "report":
         render_report(args.runs_root, ROOT / "reports")
         return
@@ -92,7 +85,7 @@ def main():
         try:
             subprocess.run(command, check=True, cwd=ROOT)
         except subprocess.CalledProcessError as error:
-            raise ContractError(
+            raise RunError(
                 f"{phase} stopped (exit {error.returncode}); inspect the saved run receipts"
             ) from None
     if "reproduction" in phases and not args.dry_run:

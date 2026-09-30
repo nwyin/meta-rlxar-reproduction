@@ -47,8 +47,8 @@ and Qwen tokenizers. Raw text, tokenizers, credentials, and runs stay local.
 
 ```sh
 uv sync --locked
-uv run python shared.py prepare-tokenizers
-uv run python shared.py validate-data
+uv run python -m xar prepare-tokenizers
+uv run python -m xar validate-data
 uv run pytest -q
 ```
 
@@ -87,7 +87,7 @@ research uses runs/meta-blog-seed0. The rejected runs/pilot-meta-blog is preserv
 Both share runs/budget_ledger.json with the preserved historical attempts.
 
 ```sh
-uv run python shared.py audit-run --source-run runs/meta-blog-seed0
+uv run python -m xar audit-run --source-run runs/meta-blog-seed0
 uv run python run_matrix.py --phase report
 ```
 
