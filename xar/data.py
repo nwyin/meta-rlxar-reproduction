@@ -279,117 +279,147 @@ def extract_paper(html, metadata):
     return examples
 
 
+PAPERS_NEEDED = 20
+# Accepted papers in discovery order: the first 2 are pilots, the last 5 are held back for
+# confirmation, and the middle 13 are shuffled with SPLIT_SEED into 8 train and 5 validation papers.
+PILOT_PAPERS = slice(0, 2)
+RESEARCH_PAPERS = slice(2, 15)
+CONFIRMATION_PAPERS = slice(15, 20)
+TRAIN_PAPERS = 8
+SPLIT_SEED = 20260929
+# Papers about rubric optimization itself are left out, since they could describe the method.
+OFF_LIMITS_TITLE = re.compile(r"rubric|XAR|unslopp", re.IGNORECASE)
+DOWNLOAD_PAUSE_SECONDS = 0.25
+ATOM = {"a": "http://www.w3.org/2005/Atom", "x": "http://arxiv.org/schemas/atom"}
+MANIFEST_EXAMPLE_FIELDS = (
+    "example_id",
+    "paper_id",
+    "section_type",
+    "split",
+    "context_hash",
+    "reference_hash",
+    "target_words",
+)
+
+
+def discovery_metadata(entry):
+    """Provenance for one arXiv Atom entry. These fields are part of the hashed dataset."""
+    paper_id = entry.find("a:id", ATOM).text.split("/abs/")[-1]
+    journal_ref = entry.find("x:journal_ref", ATOM)
+    return {
+        "paper_id": paper_id,
+        "title": normalize(entry.find("a:title", ATOM).text),
+        "authors": [
+            normalize(author.find("a:name", ATOM).text) for author in entry.findall("a:author", ATOM)
+        ],
+        "source_url": "https://arxiv.org/html/" + paper_id,
+        "abstract_url": "https://arxiv.org/abs/" + paper_id,
+        "year": int(entry.find("a:published", ATOM).text[:4]),
+        "venue": journal_ref.text if journal_ref is not None else "arXiv preprint; peer review not verified",
+        "extraction_version": "latexhtml-v1",
+        "retrieved_at": "2026-09-29",
+        "redistribution": "not verified; text stays local",
+    }
+
+
 def prepare_data():
+    """Build data/examples.jsonl and its split and source manifests from data/discovery.xml.
+
+    Takes the first PAPERS_NEEDED eligible papers in discovery order (downloading any HTML missing
+    from data/raw), lists the rejected ones in data/exclusions.json, and refuses to replace
+    existing dataset files with different content.
+    """
     policy = read_json(ROOT / "data/acquisition_policy.json")
-    ns = {"a": "http://www.w3.org/2005/Atom", "x": "http://arxiv.org/schemas/atom"}
-    entries = ET.parse(ROOT / "data/discovery.xml").getroot().findall("a:entry", ns)
+    entries = ET.parse(ROOT / "data/discovery.xml").getroot().findall("a:entry", ATOM)
     raw_dir = ROOT / "data/raw"
     raw_dir.mkdir(parents=True, exist_ok=True)
     accepted, exclusions, seen_authors, seen_titles = [], [], set(), set()
     with httpx.Client(timeout=60, follow_redirects=True) as client:
         for entry in entries:
-            paper_id = entry.find("a:id", ns).text.split("/abs/")[-1]
-            title = normalize(entry.find("a:title", ns).text)
-            authors = [normalize(a.find("a:name", ns).text) for a in entry.findall("a:author", ns)]
-            ref = entry.find("x:journal_ref", ns)
-            metadata = {
-                "paper_id": paper_id,
-                "title": title,
-                "authors": authors,
-                "source_url": "https://arxiv.org/html/" + paper_id,
-                "abstract_url": "https://arxiv.org/abs/" + paper_id,
-                "year": int(entry.find("a:published", ns).text[:4]),
-                "venue": ref.text if ref is not None else "arXiv preprint; peer review not verified",
-                "extraction_version": "latexhtml-v1",
-                "retrieved_at": "2026-09-29",
-                "redistribution": "not verified; text stays local",
-            }
+            metadata = discovery_metadata(entry)
+            paper_id, title, authors = metadata["paper_id"], metadata["title"], metadata["authors"]
             try:
-                if set(authors) & seen_authors or title.casefold() in seen_titles:
-                    raise RunError("Author or manuscript overlap with prior selected paper")
-                if re.search(r"rubric|XAR|unslopp", title, re.IGNORECASE):
-                    raise RunError("Subject overlaps rubric optimization")
+                shared_authors = sorted(set(authors) & seen_authors)
+                if shared_authors:
+                    raise RunError(
+                        f"Shares authors with an earlier selected paper: {', '.join(shared_authors)}"
+                    )
+                if title.casefold() in seen_titles:
+                    raise RunError("Same title as an earlier selected paper")
+                if OFF_LIMITS_TITLE.search(title):
+                    raise RunError("Title is about rubric optimization, the method under study")
                 path = raw_dir / (paper_id + ".html")
                 if not path.exists():
                     response = client.get(metadata["source_url"])
                     response.raise_for_status()
                     path.write_text(response.text)
-                    time.sleep(0.25)
+                    time.sleep(DOWNLOAD_PAUSE_SECONDS)
                 metadata["html_hash"] = file_hash(path)
                 extracted = extract_paper(path.read_text(), metadata)
+                # The examples' provenance is this same dict, so this lands in every example.
+                # "pending" is stale (data/human_review.json records the approval), but it is part
+                # of the hashed dataset, so it stays.
                 metadata["inspection"] = {"agent_extraction_check": "passed", "human_review": "pending"}
                 accepted.append({"metadata": metadata, "examples": extracted})
                 seen_authors.update(authors)
                 seen_titles.add(title.casefold())
-                print(f"Eligible {len(accepted)}/20: {paper_id} {title}", flush=True)
-                if len(accepted) == 20:
+                print(f"Eligible {len(accepted)}/{PAPERS_NEEDED}: {paper_id} {title}", flush=True)
+                if len(accepted) == PAPERS_NEEDED:
                     break
             except (RunError, httpx.HTTPError) as e:
                 exclusions.append({"paper_id": paper_id, "reason": str(e), "before_grading": True})
                 print(f"Excluded {paper_id}: {e}", flush=True)
     write_json(ROOT / "data/exclusions.json", exclusions)
-    if len(accepted) != 20:
+    if len(accepted) != PAPERS_NEEDED:
         raise RunError(
-            f"Only {len(accepted)} of 20 papers are eligible; see data/exclusions.json "
+            f"Only {len(accepted)} of {PAPERS_NEEDED} papers are eligible; see data/exclusions.json "
             "and add more entries to data/discovery.xml"
         )
-    research = accepted[2:15]
-    random.Random(20260929).shuffle(research)
+    research = accepted[RESEARCH_PAPERS]
+    random.Random(SPLIT_SEED).shuffle(research)
     groups = {
-        "pilot": accepted[:2],
-        "train": research[:8],
-        "validation": research[8:],
-        "confirmation": accepted[15:],
+        "pilot": accepted[PILOT_PAPERS],
+        "train": research[:TRAIN_PAPERS],
+        "validation": research[TRAIN_PAPERS:],
+        "confirmation": accepted[CONFIRMATION_PAPERS],
     }
     splits = {
-        "seed": 20260929,
+        "seed": SPLIT_SEED,
         "policy_hash": file_hash(ROOT / "data/acquisition_policy.json"),
-        "papers": {s: [p["metadata"]["paper_id"] for p in papers] for s, papers in groups.items()},
+        "papers": {split: [p["metadata"]["paper_id"] for p in papers] for split, papers in groups.items()},
     }
     records = []
     for split, papers in groups.items():
         for paper in papers:
-            for e in paper["examples"]:
-                e["split"] = split
-                records.append(e)
-    dataset = "".join(canonical(e) + "\n" for e in records)
+            for example in paper["examples"]:
+                example["split"] = split
+                records.append(example)
+    dataset = "".join(canonical(example) + "\n" for example in records)
     path = ROOT / "data/examples.jsonl"
     if path.exists() and path.read_text() != dataset:
-        raise RunError("Frozen dataset differs; never silently replace splits")
+        raise RunError(
+            f"The rebuilt dataset differs from the existing {path} (arXiv pages may have changed); "
+            "not replacing it. Move the old file aside to rebuild."
+        )
     path.write_text(dataset)
     write_json(ROOT / "data/splits.json", splits, write_once=True)
-    write_json(
-        ROOT / "data/source_manifest.json",
-        {
-            "source": policy["source"],
-            "source_deviation": policy["source_deviation"],
-            "policy_hash": digest(policy),
-            "discovery_hash": file_hash(ROOT / "data/discovery.xml"),
-            "dataset_hash": file_hash(path),
-            "papers": [p["metadata"] for p in accepted],
-            "examples": [
-                {
-                    k: e[k]
-                    for k in (
-                        "example_id",
-                        "paper_id",
-                        "section_type",
-                        "split",
-                        "context_hash",
-                        "reference_hash",
-                        "target_words",
-                    )
-                }
-                for e in records
-            ],
-        },
-        write_once=True,
-    )
+    source_manifest = {
+        "source": policy["source"],
+        "source_deviation": policy["source_deviation"],
+        "policy_hash": digest(policy),
+        "discovery_hash": file_hash(ROOT / "data/discovery.xml"),
+        "dataset_hash": file_hash(path),
+        "papers": [p["metadata"] for p in accepted],
+        "examples": [{field: e[field] for field in MANIFEST_EXAMPLE_FIELDS} for e in records],
+    }
+    write_json(ROOT / "data/source_manifest.json", source_manifest, write_once=True)
     load_examples(path, ROOT / "data/splits.json")
-    print("Frozen 80 examples: 8 pilot, 32 train, 20 validation, 20 confirmation")
+    counts = Counter(example["split"] for example in records)
+    print(f"Wrote {len(records)} examples: " + ", ".join(f"{n} {split}" for split, n in counts.items()))
 
 
 def prepare_tokenizers():
+    """Download the tokenizers pinned in configs/tokenizers.json and check their file checksums."""
     manifest = read_json(ROOT / "configs/tokenizers.json")
     for name, cfg in manifest.items():
         subprocess.run(
@@ -407,5 +437,7 @@ def prepare_tokenizers():
         )
         for filename, checksum in cfg["checksums"].items():
             if file_hash(ROOT / "data/tokenizers" / name / filename) != checksum:
-                raise RunError(f"Pinned tokenizer checksum differs: {name}/{filename}")
-    print("Pinned official tokenizer checksums verified")
+                raise RunError(
+                    f"data/tokenizers/{name}/{filename} does not match its checksum in configs/tokenizers.json"
+                )
+    print("Tokenizer checksums match configs/tokenizers.json")
