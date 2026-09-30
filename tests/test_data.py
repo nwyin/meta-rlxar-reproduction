@@ -3,6 +3,7 @@
 import pytest
 from conftest import dummy_example
 
+from xar import data
 from xar.data import SECTIONS, extract_paper, load_examples, run_examples, task_data
 from xar.openrouter import model_policy
 from xar.util import RunError, canonical, write_json
@@ -41,6 +42,11 @@ def test_run_examples_splits_pilot_papers_into_train_and_validation():
         run_examples(examples[:4], "pilot")
 
 
+def test_run_examples_rejects_an_unknown_split():
+    with pytest.raises(RunError, match="Unknown split 'confirmation'"):
+        run_examples([dummy_example()], "confirmation")
+
+
 def latexml_page(abstract_id):
     """A minimal LaTeXML page with the four target sections and a 10-item bibliography."""
 
@@ -63,3 +69,18 @@ def test_extract_paper_requires_an_id_on_each_withheld_section():
     # Without an id, find(id=None) would remove the wrong element and leave the section visible.
     with pytest.raises(RunError, match="abstract section has no HTML id"):
         extract_paper(latexml_page(abstract_id=None), {"paper_id": "p1"})
+
+
+def test_extract_paper_withholds_each_section_from_its_context(monkeypatch):
+    # Count words instead of tokens, so the test needs no downloaded tokenizer.
+    monkeypatch.setattr(data, "largest_token_count", lambda text: len(text.split()))
+    examples = extract_paper(latexml_page(abstract_id="abs"), {"paper_id": "p1"})
+    assert [e["section_type"] for e in examples] == list(SECTIONS)
+    for e in examples:
+        assert e["example_id"] == "p1_" + e["section_type"]
+        assert e["target_words"] == 80
+        assert e["reference"] not in e["context"]
+        assert f"[Missing {e['section_type'].replace('_', ' ')} section]" in e["context"]
+    abstract, introduction = examples[0], examples[1]
+    assert abstract["reference"].startswith("abs0 abs1")
+    assert abstract["reference"] in introduction["context"]
