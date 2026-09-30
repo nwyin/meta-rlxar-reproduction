@@ -388,7 +388,7 @@ def test_rejected_proposal_consumes_update_with_one_repair(tmp_path):
 
     api = Optimizer()
     result = shared.propose_prompt(
-        api, "current", {"training": True}, [dummy_example()], "initial", 1, tmp_path, 800
+        api, "current", {"training": True}, [dummy_example()], "initial", 1, output=tmp_path, max_words=800
     )
     assert result == "current" and len(api.calls) == 2
     assert "previous_proposal" in api.calls[-1]

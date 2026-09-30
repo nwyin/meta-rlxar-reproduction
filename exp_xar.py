@@ -128,7 +128,14 @@ def main():
                     train, candidates, training_rows[-1], checkpoints[-1], args.failure_examples
                 )
                 proposal = propose_prompt(
-                    api, checkpoints[-1], feedback, train, initial, iteration, out, args.max_meta_prompt_words
+                    api,
+                    checkpoints[-1],
+                    feedback,
+                    train,
+                    initial,
+                    iteration,
+                    output=out,
+                    max_words=args.max_meta_prompt_words,
                 )
                 checkpoints.append(proposal)
             path = out / "prompts" / f"iter_{iteration:02d}.md"

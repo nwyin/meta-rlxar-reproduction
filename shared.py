@@ -656,9 +656,8 @@ def contamination(candidate, reference):
     }
 
 
-def bounded_map(function, items, concurrency, stopped=None):
+def bounded_map(function, items, concurrency, stopped):
     """Keep at most concurrency tasks active; retain input order and stop refilling on errors."""
-    stopped = stopped if stopped is not None else threading.Event()
 
     def invoke(item):
         if stopped.is_set():
@@ -1563,7 +1562,7 @@ def audit_proposal(text, examples, initial_prompt, max_words):
     }
 
 
-def propose_prompt(api, current, feedback, examples, initial, iteration, output, max_words):
+def propose_prompt(api, current, feedback, examples, initial, iteration, *, output, max_words):
     directory = Path(output) / "feedback" / f"iter_{iteration:02d}"
     write_json(directory / "training.json", feedback, immutable=True)
     data = {"feedback": feedback, "max_meta_prompt_words": max_words}
