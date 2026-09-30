@@ -36,7 +36,8 @@ API_BASE = "https://openrouter.ai/api/v1"
 SNAPSHOTS = ROOT / "configs/snapshots"
 MODEL_CATALOG = SNAPSHOTS / "openrouter-models-2026-09-29.json"
 
-# Every role relies on these request fields, so a pinned endpoint must accept all of them.
+# Request fields the roles send (response_format only for structured roles); require them all so any
+# role can use any pinned endpoint.
 REQUIRED_PARAMETERS = {"temperature", "reasoning", "max_tokens", "response_format", "structured_outputs"}
 
 
@@ -80,7 +81,7 @@ def find_endpoint(endpoints, provider, source):
     return matches[0]
 
 
-def check_endpoint_supports(cfg, endpoint, catalog):
+def check_endpoint_supports(cfg, endpoint, model_info):
     """Fail unless the endpoint accepts every request field and setting that cfg sends to it."""
     missing = REQUIRED_PARAMETERS - set(endpoint["supported_parameters"])
     if missing:
@@ -94,7 +95,7 @@ def check_endpoint_supports(cfg, endpoint, catalog):
             f"{cfg['model']} max_tokens is {cfg['max_tokens']}, but endpoint {endpoint['tag']} "
             f"allows at most {output_limit}; lower it in configs/models.yaml"
         )
-    efforts = catalog.get("reasoning", {}).get("supported_efforts", [])
+    efforts = model_info.get("reasoning", {}).get("supported_efforts", [])
     effort = cfg["reasoning"].get("effort")
     if effort is not None and efforts and effort not in efforts:
         raise RunError(
@@ -107,11 +108,11 @@ def endpoint_for(cfg):
     """The saved endpoint and catalog entry for a role's model and provider, checked against cfg."""
     path = SNAPSHOTS / endpoints_filename(cfg["model"])
     endpoint = find_endpoint(read_json(path)["data"]["endpoints"], cfg["provider"], path.name)
-    catalog = next((m for m in read_json(MODEL_CATALOG)["data"] if m["id"] == cfg["model"]), None)
-    if catalog is None:
+    model_info = next((m for m in read_json(MODEL_CATALOG)["data"] if m["id"] == cfg["model"]), None)
+    if model_info is None:
         raise RunError(f"{cfg['model']} is missing from {MODEL_CATALOG.name}; refresh configs/snapshots")
-    check_endpoint_supports(cfg, endpoint, catalog)
-    return endpoint, catalog
+    check_endpoint_supports(cfg, endpoint, model_info)
+    return endpoint, model_info
 
 
 PRICE_KEYS = ("prompt", "completion", "request")
@@ -162,7 +163,7 @@ def token_counter(name):
     if file_hash(path) != read_json(ROOT / "configs/tokenizers.json")[name]["checksums"][filename]:
         raise RunError(
             f"{path} does not match its checksum in configs/tokenizers.json; "
-            "rerun python -m xar prepare-tokenizers"
+            "rerun `uv run python run.py prepare-tokenizers`"
         )
     if name == "kimi":
         import tiktoken
@@ -186,8 +187,8 @@ def token_counter(name):
 def token_count(text, model):
     name = TOKENIZER_BY_VENDOR.get(model.split("/")[0])
     if name is None:
-        # Muse Spark has no public tokenizer. Its UTF-8 byte length over-estimates the token count,
-        # so budget and context checks stay on the safe side.
+        # Models without a local tokenizer (currently Muse Spark) are counted by UTF-8 bytes, which
+        # over-estimates tokens, so budget and context checks stay on the safe side.
         return len(text.encode())
     return token_counter(name)(text)
 
@@ -252,6 +253,7 @@ def ledger_key(output, request_key, attempt):
 
 # Added to the system prompt when a structured reply is retried; the audit strips it off again.
 FORMAT_REPAIR = "\nFORMAT REPAIR: Return complete valid JSON matching the schema. "
+MAX_REPAIR_ERROR_CHARS = 500  # validation error length pasted into the repair prompt
 
 
 class Ledger:
@@ -310,7 +312,11 @@ class Ledger:
             }
 
     def settle(self, key, cost, state="complete"):
-        """Replace a reservation with the provider's actual cost (None keeps the reservation)."""
+        """Replace a reservation with the provider's actual cost (None keeps the reservation).
+
+        A negative or non-finite cost raises RunError. A cost above the reservation is saved with
+        state pricing_bound_violation, and then BudgetStop is raised.
+        """
         with self.transaction() as data:
             entry = data["entries"][key]
             if cost is not None:
@@ -365,9 +371,9 @@ class OpenRouter:
             timeout=httpx.Timeout(READ_TIMEOUT_SECONDS, connect=CONNECT_TIMEOUT_SECONDS)
         )
         self.endpoint = {}
-        self.catalog = {}
+        self.model_info = {}
         for role, cfg in roles.items():
-            self.endpoint[role], self.catalog[role] = endpoint_for(cfg)
+            self.endpoint[role], self.model_info[role] = endpoint_for(cfg)
         self.ledger = Ledger(ledger_path, str(self.output.resolve()), budget, total_budget)
         self.dispatch_stopped = threading.Event()
 
@@ -404,7 +410,7 @@ class OpenRouter:
             if model not in live_models:
                 raise RunError(f"{role} model {model} is no longer in the OpenRouter catalog")
             live_slug = live_models[model]["canonical_slug"]
-            pinned_slug = self.catalog[role]["canonical_slug"]
+            pinned_slug = self.model_info[role]["canonical_slug"]
             if live_slug != pinned_slug:
                 raise RunError(
                     f"{role} model {model} now resolves to {live_slug}, not the pinned {pinned_slug}; "
@@ -479,14 +485,14 @@ class OpenRouter:
             },
             write_once=True,
         )
-        bound = max_request_cost(payload, self.endpoint[role])
+        max_cost = max_request_cost(payload, self.endpoint[role])
         for attempt in range(MAX_SENDS):
             attempt_file = directory / f"attempt_{attempt}.json"
-            key = ledger_key(self.output, request_key, attempt)
+            send_key = ledger_key(self.output, request_key, attempt)
             if attempt_file.exists():
                 prior = read_json(attempt_file)
                 if prior["status"] == "success":
-                    return self._accept(prior["response"], role, request_key, key, attempt_file)
+                    return self._accept(prior["response"], role, request_key, send_key, attempt_file)
                 if prior["status"] == "uncertain":
                     raise BudgetStop(
                         f"Send outcome unresolved: {attempt_file} may have been billed but has no response; "
@@ -497,11 +503,11 @@ class OpenRouter:
                 continue
             if self.dispatch_stopped.is_set():
                 raise Skipped(
-                    f"Dispatch halted: another request failed, so {role} request {request_key} was not sent"
+                    f"Not sent: another request failed, so the {role} request {request_key} was skipped"
                 )
-            self.ledger.reserve(key, bound)
+            self.ledger.reserve(send_key, max_cost)
             sent_at = now()
-            write_json(attempt_file, {"status": "uncertain", "sent_at": sent_at, "upper_usd": bound})
+            write_json(attempt_file, {"status": "uncertain", "sent_at": sent_at, "upper_usd": max_cost})
             headers = {"X-OpenRouter-Title": "Independent XAR reproduction"}
             if self.key:
                 headers["Authorization"] = "Bearer " + self.key
@@ -510,10 +516,10 @@ class OpenRouter:
                 response = self.client.post(API_BASE + "/chat/completions", json=payload, headers=headers)
             except (httpx.ConnectError, httpx.ConnectTimeout):
                 # The connection never opened, so nothing was sent or billed.
-                self.ledger.settle(key, 0, "complete")
+                self.ledger.settle(send_key, 0, "complete")
                 write_json(attempt_file, {"status": "connect_error", "retryable": True, "timestamp": now()})
             except (httpx.ReadTimeout, httpx.WriteTimeout, httpx.RemoteProtocolError):
-                self.ledger.settle(key, None, "uncertain")
+                self.ledger.settle(send_key, None, "uncertain")
                 raise BudgetStop(
                     f"The {role} request was sent but got no response, so whether it was billed is unknown; "
                     f"its reservation is kept. Check the OpenRouter activity log ({attempt_file})"
@@ -538,9 +544,9 @@ class OpenRouter:
                     },
                 )
                 if success:
-                    return self._accept(raw, role, request_key, key, attempt_file)
+                    return self._accept(raw, role, request_key, send_key, attempt_file)
                 # The provider may still bill a failed request, so the reservation stays.
-                self.ledger.settle(key, None, "http_error_reserved")
+                self.ledger.settle(send_key, None, "http_error_reserved")
                 if not retryable:
                     raise RunError(
                         f"OpenRouter returned HTTP {response.status_code} for {role}; see {attempt_file}"
@@ -549,7 +555,7 @@ class OpenRouter:
                 time.sleep(2**attempt)  # 1, 2 and 4 seconds
         raise RunError(f"{role} request failed {MAX_SENDS} times with retryable errors; see {directory}")
 
-    def _accept(self, raw, role, request_key, ledger_key, attempt_file):
+    def _accept(self, raw, role, request_key, send_key, attempt_file):
         """Settle the ledger for a successful response and save it as result.json.
 
         Fails if the response has no billed cost, or if a model or provider other than the pinned one
@@ -558,17 +564,17 @@ class OpenRouter:
         usage = raw.get("usage", {})
         cost = usage.get("cost")
         if cost is None:
-            self.ledger.settle(ledger_key, None, "cost_unknown")
+            self.ledger.settle(send_key, None, "cost_unknown")
             raise BudgetStop(
                 f"The {role} response has no usage.cost, so its reservation is kept; "
                 f"check the OpenRouter activity log for {attempt_file} before sending more requests"
             )
-        self.ledger.settle(ledger_key, float(cost))
-        catalog = self.catalog[role]
+        self.ledger.settle(send_key, float(cost))
+        model_info = self.model_info[role]
         model = raw.get("model")
-        if model not in {catalog["id"], catalog["canonical_slug"]}:
+        if model not in {model_info["id"], model_info["canonical_slug"]}:
             raise RunError(
-                f"{role} response came from model {model}, not {catalog['id']}; see {attempt_file}"
+                f"{role} response came from model {model}, not {model_info['id']}; see {attempt_file}"
             )
         endpoint = self.endpoint[role]
         provider = raw.get("provider")
@@ -620,5 +626,7 @@ class OpenRouter:
                 attempts.append({"response": response, "status": "valid"})
                 return {"status": "valid", "value": value, "attempts": attempts}
             except (json.JSONDecodeError, jsonschema.ValidationError, InvalidOutput) as e:
-                attempts.append({"response": response, "status": "invalid", "error": str(e)[:500]})
+                attempts.append(
+                    {"response": response, "status": "invalid", "error": str(e)[:MAX_REPAIR_ERROR_CHARS]}
+                )
         return {"status": "missing", "value": None, "attempts": attempts}

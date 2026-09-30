@@ -118,10 +118,11 @@ def bounded_map(function, items, concurrency, stopped):
 
 
 def write_table(path, rows):
-    path = Path(path)
-    path.parent.mkdir(parents=True, exist_ok=True)
+    """Write rows (dicts with the same keys) as CSV; writes nothing when rows is empty."""
     if not rows:
         return
+    path = Path(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("w", newline="") as f:
         writer = csv.DictWriter(f, fieldnames=list(rows[0]))
         writer.writeheader()

@@ -6,8 +6,18 @@ import json
 import httpx
 import pytest
 
-from xar.openrouter import Ledger, OpenRouter, endpoint_for, highest_prices, role_config
-from xar.util import ROOT, BudgetStop, RunError, read_json
+from xar.openrouter import (
+    MODEL_CATALOG,
+    PRICING_HEADROOM,
+    SNAPSHOTS,
+    Ledger,
+    OpenRouter,
+    endpoint_for,
+    endpoints_filename,
+    highest_prices,
+    role_config,
+)
+from xar.util import BudgetStop, RunError, read_json
 
 
 def mock_api(tmp_path, role, handler):
@@ -24,7 +34,7 @@ def mock_api(tmp_path, role, handler):
 
 
 def test_reservations_stop_at_run_and_total_budgets(tmp_path):
-    ledger = Ledger(tmp_path / "ledger.json", "run", 1, 1.5)
+    ledger = Ledger(tmp_path / "ledger.json", "run", run_limit=1, total_limit=1.5)
     ledger.reserve("request1", 0.75)
     with pytest.raises(BudgetStop):
         ledger.reserve("request2", 0.3)
@@ -32,14 +42,14 @@ def test_reservations_stop_at_run_and_total_budgets(tmp_path):
     ledger.reserve("request2", 0.6)
     with pytest.raises(BudgetStop, match="unsettled"):
         ledger.reserve("request2", 0.6)
-    second = Ledger(tmp_path / "ledger.json", "run2", 2, 1.5)
+    second = Ledger(tmp_path / "ledger.json", "run2", run_limit=2, total_limit=1.5)
     with pytest.raises(BudgetStop):
         second.reserve("request3", 0.8)
 
 
 def test_overspend_is_saved_before_budget_stop(tmp_path):
     path = tmp_path / "ledger.json"
-    ledger = Ledger(path, "run", 10, 10)
+    ledger = Ledger(path, "run", run_limit=10, total_limit=10)
     ledger.reserve("request", 1.0)
     with pytest.raises(BudgetStop, match="reservation"):
         ledger.settle("request", 2.0)
@@ -56,7 +66,7 @@ def test_parallel_reservations_share_one_budget(tmp_path):
     path = tmp_path / "global_ledger.json"
 
     def reserve(i):
-        ledger = Ledger(path, str(i), 1, 1)
+        ledger = Ledger(path, str(i), run_limit=1, total_limit=1)
         try:
             ledger.reserve(str(i), 0.4)
             return True
@@ -81,7 +91,7 @@ def test_timeout_is_never_resent_and_blocks_later_calls(tmp_path):
         api.call("writer", "Instructions", {"paper": "first"}, None, "first")
     with pytest.raises(BudgetStop, match="unresolved"):
         api.call("writer", "Instructions", {"paper": "first"}, None, "first")
-    with pytest.raises(RunError, match="Dispatch halted"):
+    with pytest.raises(RunError, match="Not sent"):
         api.call("writer", "Instructions", {"paper": "second"}, None, "second")
     assert len(sends) == 1
     # The timed-out send keeps its reservation.
@@ -118,21 +128,21 @@ def test_invalid_reply_is_repaired_once_with_the_error(tmp_path):
     assert "FORMAT REPAIR" in systems[1] and "Expecting value" in systems[1]
 
 
-@pytest.mark.parametrize("factor,accepted", [(0.5, True), (1.1, True), (1.3, False)])
+@pytest.mark.parametrize(
+    "factor,accepted", [(0.5, True), (PRICING_HEADROOM - 0.01, True), (PRICING_HEADROOM + 0.05, False)]
+)
 def test_preflight_accepts_price_changes_up_to_the_headroom(tmp_path, factor, accepted):
     cfg = role_config("judge")
     endpoint, _ = endpoint_for(cfg)
 
     def handler(request):
         if request.url.path.endswith("/endpoints"):
-            data = read_json(
-                ROOT / "configs/snapshots" / (cfg["model"].replace("/", "_") + "-endpoints.json")
-            )
+            data = read_json(SNAPSHOTS / endpoints_filename(cfg["model"]))
             for e in data["data"]["endpoints"]:
                 if e["tag"] == cfg["provider"]:
                     e["pricing"]["completion"] = str(float(e["pricing"]["completion"]) * factor)
         else:
-            data = read_json(ROOT / "configs/snapshots/openrouter-models-2026-09-29.json")
+            data = read_json(MODEL_CATALOG)
         return httpx.Response(200, json=data)
 
     api = mock_api(tmp_path, "judge", handler)
