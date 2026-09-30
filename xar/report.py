@@ -1,125 +1,393 @@
-"""Render the blog-comparison report and checkpoint plots from the audited research run."""
+"""Write reports/ from the audited research run: results.md, checkpoints.csv and the gap figure."""
 
 from __future__ import annotations
 
+import statistics
+from datetime import datetime
 from pathlib import Path
 
 import jsonschema
 import yaml
 
 from xar.audit import audit_xar_run, validate_primary_manifest
+from xar.pipeline import length_window
 from xar.stats import paired_improvement
-from xar.util import ROOT, RunError, read_json, write_json, write_table
+from xar.util import ROLES, ROOT, RunError, read_json, write_json, write_table
+
+SCOPE = "meta_blog_initial_empirical_investigation"
+SCORE_RANGE = (0, 10)
+RUN_OUTPUTS = ("checkpoints.csv", "gap_curves.png", "gap_curves.svg")
+JOBS = {
+    "writer": "wrote the missing sections",
+    "rubric": "generated the rubrics",
+    "optimizer": "rewrote the rubric prompt after each round",
+    "judge": "graded the sections",
+}
 
 
 def render_report(runs_root, output):
-    """Report only the declared same-model trajectory; old pilots are historical evidence."""
+    """Audit the research run and write every report file into output.
+
+    All numbers in results.md come from the saved run, so the report can be regenerated at any
+    time. If the run is missing or fails its audit, the run-specific files are removed.
+    """
     design = yaml.safe_load((ROOT / "configs/experiments.yaml").read_text())
-    if design.get("scope") != "meta_blog_initial_empirical_investigation":
-        raise RunError("Reporting requires the active blog reproduction design")
-    output, source = Path(output), Path(runs_root) / design["research_run"]
+    if design.get("scope") != SCOPE:
+        raise RunError(f"configs/experiments.yaml has scope {design.get('scope')!r}; expected {SCOPE!r}")
+    runs_root, output = Path(runs_root), Path(output)
+    source = runs_root / design["research_run"]
     output.mkdir(parents=True, exist_ok=True)
     audit = {"source_run": str(source), "state": "not_started", "error": None}
-    lines = [
-        "# Meta blog same-model reproduction",
-        "",
-        "Muse Spark 1.1: writer, rubric generator, judge. Kimi K2.6: optimizer.",
-        "",
-        "One trajectory; 52 sections from 8 training and 5 validation papers; seven updates.",
-        "",
-        "The paper IDs, original prompts, and decoding settings were not published in the blog.",
-        "This reconstruction uses frozen arXiv author sections and declared prompts/settings.",
-        "A reversal measures optimized judging preferences, not objective writing quality.",
-        "",
-    ]
     comparison = {
         "source_url": design["source"],
         "blog_reported": design["reported_validation"],
         "reproduction": None,
     }
-    if not (source / "manifest.json").exists():
-        lines += ["Research has not started. Historical alternative-model pilots are excluded.", ""]
-    else:
-        manifest = read_json(source / "manifest.json")
+    run = None
+    if (source / "manifest.json").exists():
         try:
-            validate_primary_manifest(manifest, design)
-            if (
-                manifest["arguments"]["split"] != "research"
-                or manifest["arguments"]["seed"] != design["seed"]
-            ):
-                raise RunError("Declared research split and trajectory required")
-            run = audit_xar_run(source)
+            run = audit_research_run(source, design)
         except (RunError, FileNotFoundError, jsonschema.ValidationError, ValueError) as error:
             audit.update(state="failed", error=str(error))
-            lines += [
-                "Research is incomplete; no verified comparison is available.",
-                "",
-                f"Audit: {error}",
-                "",
-            ]
         else:
-            table, selected = run["table"], run["freeze"]["selected"]
-            blog = design["reported_validation"]
-            initial, final = table[0], table[selected]
-            positives = [r["iteration"] for r in table if r["val_gap"] > 0]
-            peak = max(table, key=lambda r: (r["val_gap"], -r["iteration"]))
-            comparison["reproduction"] = {
-                "initial_gap": initial["val_gap"],
-                "selected_gap": final["val_gap"],
-                "selected_iteration": selected,
-                "terminal_gap": table[-1]["val_gap"],
-                "first_positive_iteration": positives[0] if positives else None,
-                "validation_peak_gap": peak["val_gap"],
-                "validation_peak_iteration": peak["iteration"],
-                "initial_human": initial["val_human"],
-                "selected_human": final["val_human"],
-                "initial_model": initial["val_model"],
-                "selected_model": final["val_model"],
-                "paired_improvement": paired_improvement(
-                    run["rows"][(0, "validation")], run["rows"][(selected, "validation")], design["seed"]
-                ),
-                "reversed": initial["val_gap"] < 0 < final["val_gap"],
-            }
             audit["state"] = "passed"
-            write_table(output / "checkpoints.csv", table)
-            lines += [
-                f"Raw-verified trajectory: 1/1. Training selected checkpoint {selected}.",
-                "",
-                f"Validation gap: {initial['val_gap']:.3f} → {final['val_gap']:.3f}.",
-                "",
-                (
-                    f"Blog reports {blog['initial_gap']} → {blog['peak_gap']:+}; validation crossing at "
-                    f"{blog['first_positive_iteration']} and peak at {blog['peak_iteration']}."
-                ),
-                "",
-                "The entire checkpoint curve is reported; the validation maximum is descriptive only.",
-                "",
-            ]
-            import matplotlib
-
-            matplotlib.use("Agg")
-            import matplotlib.pyplot as plt
-
-            fig, axes = plt.subplots(1, 2, figsize=(10, 4))
-            xs = [r["iteration"] for r in table]
-            axes[0].plot(xs, [r["train_gap"] for r in table], "--o", label="Train")
-            axes[0].plot(xs, [r["val_gap"] for r in table], "-o", label="Validation")
-            axes[0].axhline(0, color="black", linewidth=0.7)
-            axes[0].set_title("Human minus model score")
-            axes[1].plot(xs, [r["val_human"] for r in table], "-o", label="Author")
-            axes[1].plot(xs, [r["val_model"] for r in table], "-o", label="Muse Spark 1.1")
-            axes[1].set_title("Validation mean scores")
-            for axis in axes:
-                axis.set_xlabel("Prompt update")
-                axis.legend()
-            fig.tight_layout()
-            fig.savefig(output / "gap_curves.png", dpi=160)
-            fig.savefig(output / "gap_curves.svg")
-            plt.close(fig)
-    if audit["state"] != "passed":
-        for name in ("checkpoints.csv", "gap_curves.png", "gap_curves.svg"):
+    if run is None:
+        for name in RUN_OUTPUTS:
             (output / name).unlink(missing_ok=True)
+        text = unavailable_text(audit)
+    else:
+        comparison["reproduction"] = summarize_trajectory(run, design["seed"])
+        write_table(output / "checkpoints.csv", run["table"])
+        plot_checkpoints(run["table"], design["reported_validation"], output / "gap_curves")
+        text = results_text(run, comparison["reproduction"], design, source, runs_root)
     write_json(output / "audit.json", audit)
     write_json(output / "blog_comparison.json", comparison)
-    (output / "results.md").write_text("\n".join(lines))
+    (output / "results.md").write_text(text)
     print(f"Report written to {output} (audit {audit['state']})")
+
+
+def audit_research_run(source, design):
+    """Check the run is the configured research trajectory, then re-audit it from its saved files."""
+    manifest = read_json(source / "manifest.json")
+    validate_primary_manifest(manifest, design)
+    split, seed = manifest["arguments"]["split"], manifest["arguments"]["seed"]
+    if split != "research" or seed != design["seed"]:
+        raise RunError(
+            f"{source} was run with split {split!r} and seed {seed}; "
+            f"the report needs split 'research' and seed {design['seed']}"
+        )
+    return audit_xar_run(source)
+
+
+def summarize_trajectory(run, seed):
+    """The validation numbers saved to blog_comparison.json."""
+    table, selected = run["table"], run["freeze"]["selected"]
+    initial, chosen = table[0], table[selected]
+    positives = [r["iteration"] for r in table if r["val_gap"] > 0]
+    # Ties go to the earliest checkpoint, matching the selection rule.
+    peak = max(table, key=lambda r: (r["val_gap"], -r["iteration"]))
+    return {
+        "initial_gap": initial["val_gap"],
+        "selected_gap": chosen["val_gap"],
+        "selected_iteration": selected,
+        "terminal_gap": table[-1]["val_gap"],
+        "first_positive_iteration": positives[0] if positives else None,
+        "validation_peak_gap": peak["val_gap"],
+        "validation_peak_iteration": peak["iteration"],
+        "initial_human": initial["val_human"],
+        "selected_human": chosen["val_human"],
+        "initial_model": initial["val_model"],
+        "selected_model": chosen["val_model"],
+        "paired_improvement": paired_improvement(
+            run["rows"][(0, "validation")], run["rows"][(selected, "validation")], seed
+        ),
+        "reversed": initial["val_gap"] < 0 < chosen["val_gap"],
+    }
+
+
+def plot_checkpoints(table, blog, path):
+    """Plot the gaps and validation means per checkpoint with the blog's published values.
+
+    Saves path.png and path.svg. The blog gives only its start, peak and end values, so those are
+    drawn as separate markers rather than a curve.
+    """
+    import matplotlib
+
+    matplotlib.use("Agg")  # draw to files; there is no display
+    import matplotlib.pyplot as plt
+
+    xs = [r["iteration"] for r in table]
+    last = xs[-1]
+    fig, (gaps, means) = plt.subplots(1, 2, figsize=(11, 4.5))
+    gaps.plot(xs, [r["train_gap"] for r in table], "--o", color="tab:gray", label="This run: training")
+    gaps.plot(xs, [r["val_gap"] for r in table], "-o", color="tab:green", label="This run: validation")
+    gaps.scatter(
+        [0, blog["peak_iteration"]],
+        [blog["initial_gap"], blog["peak_gap"]],
+        marker="D",
+        facecolors="none",
+        edgecolors="black",
+        s=65,
+        label=f"Meta blog: validation (P0, peak at P{blog['peak_iteration']})",
+    )
+    gaps.axhline(0, color="black", linewidth=0.7)
+    gaps.set_title("Author minus Muse score")
+    for origin, who, color in (("human", "author", "tab:blue"), ("model", "Muse", "tab:orange")):
+        means.plot(xs, [r[f"val_{origin}"] for r in table], "-o", color=color, label=f"This run: {who}")
+        blog_scores = [blog[f"initial_{origin}"], blog[f"final_{origin}"]]
+        means.scatter(
+            [0, last], blog_scores, marker="x", color=color, s=65, label=f"Meta blog: {who} (P0, P{last})"
+        )
+    means.set_ylim(*SCORE_RANGE)
+    means.set_title("Validation mean scores")
+    for axis in (gaps, means):
+        axis.set_xlabel("Prompt update")
+        axis.set_xticks(xs)
+        axis.grid(alpha=0.15)
+        axis.legend(fontsize=8)
+    fig.suptitle("Scores by prompt update: this run and the values Meta published", fontsize=11)
+    fig.tight_layout()
+    fig.savefig(path.with_suffix(".png"), dpi=160)
+    fig.savefig(path.with_suffix(".svg"))
+    plt.close(fig)
+
+
+def unavailable_text(audit):
+    if audit["state"] == "not_started":
+        body = f"The research run {audit['source_run']} has not started, so there are no results yet."
+    else:
+        body = f"The research run {audit['source_run']} failed its audit, so no results are reported.\n\n"
+        body += f"Audit error: {audit['error']}"
+    return f"# Meta blog same-model reproduction\n\n{body}\n"
+
+
+def results_text(run, summary, design, source, runs_root):
+    """The full results.md for an audited run."""
+    manifest, table, candidates = run["manifest"], run["table"], run["candidates"]
+    selected, last = summary["selected_iteration"], table[-1]["iteration"]
+    blog = design["reported_validation"]
+    names = {role: display_name(manifest["endpoints"][role]) for role in ROLES}
+    papers = {
+        split: len({r["paper_id"] for r in run["rows"][(0, split)]}) for split in ("train", "validation")
+    }
+    validation_sections = len(run["rows"][(0, "validation")])
+    setup = (
+        f"This run repeats the first rubric-learning experiment in [Meta's blog]({design['source']}) "
+        f"with the same models. {describe_roles(names)}. It used {len(candidates)} sections from "
+        f"{papers['train']} training and {papers['validation']} validation papers, with {last} "
+        "prompt updates. Checkpoint P0 is the starting prompt, and Pn is the prompt after n updates."
+    )
+    metric = (
+        "The gap is the author score minus the Muse score, both given by the same judge with the same "
+        "rubric. A positive gap means the judge scored the author's section higher."
+    )
+    outcome = (
+        f"{sign_sentence(table, summary)} Meta's blog reports {blog['initial_gap']:+.2f} at P0 and a "
+        f"peak of {blog['peak_gap']:+.2f} at P{blog['peak_iteration']}, with the gap first positive at "
+        f"P{blog['first_positive_iteration']}."
+    )
+    selection = (
+        f"P{selected} had the highest training gap, so it was selected, and the selection was fixed "
+        f"before any validation request was sent. {training_trend(table, selected)}"
+    )
+    figure = (
+        "![Gaps and validation means by prompt update, with Meta's published values](gap_curves.png)\n\n"
+        "The numbers for every checkpoint are in [checkpoints.csv](checkpoints.csv)."
+    )
+    pilot = runs_root / design["pilot_run"]
+    details = (
+        f"{format_sentence(read_json(source / 'operational_summary.json'), run)} "
+        f"{cost_sentence(read_json(source / 'costs.json'), source, manifest, pilot)}"
+    )
+    limitations = [
+        (
+            "Meta did not publish its paper IDs, prompts or decoding settings. This run uses "
+            f"{sum(papers.values())} recent arXiv papers and prompts written for this repository, so its "
+            "numbers are not directly comparable with the blog's. The author sections were not "
+            "independently rated as expert writing."
+        ),
+        (
+            f"The validation split has only {papers['validation']} papers ({validation_sections} "
+            "sections), which is why the interval is wide."
+        ),
+        (
+            "A positive gap would mean this judge, with these rubrics, prefers the author's text. It "
+            "would not show that the author's text is better writing."
+        ),
+        length_limitation(run, selected),
+        copy_limitation(candidates),
+        serving_limitation(manifest),
+    ]
+    paragraphs = [
+        "# Meta blog same-model reproduction",
+        setup,
+        metric,
+        "## Result",
+        outcome,
+        checkpoint_table(table, selected),
+        selection,
+        improvement_sentence(summary["paired_improvement"], selected, papers["validation"]),
+        figure,
+        "## Run details",
+        details,
+        "## Limitations",
+        "\n".join(f"- {item}" for item in limitations),
+    ]
+    return "\n\n".join(paragraphs) + "\n"
+
+
+def display_name(endpoint):
+    """'Muse Spark 1.1' from OpenRouter's 'Meta: Muse Spark 1.1'."""
+    return endpoint["endpoint"]["model_name"].split(": ", 1)[-1]
+
+
+def describe_roles(names):
+    jobs = {}
+    for role in ROLES:
+        jobs.setdefault(names[role], []).append(JOBS[role])
+    clauses = []
+    for name, tasks in jobs.items():
+        listed = tasks[0] if len(tasks) == 1 else ", ".join(tasks[:-1]) + " and " + tasks[-1]
+        clauses.append(f"{name} {listed}")
+    return "; ".join(clauses)
+
+
+def sign_sentence(table, summary):
+    initial, chosen = summary["initial_gap"], summary["selected_gap"]
+    selected = summary["selected_iteration"]
+    moved = f"The validation gap went from {initial:+.2f} at P0 to {chosen:+.2f} at P{selected}"
+    if summary["reversed"]:
+        return f"The sign flipped. {moved}, so the judge now scored the author's sections higher."
+    if all(r["val_gap"] < 0 for r in table):
+        return (
+            f"The sign did not flip. {moved} and was negative at every checkpoint, so Muse kept "
+            "scoring its own sections above the author's."
+        )
+    return f"The sign did not flip at the selected checkpoint. {moved}."
+
+
+def checkpoint_table(table, selected):
+    lines = [
+        "| Checkpoint | Training gap | Validation gap | Validation author | Validation Muse |",
+        "| --- | ---: | ---: | ---: | ---: |",
+    ]
+    for r in table:
+        label = f"P{r['iteration']}" + (" (selected)" if r["iteration"] == selected else "")
+        lines.append(
+            f"| {label} | {r['train_gap']:+.2f} | {r['val_gap']:+.2f} | "
+            f"{r['val_human']:.2f} | {r['val_model']:.2f} |"
+        )
+    return "\n".join(lines)
+
+
+def training_trend(table, selected):
+    """Say which way the training gap moved after the selected checkpoint."""
+    gaps = [r["train_gap"] for r in table]
+    last = len(gaps) - 1
+    if selected == last:
+        return f"The training gap was highest at the last checkpoint, P{last}."
+    start, end = gaps[selected], gaps[last]
+    trend = (
+        f"No later update beat it: the training gap went from {start:+.2f} at P{selected} "
+        f"to {end:+.2f} at P{last}."
+    )
+    if start <= 0:
+        trend += " It moved away from zero: the later updates widened Muse's lead on the training papers."
+    return trend
+
+
+def improvement_sentence(improvement, selected, validation_papers):
+    interval = improvement["interval"]
+    return (
+        f"From P0 to P{selected} the validation gap improved by {improvement['mean']:+.2f} points on "
+        f"average over {improvement['paired_coverage']} paired sections (95% bootstrap interval "
+        f"{interval['low']:+.2f} to {interval['high']:+.2f}, {interval['replicates']:,} resamples of "
+        f"the {validation_papers} validation papers)."
+    )
+
+
+def format_sentence(operations, run):
+    """Say how often each structured-output role returned output that failed validation."""
+    clean, sentences = [], []
+    for role, counts in operations["format_validation"].items():
+        invalid, total = counts["invalid_attempts"], counts["structured_attempts"]
+        if invalid:
+            sentences.append(
+                f"The {role} returned invalid output {invalid} times in {total:,} responses; "
+                "each was sent back with a repair request."
+            )
+        else:
+            clean.append(f"{total:,} {role}")
+    if clean:
+        sentences.insert(0, f"All {' and '.join(clean)} responses were valid on the first attempt.")
+    grades = 2 * sum(len(rows) for rows in run["rows"].values())
+    sentences.append(f"All {grades:,} final grades passed validation.")
+    return " ".join(sentences)
+
+
+def cost_sentence(costs, source, manifest, pilot):
+    minutes = wallclock_seconds(source, manifest) / 60
+    sentence = (
+        f"The research run made {costs['requests']:,} paid requests, cost "
+        f"${costs['actual_complete_usd']:,.2f} and took {minutes:.0f} minutes with "
+        f"{manifest['arguments']['concurrency']} requests in parallel."
+    )
+    if (pilot / "costs.json").exists():
+        pilot_cost = read_json(pilot / "costs.json")["actual_complete_usd"]
+        sentence += f" The pilot run cost ${pilot_cost:,.2f}."
+    return sentence
+
+
+def wallclock_seconds(source, manifest):
+    """Time from run creation to the last saved response."""
+    responses = (source / "requests").glob("*/attempt_*.json")
+    finished = datetime.fromisoformat(max(read_json(path)["timestamp"] for path in responses))
+    return (finished - datetime.fromisoformat(manifest["created_at"])).total_seconds()
+
+
+def length_limitation(run, selected):
+    """Describe the sections that missed their length target and the gap without them."""
+    candidates = run["candidates"]
+    missed = sum(not c["length_compliant"] for c in candidates.values())
+    low, high = length_window(100)
+    target = f"{low:.0f}-{high:.0f}% of their target length"
+    if not missed:
+        return f"All {len(candidates)} generated sections came within {target}."
+    rewrites = max(len(c["attempts"]) for c in candidates.values()) - 1
+    text = (
+        f"{missed} of {len(candidates)} generated sections were still outside {target} after up to "
+        f"{rewrites} rewrites; they stay in the analysis."
+    )
+    before = [r for r in run["rows"][(0, "validation")] if r["length_compliant"]]
+    after = [r for r in run["rows"][(selected, "validation")] if r["length_compliant"]]
+    if not before:
+        return text
+    improvement = paired_improvement(before, after)["mean"]
+    return text + (
+        f" On the {len(after)} validation sections that met the target, the gap went from "
+        f"{statistics.mean(r['gap'] for r in before):+.2f} at P0 to "
+        f"{statistics.mean(r['gap'] for r in after):+.2f} at P{selected}, an improvement of "
+        f"{improvement:+.2f}."
+    )
+
+
+def copy_limitation(candidates):
+    flagged = sum(c["contamination"]["flagged"] for c in candidates.values())
+    found = f"{flagged} of the {len(candidates)}" if flagged else "none of them"
+    return (
+        f"The generated sections were checked for text copied from the author's; the check flagged "
+        f"{found}. It compares wording only, so it cannot tell whether Muse saw the papers in training."
+    )
+
+
+def serving_limitation(manifest):
+    """State each model's provider and weight precision, as OpenRouter reported them."""
+    notes = {}
+    for role in ROLES:
+        endpoint = manifest["endpoints"][role]["endpoint"]
+        name, provider = display_name(manifest["endpoints"][role]), endpoint["provider_name"]
+        if endpoint["quantization"] == "unknown":
+            notes[name] = f"{provider} does not say what precision it serves {name} at"
+        else:
+            notes[name] = f"{name} was served by {provider} at {endpoint['quantization']} precision"
+    return "; ".join(notes.values()) + "."
