@@ -8,4 +8,6 @@ The paper IDs, original prompts, and decoding settings were not published in the
 This reconstruction uses frozen arXiv author sections and declared prompts/settings.
 A reversal measures optimized judging preferences, not objective writing quality.
 
-Research has not started. Historical alternative-model pilots are excluded.
+Research is incomplete; no verified comparison is available.
+
+Audit: [Errno 2] No such file or directory: 'runs/meta-blog-seed0/freeze.json'

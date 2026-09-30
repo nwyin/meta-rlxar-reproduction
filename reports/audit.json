@@ -4,6 +4,8 @@
   "raw_verified_trajectories": 0,
   "complete": false,
   "source_run": "runs/meta-blog-seed0",
-  "failures": [],
-  "state": "not_started"
+  "failures": [
+    "[Errno 2] No such file or directory: 'runs/meta-blog-seed0/freeze.json'"
+  ],
+  "state": "incomplete"
 }
