@@ -52,7 +52,7 @@ def test_feedback_rejects_validation_and_deterministic_failure_order(tmp_path):
     feedback = build_feedback(examples, candidates, rows, "initial", 4)
     assert [f["paper_id"] for f in feedback["failures"]] == ["paper0", "paper1", "paper2", "paper3"]
     examples[0]["split"] = "validation"
-    with pytest.raises(RunError, match="cannot enter"):
+    with pytest.raises(RunError, match="only use training"):
         build_feedback(examples, candidates, rows, "initial", 4)
 
 
