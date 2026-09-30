@@ -33,7 +33,18 @@ from xar.pipeline import (
 from xar.stats import paired_improvement, summarize
 from xar.util import ROOT, RunError, canonical, digest, now, read_json, words, write_json
 
+PILOT_RUN = ROOT / "runs/pilot-meta-blog-attested"
+PILOT_GATE = ROOT / "runs/meta_blog_pilot_gate.json"
 WRITER_ATTEMPTS = 3  # xar.pipeline.writer_candidates tries each section at most three times
+OPTIMIZER_ATTEMPTS = 2  # xar.pipeline.propose_prompt allows one repair
+# The writer returns plain text, so its requests carry no response_format.
+SCHEMAS = {"writer": None, "rubric": RUBRIC_SCHEMA, "judge": GRADE_SCHEMA, "optimizer": PROPOSAL_SCHEMA}
+# Row filters for the sensitivity table.
+SUBSETS = {
+    "all": lambda row: True,
+    "length_compliant": lambda row: row["length_compliant"],
+    "unflagged": lambda row: not row["contamination_flagged"],
+}
 
 
 def check(ok, message):
@@ -42,18 +53,11 @@ def check(ok, message):
         raise RunError(message)
 
 
-def main():
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--source-run", default=ROOT / "runs/meta-blog-seed0")
-    parser.add_argument("--output", default=ROOT / "reports/completion_audit.json")
-    args = parser.parse_args()
-    root, output = Path(args.source_run).resolve(), Path(args.output).resolve()
-    # Saved runs store file paths relative to the repo root, so work from there.
-    os.chdir(ROOT)
-    run = audit_xar_run(root)
-    manifest = run["manifest"]
-    run_args = manifest["arguments"]
-    # The code has changed since the run; check the recorded hashes against the commit that produced it.
+def check_software(manifest):
+    """Check the manifest's code hashes against the files at the run's git commit.
+
+    The working tree has changed since the run, so the files are read with git show.
+    """
     commit = manifest["git_commit"]
     check(commit, "Run manifest has no git commit; cannot verify the code that produced it")
     for name, expected in manifest["software_hashes"].items():
@@ -62,27 +66,33 @@ def main():
             hashlib.sha256(blob).hexdigest() == expected,
             f"{name} at {commit} does not match the run manifest",
         )
-    dataset = Path(manifest["dataset"])
-    all_examples = load_examples(dataset, manifest["splits"])
-    examples = run_examples(all_examples, run_args["split"])
-    train = [e for e in examples if e["split"] == "train"]
-    lookup = {e["example_id"]: e for e in examples}
-    review = read_json(dataset.parent / "human_review.json")
+
+
+def check_human_review(manifest, examples):
+    review = read_json(Path(manifest["dataset"]).parent / "human_review.json")
     check(review["dataset_hash"] == manifest["dataset_hash"], "human_review.json is for a different dataset")
-    for e in examples:
-        decision = review["papers"][e["paper_id"]]["decision"]
-        check(decision == "approved", f"{e['paper_id']}: human review decision is {decision!r}")
-    candidates = run["candidates"]
-    check(set(candidates) == set(lookup), "Writer candidates do not match the train and validation examples")
-    ledger = read_json(run_args["budget_ledger"])["entries"]
-    counts, latencies, ended = collections.Counter(), collections.defaultdict(list), {}
-    # The writer returns plain text, so its requests carry no response_format.
-    schemas = {"writer": None, "rubric": RUBRIC_SCHEMA, "judge": GRADE_SCHEMA, "optimizer": PROPOSAL_SCHEMA}
+    for example in examples:
+        decision = review["papers"][example["paper_id"]]["decision"]
+        check(decision == "approved", f"{example['paper_id']}: human review decision is {decision!r}")
+
+
+def check_requests(source, manifest, ledger):
+    """Check every saved request and response against the manifest and the budget ledger.
+
+    Returns per-role request counts and latencies, the total cost, the time the last response
+    arrived, and each request's first send as (role, identity, receipt) for the timing checks.
+    """
+    counts = collections.Counter()
+    latencies = collections.defaultdict(list)
     total_cost = 0
-    for path in root.glob("requests/*/request.json"):
+    finished = []
+    first_sends = []
+    for path in source.glob("requests/*/request.json"):
         request = read_json(path)
         role, payload = request["role"], request["payload"]
         cfg, endpoint = manifest["roles"][role], manifest["endpoints"][role]
+
+        # The request key is the hash of what was sent, and names the folder.
         check(request["key"] == path.parent.name, f"{path}: key {request['key']} differs from its folder")
         hashed = {
             "payload": payload,
@@ -90,29 +100,34 @@ def main():
             "schema_version": manifest["schema_version"],
         }
         check(request["key"] == digest(hashed), f"{path}: key does not match the request contents")
-        wrapper = "rubric_wrapper" if role == "rubric" else role
+
+        # Routing, decoding, schema and system prompt match the role.
+        prompt_name = "rubric_wrapper" if role == "rubric" else role
         audit_request_contract(
-            payload, cfg, schemas[role], manifest["software_hashes"][f"prompts/{wrapper}.md"]
+            payload, cfg, SCHEMAS[role], manifest["software_hashes"][f"prompts/{prompt_name}.md"], where=path
         )
+
+        # Each send succeeded, came from the right model and provider, and was reserved and
+        # settled in the ledger in order, at a cost within its reservation.
         bound = max_request_cost(payload, endpoint["endpoint"])
         for receipt_path in path.parent.glob("attempt_*.json"):
             receipt = read_json(receipt_path)
             check(receipt["status"] == "success", f"{receipt_path}: status is {receipt['status']}")
-            raw = receipt["response"]
+            response = receipt["response"]
             check(
-                raw["model"] in (cfg["model"], endpoint["canonical_slug"]),
-                f"{receipt_path}: answered by model {raw['model']}",
+                response["model"] in (cfg["model"], endpoint["canonical_slug"]),
+                f"{receipt_path}: answered by model {response['model']}",
             )
             check(
-                raw["provider"] in (cfg["provider"], endpoint["endpoint"]["provider_name"]),
-                f"{receipt_path}: answered by provider {raw['provider']}",
+                response["provider"] in (cfg["provider"], endpoint["endpoint"]["provider_name"]),
+                f"{receipt_path}: answered by provider {response['provider']}",
             )
-            finish = raw["choices"][0]["finish_reason"]
+            finish = response["choices"][0]["finish_reason"]
             check(finish == "stop", f"{receipt_path}: finish reason is {finish}")
-            index = receipt_path.stem.removeprefix("attempt_")
-            key = ledger_key(root, request["key"], index)
+            attempt = receipt_path.stem.removeprefix("attempt_")
+            key = ledger_key(source, request["key"], attempt)
             entry = ledger[key]
-            cost = raw["usage"]["cost"]
+            cost = response["usage"]["cost"]
             check(entry["state"] == "complete", f"{key}: ledger entry is {entry['state']}")
             check(
                 math.isclose(entry["charge"], cost), f"{key}: ledger charge {entry['charge']} != cost {cost}"
@@ -129,174 +144,219 @@ def main():
             counts[role] += 1
             latencies[role].append(receipt["duration_seconds"])
             total_cost += cost
-            ended[str(receipt_path)] = receipt["timestamp"]
-    writer_times, training_times, validation_times = [], [], []
+            finished.append(receipt["timestamp"])
+        first_sends.append((role, canonical(request["identity"]), read_json(path.parent / "attempt_0.json")))
+    return counts, latencies, total_cost, max(finished), first_sends
+
+
+def check_writer(candidates, examples_by_id):
+    """Re-derive each writer candidate from its raw responses; return when each response arrived."""
+    finished = []
     for eid, candidate in candidates.items():
-        e = lookup[eid]
+        example = examples_by_id[eid]
         attempts = candidate["attempts"]
         check(1 <= len(attempts) <= WRITER_ATTEMPTS, f"{eid}: {len(attempts)} writer attempts")
         check(
             candidate["accepted_attempt"] == len(attempts) - 1, f"{eid}: accepted attempt is not the last one"
         )
         check(
-            not any(a["length_compliant"] for a in attempts[:-1]),
+            not any(attempt["length_compliant"] for attempt in attempts[:-1]),
             f"{eid}: writer retried after a section that met the length target",
         )
         check(
             candidate["length_compliant"] or len(attempts) == WRITER_ATTEMPTS,
             f"{eid}: writer stopped before meeting the length target or using every attempt",
         )
-        for i, attempt in enumerate(attempts):
+        low, high = length_window(example["target_words"])
+        for index, attempt in enumerate(attempts):
+            where = f"{eid} attempt {index}"
             receipt = read_json(attempt["response"]["raw_response"])
-            raw_text = receipt["response"]["choices"][0]["message"]["content"].strip()
-            check(raw_text == attempt["text"], f"{eid} attempt {i}: saved text differs from the response")
-            check(digest(raw_text) == attempt["text_hash"], f"{eid} attempt {i}: text hash differs")
-            check(words(raw_text) == attempt["words"], f"{eid} attempt {i}: word count differs")
-            low, high = length_window(e["target_words"])
+            text = receipt["response"]["choices"][0]["message"]["content"].strip()
+            check(text == attempt["text"], f"{where}: saved text differs from the response")
+            check(digest(text) == attempt["text_hash"], f"{where}: text hash differs")
+            check(words(text) == attempt["words"], f"{where}: word count differs")
             check(
-                attempt["length_compliant"] == (low <= words(raw_text) <= high),
-                f"{eid} attempt {i}: length_compliant flag is wrong",
+                attempt["length_compliant"] == (low <= words(text) <= high),
+                f"{where}: length_compliant flag is wrong",
             )
-            q = read_json(Path(attempt["response"]["raw_response"]).parent / "request.json")
-            expected = task_data(e)
-            if i:
-                expected.update(
-                    previous_section=attempts[i - 1]["text"],
-                    length_revision=length_revision_note(e["target_words"]),
+            # A retry also sends the previous section and the length revision note.
+            request = read_json(Path(attempt["response"]["raw_response"]).parent / "request.json")
+            expected_input = task_data(example)
+            if index:
+                expected_input.update(
+                    previous_section=attempts[index - 1]["text"],
+                    length_revision=length_revision_note(example["target_words"]),
                 )
             check(
-                canonical(expected) == q["payload"]["messages"][1]["content"],
-                f"{eid} attempt {i}: writer input differs from the task data",
+                canonical(expected_input) == request["payload"]["messages"][1]["content"],
+                f"{where}: writer input differs from the task data",
             )
-            writer_times.append(receipt["timestamp"])
+            finished.append(receipt["timestamp"])
         check(candidate["text"] == attempts[-1]["text"], f"{eid}: candidate text is not the last attempt")
         check(candidate["complete"], f"{eid}: candidate is incomplete")
         check(
-            candidate["contamination"] == contamination(candidate["text"], e["reference"]),
+            candidate["contamination"] == contamination(candidate["text"], example["reference"]),
             f"{eid}: contamination check differs",
         )
-    initial = (root / "prompts/iter_00.md").read_text()
+    return finished
+
+
+def check_proposals(source, run, train, candidates):
+    """Rebuild each iteration's optimizer feedback and proposal audit; return one summary per proposal."""
+    run_args = run["manifest"]["arguments"]
     max_words = run_args["max_meta_prompt_words"]
+    initial = (source / "prompts/iter_00.md").read_text()
     proposals = []
     for iteration in range(1, run_args["iterations"] + 1):
-        previous = (root / f"prompts/iter_{iteration - 1:02d}.md").read_text()
-        rows = read_json(root / f"scores/main/{iteration - 1}/train_rows.json")
-        expected = build_feedback(train, candidates, rows, previous, run_args["failure_examples"])
-        directory = root / f"feedback/iter_{iteration:02d}"
-        feedback, proposal = (
-            read_json(directory / "training.json"),
-            read_json(directory / "proposal.json"),
-        )
-        check(canonical(expected) == canonical(feedback), f"iteration {iteration}: feedback differs")
-        check(
-            proposal["parent_prompt_hash"] == digest(previous),
-            f"iteration {iteration}: parent prompt differs",
-        )
-        check(proposal["feedback_hash"] == digest(feedback), f"iteration {iteration}: feedback hash differs")
-        check(proposal["update_consumed"], f"iteration {iteration}: update not consumed")
-        check(
-            1 <= len(proposal["attempts"]) <= 2,
-            f"iteration {iteration}: {len(proposal['attempts'])} attempts",
-        )
-        for attempt in proposal["attempts"]:
-            payload = audit_saved_output(attempt, PROPOSAL_SCHEMA)
-            check(
-                payload["messages"][1]["content"]
-                == canonical({"feedback": feedback, "max_meta_prompt_words": max_words}),
-                f"iteration {iteration}: optimizer input differs",
-            )
+        where = f"iteration {iteration}"
+        previous = (source / f"prompts/iter_{iteration - 1:02d}.md").read_text()
+        rows = read_json(source / f"scores/main/{iteration - 1}/train_rows.json")
+        expected_feedback = build_feedback(train, candidates, rows, previous, run_args["failure_examples"])
+        directory = source / f"feedback/iter_{iteration:02d}"
+        feedback = read_json(directory / "training.json")
+        proposal = read_json(directory / "proposal.json")
+        check(canonical(expected_feedback) == canonical(feedback), f"{where}: feedback differs")
+        check(proposal["parent_prompt_hash"] == digest(previous), f"{where}: parent prompt differs")
+        check(proposal["feedback_hash"] == digest(feedback), f"{where}: feedback hash differs")
+        check(proposal["update_consumed"], f"{where}: update not consumed")
+
+        attempts = proposal["attempts"]
+        check(1 <= len(attempts) <= OPTIMIZER_ATTEMPTS, f"{where}: {len(attempts)} attempts")
+        expected_input = canonical({"feedback": feedback, "max_meta_prompt_words": max_words})
+        for attempt in attempts:
+            payload = audit_saved_output(attempt, PROPOSAL_SCHEMA, where=where)
+            check(payload["messages"][1]["content"] == expected_input, f"{where}: optimizer input differs")
             check(
                 attempt["audit"] == audit_proposal(attempt["value"]["prompt"], train, initial, max_words),
-                f"iteration {iteration}: proposal audit differs",
+                f"{where}: proposal audit differs",
             )
+
+        # The last attempt's audit decides whether the prompt changes.
+        final = attempts[-1]
         check(
-            proposal["accepted"] == proposal["attempts"][-1]["audit"]["accepted"],
-            f"iteration {iteration}: accepted flag differs from the last audit",
+            proposal["accepted"] == final["audit"]["accepted"],
+            f"{where}: accepted flag differs from the last audit",
         )
+        expected_prompt = final["value"]["prompt"] if proposal["accepted"] else previous
         check(
-            proposal["prompt"]
-            == (proposal["attempts"][-1]["value"]["prompt"] if proposal["accepted"] else previous),
-            f"iteration {iteration}: saved prompt is not the one the audit implies",
+            proposal["prompt"] == expected_prompt, f"{where}: saved prompt is not the one the audit implies"
         )
         check(
             proposal["prompt_hash"] == run["freeze"]["prompt_hashes"][iteration],
-            f"iteration {iteration}: prompt hash differs from freeze.json",
+            f"{where}: prompt hash differs from freeze.json",
         )
         proposals.append(
             {"iteration": iteration, "accepted": proposal["accepted"], "words": words(proposal["prompt"])}
         )
-    for path in root.glob("requests/*/request.json"):
-        q = read_json(path)
-        if q["role"] == "writer":
-            continue
-        data = read_json(path.parent / "attempt_0.json")
-        identity = canonical(q["identity"])
-        if "/validation/" in identity:
-            validation_times.append(data["sent_at"])
-        else:
-            training_times.append(data["timestamp"])
-    first_rubric = min(
-        read_json(p.parent / "attempt_0.json")["sent_at"]
-        for p in root.glob("requests/*/request.json")
-        if read_json(p)["role"] == "rubric"
-    )
+    return proposals
+
+
+def check_order(run, writer_finished, first_sends):
+    """Check that the phases ran in order: writer, training, freeze.json, then validation."""
     frozen_at = run["freeze"]["frozen_at"]
-    check(max(writer_times) <= first_rubric, "A rubric request was sent before the writer finished")
-    check(max(training_times) <= frozen_at, "A training request finished after freeze.json was written")
-    check(frozen_at <= min(validation_times), "A validation request was sent before freeze.json was written")
-    costs = read_json(root / "costs.json")
+    first_rubric_sent = min(receipt["sent_at"] for role, _, receipt in first_sends if role == "rubric")
+    scoring = [(identity, receipt) for role, identity, receipt in first_sends if role != "writer"]
+    training_finished = [
+        receipt["timestamp"] for identity, receipt in scoring if "/validation/" not in identity
+    ]
+    validation_sent = [receipt["sent_at"] for identity, receipt in scoring if "/validation/" in identity]
+    check(max(writer_finished) <= first_rubric_sent, "A rubric request was sent before the writer finished")
+    check(max(training_finished) <= frozen_at, "A training request finished after freeze.json was written")
+    check(frozen_at <= min(validation_sent), "A validation request was sent before freeze.json was written")
+
+
+def sensitivity_table(run):
+    """Initial vs selected checkpoint scores on each split, for all rows and two filtered subsets."""
+    selected = run["freeze"]["selected"]
+    table = {}
+    for split in ("train", "validation"):
+        for name, keep in SUBSETS.items():
+            initial_rows = [row for row in run["rows"][(0, split)] if keep(row)]
+            selected_rows = [row for row in run["rows"][(selected, split)] if keep(row)]
+            table[f"{split}_{name}"] = {
+                "examples": len(selected_rows),
+                "initial": summarize(initial_rows),
+                "selected": summarize(selected_rows),
+                "improvement": paired_improvement(initial_rows, selected_rows),
+            }
+    return table
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--source-run", default=ROOT / "runs/meta-blog-seed0")
+    parser.add_argument("--output", default=ROOT / "reports/completion_audit.json")
+    args = parser.parse_args()
+    source, output = Path(args.source_run).resolve(), Path(args.output).resolve()
+    # Saved runs store file paths relative to the repo root, so work from there.
+    os.chdir(ROOT)
+
+    # Rubrics, grades, checkpoint table and selection (see audit_xar_run).
+    run = audit_xar_run(source)
+    manifest = run["manifest"]
+    run_args = manifest["arguments"]
+    check_software(manifest)
+
+    # The run's examples, their human review, and one writer candidate for each.
+    examples = run_examples(load_examples(manifest["dataset"], manifest["splits"]), run_args["split"])
+    train = [example for example in examples if example["split"] == "train"]
+    examples_by_id = {example["example_id"]: example for example in examples}
+    check_human_review(manifest, examples)
+    candidates = run["candidates"]
+    check(
+        set(candidates) == set(examples_by_id),
+        "Writer candidates do not match the train and validation examples",
+    )
+
+    ledger = read_json(run_args["budget_ledger"])["entries"]
+    counts, latencies, total_cost, last_finished, first_sends = check_requests(source, manifest, ledger)
+    writer_finished = check_writer(candidates, examples_by_id)
+    proposals = check_proposals(source, run, train, candidates)
+    check_order(run, writer_finished, first_sends)
+
+    # costs.json and the shared ledger agree with the responses.
+    costs = read_json(source / "costs.json")
     check(
         math.isclose(costs["actual_complete_usd"], total_cost),
         f"costs.json total {costs['actual_complete_usd']} != sum of responses {total_cost}",
     )
     check(costs["unresolved"] == 0, f"costs.json has {costs['unresolved']} unresolved requests")
+    request_total = sum(counts.values())
     check(
-        costs["requests"] == sum(counts.values()),
-        f"costs.json counts {costs['requests']} requests; found {sum(counts.values())}",
+        costs["requests"] == request_total,
+        f"costs.json counts {costs['requests']} requests; found {request_total}",
     )
-    shared_total = sum(e["charge"] for e in ledger.values())
+    shared_total = sum(entry["charge"] for entry in ledger.values())
     check(
         shared_total <= run_args["total_budget_usd"],
         f"Ledger total {shared_total} is over the ${run_args['total_budget_usd']} budget",
     )
-    pilot = audit_xar_run("runs/pilot-meta-blog-attested")
-    gate = read_json("runs/meta_blog_pilot_gate.json")
+
+    # The pilot run passes the same audit, and the gate file names it.
+    pilot = audit_xar_run(PILOT_RUN)
+    gate = read_json(PILOT_GATE)
     check(
         gate["pilot_substantive_hash"] == pilot["manifest"]["substantive_hash"],
         "Pilot gate file does not match the pilot run",
     )
-    selected = run["freeze"]["selected"]
-    sensitivity = {}
-    for split in ("train", "validation"):
-        a, b = run["rows"][(0, split)], run["rows"][(selected, split)]
-        for label, keep in [
-            ("all", lambda r: True),
-            ("length_compliant", lambda r: r["length_compliant"]),
-            ("unflagged", lambda r: not r["contamination_flagged"]),
-        ]:
-            aa, bb = [r for r in a if keep(r)], [r for r in b if keep(r)]
-            sensitivity[f"{split}_{label}"] = {
-                "examples": len(bb),
-                "initial": summarize(aa),
-                "selected": summarize(bb),
-                "improvement": paired_improvement(aa, bb),
-            }
-    wallclock = datetime.fromisoformat(max(ended.values())) - datetime.fromisoformat(manifest["created_at"])
+
+    wallclock = datetime.fromisoformat(last_finished) - datetime.fromisoformat(manifest["created_at"])
     result = {
         "at": now(),
-        "source_run": str(root),
+        "source_run": str(source),
         "proposals": proposals,
         "request_counts": dict(counts),
         "research_cost_usd": total_cost,
-        "pilot_cost_usd": read_json("runs/pilot-meta-blog-attested/costs.json")["actual_complete_usd"],
+        "pilot_cost_usd": read_json(PILOT_RUN / "costs.json")["actual_complete_usd"],
         "shared_charged_or_reserved_usd": shared_total,
         "writer_length_compliant": sum(c["length_compliant"] for c in candidates.values()),
         "writer_contamination_flagged": sum(c["contamination"]["flagged"] for c in candidates.values()),
         "latency_seconds": {
-            r: {"median": statistics.median(v), "total": sum(v)} for r, v in latencies.items()
+            role: {"median": statistics.median(values), "total": sum(values)}
+            for role, values in latencies.items()
         },
         "research_wallclock_seconds": wallclock.total_seconds(),
-        "sensitivity": sensitivity,
+        "sensitivity": sensitivity_table(run),
     }
     write_json(output, result)
     print(
