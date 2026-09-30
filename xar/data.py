@@ -407,8 +407,9 @@ def prepare_data():
     path = ROOT / "data/examples.jsonl"
     if path.exists() and path.read_text() != dataset:
         raise RunError(
-            f"The rebuilt dataset differs from the existing {path} (arXiv pages may have changed); "
-            "not replacing it. Move the old file aside to rebuild."
+            f"The rebuilt dataset differs from the existing {path}, so it was not replaced. Check for "
+            "changes to data/raw, data/discovery.xml or the extraction code. To build a new dataset, "
+            "move examples.jsonl, splits.json and source_manifest.json out of data/ first."
         )
     path.write_text(dataset)
     write_json(ROOT / "data/splits.json", splits, write_once=True)
@@ -447,6 +448,7 @@ def prepare_tokenizers():
         for filename, checksum in cfg["checksums"].items():
             if file_hash(ROOT / "data/tokenizers" / name / filename) != checksum:
                 raise RunError(
-                    f"data/tokenizers/{name}/{filename} does not match its checksum in configs/tokenizers.json"
+                    f"Downloaded data/tokenizers/{name}/{filename} does not match its checksum in "
+                    "configs/tokenizers.json; check the pinned revision"
                 )
     print("Tokenizer checksums match configs/tokenizers.json")
