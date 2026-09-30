@@ -384,8 +384,9 @@ def test_rejected_proposal_consumes_update_with_one_repair(tmp_path):
             }
 
     api = Optimizer()
-    args = SimpleNamespace(output_dir=str(tmp_path), max_meta_prompt_words=800)
-    result = shared.propose_prompt(api, "current", {"training": True}, [dummy_example()], "initial", args, 1)
+    result = shared.propose_prompt(
+        api, "current", {"training": True}, [dummy_example()], "initial", 1, tmp_path, 800
+    )
     assert result == "current" and len(api.calls) == 2
     assert "previous_proposal" in api.calls[-1]
     artifact = shared.read_json(tmp_path / "feedback/iter_01/proposal.json")

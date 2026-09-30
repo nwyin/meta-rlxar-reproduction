@@ -127,9 +127,10 @@ def main():
                 feedback = build_feedback(
                     train, candidates, training_rows[-1], checkpoints[-1], args.failure_examples
                 )
-                checkpoints.append(
-                    propose_prompt(api, checkpoints[-1], feedback, train, initial, args, iteration)
+                proposal = propose_prompt(
+                    api, checkpoints[-1], feedback, train, initial, iteration, out, args.max_meta_prompt_words
                 )
+                checkpoints.append(proposal)
             path = out / "prompts" / f"iter_{iteration:02d}.md"
             path.parent.mkdir(parents=True, exist_ok=True)
             if path.exists() and path.read_text() != checkpoints[-1]:

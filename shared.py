@@ -99,11 +99,11 @@ def model_policy(model):
         raise ContractError("Routing aliases and model variants are not pinned releases")
 
 
-def object_schema(properties, required=None):
+def object_schema(properties):
     return {
         "type": "object",
         "properties": properties,
-        "required": list(properties) if required is None else required,
+        "required": list(properties),
         "additionalProperties": False,
     }
 
@@ -168,8 +168,8 @@ def role_config(role, model=None):
     }
 
 
-def endpoint_for(cfg, snapshot=None):
-    path = snapshot or ROOT / "configs/snapshots" / (cfg["model"].replace("/", "_") + "-endpoints.json")
+def endpoint_for(cfg):
+    path = ROOT / "configs/snapshots" / (cfg["model"].replace("/", "_") + "-endpoints.json")
     data = read_json(path)["data"]
     matches = [e for e in data["endpoints"] if e["tag"] == cfg["provider"]]
     if len(matches) != 1:
@@ -603,7 +603,7 @@ class OpenRouter:
         return {"status": "missing", "value": None, "attempts": attempts}
 
 
-def load_examples(dataset, splits, selected_split=None):
+def load_examples(dataset, splits):
     split_data = read_json(splits)
     groups = split_data["papers"]
     flat = [p for papers in groups.values() for p in papers]
@@ -628,7 +628,7 @@ def load_examples(dataset, splits, selected_split=None):
     for p, sections in counts.items():
         if sorted(sections) != sorted(SECTIONS):
             raise ContractError(f"Missing/duplicate target sections: {p}")
-    return [e for e in examples if selected_split is None or e["split"] == selected_split]
+    return examples
 
 
 def task_data(example):
@@ -795,13 +795,13 @@ def generate_rubric(api, example, meta_prompt, identity, output):
     return record
 
 
-def grade_candidate(api, example, rubric_record, text, identity, output, role="judge"):
+def grade_candidate(api, example, rubric_record, text, identity, output):
     if rubric_record["status"] != "valid":
         result = {"status": "missing", "value": None, "attempts": [], "reason": "invalid_rubric"}
     else:
         rubric = rubric_record["value"]
         result = api.structured(
-            role,
+            "judge",
             prompt("judge"),
             {**task_data(example), "rubric": rubric, "candidate": text},
             GRADE_SCHEMA,
@@ -812,7 +812,7 @@ def grade_candidate(api, example, rubric_record, text, identity, output, role="j
         "example_id": example["example_id"],
         "candidate_hash": digest(text),
         "rubric_hash": rubric_record["rubric_hash"],
-        "judge_configuration": api.roles[role],
+        "judge_configuration": api.roles["judge"],
         "identity": identity,
         **result,
     }
@@ -823,32 +823,16 @@ def grade_candidate(api, example, rubric_record, text, identity, output, role="j
     return record
 
 
-def evaluate_checkpoint(
-    api,
-    examples,
-    candidates,
-    meta_prompt,
-    checkpoint,
-    output,
-    concurrency=2,
-    frozen_rubrics=None,
-    judge_role="judge",
-    namespace="main",
-):
+def evaluate_checkpoint(api, examples, candidates, meta_prompt, checkpoint, output, concurrency):
     root = Path(output)
 
     def evaluate(e):
         eid = e["example_id"]
-        label = f"{namespace}/{checkpoint}/{e['split']}/{eid}"
-        if frozen_rubrics is not None:
-            rubric = frozen_rubrics[eid]
-            if rubric["context_hash"] != e["context_hash"]:
-                raise ContractError("Frozen rubric context differs")
-            write_json(root / "rubrics" / label / "rubric.json", rubric, immutable=True)
-        else:
-            rubric = generate_rubric(
-                api, e, meta_prompt, {"rubric": label}, root / "rubrics" / label / "rubric.json"
-            )
+        # The "main/" prefix is part of saved paths and request identities.
+        label = f"main/{checkpoint}/{e['split']}/{eid}"
+        rubric = generate_rubric(
+            api, e, meta_prompt, {"rubric": label}, root / "rubrics" / label / "rubric.json"
+        )
         labels = ["human", "model"]
         random.Random(int(digest({"seed": api.seed, "label": label})[:16], 16)).shuffle(labels)
         grades = {}
@@ -862,7 +846,6 @@ def evaluate_checkpoint(
                 text,
                 {"grade": label, "slot": slot},
                 root / "scores" / label / (origin + ".json"),
-                judge_role,
             )
         human, model = grades["human"]["total"], grades["model"]["total"]
         return {
@@ -882,32 +865,35 @@ def evaluate_checkpoint(
         }
 
     rows = bounded_map(evaluate, examples, concurrency, getattr(api, "dispatch_stopped", None))
-    write_json(root / "scores" / namespace / str(checkpoint) / f"{examples[0]['split']}_rows.json", rows)
+    write_json(root / "scores" / "main" / str(checkpoint) / f"{examples[0]['split']}_rows.json", rows)
     return rows
 
 
-def bootstrap(rows, seed=0, replicates=2000, field="gap"):
+BOOTSTRAP_REPLICATES = 2000
+
+
+def bootstrap(rows, seed=0):
     bundles = {}
     for r in rows:
-        if r.get(field) is not None:
-            bundles.setdefault(r["paper_id"], []).append(r[field])
+        if r.get("gap") is not None:
+            bundles.setdefault(r["paper_id"], []).append(r["gap"])
     if not bundles:
         return None
     rng = random.Random(seed)
     papers = sorted(bundles)
     samples = sorted(
         statistics.mean(value for p in rng.choices(papers, k=len(papers)) for value in bundles[p])
-        for _ in range(replicates)
+        for _ in range(BOOTSTRAP_REPLICATES)
     )
     return {
         "method": "paired_whole_paper_percentile_bootstrap",
         "paper_clusters": len(papers),
-        "replicates": replicates,
+        "replicates": BOOTSTRAP_REPLICATES,
         "seed": seed,
         "estimate": statistics.mean(value for values in bundles.values() for value in values),
-        "bootstrap_median": samples[replicates // 2],
-        "low": samples[int(0.025 * replicates)],
-        "high": samples[int(0.975 * replicates)],
+        "bootstrap_median": samples[BOOTSTRAP_REPLICATES // 2],
+        "low": samples[int(0.025 * BOOTSTRAP_REPLICATES)],
+        "high": samples[int(0.975 * BOOTSTRAP_REPLICATES)],
     }
 
 
@@ -1017,13 +1003,8 @@ def operational_summary(output):
         for path in (output / folder).rglob("*.json"):
             collect(read_json(path))
     role_rates = {}
-    inherited = 0
     for key, status in attempts.items():
-        request_path = output / "requests" / key / "request.json"
-        if not request_path.exists():
-            inherited += 1
-            continue
-        role = read_json(request_path)["role"]
+        role = read_json(output / "requests" / key / "request.json")["role"]
         counts = role_rates.setdefault(role, {"structured_attempts": 0, "invalid_attempts": 0})
         counts["structured_attempts"] += 1
         counts["invalid_attempts"] += status == "invalid"
@@ -1048,7 +1029,6 @@ def operational_summary(output):
     summary = {
         "format_validation": role_rates,
         "transport_attempts": len(usage_rows),
-        "inherited_frozen_responses": inherited,
         "raw_usage_cost_usd": sum(r["cost_usd"] or 0 for r in usage_rows),
         "unresolved_transport": sum(r["status"] == "uncertain" for r in usage_rows),
     }
@@ -1591,22 +1571,21 @@ def audit_proposal(text, examples, initial_prompt, max_words):
     }
 
 
-def propose_prompt(api, current, feedback, examples, initial, args, iteration):
-    directory = Path(args.output_dir) / "feedback" / f"iter_{iteration:02d}"
+def propose_prompt(api, current, feedback, examples, initial, iteration, output, max_words):
+    directory = Path(output) / "feedback" / f"iter_{iteration:02d}"
     write_json(directory / "training.json", feedback, immutable=True)
-    data = {"feedback": feedback, "max_meta_prompt_words": args.max_meta_prompt_words}
+    data = {"feedback": feedback, "max_meta_prompt_words": max_words}
     attempts = []
     for attempt in range(2):
         instruction = prompt("optimizer")
         if attempt:
+            rejected = attempts[-1]
             instruction += "\nBOUNDED REPAIR: Fix these proposal violations: " + ", ".join(
-                attempts[-1]["audit"]["reasons"]
+                rejected["audit"]["reasons"]
             )
-            data = {
-                **data,
-                "previous_proposal": attempts[-1]["value"]
-                or attempts[-1]["attempts"][-1]["response"]["content"],
-            }
+            # Show the rejected proposal, or the raw reply if it was not valid JSON.
+            previous = rejected["value"] or rejected["attempts"][-1]["response"]["content"]
+            data = {**data, "previous_proposal": previous}
         result = api.structured(
             "optimizer",
             instruction,
@@ -1616,7 +1595,7 @@ def propose_prompt(api, current, feedback, examples, initial, args, iteration):
             repair=False,
         )
         audit = (
-            audit_proposal(result["value"]["prompt"], examples, initial, args.max_meta_prompt_words)
+            audit_proposal(result["value"]["prompt"], examples, initial, max_words)
             if result["value"]
             else {"accepted": False, "reasons": ["invalid_format"], "flags": []}
         )
@@ -1729,7 +1708,7 @@ def extract_paper(html, metadata):
     return examples
 
 
-def prepare_data(args):
+def prepare_data():
     policy = read_json(ROOT / "data/acquisition_policy.json")
     ns = {"a": "http://www.w3.org/2005/Atom", "x": "http://arxiv.org/schemas/atom"}
     entries = ET.parse(ROOT / "data/discovery.xml").getroot().findall("a:entry", ns)
@@ -1871,7 +1850,7 @@ if __name__ == "__main__":
     parser.add_argument("--source-run")
     args = parser.parse_args()
     if args.command == "prepare-data":
-        main_guard(lambda: prepare_data(args))
+        main_guard(prepare_data)
     elif args.command == "prepare-tokenizers":
         main_guard(prepare_tokenizers)
     elif args.command == "validate-data":
