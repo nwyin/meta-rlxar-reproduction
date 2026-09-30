@@ -523,7 +523,9 @@ def optimize_on_training(api, settings, train, candidates, initial):
     Each update is proposed from the previous checkpoint's training feedback and then scored on
     training too. Returns the prompts (index = update number) and their training summaries."""
     out = Path(settings.output_dir)
-    prompts, summaries, rows = [initial], [], None
+    prompts = [initial]
+    summaries = []
+    rows = None  # the previous checkpoint's training rows
     for iteration in range(settings.iterations + 1):
         if iteration:
             feedback = build_feedback(train, candidates, rows, prompts[-1], settings.failure_examples)
@@ -554,7 +556,8 @@ def optimize_on_training(api, settings, train, candidates, initial):
             raise RunError(
                 f"Checkpoint {iteration}: only {summary['paired_coverage']}/{len(train)} training "
                 "sections have a valid rubric and both grades, so no checkpoint can be selected. "
-                f"The failed responses are saved under {out}, and resuming would replay them."
+                f"The failed responses are saved under {out}; --resume would reuse them, "
+                "so start a new run directory."
             )
     return prompts, summaries
 

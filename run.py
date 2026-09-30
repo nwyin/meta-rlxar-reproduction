@@ -47,10 +47,10 @@ def settings_for(phase, design, options):
 
 
 def check_pilot(runs_root, design):
-    """Audit the pilot run and check it used the design's settings before research may start.
+    """Audit the pilot run and check that it used the settings in experiments.yaml.
 
-    Records the pilot's substantive hash in meta_blog_pilot_gate.json. Only the audit matters:
-    the pilot's scores are never looked at."""
+    reproduce calls this first. On success it saves the pilot's substantive hash to
+    meta_blog_pilot_gate.json. The pilot's scores are never looked at."""
     run = audit_xar_run(Path(runs_root) / design["pilot_run"])
     manifest = run["manifest"]
     validate_primary_manifest(manifest, {**design, "iterations": design["pilot_iterations"]})
@@ -100,16 +100,18 @@ def parse_args(argv=None):
     run_options.add_argument(
         "--resume", action="store_true", help="continue an existing run whose settings are unchanged"
     )
-    run_options.add_argument("--runs-root", default="runs")
+    run_options.add_argument(
+        "--runs-root", default="runs", help="directory for the runs and the shared budget ledger"
+    )
     commands.add_parser(
         "pilot",
         parents=[run_options],
-        help="one update on the two pilot papers (one training, one validation), to check the pipeline",
+        help="a short run on the two pilot papers (pilot_iterations updates) to check the pipeline",
     )
     commands.add_parser(
         "reproduce",
         parents=[run_options],
-        help="check the pilot, run the seven-update research trajectory, write reports/",
+        help="check the pilot, run the research trajectory, then write reports/",
     )
     commands.add_parser("all", parents=[run_options], help="pilot, then reproduce")
     report = commands.add_parser("report", help="audit the research run and write the report")
