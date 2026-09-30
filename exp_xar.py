@@ -129,10 +129,7 @@ def main():
                 flush=True,
             )
             if not summary["complete"]:
-                write_json(
-                    out / "status.json",
-                    {"state": "incomplete", "reason": "missing_training_grades", "checkpoint": iteration},
-                )
+                write_json(out / "status.json", {"state": "incomplete"})
                 raise ContractError(
                     "Training checkpoint incomplete; selection and validation remain unopened"
                 )
