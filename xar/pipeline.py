@@ -484,10 +484,12 @@ def checkpoint_row(iteration, train, validation, selected):
 
 @dataclass
 class RunSettings:
-    """Everything run_xar needs for one trajectory; run.py builds it from configs/experiments.yaml.
+    """Everything run_xar needs for one run; run.py builds it from configs/experiments.yaml and
+    the command-line options.
 
-    The manifest saves every field except output_dir, dry_run and resume under "arguments", and
-    all of those except the two budgets go into its substantive hash, which --resume checks."""
+    The manifest saves every field except output_dir, dry_run and resume under "arguments". All
+    of those except the two budgets go into the manifest's settings hash (substantive_hash),
+    which --resume checks."""
 
     output_dir: str
     split: str  # "pilot" or "research"

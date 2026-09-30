@@ -1,8 +1,5 @@
-source: https://facebookresearch.github.io/RAM/blogs/unslop/
-writer: meta/muse-spark-1.1
-rubric: meta/muse-spark-1.1
-optimizer: moonshotai/kimi-k2.6
-judge: meta/muse-spark-1.1
+# The model for each role is set in configs/models.yaml.
+blog_url: https://facebookresearch.github.io/RAM/blogs/unslop/
 seed: 0
 iterations: 7
 pilot_iterations: 1

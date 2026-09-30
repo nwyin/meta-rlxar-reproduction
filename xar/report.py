@@ -7,12 +7,11 @@ from datetime import datetime
 from pathlib import Path
 
 import jsonschema
-import yaml
 
 from xar.audit import audit_xar_run, validate_primary_manifest
 from xar.pipeline import WRITER_ATTEMPTS, length_window
 from xar.stats import paired_improvement
-from xar.util import ROLES, ROOT, RunError, read_json, write_json, write_table
+from xar.util import ROLES, RunError, load_design, read_json, write_json, write_table
 
 SCORE_RANGE = (0, 10)
 RUN_OUTPUTS = ("checkpoints.csv", "gap_curves.png", "gap_curves.svg")
@@ -30,20 +29,20 @@ def render_report(runs_root, output):
     All numbers in results.md come from the saved run, so the report can be regenerated at any
     time. If the run is missing or fails its audit, the run-specific files are removed.
     """
-    design = yaml.safe_load((ROOT / "configs/experiments.yaml").read_text())
+    design = load_design()
     runs_root, output = Path(runs_root), Path(output)
-    source = runs_root / design["research_run"]
+    run_dir = runs_root / design["research_run"]
     output.mkdir(parents=True, exist_ok=True)
-    audit = {"source_run": str(source), "state": "not_started", "error": None}
+    audit = {"source_run": str(run_dir), "state": "not_started", "error": None}
     comparison = {
-        "source_url": design["source"],
+        "blog_url": design["blog_url"],
         "blog_reported": design["reported_validation"],
         "reproduction": None,
     }
     run = None
-    if (source / "manifest.json").exists():
+    if (run_dir / "manifest.json").exists():
         try:
-            run = audit_research_run(source, design)
+            run = audit_research_run(run_dir, design)
         except (RunError, FileNotFoundError, jsonschema.ValidationError, ValueError) as error:
             audit.update(state="failed", error=str(error))
         else:
@@ -56,24 +55,24 @@ def render_report(runs_root, output):
         comparison["reproduction"] = summarize_trajectory(run, design["seed"])
         write_table(output / "checkpoints.csv", run["table"])
         plot_checkpoints(run["table"], design["reported_validation"], output / "gap_curves")
-        text = results_text(run, comparison["reproduction"], design, source, runs_root)
+        text = results_text(run, comparison["reproduction"], design, run_dir, runs_root)
     write_json(output / "audit.json", audit)
     write_json(output / "blog_comparison.json", comparison)
     (output / "results.md").write_text(text)
     print(f"Report written to {output} (audit {audit['state']})")
 
 
-def audit_research_run(source, design):
-    """Check the run is the configured research trajectory, then re-audit it from its saved files."""
-    manifest = read_json(source / "manifest.json")
+def audit_research_run(run_dir, design):
+    """Check the run is the research run experiments.yaml describes, then re-audit it from its saved files."""
+    manifest = read_json(run_dir / "manifest.json")
     validate_primary_manifest(manifest, design)
     split, seed = manifest["arguments"]["split"], manifest["arguments"]["seed"]
     if split != "research" or seed != design["seed"]:
         raise RunError(
-            f"{source} was run with split {split!r} and seed {seed}; "
+            f"{run_dir} was run with split {split!r} and seed {seed}; "
             f"the report needs split 'research' and seed {design['seed']}"
         )
-    return audit_xar_run(source)
+    return audit_xar_run(run_dir)
 
 
 def summarize_trajectory(run, seed):
@@ -158,7 +157,7 @@ def unavailable_text(audit):
     return f"# Meta blog same-model reproduction\n\n{body}\n"
 
 
-def results_text(run, summary, design, source, runs_root):
+def results_text(run, summary, design, run_dir, runs_root):
     """The full results.md for an audited run."""
     manifest, table, candidates = run["manifest"], run["table"], run["candidates"]
     selected, last = summary["selected_iteration"], table[-1]["iteration"]
@@ -169,7 +168,7 @@ def results_text(run, summary, design, source, runs_root):
     }
     validation_sections = len(run["rows"][(0, "validation")])
     setup = (
-        f"This run repeats the first rubric-learning experiment in [Meta's blog]({design['source']}) "
+        f"This run repeats the first rubric-learning experiment in [Meta's blog]({design['blog_url']}) "
         f"with the same models. {describe_roles(names)}. The run used {len(candidates)} sections from "
         f"{papers['train']} training and {papers['validation']} validation papers, with {last} "
         "prompt updates. Checkpoint P0 is the starting prompt, and Pn is the prompt after n updates."
@@ -196,14 +195,14 @@ def results_text(run, summary, design, source, runs_root):
         "The numbers for every checkpoint are in [checkpoints.csv](checkpoints.csv)."
     )
     costs = cost_sentence(
-        read_json(source / "costs.json"),
-        source,
+        read_json(run_dir / "costs.json"),
+        run_dir,
         manifest,
         runs_root / design["pilot_run"],
         read_json(runs_root / "budget_ledger.json")["entries"],
     )
     details = (
-        f"{format_sentence(read_json(source / 'operational_summary.json'), run)} {costs}\n\n"
+        f"{format_sentence(read_json(run_dir / 'operational_summary.json'), run)} {costs}\n\n"
         "Before writing these numbers, the report re-checked the run against every saved response; "
         "the result is in [audit.json](audit.json). The blog's values and this run's summary are in "
         "[blog_comparison.json](blog_comparison.json)."
@@ -356,10 +355,10 @@ def format_sentence(operations, run):
     return " ".join(sentences)
 
 
-def cost_sentence(costs, source, manifest, pilot, ledger):
+def cost_sentence(costs, run_dir, manifest, pilot, ledger):
     """Cost and time of the research run, the pilot's cost, and the total over all runs in the ledger."""
-    minutes = wallclock_seconds(source, manifest) / 60
-    optimizer_calls, optimizer_seconds = optimizer_time(source)
+    minutes = wallclock_seconds(run_dir, manifest) / 60
+    optimizer_calls, optimizer_seconds = optimizer_time(run_dir)
     sentence = (
         f"The research run made {costs['requests']:,} paid requests, cost "
         f"${costs['actual_complete_usd']:,.2f} and took {minutes:.0f} minutes with up to "
@@ -378,17 +377,17 @@ def cost_sentence(costs, source, manifest, pilot, ledger):
     )
 
 
-def wallclock_seconds(source, manifest):
+def wallclock_seconds(run_dir, manifest):
     """Time from run creation to the last saved response."""
-    responses = (source / "requests").glob("*/attempt_*.json")
+    responses = (run_dir / "requests").glob("*/attempt_*.json")
     finished = datetime.fromisoformat(max(read_json(path)["timestamp"] for path in responses))
     return (finished - datetime.fromisoformat(manifest["created_at"])).total_seconds()
 
 
-def optimizer_time(source):
+def optimizer_time(run_dir):
     """Number of optimizer requests and the seconds spent waiting for their responses."""
     calls, seconds = 0, 0.0
-    for request in (source / "requests").glob("*/request.json"):
+    for request in (run_dir / "requests").glob("*/request.json"):
         if read_json(request)["role"] == "optimizer":
             calls += 1
             seconds += sum(

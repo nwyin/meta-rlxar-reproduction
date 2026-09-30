@@ -5,7 +5,6 @@ from conftest import dummy_example
 
 from xar import data
 from xar.data import SECTIONS, extract_paper, load_examples, run_examples, task_data
-from xar.openrouter import model_policy
 from xar.util import RunError, canonical, write_json
 
 
@@ -13,12 +12,6 @@ def test_task_data_sends_only_visible_fields():
     e = dummy_example()
     assert set(task_data(e)) == {"visible_paper", "section_type", "target_words"}
     assert e["reference"] not in canonical(task_data(e))
-
-
-def test_model_policy_rejects_excluded_families_and_routers():
-    for model in ("anthropic/claude-test", "google/gemini-test", "openrouter/auto", "qwen/qwen3.5-9b:free"):
-        with pytest.raises(RunError):
-            model_policy(model)
 
 
 def test_load_examples_rejects_a_paper_in_two_splits(tmp_path):

@@ -445,7 +445,7 @@ def prepare_tokenizers():
                 "hf",
                 "download",
                 cfg["repo"],
-                *cfg["files"],
+                *cfg["checksums"],
                 "--revision",
                 cfg["revision"],
                 "--local-dir",

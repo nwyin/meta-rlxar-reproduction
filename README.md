@@ -3,8 +3,8 @@
 This repository reproduces the Initial Empirical Investigation in
 [Meta's Unslopping AI blog](https://facebookresearch.github.io/RAM/blogs/unslop/).
 Muse Spark 1.1 writes missing paper sections, generates rubrics and judges; Kimi K2.6 rewrites
-the rubric meta prompt. One trajectory covers 52 sections from 8 training and 5 validation
-papers, with 7 prompt updates. [METHOD.md](METHOD.md) describes the data, the procedure, how
+the rubric meta prompt. One run covers 52 sections from 8 training and 5 validation papers,
+with 7 prompt updates. [METHOD.md](METHOD.md) describes the data, the procedure, how
 this differs from the blog, and the limitations.
 
 ## Result
@@ -56,17 +56,21 @@ uv run python run.py all --budget-usd 100 --total-budget-usd 100
 `reproduce`, which you can also run on their own:
 
 - `run.py pilot` runs one update on the two pilot papers to check the pipeline end to end.
-- `run.py reproduce` audits the pilot, runs the research trajectory, and writes `reports/`.
+- `run.py reproduce` audits the completed pilot run, then runs the full experiment on the
+  training and validation papers and writes the report to `reports/`.
 
 Paid runs need both limits: `--budget-usd` for this run and `--total-budget-usd` for all runs
 that share `runs/budget_ledger.json`. `--concurrency` sets the number of parallel requests
 (default 4, from `configs/experiments.yaml`). `--resume` continues an interrupted run; it
-stops if anything other than the budgets has changed since the run started.
+stops if anything other than the budgets has changed since the run started. `--runs-root`
+(default `runs/`) sets where the runs and the ledger are kept, and `--output-dir` (default
+`reports/`) where `reproduce`, `all` and `report` write the report. `uv run python run.py
+--help` lists every command and option.
 
 ## Audit
 
 ```sh
-uv run python run.py audit-run --source-run runs/meta-blog-seed0
+uv run python run.py audit-run runs/meta-blog-seed0
 uv run python scripts/audit_completed_run.py
 uv run python run.py report
 ```
