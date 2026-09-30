@@ -114,7 +114,9 @@ def parse_args(argv=None):
         "--dry-run", action="store_true", help="print the cost estimate without sending requests"
     )
     run_options.add_argument(
-        "--resume", action="store_true", help="continue an existing run whose settings are unchanged"
+        "--resume",
+        action="store_true",
+        help="continue an existing run; only budgets, concurrency and the ledger path may change",
     )
     run_options.add_argument(
         "--runs-root",
