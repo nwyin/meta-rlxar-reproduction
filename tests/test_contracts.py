@@ -146,6 +146,21 @@ def test_atomic_budget_and_uncertain_resend(tmp_path):
         second.reserve("request3", 0.8)
 
 
+def test_overspend_is_saved_before_budget_stop(tmp_path):
+    path = tmp_path / "ledger.json"
+    ledger = shared.Ledger(path, "run", 10, 10)
+    ledger.reserve("request", 1.0)
+    with pytest.raises(shared.BudgetStop, match="reservation"):
+        ledger.settle("request", 2.0)
+    entry = shared.read_json(path)["entries"]["request"]
+    assert entry["state"] == "pricing_bound_violation"
+    assert entry["charge"] == 2.0
+    # Reading the summary does not rewrite the ledger.
+    before = path.stat().st_ino  # a save replaces the file with a new one
+    assert ledger.summary()["charged_or_reserved_usd"] == 2.0
+    assert path.stat().st_ino == before
+
+
 class FakeProvider:
     def __init__(self):
         self.payloads = []
@@ -287,6 +302,11 @@ def test_full_pilot_orchestration_resume_and_frozen_transfer(tmp_path, monkeypat
     n = len(fake.payloads)
     invoke(monkeypatch, exp_xar, [*argv, "--resume"])
     assert len(fake.payloads) == n
+    # Forgetting --resume fails before preflight writes anything into the run.
+    preflights = sorted((out / "preflight").iterdir())
+    with pytest.raises(shared.ContractError, match="Run exists"):
+        invoke(monkeypatch, exp_xar, argv)
+    assert sorted((out / "preflight").iterdir()) == preflights
     invoke(
         monkeypatch,
         exp_judge_transfer,

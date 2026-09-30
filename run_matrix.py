@@ -108,7 +108,7 @@ def main():
             raise ContractError(
                 f"{phase} stopped (exit {error.returncode}); inspect the saved run receipts"
             ) from None
-    if not args.dry_run:
+    if "reproduction" in phases and not args.dry_run:
         render_report(args.runs_root, ROOT / "reports")
 
 

@@ -295,13 +295,18 @@ class Ledger:
         self.thread_lock = threading.Lock()
 
     @contextlib.contextmanager
-    def transaction(self):
+    def locked(self):
+        """Load the ledger under an exclusive lock without saving it."""
         with self.thread_lock, self.path.with_suffix(".lock").open("a+") as lock:
-            fcntl.flock(lock, fcntl.LOCK_EX)
-            data = read_json(self.path) if self.path.exists() else {"entries": {}}
+            fcntl.flock(lock, fcntl.LOCK_EX)  # released when the lock file closes
+            yield read_json(self.path) if self.path.exists() else {"entries": {}}
+
+    @contextlib.contextmanager
+    def transaction(self):
+        """Load the ledger under the lock; save it only if the block finishes without raising."""
+        with self.locked() as data:
             yield data
             write_json(self.path, data)
-            fcntl.flock(lock, fcntl.LOCK_UN)
 
     def reserve(self, key, amount):
         with self.transaction() as data:
@@ -323,20 +328,26 @@ class Ledger:
                 "created_at": now(),
             }
 
-    def settle(self, key, actual, state="complete"):
+    def settle(self, key, cost, state="complete"):
+        """Replace a reservation with the provider's actual cost (None keeps the reservation)."""
         with self.transaction() as data:
             entry = data["entries"][key]
-            if actual is not None:
-                if actual < 0 or not math.isfinite(actual):
-                    raise ContractError("Invalid provider cost")
-                entry["charge"] = actual
+            if cost is not None:
+                if cost < 0 or not math.isfinite(cost):
+                    raise ContractError(f"Provider reported an invalid cost {cost!r} for {key}")
+                entry["charge"] = cost
+                if cost > entry["upper"]:
+                    state = "pricing_bound_violation"
             entry.update(state=state, settled_at=now())
-            if actual is not None and actual > entry["upper"]:
-                entry["state"] = "pricing_bound_violation"
-                raise BudgetStop("Actual charge exceeded reserved pricing bound; halt and refresh pricing")
+        # Raise only after the transaction has saved the overspend.
+        if state == "pricing_bound_violation":
+            raise BudgetStop(
+                f"{key} cost ${cost:.4f}, more than its ${entry['upper']:.4f} reservation; "
+                "refresh the endpoint pricing snapshots before sending more requests"
+            )
 
     def summary(self):
-        with self.transaction() as data:
+        with self.locked() as data:
             entries = [e for e in data["entries"].values() if e["run_id"] == self.run_id]
             return {
                 "charged_or_reserved_usd": sum(e["charge"] for e in entries),
@@ -1172,14 +1183,16 @@ def initialize_run(args, roles, experiment, extra=None):
     if any(review.get("papers", {}).get(p, {}).get("decision") != "approved" for p in used_papers):
         raise ContractError("Selected papers still need human review; see data/review.md")
     manifest["human_review_hash"] = file_hash(review_path)
-    api = OpenRouter(out, roles, args.seed, args.budget_usd, args.total_budget_usd, args.budget_ledger)
-    api.preflight()
-    if path.exists():
+    # Check for an existing run before any network call or write.
+    saved = read_json(path) if path.exists() else None
+    if saved is not None:
         if not args.resume:
             raise ContractError("Run exists; use --resume or a new output directory")
-        saved = read_json(path)
         if saved["substantive_hash"] != manifest["substantive_hash"]:
             raise ContractError("Resume substantive configuration changed; create a new run")
+    api = OpenRouter(out, roles, args.seed, args.budget_usd, args.total_budget_usd, args.budget_ledger)
+    api.preflight()
+    if saved is not None:
         if (
             saved["arguments"].get("budget_usd") != args.budget_usd
             or saved["arguments"].get("total_budget_usd") != args.total_budget_usd
@@ -2137,6 +2150,9 @@ def extract_paper(html, metadata):
         reference = html_text(target, strip_heading=True)
         if words(reference) < 60:
             raise ContractError("Target section under 60 words")
+        # find(id=None) would match the first element without an id, so require one.
+        if not target.get("id"):
+            raise ContractError(f"{kind} section has no HTML id")
         context_document = BeautifulSoup(str(document), "html.parser")
         remove = context_document.find(id=target.get("id"))
         if remove is None:
