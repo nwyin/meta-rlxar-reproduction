@@ -145,73 +145,116 @@ def run_examples(examples, split):
     return chosen
 
 
+HEADING_TAG = re.compile(r"^h[1-6]$")
+
+# Top-level section headings (numbering removed, case-folded) that mark each target section.
+TARGET_HEADINGS = {
+    "introduction": r"introduction",
+    "related_work": r"related works?",
+    "conclusion": r"conclusions?( and future work)?",
+}
+MIN_BIBLIOGRAPHY_ITEMS = 10
+MIN_SECTION_WORDS = 60
+
+# A paper is only usable if the optimizer's largest possible request fits Kimi K2.6's context. That
+# request holds FAILURE_EXAMPLES failures, each with the visible paper plus the author's and the
+# model's version of the withheld section (the model's assumed as long as the author's).
+OPTIMIZER_CONTEXT = 262_144
+OPTIMIZER_MAX_OUTPUT = 16_384
+PROMPT_OVERHEAD = 16_000  # instructions, rubrics and grades
+SAFETY_MARGIN = 1.25
+FAILURE_EXAMPLES = 4  # failure_examples in configs/experiments.yaml
+# Papers are sized with the larger of these two token counts. Qwen is left over from the earlier
+# multi-model study; it stays so that the set of eligible papers cannot change.
+SIZING_MODELS = ("qwen/qwen3.5-9b", "moonshotai/kimi-k2.6")
+
+
 def html_text(node, strip_heading=False):
-    clone = BeautifulSoup(str(node), "html.parser")
+    """Plain, normalized text of an HTML element, with each formula replaced by its TeX source.
+
+    Works on a copy, so `node` is left unchanged. Scripts, navigation, footers and LaTeXML error
+    markers are dropped, and with strip_heading so is the element's first heading.
+    """
+    fragment = BeautifulSoup(str(node), "html.parser")
     if strip_heading:
-        head = clone.find(re.compile(r"^h[1-6]$"))
-        if head:
-            head.decompose()
-    for math_node in clone.find_all("math"):
-        annotation = math_node.find("annotation", attrs={"encoding": "application/x-tex"})
-        math_node.replace_with(
-            annotation.get_text() if annotation else math_node.get("alttext", math_node.get_text(" "))
-        )
-    for n in clone.select("script, style, nav, footer, .ltx_ERROR"):
-        n.decompose()
-    return normalize(clone.get_text(" ", strip=True))
+        heading = fragment.find(HEADING_TAG)
+        if heading:
+            heading.decompose()
+    for math_node in fragment.find_all("math"):
+        tex = math_node.find("annotation", attrs={"encoding": "application/x-tex"})
+        if tex:
+            math_node.replace_with(tex.get_text())
+        else:
+            math_node.replace_with(math_node.get("alttext", math_node.get_text(" ")))
+    for element in fragment.select("script, style, nav, footer, .ltx_ERROR"):
+        element.decompose()
+    return normalize(fragment.get_text(" ", strip=True))
+
+
+def max_tokens(text):
+    return max(token_count(text, model) for model in SIZING_MODELS)
 
 
 def extract_paper(html, metadata):
-    soup = BeautifulSoup(html, "html.parser")
-    document = soup.select_one(".ltx_document")
+    """Split one arXiv LaTeXML page into four examples, one per section in SECTIONS.
+
+    Each example's reference is the text of one section, and its context is the rest of the paper
+    with that section replaced by a placeholder. Raises RunError saying why a paper is unusable.
+    """
+    document = BeautifulSoup(html, "html.parser").select_one(".ltx_document")
     if document is None:
-        raise RunError("No LaTeXML document")
+        raise RunError("Page has no LaTeXML document (.ltx_document)")
     abstracts = document.select(".ltx_abstract")
     if len(abstracts) != 1:
-        raise RunError("Missing or duplicated abstract")
+        raise RunError(f"Page has {len(abstracts)} abstracts; expected 1")
     targets = {"abstract": abstracts[0]}
-    patterns = {
-        "introduction": r"^introduction$",
-        "related_work": r"^(related work|related works)$",
-        "conclusion": r"^(conclusion|conclusions|conclusion and future work|conclusions and future work)$",
-    }
     for section in document.select(".ltx_section"):
         if section.find_parent(class_="ltx_section"):
             continue
-        head = section.find(re.compile(r"^h[1-6]$"))
-        heading = re.sub(r"^\s*[\d.]+\s*", "", head.get_text(" ", strip=True)).casefold() if head else ""
-        for kind, pattern in patterns.items():
+        heading_tag = section.find(HEADING_TAG)
+        if not heading_tag:
+            continue
+        heading = re.sub(r"^\s*[\d.]+\s*", "", heading_tag.get_text(" ", strip=True)).casefold()
+        for kind, pattern in TARGET_HEADINGS.items():
             if re.fullmatch(pattern, heading):
                 if kind in targets:
-                    raise RunError("Ambiguous target boundary")
+                    raise RunError(f"More than one top-level section is headed like {kind}")
                 targets[kind] = section
-    if set(targets) != set(SECTIONS):
-        raise RunError("Required top-level sections missing")
-    if len(document.select(".ltx_bibitem")) < 10:
-        raise RunError("Incomplete or short bibliography")
+    missing = [kind for kind in SECTIONS if kind not in targets]
+    if missing:
+        raise RunError(f"Top-level sections not found: {', '.join(missing)}")
+    bibliography_items = len(document.select(".ltx_bibitem"))
+    if bibliography_items < MIN_BIBLIOGRAPHY_ITEMS:
+        raise RunError(
+            f"Bibliography has {bibliography_items} entries; at least {MIN_BIBLIOGRAPHY_ITEMS} required"
+        )
     if document.select(".ltx_ERROR") or "�" in document.get_text():
-        raise RunError("Extraction debris")
+        raise RunError("Page contains LaTeXML errors or U+FFFD replacement characters")
     examples = []
     for kind, target in targets.items():
         reference = html_text(target, strip_heading=True)
-        if words(reference) < 60:
-            raise RunError("Target section under 60 words")
+        if words(reference) < MIN_SECTION_WORDS:
+            raise RunError(f"{kind} has {words(reference)} words; at least {MIN_SECTION_WORDS} required")
         # find(id=None) would match the first element without an id, so require one.
         if not target.get("id"):
             raise RunError(f"{kind} section has no HTML id")
-        context_document = BeautifulSoup(str(document), "html.parser")
-        remove = context_document.find(id=target.get("id"))
-        if remove is None:
-            raise RunError("Target lacks unique HTML ID")
-        remove.replace_with(f"[Missing {kind.replace('_', ' ')} section]")
-        context = html_text(context_document)
+        page = BeautifulSoup(str(document), "html.parser")
+        removed = page.find(id=target.get("id"))
+        if removed is None:
+            raise RunError(f"{kind} section id {target.get('id')!r} not found in the copied page")
+        removed.replace_with(f"[Missing {kind.replace('_', ' ')} section]")
+        context = html_text(page)
         if reference in context:
-            raise RunError("Withheld text remains duplicated in context")
-        # Largest optimizer payload uses four full failure papers, candidate pairs, rubrics, evidence.
-        count = max(token_count(context, m) for m in ("qwen/qwen3.5-9b", "moonshotai/kimi-k2.6"))
-        reference_count = max(token_count(reference, m) for m in ("qwen/qwen3.5-9b", "moonshotai/kimi-k2.6"))
-        if math.ceil(1.25 * (4 * count + 8 * reference_count + 16000)) + 16384 > 262144:
-            raise RunError("Conservative four-failure optimizer context bound exceeded")
+            raise RunError(
+                f"{kind} text also appears elsewhere in the paper, so removing it does not hide it"
+            )
+        worst_case_prompt = FAILURE_EXAMPLES * (max_tokens(context) + 2 * max_tokens(reference))
+        needed = math.ceil(SAFETY_MARGIN * (worst_case_prompt + PROMPT_OVERHEAD)) + OPTIMIZER_MAX_OUTPUT
+        if needed > OPTIMIZER_CONTEXT:
+            raise RunError(
+                f"Paper too long: with its {kind} withheld, the largest optimizer request would "
+                f"need {needed} tokens, more than the {OPTIMIZER_CONTEXT}-token context"
+            )
         examples.append(
             {
                 "example_id": metadata["paper_id"] + "_" + kind,
@@ -223,10 +266,12 @@ def extract_paper(html, metadata):
                 "reference_hash": digest(reference),
                 "target_words": words(reference),
                 "provenance": metadata,
+                # Constant apart from the count, since examples are only written once every check
+                # passed. The fields stay because they are part of the hashed dataset.
                 "extraction_checks": {
                     "unique_target": True,
                     "reference_removed": True,
-                    "bibliography_items": len(document.select(".ltx_bibitem")),
+                    "bibliography_items": bibliography_items,
                     "ocr_debris": False,
                 },
             }
