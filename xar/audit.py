@@ -1,4 +1,4 @@
-"""Re-check a saved run against its raw responses, frozen settings and preregistered design."""
+"""Re-check a saved run against its raw API responses, its manifest and configs/experiments.yaml."""
 
 from __future__ import annotations
 
@@ -20,167 +20,238 @@ from xar.pipeline import (
 from xar.stats import summarize
 from xar.util import ROLES, RunError, canonical, digest, file_hash, prompt, read_json
 
+# The research run's fixed size. A pilot run is smaller and is not held to these.
+RESEARCH_SPLIT_SIZES = {"train": 32, "validation": 20}
+RESEARCH_ITERATIONS = 7
 
-def audit_request_contract(payload, cfg, schema, prompt_file):
-    """Check the actual sent request against the frozen role, scoring wrapper, and schema."""
-    if any(payload.get(key) != value for key, value in routing_fields(cfg).items()):
-        raise RunError("Saved request differs from frozen role/routing/decoding contract")
+
+def audit_request_contract(payload, cfg, schema, prompt_file, where="saved request"):
+    """Check that a saved request payload used the role's settings, schema and system prompt.
+
+    prompt_file is the manifest hash of the system prompt file. schema=None means a plain-text
+    request, which must have no response_format and is never retried with a format repair.
+    """
+    changed = [key for key, value in routing_fields(cfg).items() if payload.get(key) != value]
+    if changed:
+        raise RunError(
+            f"{where}: request fields {changed} differ from the {cfg['model']} role settings "
+            "(routing/decoding contract)"
+        )
     if payload.get("response_format") != json_schema_format(schema):
-        raise RunError("Saved request differs from fixed output schema")
+        expected = "no response_format" if schema is None else "the role's JSON schema"
+        raise RunError(f"{where}: response_format differs from {expected}")
     messages = payload.get("messages", [])
-    if len(messages) != 2 or [m.get("role") for m in messages] != ["system", "user"]:
-        raise RunError("Saved request includes conversation history or unexpected message roles")
+    roles = [message.get("role") for message in messages]
+    if roles != ["system", "user"]:
+        raise RunError(f"{where}: expected one system and one user message, got {roles}")
     system = messages[0]["content"]
-    # Only structured requests are retried with a format repair; plain-text ones must match exactly.
-    base = system.split(FORMAT_REPAIR, 1)[0] if schema is not None else system
-    if digest(base) != prompt_file:
-        raise RunError("Saved request changed the frozen grading/rubric wrapper")
+    if schema is not None:
+        system = system.split(FORMAT_REPAIR, 1)[0]
+    if digest(system) != prompt_file:
+        raise RunError(f"{where}: system prompt differs from the prompt file recorded in the manifest")
 
 
-def audit_saved_output(record, schema, cfg=None, endpoint=None, prompt_file=None):
+def audit_saved_output(record, schema, cfg=None, endpoint=None, prompt_file=None, where="saved output"):
+    """Check a saved structured-output record against the raw API response it came from.
+
+    With cfg, also check the request with audit_request_contract and that the response came from
+    the role's model and provider. Returns the request payload.
+    """
     if record["status"] != "valid":
-        raise RunError("Missing structured output")
+        raise RunError(f"{where}: structured output is {record['status']}, not valid")
     last = record["attempts"][-1]
     if last["status"] != "valid":
-        raise RunError("Artifact marked valid with invalid final attempt")
-    response = last["response"]
-    receipt = read_json(response["raw_response"])
+        raise RunError(f"{where}: marked valid, but its last attempt is {last['status']}")
+    receipt_path = last["response"]["raw_response"]
+    receipt = read_json(receipt_path)
     if receipt["status"] != "success":
-        raise RunError("Artifact lacks successful raw response")
-    choice = receipt["response"]["choices"][0]
+        raise RunError(f"{receipt_path}: API call status is {receipt['status']}, not success")
+    response = receipt["response"]
+    choice = response["choices"][0]
     if choice["finish_reason"] != "stop":
-        raise RunError("Artifact uses incomplete raw response")
+        raise RunError(f"{receipt_path}: response finished with {choice['finish_reason']!r}, not 'stop'")
     parsed = json.loads(choice["message"]["content"])
     jsonschema.validate(parsed, schema)
     if canonical(parsed) != canonical(record["value"]):
-        raise RunError("Derived artifact differs from raw response")
-    request = read_json(Path(response["raw_response"]).parent / "request.json")
+        raise RunError(f"{where}: saved value differs from the raw response in {receipt_path}")
+    request_path = Path(receipt_path).parent / "request.json"
+    payload = read_json(request_path)["payload"]
     if cfg is not None:
-        audit_request_contract(request["payload"], cfg, schema, prompt_file)
-        raw = receipt["response"]
-        if raw.get("model") not in {cfg["model"], endpoint["canonical_slug"]}:
-            raise RunError("Raw response used a different model from the frozen role")
-        provider = raw.get("provider")
+        audit_request_contract(payload, cfg, schema, prompt_file, where=request_path)
+        model = response.get("model")
+        if model not in {cfg["model"], endpoint["canonical_slug"]}:
+            raise RunError(f"{receipt_path}: answered by model {model}; expected {cfg['model']}")
+        provider = response.get("provider")
         if provider and provider not in {endpoint["endpoint"]["provider_name"], cfg["provider"]}:
-            raise RunError("Raw response used a different provider from the frozen role")
-    return request["payload"]
+            raise RunError(f"{receipt_path}: answered by provider {provider}; expected {cfg['provider']}")
+    return payload
+
+
+def _check_sent_after_freeze(record, frozen_at, where):
+    """Validation requests must be sent after freeze.json, so they cannot affect which checkpoint is selected."""
+    for attempt in record["attempts"]:
+        sent_at = read_json(attempt["response"]["raw_response"]).get("sent_at")
+        if not sent_at or sent_at < frozen_at:
+            raise RunError(f"{where}: validation request sent at {sent_at}, before freeze.json ({frozen_at})")
+
+
+def _check_feedback(run, iteration, training_ids):
+    """The optimizer's feedback for an iteration may only use training examples."""
+    path = run / f"feedback/iter_{iteration:02d}/training.json"
+    feedback = read_json(path)
+    used = set(feedback["example_ids_used_for_aggregate"])
+    if used != training_ids:
+        raise RunError(
+            f"{path}: feedback must aggregate exactly the training examples; "
+            f"extra {sorted(used - training_ids)}, missing {sorted(training_ids - used)}"
+        )
+    failure_ids = [failure["example_id"] for failure in feedback["failures"]]
+    leaked = [eid for eid in failure_ids if eid not in training_ids]
+    if leaked:
+        raise RunError(f"{path}: failure examples {leaked} are not training examples")
+
+
+def _audit_section(run, manifest, frozen_at, example, candidate, iteration, meta_prompt):
+    """Check one section's rubric and its two grades at one checkpoint, and return its score row."""
+    eid, split = example["example_id"], example["split"]
+    roles, endpoints, hashes = manifest["roles"], manifest["endpoints"], manifest["software_hashes"]
+
+    rubric_path = run / f"rubrics/main/{iteration}/{split}/{eid}/rubric.json"
+    rubric = read_json(rubric_path)
+    if rubric["generator_configuration"] != roles["rubric"]:
+        raise RunError(f"{rubric_path}: generator_configuration differs from the manifest's rubric role")
+    rubric_payload = audit_saved_output(
+        rubric,
+        RUBRIC_SCHEMA,
+        roles["rubric"],
+        endpoints["rubric"],
+        hashes["prompts/rubric_wrapper.md"],
+        where=rubric_path,
+    )
+    if split == "validation":
+        _check_sent_after_freeze(rubric, frozen_at, rubric_path)
+    validate_rubric(rubric["value"])
+    expected_input = {**task_data(example), "meta_prompt": meta_prompt}
+    if json.loads(rubric_payload["messages"][1]["content"]) != expected_input:
+        raise RunError(
+            f"{rubric_path}: request input is not the task data plus the checkpoint {iteration} prompt"
+        )
+
+    totals = {}
+    for origin, text in (("human", example["reference"]), ("model", candidate["text"])):
+        grade_path = run / f"scores/main/{iteration}/{split}/{eid}/{origin}.json"
+        grade = read_json(grade_path)
+        if grade["judge_configuration"] != roles["judge"]:
+            raise RunError(f"{grade_path}: judge_configuration differs from the manifest's judge role")
+        grade_payload = audit_saved_output(
+            grade,
+            GRADE_SCHEMA,
+            roles["judge"],
+            endpoints["judge"],
+            hashes["prompts/judge.md"],
+            where=grade_path,
+        )
+        if split == "validation":
+            _check_sent_after_freeze(grade, frozen_at, grade_path)
+        expected_input = {**task_data(example), "rubric": rubric["value"], "candidate": text}
+        if json.loads(grade_payload["messages"][1]["content"]) != expected_input:
+            raise RunError(f"{grade_path}: request input is not the task data, rubric and {origin} text")
+        totals[origin] = validate_grade(grade["value"], rubric["value"], text + " " + example["context"])
+        if grade["total"] != totals[origin]:
+            raise RunError(
+                f"{grade_path}: grade arithmetic mismatch (saved {grade['total']}, recomputed {totals[origin]})"
+            )
+        if grade["candidate_hash"] != digest(text):
+            raise RunError(f"{grade_path}: candidate_hash does not match the {origin} text")
+
+    return {
+        "example_id": eid,
+        "paper_id": example["paper_id"],
+        "section_type": example["section_type"],
+        "split": split,
+        "checkpoint": iteration,
+        **totals,
+        "gap": totals["human"] - totals["model"],
+        "length_compliant": candidate["length_compliant"],
+        "length_ratio": candidate["length_ratio"],
+        "contamination_flagged": candidate["contamination"]["flagged"],
+    }
 
 
 def audit_xar_run(path):
-    """Rebuild means from raw-linked criterion grades and prove full-scope checkpoint coverage."""
-    path = Path(path)
-    manifest, freeze = read_json(path / "manifest.json"), read_json(path / "freeze.json")
+    """Re-check a saved XAR run and rebuild its checkpoint table from the raw API responses.
+
+    Every rubric and grade must match its raw response, its request must use the manifest's role
+    settings and prompts, validation requests must postdate freeze.json, and the recomputed grade
+    totals, training gaps and selected checkpoint must equal the saved ones. Raises RunError if not.
+    """
+    run = Path(path)
+    manifest = read_json(run / "manifest.json")
+    freeze = read_json(run / "freeze.json")
     if manifest["experiment"] != "xar":
-        raise RunError("Expected XAR run")
-    run_split = manifest["arguments"]["split"]
-    pilot = run_split == "pilot"
-    examples = run_examples(load_examples(manifest["dataset"], manifest["splits"]), run_split)
-    counts = {s: sum(e["split"] == s for e in examples) for s in ("train", "validation")}
-    if not pilot and counts != {"train": 32, "validation": 20}:
-        raise RunError("Primary dataset must have 32 train and 20 validation examples")
-    if (
-        file_hash(manifest["dataset"]) != manifest["dataset_hash"]
-        or file_hash(manifest["splits"]) != manifest["splits_hash"]
-    ):
-        raise RunError("Run data changed")
-    candidates = read_json(path / "generations/candidates.json")["candidates"]
+        raise RunError(f"{run} is a {manifest['experiment']!r} run, not an XAR run")
+    for name in ("dataset", "splits"):
+        if file_hash(manifest[name]) != manifest[f"{name}_hash"]:
+            raise RunError(f"{manifest[name]} changed after the run started")
+
+    arguments = manifest["arguments"]
+    iterations = arguments["iterations"]
+    examples = run_examples(load_examples(manifest["dataset"], manifest["splits"]), arguments["split"])
+    by_split = {split: [e for e in examples if e["split"] == split] for split in ("train", "validation")}
+    if arguments["split"] != "pilot":
+        sizes = {split: len(group) for split, group in by_split.items()}
+        if sizes != RESEARCH_SPLIT_SIZES:
+            raise RunError(f"Research run has {sizes} examples; expected {RESEARCH_SPLIT_SIZES}")
+        if iterations != RESEARCH_ITERATIONS:
+            raise RunError(f"Research run has {iterations} iterations; expected {RESEARCH_ITERATIONS}")
+
+    candidates = read_json(run / "generations/candidates.json")["candidates"]
+    for example in examples:
+        eid = example["example_id"]
+        candidate = candidates[eid]
+        if candidate["context_hash"] != example["context_hash"]:
+            raise RunError(f"{eid}: writer candidate was generated from a different context")
+        if candidate["text_hash"] != digest(candidate["text"]):
+            raise RunError(f"{eid}: writer candidate text does not match its text_hash")
+
+    frozen_at = freeze.get("frozen_at")
+    if not frozen_at:
+        raise RunError(f"{run / 'freeze.json'} has no frozen_at time")
+    training_ids = {e["example_id"] for e in by_split["train"]}
+
     all_rows, table = {}, []
-    iterations = manifest["arguments"]["iterations"]
-    if not pilot and iterations != 7:
-        raise RunError("Primary trajectory lacks seven updates")
     for iteration in range(iterations + 1):
-        checkpoint = (path / f"prompts/iter_{iteration:02d}.md").read_text()
-        if digest(checkpoint) != freeze["prompt_hashes"][iteration]:
-            raise RunError("Frozen checkpoint differs")
+        prompt_path = run / f"prompts/iter_{iteration:02d}.md"
+        meta_prompt = prompt_path.read_text()
+        if digest(meta_prompt) != freeze["prompt_hashes"][iteration]:
+            raise RunError(f"{prompt_path} differs from its hash in freeze.json")
         if iteration:
-            feedback = read_json(path / f"feedback/iter_{iteration:02d}/training.json")
-            training_ids = {e["example_id"] for e in examples if e["split"] == "train"}
-            if set(feedback["example_ids_used_for_aggregate"]) != training_ids:
-                raise RunError("Optimizer aggregate contains non-training examples")
-            if any(f["example_id"] not in training_ids for f in feedback["failures"]):
-                raise RunError("Optimizer failures contain non-training examples")
+            _check_feedback(run, iteration, training_ids)
         summaries = {}
-        for split in ("train", "validation"):
-            rows = []
-            for e in [e for e in examples if e["split"] == split]:
-                eid = e["example_id"]
-                candidate = candidates[eid]
-                if candidate["context_hash"] != e["context_hash"] or candidate["text_hash"] != digest(
-                    candidate["text"]
-                ):
-                    raise RunError("Writer candidate integrity failed")
-                rubric = read_json(path / f"rubrics/main/{iteration}/{split}/{eid}/rubric.json")
-                if rubric["generator_configuration"] != manifest["roles"]["rubric"]:
-                    raise RunError("Rubric artifact configuration differs from the frozen generator")
-                rubric_payload = audit_saved_output(
-                    rubric,
-                    RUBRIC_SCHEMA,
-                    manifest["roles"]["rubric"],
-                    manifest["endpoints"]["rubric"],
-                    manifest["software_hashes"]["prompts/rubric_wrapper.md"],
+        for split, split_examples in by_split.items():
+            rows = [
+                _audit_section(
+                    run, manifest, frozen_at, e, candidates[e["example_id"]], iteration, meta_prompt
                 )
-                if split == "validation":
-                    if not freeze.get("frozen_at"):
-                        raise RunError("Freeze lacks timestamp evidence for held-out evaluation ordering")
-                    for record in rubric["attempts"]:
-                        receipt = read_json(record["response"]["raw_response"])
-                        if not receipt.get("sent_at") or receipt["sent_at"] < freeze["frozen_at"]:
-                            raise RunError("Validation rubric was dispatched before trajectory freeze")
-                validate_rubric(rubric["value"])
-                if json.loads(rubric_payload["messages"][1]["content"]) != {
-                    **task_data(e),
-                    "meta_prompt": checkpoint,
-                }:
-                    raise RunError("Rubric inputs contain an unexpected field or changed context")
-                totals = {}
-                for origin, text in (("human", e["reference"]), ("model", candidate["text"])):
-                    grade = read_json(path / f"scores/main/{iteration}/{split}/{eid}/{origin}.json")
-                    if grade["judge_configuration"] != manifest["roles"]["judge"]:
-                        raise RunError("Grade artifact configuration differs from the frozen judge")
-                    grade_payload = audit_saved_output(
-                        grade,
-                        GRADE_SCHEMA,
-                        manifest["roles"]["judge"],
-                        manifest["endpoints"]["judge"],
-                        manifest["software_hashes"]["prompts/judge.md"],
-                    )
-                    if split == "validation":
-                        for attempt in grade["attempts"]:
-                            receipt = read_json(attempt["response"]["raw_response"])
-                            if not receipt.get("sent_at") or receipt["sent_at"] < freeze["frozen_at"]:
-                                raise RunError("Validation grade was dispatched before trajectory freeze")
-                    expected = {**task_data(e), "rubric": rubric["value"], "candidate": text}
-                    if json.loads(grade_payload["messages"][1]["content"]) != expected:
-                        raise RunError("Anonymous grade payload violates input contract")
-                    totals[origin] = validate_grade(
-                        grade["value"], rubric["value"], text + " " + e["context"]
-                    )
-                    if grade["total"] != totals[origin] or grade["candidate_hash"] != digest(text):
-                        raise RunError("Grade arithmetic or candidate hash differs")
-                rows.append(
-                    {
-                        "example_id": eid,
-                        "paper_id": e["paper_id"],
-                        "section_type": e["section_type"],
-                        "split": split,
-                        "checkpoint": iteration,
-                        **totals,
-                        "gap": totals["human"] - totals["model"],
-                        "length_compliant": candidate["length_compliant"],
-                        "length_ratio": candidate["length_ratio"],
-                        "contamination_flagged": candidate["contamination"]["flagged"],
-                    }
-                )
+                for e in split_examples
+            ]
             all_rows[(iteration, split)] = rows
-            summaries[split] = summarize(rows, manifest["arguments"]["seed"])
+            summaries[split] = summarize(rows, arguments["seed"])
         table.append(
             checkpoint_row(iteration, summaries["train"], summaries["validation"], freeze["selected"])
         )
-    selected = select_checkpoint([r["train_gap"] for r in table])
+
+    gaps = [row["train_gap"] for row in table]
+    if freeze["training_gaps"] != gaps:
+        raise RunError(
+            f"freeze.json training_gaps {freeze['training_gaps']} differ from the recomputed {gaps}"
+        )
+    selected = select_checkpoint(gaps)
     if selected != freeze["selected"]:
-        raise RunError("Selection rule differs")
-    if freeze["training_gaps"] != [r["train_gap"] for r in table]:
-        raise RunError("Training-selection ledger differs")
+        raise RunError(
+            f"freeze.json selected checkpoint {freeze['selected']}, "
+            f"but the highest training gap is at checkpoint {selected}"
+        )
     return {
         "manifest": manifest,
         "freeze": freeze,
@@ -191,17 +262,27 @@ def audit_xar_run(path):
 
 
 def validate_primary_manifest(manifest, design):
-    if manifest["roles"]["judge"]["model"] != design["judge"]:
-        raise RunError("Primary matrix must hold the preregistered main judge fixed")
-    if design.get("scope") == "meta_blog_initial_empirical_investigation":
-        for role in ROLES:
-            if manifest["roles"][role]["model"] != design[role]:
-                raise RunError(f"Blog reproduction requires the declared {role} model")
+    """Check that a run used the models, protocol and starting prompt that the design specifies.
+
+    design is configs/experiments.yaml (with pilot_iterations as iterations for the pilot). Each
+    role's full settings must also still match configs/models.yaml.
+    """
+    for role in ROLES:
+        actual = manifest["roles"][role]
+        if actual["model"] != design[role]:
+            raise RunError(f"{role} model is {actual['model']}; configs/experiments.yaml says {design[role]}")
+        expected = role_config(role)
+        if actual != expected:
+            changed = sorted(
+                key for key in expected.keys() | actual.keys() if actual.get(key) != expected.get(key)
+            )
+            raise RunError(
+                f"{role} settings differ from configs/models.yaml in {', '.join(changed)}: "
+                f"run used {actual}, config says {expected}"
+            )
     for field in ("iterations", "max_meta_prompt_words", "failure_examples"):
-        if manifest["arguments"].get(field) != design[field]:
-            raise RunError(f"Primary matrix differs from preregistered {field}")
+        value = manifest["arguments"].get(field)
+        if value != design[field]:
+            raise RunError(f"Run used {field}={value}; the design says {design[field]}")
     if manifest["extra"].get("initial_meta_prompt_hash") != digest(prompt("rubric_initial")):
-        raise RunError("Primary matrix differs from the frozen neutral starting prompt")
-    for role, cfg in manifest["roles"].items():
-        if cfg != role_config(role, cfg["model"]):
-            raise RunError(f"Primary {role} provider/decoding differs from the frozen configuration")
+        raise RunError("Run started from a different prompts/rubric_initial.md than the current file")
