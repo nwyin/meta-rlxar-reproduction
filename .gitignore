@@ -7,7 +7,6 @@ __pycache__/
 .pytest_cache/
 .ruff_cache/
 data/raw/
-data/papers/
 data/examples.jsonl
 data/review.md
 data/tokenizers/

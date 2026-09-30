@@ -833,8 +833,8 @@ requires-dist = [
     { name = "matplotlib", specifier = ">=3.10,<4" },
     { name = "python-dotenv", specifier = ">=1,<2" },
     { name = "pyyaml", specifier = ">=6,<7" },
-    { name = "tiktoken", specifier = ">=0.14.0" },
-    { name = "tokenizers", specifier = ">=0.23.2" },
+    { name = "tiktoken", specifier = ">=0.14,<0.15" },
+    { name = "tokenizers", specifier = ">=0.23.2,<0.24" },
 ]
 
 [package.metadata.requires-dev]
