@@ -29,7 +29,7 @@ def test_result_sentences_state_sign_and_training_direction():
     assert sign_sentence(table, summary).startswith("The sign did not flip.")
     assert "negative at every checkpoint" in sign_sentence(table, summary)
     trend = training_trend(table, 1)
-    assert "from -0.25 at P1 to -0.65 at P3." in trend and "moved away from zero" in trend
+    assert trend.startswith("After P1 the training gap went from -0.25 to -0.65 at P3, further from zero")
     rows = checkpoint_table(table, 1).splitlines()
     assert len(rows) == 2 + len(table)
     assert rows[3] == "| P1 (selected) | -0.25 | -0.16 | 8.00 | 8.16 |"

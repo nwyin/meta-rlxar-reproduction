@@ -187,8 +187,8 @@ def results_text(run, summary, design, source, runs_root):
         f"P{blog['first_positive_iteration']}."
     )
     selection = (
-        f"P{selected} had the highest training gap, so it was selected, and the selection was fixed "
-        f"before any validation request was sent. {training_trend(table, selected)}"
+        f"P{selected} had the highest training gap, so it was selected. The selection was fixed before "
+        f"any validation request was sent. {training_trend(table, selected)}"
     )
     figure = (
         "![Gaps and validation means by prompt update, with Meta's published values](gap_curves.png)\n\n"
@@ -203,8 +203,8 @@ def results_text(run, summary, design, source, runs_root):
         (
             "Meta did not publish its paper IDs, prompts or decoding settings. This run uses "
             f"{sum(papers.values())} recent arXiv papers and prompts written for this repository, so its "
-            "numbers are not directly comparable with the blog's. The author sections were not "
-            "independently rated as expert writing."
+            "numbers are not directly comparable with the blog's. The author sections were used as "
+            "published; nobody checked their quality independently."
         ),
         (
             f"The validation split has only {papers['validation']} papers ({validation_sections} "
@@ -282,21 +282,20 @@ def checkpoint_table(table, selected):
 
 def training_trend(table, selected):
     """Say which way the training gap moved after the selected checkpoint."""
-    gaps = [r["train_gap"] for r in table]
-    last = len(gaps) - 1
+    last = table[-1]["iteration"]
     if selected == last:
         return f"The training gap was highest at the last checkpoint, P{last}."
-    start, end = gaps[selected], gaps[last]
-    trend = (
-        f"No later update beat it: the training gap went from {start:+.2f} at P{selected} "
-        f"to {end:+.2f} at P{last}."
-    )
+    start, end = table[selected]["train_gap"], table[-1]["train_gap"]
+    trend = f"After P{selected} the training gap went from {start:+.2f} to {end:+.2f} at P{last}"
+    # The selected checkpoint has the highest training gap, so a negative one can only move away from zero.
     if start <= 0:
-        trend += " It moved away from zero: the later updates widened Muse's lead on the training papers."
-    return trend
+        return trend + ", further from zero: the later updates widened Muse's lead on the training papers."
+    return trend + "."
 
 
 def improvement_sentence(improvement, selected, validation_papers):
+    if not selected:
+        return "No prompt update beat P0 on the training papers, so there is no improvement to report."
     interval = improvement["interval"]
     return (
         f"From P0 to P{selected} the validation gap improved by {improvement['mean']:+.2f} points on "
@@ -320,7 +319,8 @@ def format_sentence(operations, run):
             clean.append(f"{total:,} {role}")
     if clean:
         sentences.insert(0, f"All {' and '.join(clean)} responses were valid on the first attempt.")
-    grades = 2 * sum(len(rows) for rows in run["rows"].values())
+    sections_graded = sum(len(rows) for rows in run["rows"].values())
+    grades = 2 * sections_graded  # one for the author's section, one for Muse's
     sentences.append(f"All {grades:,} final grades passed validation.")
     return " ".join(sentences)
 
@@ -349,7 +349,7 @@ def length_limitation(run, selected):
     """Describe the sections that missed their length target and the gap without them."""
     candidates = run["candidates"]
     missed = sum(not c["length_compliant"] for c in candidates.values())
-    low, high = length_window(100)
+    low, high = length_window(100)  # a 100-word target gives the window in percent
     target = f"{low:.0f}-{high:.0f}% of their target length"
     if not missed:
         return f"All {len(candidates)} generated sections came within {target}."
@@ -358,16 +358,15 @@ def length_limitation(run, selected):
         f"{missed} of {len(candidates)} generated sections were still outside {target} after up to "
         f"{rewrites} rewrites; they stay in the analysis."
     )
-    before = [r for r in run["rows"][(0, "validation")] if r["length_compliant"]]
-    after = [r for r in run["rows"][(selected, "validation")] if r["length_compliant"]]
-    if not before:
+    before = [r["gap"] for r in run["rows"][(0, "validation")] if r["length_compliant"]]
+    after = [r["gap"] for r in run["rows"][(selected, "validation")] if r["length_compliant"]]
+    if not before or not selected:
         return text
-    improvement = paired_improvement(before, after)["mean"]
+    # Both lists hold the same sections, so the change in the mean is the mean paired improvement.
+    start, end = statistics.mean(before), statistics.mean(after)
     return text + (
         f" On the {len(after)} validation sections that met the target, the gap went from "
-        f"{statistics.mean(r['gap'] for r in before):+.2f} at P0 to "
-        f"{statistics.mean(r['gap'] for r in after):+.2f} at P{selected}, an improvement of "
-        f"{improvement:+.2f}."
+        f"{start:+.2f} at P0 to {end:+.2f} at P{selected}, an improvement of {end - start:+.2f}."
     )
 
 
