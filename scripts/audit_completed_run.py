@@ -18,13 +18,16 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
+from run import load_design
 from xar.audit import audit_request_contract, audit_saved_output, audit_xar_run
 from xar.data import contamination, load_examples, run_examples, task_data
 from xar.openrouter import ledger_key, max_request_cost
 from xar.pipeline import (
     GRADE_SCHEMA,
+    PROPOSAL_ATTEMPTS,
     PROPOSAL_SCHEMA,
     RUBRIC_SCHEMA,
+    WRITER_ATTEMPTS,
     audit_proposal,
     build_feedback,
     length_revision_note,
@@ -33,10 +36,9 @@ from xar.pipeline import (
 from xar.stats import paired_improvement, summarize
 from xar.util import ROOT, RunError, canonical, digest, now, read_json, words, write_json
 
-PILOT_RUN = ROOT / "runs/pilot-meta-blog-attested"
+DESIGN = load_design()
+PILOT_RUN = ROOT / "runs" / DESIGN["pilot_run"]
 PILOT_GATE = ROOT / "runs/meta_blog_pilot_gate.json"
-WRITER_ATTEMPTS = 3  # xar.pipeline.writer_candidates tries each section at most three times
-OPTIMIZER_ATTEMPTS = 2  # xar.pipeline.propose_prompt allows one repair
 # The writer returns plain text, so its requests carry no response_format.
 SCHEMAS = {"writer": None, "rubric": RUBRIC_SCHEMA, "judge": GRADE_SCHEMA, "optimizer": PROPOSAL_SCHEMA}
 # Row filters for the sensitivity table.
@@ -109,7 +111,7 @@ def check_requests(source, manifest, ledger):
 
         # Each send succeeded, came from the right model and provider, and was reserved and
         # settled in the ledger in order, at a cost within its reservation.
-        bound = max_request_cost(payload, endpoint["endpoint"])
+        max_cost = max_request_cost(payload, endpoint["endpoint"])
         for receipt_path in path.parent.glob("attempt_*.json"):
             receipt = read_json(receipt_path)
             check(receipt["status"] == "success", f"{receipt_path}: status is {receipt['status']}")
@@ -133,10 +135,10 @@ def check_requests(source, manifest, ledger):
                 math.isclose(entry["charge"], cost), f"{key}: ledger charge {entry['charge']} != cost {cost}"
             )
             check(
-                math.isclose(entry["upper"], bound),
-                f"{key}: ledger reservation {entry['upper']} != bound {bound}",
+                math.isclose(entry["upper"], max_cost),
+                f"{key}: ledger reserved {entry['upper']}, but the maximum request cost is {max_cost}",
             )
-            check(cost <= bound, f"{key}: cost {cost} is more than its bound {bound}")
+            check(cost <= max_cost, f"{key}: cost {cost} exceeds the maximum request cost {max_cost}")
             check(
                 entry["created_at"] <= receipt["sent_at"] <= receipt["timestamp"] <= entry["settled_at"],
                 f"{key}: reserve, send, receive and settle times are out of order",
@@ -221,7 +223,7 @@ def check_proposals(source, run, train, candidates):
         check(proposal["update_consumed"], f"{where}: update not consumed")
 
         attempts = proposal["attempts"]
-        check(1 <= len(attempts) <= OPTIMIZER_ATTEMPTS, f"{where}: {len(attempts)} attempts")
+        check(1 <= len(attempts) <= PROPOSAL_ATTEMPTS, f"{where}: {len(attempts)} attempts")
         expected_input = canonical({"feedback": feedback, "max_meta_prompt_words": max_words})
         for attempt in attempts:
             payload = audit_saved_output(attempt, PROPOSAL_SCHEMA, where=where)
@@ -284,7 +286,7 @@ def sensitivity_table(run):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--source-run", default=ROOT / "runs/meta-blog-seed0")
+    parser.add_argument("--source-run", default=ROOT / "runs" / DESIGN["research_run"])
     parser.add_argument("--output", default=ROOT / "reports/completion_audit.json")
     args = parser.parse_args()
     source, output = Path(args.source_run).resolve(), Path(args.output).resolve()
