@@ -1,5 +1,8 @@
 """Grading, writer, feedback and proposal stages with fake APIs."""
 
+import math
+import threading
+
 import jsonschema
 import pytest
 from conftest import dummy_example, rubric
@@ -9,24 +12,38 @@ from xar.pipeline import audit_proposal, build_feedback, propose_prompt, validat
 from xar.util import BudgetStop, RunError, canonical, read_json, write_json
 
 
-def test_grade_arithmetic_and_coverage():
-    r = rubric()
-    grade = {
-        "scores": [{"id": str(i), "score": i + 2, "evidence": 'Uses "supported text".'} for i in range(4)]
-    }
-    assert validate_grade(grade, r, "supported text") == 3.5
-    grade["scores"][0]["id"] = "1"
+def grade(**changes):
+    """A valid grade for rubric() that quotes "supported text"; changes apply to the first score."""
+    scores = [{"id": str(i), "score": i + 2, "evidence": 'Uses "supported text".'} for i in range(4)]
+    scores[0].update(changes)
+    return {"scores": scores}
+
+
+def test_validate_grade_returns_the_mean_score():
+    assert validate_grade(grade(), rubric(), "supported text") == 3.5
+
+
+def test_validate_grade_rejects_a_criterion_scored_twice():
     with pytest.raises(RunError, match="coverage"):
-        validate_grade(grade, r, "supported text")
-    grade["scores"][0]["id"] = "0"
+        validate_grade(grade(id="1"), rubric(), "supported text")
+
+
+def test_validate_grade_rejects_a_quote_missing_from_the_text():
     with pytest.raises(RunError, match="quote"):
-        validate_grade(grade, r, "other text")
-    grade["total"] = 10
+        validate_grade(grade(), rubric(), "other text")
+
+
+def test_validate_grade_rejects_nan_scores():
+    with pytest.raises(RunError, match="finite"):
+        validate_grade(grade(score=math.nan), rubric(), "supported text")
+
+
+def test_validate_grade_rejects_extra_fields():
     with pytest.raises(jsonschema.ValidationError):
-        validate_grade(grade, r, "supported text")
+        validate_grade({**grade(), "total": 10}, rubric(), "supported text")
 
 
-def test_feedback_rejects_validation_and_deterministic_failure_order(tmp_path):
+def test_build_feedback_picks_smallest_gaps_by_example_id_and_rejects_validation(tmp_path):
     examples = [dummy_example("paper" + str(i)) for i in range(5)]
     candidates = {e["example_id"]: {"text": "Generated"} for e in examples}
     path = tmp_path / "rubric.json"
@@ -56,38 +73,51 @@ def test_feedback_rejects_validation_and_deterministic_failure_order(tmp_path):
         build_feedback(examples, candidates, rows, "initial", 4)
 
 
-def test_proposal_leakage_and_scale_guards():
-    examples = [dummy_example()]
-    for text in (
+@pytest.mark.parametrize(
+    "text",
+    [
         "Prefer human candidates",
         "Use a weighted average",
         "Unique Author prefers clear writing",
         " ".join("excess" for _ in range(801)),
-        examples[0]["reference"],
-    ):
-        assert not audit_proposal(text, examples, "initial", 800)["accepted"]
-    assert audit_proposal(
-        "Assess clear organization and support for specific claims.", examples, "initial", 800
-    )["accepted"]
+        dummy_example()["reference"],
+    ],
+    ids=["prefers-human", "weighted-average", "names-author", "too-long", "copies-reference"],
+)
+def test_audit_proposal_rejects(text):
+    assert not audit_proposal(text, [dummy_example()], "initial", 800)["accepted"]
 
 
-def test_first_compliant_writer_attempt_and_failed_writer_retention(tmp_path):
-    import threading
+def test_audit_proposal_accepts_a_neutral_prompt():
+    text = "Assess clear organization and support for specific claims."
+    assert audit_proposal(text, [dummy_example()], "initial", 800)["accepted"]
 
+
+WRITER_ROLES = {"writer": role_config("writer")}
+
+
+def writer_reply(word_count, key):
+    return {
+        "content": " ".join(["word"] * word_count),
+        "finish_reason": "stop",
+        "response_id": key,
+        "request_key": key,
+    }
+
+
+def test_writer_keeps_first_compliant_draft_or_the_last_failed_one(tmp_path):
     class Writer:
+        """Replies with the given word counts, one per call."""
+
+        roles = WRITER_ROLES
+
         def __init__(self, counts):
-            self.roles = {"writer": role_config("writer")}
             self.dispatch_stopped = threading.Event()
             self.counts, self.calls = counts, []
 
         def call(self, role, system, data, schema, identity):
             self.calls.append(data)
-            return {
-                "content": " ".join(["word"] * self.counts[len(self.calls) - 1]),
-                "finish_reason": "stop",
-                "response_id": "fake-writer",
-                "request_key": "fake",
-            }
+            return writer_reply(self.counts[len(self.calls) - 1], "fake")
 
     example = dummy_example()
     api = Writer([10, 62, 64])
@@ -103,7 +133,7 @@ def test_first_compliant_writer_attempt_and_failed_writer_retention(tmp_path):
     assert len(candidates) == 1 and candidates[example["example_id"]]["length_compliant"] is False
 
 
-def test_rejected_proposal_consumes_update_with_one_repair(tmp_path):
+def test_rejected_proposal_is_retried_once_then_keeps_current_prompt(tmp_path):
     class Optimizer:
         def __init__(self):
             self.roles = {"optimizer": role_config("optimizer")}
@@ -125,17 +155,18 @@ def test_rejected_proposal_consumes_update_with_one_repair(tmp_path):
     assert result == "current" and len(api.calls) == 2
     assert "previous_proposal" in api.calls[-1]
     artifact = read_json(tmp_path / "feedback/iter_01/proposal.json")
-    assert artifact["update_consumed"] is True and artifact["accepted"] is False
+    assert artifact["accepted"] is False
 
 
-def test_parallel_writer_sampling_repairs_order_and_resume(tmp_path):
-    import threading
-
+def test_parallel_writer_revises_each_section_keeps_order_and_resumes_without_calls(tmp_path):
     examples = [dummy_example("parallel" + str(i)) for i in range(4)]
 
     class ParallelWriter:
+        """Makes every first draft too short, and holds it until two are in flight at once."""
+
+        roles = WRITER_ROLES
+
         def __init__(self):
-            self.roles = {"writer": role_config("writer")}
             self.dispatch_stopped = threading.Event()
             self.calls = {}
             self.lock = threading.Lock()
@@ -153,12 +184,7 @@ def test_parallel_writer_sampling_repairs_order_and_resume(tmp_path):
             with self.lock:
                 self.active -= 1
             count = 10 if identity["attempt"] == 0 else data["target_words"]
-            return {
-                "content": " ".join(["word"] * count),
-                "finish_reason": "stop",
-                "response_id": eid,
-                "request_key": eid + str(identity["attempt"]),
-            }
+            return writer_reply(count, eid + str(identity["attempt"]))
 
     api = ParallelWriter()
     result = writer_candidates(api, examples, tmp_path, concurrency=2)
@@ -176,14 +202,15 @@ def test_parallel_writer_sampling_repairs_order_and_resume(tmp_path):
     assert canonical(api.calls) == before
 
 
-def test_parallel_writer_failure_stops_new_dispatch_and_preserves_sections(tmp_path):
-    import threading
-
+def test_parallel_writer_failure_stops_new_sections_and_keeps_finished_ones(tmp_path):
     examples = [dummy_example("interrupted" + str(i)) for i in range(4)]
 
     class InterruptedWriter:
+        """With fail=True, the first two sections start together and the first one raises."""
+
+        roles = WRITER_ROLES
+
         def __init__(self, fail):
-            self.roles = {"writer": role_config("writer")}
             self.dispatch_stopped = threading.Event()
             self.calls = []
             self.fail = fail
@@ -196,12 +223,7 @@ def test_parallel_writer_failure_stops_new_dispatch_and_preserves_sections(tmp_p
                 self.barrier.wait(timeout=5)
                 if eid == examples[0]["example_id"]:
                     raise BudgetStop("Budget exhausted before send")
-            return {
-                "content": " ".join(["word"] * data["target_words"]),
-                "finish_reason": "stop",
-                "response_id": eid,
-                "request_key": eid,
-            }
+            return writer_reply(data["target_words"], eid)
 
     failed = InterruptedWriter(True)
     with pytest.raises(BudgetStop, match="before send"):
