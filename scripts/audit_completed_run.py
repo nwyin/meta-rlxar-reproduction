@@ -54,7 +54,10 @@ def check(ok, message):
 
 
 def check_software(manifest):
-    """The recorded code hashes must match the commit that produced the run (the code has changed since)."""
+    """Check the manifest's code hashes against the files at the run's git commit.
+
+    The working tree has changed since the run, so the files are read with git show.
+    """
     commit = manifest["git_commit"]
     check(commit, "Run manifest has no git commit; cannot verify the code that produced it")
     for name, expected in manifest["software_hashes"].items():
@@ -249,7 +252,7 @@ def check_proposals(source, run, train, candidates):
 
 
 def check_order(run, writer_finished, first_sends):
-    """Writer, then training, then freeze.json, then validation."""
+    """Check that the phases ran in order: writer, training, freeze.json, then validation."""
     frozen_at = run["freeze"]["frozen_at"]
     first_rubric_sent = min(receipt["sent_at"] for role, _, receipt in first_sends if role == "rubric")
     scoring = [(identity, receipt) for role, identity, receipt in first_sends if role != "writer"]
