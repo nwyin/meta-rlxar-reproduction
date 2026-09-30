@@ -43,10 +43,7 @@ def canonical(value):
 
 
 def digest(value):
-    """SHA-256 hex of a string as-is, or of any other value's canonical JSON.
-
-    Strings are hashed raw so that digest(prompt text) equals file_hash of the prompt file.
-    """
+    """SHA-256 hex of a string, or of any other value's canonical JSON."""
     return hashlib.sha256((value if isinstance(value, str) else canonical(value)).encode()).hexdigest()
 
 
@@ -93,7 +90,7 @@ def bounded_map(function, items, concurrency, stopped):
     """Run function over items on up to `concurrency` threads; return the results in input order.
 
     A failure sets `stopped`, and items that start after that raise Skipped instead of running.
-    The error raised is the original failure, not a Skipped error from an item that was cut short.
+    When every item has finished or been skipped, the first failure other than Skipped is raised.
     """
 
     def invoke(item):
@@ -114,7 +111,9 @@ def bounded_map(function, items, concurrency, stopped):
             raise
     failures = [future.exception() for future in finished if future.exception() is not None]
     if failures:
-        raise next((error for error in failures if not isinstance(error, Skipped)), failures[0])
+        # Raise the error that caused the stop, not one of the Skipped errors that followed it.
+        original = [error for error in failures if not isinstance(error, Skipped)]
+        raise (original or failures)[0]
     return [future.result() for future in futures]
 
 
