@@ -1,0 +1,15 @@
+{
+  "source_url": "https://facebookresearch.github.io/RAM/blogs/unslop/",
+  "blog_reported": {
+    "initial_gap": -4.2,
+    "peak_gap": 2.76,
+    "first_positive_iteration": 4,
+    "peak_iteration": 5,
+    "initial_human": 3.4,
+    "final_human": 5.0,
+    "initial_model": 7.6,
+    "final_model": 2.7
+  },
+  "reproduction": null,
+  "exact_source_data_and_prompts_available": false
+}

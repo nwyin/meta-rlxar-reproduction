@@ -140,7 +140,7 @@ class FakeProvider:
             value = " ".join("generated" for _ in range(data["target_words"]))
         provider = payload["provider"]["only"][0]
         names = {"deepinfra/bf16": "DeepInfra", "parasail/bf16": "Parasail", "crusoe/bf16": "Crusoe",
-                 "digitalocean": "DigitalOcean", "siliconflow/fp8": "SiliconFlow", "wafer": "Wafer"}
+             "digitalocean": "DigitalOcean", "siliconflow/fp8": "SiliconFlow", "wafer": "Wafer", "meta": "Meta"}
         return httpx.Response(200, json={"model": payload["model"], "provider": names[provider],
             "id": f"fake-{len(self.payloads)}", "usage": {"cost": .0001, "prompt_tokens": 100, "completion_tokens": 100},
             "choices": [{"finish_reason": "stop", "message": {"content": json.dumps(value) if isinstance(value, dict) else value,
@@ -351,8 +351,10 @@ def test_confirmation_rejects_changed_dataset_override(monkeypatch, tmp_path):
     original.write_text("original")
     changed = tmp_path / "changed.jsonl"
     changed.write_text("changed")
+    prereg = shared.read_json(shared.ROOT / "configs/confirmation.json")
     manifest = {"experiment": "xar", "arguments": {"split": "research", "seed": 0},
-        "roles": {r: shared.role_config(SimpleNamespace(), r) for r in ("writer", "rubric", "optimizer", "judge")},
+        "roles": {r: shared.role_config(SimpleNamespace(), r, model=prereg[r])
+                  for r in ("writer", "rubric", "optimizer", "judge")},
         "dataset": str(original), "dataset_hash": shared.file_hash(original)}
     shared.write_json(source / "manifest.json", manifest)
     shared.write_json(source / "freeze.json", {"selected": 0})
@@ -580,3 +582,46 @@ def test_pairwise_examples_overlap_but_each_order_is_sent_once(tmp_path, monkeyp
         record = shared.read_json(p)
         assert [r['order'] for r in record['orders']] == [0, 1]
     assert len(fake.payloads) == 12  # Four writers plus two orders for each example.
+
+
+def test_blog_model_contract_rejects_every_role_substitution():
+    design = shared.yaml.safe_load((shared.ROOT / 'configs/experiments.yaml').read_text())
+    manifest = {'roles': {r: shared.role_config(SimpleNamespace(), r)
+                         for r in ('writer', 'rubric', 'optimizer', 'judge')},
+                'arguments': {k: design[k] for k in ('iterations', 'max_meta_prompt_words', 'failure_examples')},
+                'extra': {'initial_meta_prompt_hash': shared.digest(shared.prompt('rubric_initial'))}}
+    shared.validate_primary_manifest(manifest, design)
+    for role in ('writer', 'rubric', 'optimizer', 'judge'):
+        changed = json.loads(json.dumps(manifest))
+        changed['roles'][role] = shared.role_config(SimpleNamespace(), role, model='qwen/qwen3.5-9b')
+        with pytest.raises(shared.ContractError):
+            shared.validate_primary_manifest(changed, design)
+
+
+def test_blog_driver_excludes_sweep_and_old_writer_cache():
+    import run_matrix
+
+    design = shared.yaml.safe_load((shared.ROOT / 'configs/experiments.yaml').read_text())
+    args = SimpleNamespace(runs_root='runs', concurrency=4, budget_usd=100, total_budget_usd=100,
+                           dry_run=True, resume=False)
+    for phase, split, iterations in [('pilot', 'pilot', '1'), ('reproduction', 'research', '7')]:
+        command = run_matrix.build_command(args, design, phase)
+        assert command[command.index('--split')+1] == split
+        assert command[command.index('--iterations')+1] == iterations
+        assert command[command.index('--seed')+1] == '0'
+        assert '--writer-generations' not in command
+        for role in ('writer', 'rubric', 'judge'):
+            assert command[command.index(f'--{role}-model')+1] == 'meta/muse-spark-1.1'
+        assert command[command.index('--optimizer-model')+1] == 'moonshotai/kimi-k2.6'
+
+
+def test_blog_report_does_not_count_historical_runs(tmp_path):
+    historical = tmp_path / 'runs/pilot-schema-GG2'
+    shared.write_json(historical / 'manifest.json', {'experiment': 'xar', 'arguments': {'split': 'pilot'}})
+    output = tmp_path / 'report'
+    shared.render_report(tmp_path / 'runs', output)
+    audit = shared.read_json(output / 'audit.json')
+    assert audit['expected_trajectories'] == 1
+    assert audit['raw_verified_trajectories'] == 0 and audit['state'] == 'not_started'
+    assert shared.read_json(output / 'blog_comparison.json')['reproduction'] is None
+    assert not (output / 'gap_curves.png').exists()

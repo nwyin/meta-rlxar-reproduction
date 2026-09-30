@@ -1,0 +1,77 @@
+{
+  "data": {
+    "id": "meta/muse-spark-1.1",
+    "name": "Meta: Muse Spark 1.1",
+    "created": 1784215741,
+    "description": "Muse Spark 1.1 is a multimodal reasoning model from Meta, built for agentic tasks. It accepts text, images, video, and PDF documents and returns text, with a 1M-token context window....",
+    "architecture": {
+      "tokenizer": "Other",
+      "instruct_type": null,
+      "modality": "text+image+file+video->text",
+      "input_modalities": [
+        "text",
+        "image",
+        "video",
+        "file"
+      ],
+      "output_modalities": [
+        "text"
+      ]
+    },
+    "endpoints": [
+      {
+        "name": "Meta | meta/muse-spark-1.1-20260709",
+        "model_id": "meta/muse-spark-1.1",
+        "model_name": "Meta: Muse Spark 1.1",
+        "context_length": 1048576,
+        "pricing": {
+          "prompt": "0.00000125",
+          "completion": "0.00000425",
+          "web_search": "0.0025",
+          "input_cache_read": "0.00000015",
+          "discount": 0
+        },
+        "provider_name": "Meta",
+        "tag": "meta",
+        "quantization": "unknown",
+        "max_completion_tokens": 943718,
+        "max_prompt_tokens": null,
+        "supported_parameters": [
+          "reasoning",
+          "include_reasoning",
+          "max_tokens",
+          "repetition_penalty",
+          "top_k",
+          "temperature",
+          "top_p",
+          "tools",
+          "tool_choice",
+          "structured_outputs",
+          "response_format",
+          "reasoning_effort"
+        ],
+        "supports_tool_choice": {
+          "none": true,
+          "auto": true,
+          "required": true,
+          "function": true
+        },
+        "status": 0,
+        "uptime_last_30m": 100,
+        "uptime_last_5m": 100,
+        "uptime_last_1d": 99.99298220990211,
+        "supports_implicit_caching": false,
+        "native_tools": {
+          "openrouter:web_search": {
+            "type": "web_search"
+          }
+        },
+        "supports_voice_cloning": false,
+        "supports_multiple_audio_references": false,
+        "supports_image_reference": false,
+        "latency_last_30m": null,
+        "throughput_last_30m": null
+      }
+    ]
+  }
+}

@@ -1,50 +1,149 @@
 {
-  "at": "2026-09-29T22:58:45.726122+00:00",
-  "budget_authorized_usd": 100,
-  "provider_declaration": "reports/kimi_schema_endpoint_check.json",
-  "phases": {
-    "matrix": {
-      "planned_runs": 24,
-      "request_counts_before_retries": {
-        "writer": 0,
-        "rubric": 9984,
-        "judge": 19968,
-        "optimizer": 168
+  "scope": "meta_blog_initial_empirical_investigation",
+  "pilot": {
+    "dry_run": true,
+    "examples": 8,
+    "roles": {
+      "writer": {
+        "model": "meta/muse-spark-1.1",
+        "provider": "meta",
+        "temperature": 0.7,
+        "reasoning": {
+          "effort": "medium"
+        },
+        "max_tokens": 16384
       },
-      "estimated_uncached_usd_with_25_percent_reserve": 998.8903436759999
+      "rubric": {
+        "model": "meta/muse-spark-1.1",
+        "provider": "meta",
+        "temperature": 0.2,
+        "reasoning": {
+          "effort": "medium"
+        },
+        "max_tokens": 16384
+      },
+      "optimizer": {
+        "model": "moonshotai/kimi-k2.6",
+        "provider": "siliconflow/fp8",
+        "temperature": 0.7,
+        "reasoning": {
+          "enabled": true
+        },
+        "max_tokens": 16384
+      },
+      "judge": {
+        "model": "meta/muse-spark-1.1",
+        "provider": "meta",
+        "temperature": 0,
+        "reasoning": {
+          "effort": "medium"
+        },
+        "max_tokens": 16384
+      }
     },
-    "controls": {
-      "planned_runs": 4,
-      "request_counts_before_retries": {
-        "writer": 104,
-        "rubric": 240,
-        "judge": 688
+    "counts_and_costs": {
+      "writer": {
+        "requests": 8,
+        "typical_uncached_usd": 0.41519928571428577,
+        "per_request_conservative_usd": 0.23212325
       },
-      "estimated_uncached_usd_with_25_percent_reserve": 33.554368530285714
+      "rubric": {
+        "requests": 16,
+        "typical_uncached_usd": 0.8303985714285715,
+        "per_request_conservative_usd": 0.23212325
+      },
+      "judge": {
+        "requests": 32,
+        "typical_uncached_usd": 1.660797142857143,
+        "per_request_conservative_usd": 0.23212325
+      },
+      "optimizer": {
+        "requests": 1,
+        "typical_uncached_usd": 0.03588034500000001,
+        "per_request_conservative_usd": 0.15580021
+      }
     },
-    "transfers": {
-      "planned_runs": 48,
-      "request_counts_before_retries": {
-        "alternate_strong_judge": 1920,
-        "weak_judge": 1920,
-        "cross_writer_main_judge": 1920
-      },
-      "estimated_uncached_usd_with_25_percent_reserve": 132.6093948137143,
-      "assumption": "Two distinct source checkpoints, P0 and selected. Equal checkpoints share artifacts and cost less."
-    },
-    "confirmation": {
-      "planned_runs": 1,
-      "request_counts_before_retries": {
-        "writer": 20,
-        "rubric": 40,
-        "judge": 80
-      },
-      "estimated_uncached_usd_with_25_percent_reserve": 3.480941227714286,
-      "assumption": "Preregistered strong W / weak G / strong O seed0; P0 and selected distinct."
-    }
+    "artifact_reuse": {},
+    "retry_reserve_fraction": 0.25,
+    "estimated_phase_usd_with_reserve": 3.6778441812500007,
+    "pricing_source": "saved_endpoint_snapshots",
+    "limitations": "Pilot token usage required; optimizer feedback may be larger.",
+    "budget_usd": null,
+    "total_budget_usd": 100.0
   },
-  "estimated_remaining_research_phases_usd": 1168.5350482477143,
-  "pilot_latency_and_usage_measurements": "reports/live_pilot_metrics.json",
-  "provider_quota": "reports/provider_quota.json",
-  "limitations": "Read-only approximate uncached token estimates, not spending authorization. The full scope includes all 24 primary trajectories. Final pilot-measured projections remain pending; estimates use context bytes/3.5 +1500 input tokens and5000 output tokens per call, so optimizer feedback and reasoning variance may increase costs. Paid operational attempts and remaining pilots are additional. Shared ledger remains capped at $100; provider API key separately caps weekly usage at $50."
+  "research": {
+    "dry_run": true,
+    "examples": 52,
+    "roles": {
+      "writer": {
+        "model": "meta/muse-spark-1.1",
+        "provider": "meta",
+        "temperature": 0.7,
+        "reasoning": {
+          "effort": "medium"
+        },
+        "max_tokens": 16384
+      },
+      "rubric": {
+        "model": "meta/muse-spark-1.1",
+        "provider": "meta",
+        "temperature": 0.2,
+        "reasoning": {
+          "effort": "medium"
+        },
+        "max_tokens": 16384
+      },
+      "optimizer": {
+        "model": "moonshotai/kimi-k2.6",
+        "provider": "siliconflow/fp8",
+        "temperature": 0.7,
+        "reasoning": {
+          "enabled": true
+        },
+        "max_tokens": 16384
+      },
+      "judge": {
+        "model": "meta/muse-spark-1.1",
+        "provider": "meta",
+        "temperature": 0,
+        "reasoning": {
+          "effort": "medium"
+        },
+        "max_tokens": 16384
+      }
+    },
+    "counts_and_costs": {
+      "writer": {
+        "requests": 52,
+        "typical_uncached_usd": 3.0029814285714287,
+        "per_request_conservative_usd": 0.29089075000000003
+      },
+      "rubric": {
+        "requests": 416,
+        "typical_uncached_usd": 24.02385142857143,
+        "per_request_conservative_usd": 0.29089075000000003
+      },
+      "judge": {
+        "requests": 832,
+        "typical_uncached_usd": 48.04770285714286,
+        "per_request_conservative_usd": 0.29089075000000003
+      },
+      "optimizer": {
+        "requests": 7,
+        "typical_uncached_usd": 0.27638646,
+        "per_request_conservative_usd": 0.19200099
+      }
+    },
+    "artifact_reuse": {},
+    "retry_reserve_fraction": 0.25,
+    "estimated_phase_usd_with_reserve": 94.18865271785714,
+    "pricing_source": "saved_endpoint_snapshots",
+    "limitations": "Pilot token usage required; optimizer feedback may be larger.",
+    "budget_usd": null,
+    "total_budget_usd": 100.0
+  },
+  "historical_charged_or_reserved_usd": 5.95643421255,
+  "total_uncached_estimate_with_retry_reserve_including_history": 103.82293111165713,
+  "authorized_total_ceiling_usd": 100,
+  "note": "Provisional uncached estimates use 5000 output tokens per call; measured pilot usage will refine them. Provider quota is independent."
 }

@@ -1,16 +1,11 @@
-# Independent XAR reproduction results
+# Meta blog same-model reproduction
 
-Primary matrix: 0/24 trajectories verified against raw outputs.
+Muse Spark 1.1: writer, rubric generator, judge. Kimi K2.6: optimizer.
 
-No empirical inversion or improvement claim is supported by unexecuted or incomplete cells.
+One trajectory; 52 sections from 8 training and 5 validation papers; seven updates.
 
-Recent arXiv preprints replace the intended S2ORC source. Original author sections are a proxy
-for human writing; peer review and absence of AI assistance are not guaranteed. The dataset
-has only five validation paper clusters. Model family and capability are confounded.
+The paper IDs, original prompts, and decoding settings were not published in the blog.
+This reconstruction uses frozen arXiv author sections and declared prompts/settings.
+A reversal measures optimized judging preferences, not objective writing quality.
 
-Static prompt audits cannot exclude every provenance heuristic or memorization. Provider
-pins reduce routing changes but do not guarantee immutable weights or determinism.
-
-Null and adverse results must remain in the matrix. A descriptive reversal is an optimized
-grading preference, not proof of objective writing quality. Confirmation, transfer, and
-controls must be inspected before any stronger claim.
+Research has not started. Historical alternative-model pilots are excluded.

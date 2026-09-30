@@ -1,0 +1,7 @@
+{
+  "expected_trajectories": 24,
+  "raw_verified_trajectories": 0,
+  "primary_matrix_complete": false,
+  "failures": [],
+  "controls_transfers_confirmation": "Require separate audited artifacts; matrix completion alone is not milestone completion"
+}

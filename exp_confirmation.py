@@ -32,6 +32,8 @@ def main():
     args = parse_args(parser)
     if args.split != "confirmation":
         raise ContractError("Confirmation must use the reserved confirmation split")
+    if not args.dry_run and read_json("configs/confirmation.json").get("active") is False:
+        raise ContractError("Confirmation is disabled by the active same-model reproduction plan")
     source = Path(args.source_run)
     manifest, freeze = read_json(source / "manifest.json"), read_json(source / "freeze.json")
     if manifest["experiment"] != "xar" or manifest["arguments"]["split"] != "research":

@@ -1,5 +1,3 @@
-# Only Muse Spark 1.1 and Kimi K2.6 are used by the active reproduction.
-# Other saved models support historical artifacts and explicit utility invocations.
 models:
   qwen/qwen3.5-9b:
     provider: parasail/bf16
@@ -41,20 +39,12 @@ models:
     endpoint_snapshot: configs/snapshots/qwen_qwen3.5-27b-endpoints.json
     release: qwen/qwen3.5-27b-20260224
     seed_supported: true
-  meta/muse-spark-1.1:
-    provider: meta
-    reasoning:
-      effort: medium
-    max_tokens: 16384
-    endpoint_snapshot: configs/snapshots/meta_muse-spark-1.1-endpoints.json
-    release: meta/muse-spark-1.1-20260709
-    seed_supported: false
 roles:
   writer:
-    model: meta/muse-spark-1.1
+    model: moonshotai/kimi-k2.6
     temperature: 0.7
   rubric:
-    model: meta/muse-spark-1.1
+    model: qwen/qwen3.5-9b
     temperature: 0.2
     providers:
       moonshotai/kimi-k2.6: siliconflow/fp8
@@ -64,5 +54,5 @@ roles:
     providers:
       moonshotai/kimi-k2.6: siliconflow/fp8
   judge:
-    model: meta/muse-spark-1.1
+    model: deepseek/deepseek-v4-pro-0813
     temperature: 0

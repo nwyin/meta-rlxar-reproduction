@@ -1,7 +1,9 @@
 {
-  "expected_trajectories": 24,
+  "scope": "meta_blog_initial_empirical_investigation",
+  "expected_trajectories": 1,
   "raw_verified_trajectories": 0,
-  "primary_matrix_complete": false,
+  "complete": false,
+  "source_run": "runs/meta-blog-seed0",
   "failures": [],
-  "controls_transfers_confirmation": "Require separate audited artifacts; matrix completion alone is not milestone completion"
+  "state": "not_started"
 }

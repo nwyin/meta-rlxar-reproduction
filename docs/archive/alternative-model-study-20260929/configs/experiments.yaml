@@ -1,0 +1,24 @@
+design_version: 1
+weak: qwen/qwen3.5-9b
+strong: moonshotai/kimi-k2.6
+judge: deepseek/deepseek-v4-pro-0813
+evaluation_judges:
+- z-ai/glm-5.2
+- qwen/qwen3.5-9b
+seeds:
+- 0
+- 1
+- 2
+iterations: 7
+max_meta_prompt_words: 800
+failure_examples: 4
+baseline_repeats: 3
+concurrency: 2
+split_seed: 20260929
+selection: highest_complete_training_mean_gap_then_earliest_checkpoint
+failure_selection: smallest_gap_then_example_id
+proposal_policy: one_proposal_one_repair_rejection_consumes_update
+budget_usd: 100.0
+total_budget_usd: 100.0
+confirmation: freeze_configuration_before_opening_five_reserved_papers
+scaling: later_separately_preregistered_extension

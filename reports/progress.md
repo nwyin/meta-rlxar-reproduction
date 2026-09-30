@@ -171,3 +171,7 @@ remains fresh and post-selection; unchanged-prompt controls remain independent.
 All 25 tests and lint pass in that worktree. End-to-end checks verify reduced
 calls, untouched source validation, seed/tamper rejection, resume and no duplicate
 billing. Apply after the active frozen pilots, before the research matrix.
+
+## Scope revised to the blog models
+
+The user requested only the blog initial experiment. Alternative-model pilots and the weak-judge probe were stopped; completed outputs and all unresolved upper reservations remain. Active roles are Muse Spark 1.1 W/G/J and Kimi K2.6 O, one 52-section trajectory with seven updates. The former matrix, transfers, controls, confirmation, and scaling are disabled in the default driver. Original plan/configuration/report snapshots are under docs/archive/alternative-model-study-20260929. The earlier request to raise the full-sweep budget is obsolete; the $100 shared ceiling remains. Read-only exact-model catalog verification passed. A one-update separate Muse/Kimi pilot precedes research.

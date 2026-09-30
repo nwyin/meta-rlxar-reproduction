@@ -1,6 +1,4 @@
 {
-  "active": false,
-  "historical_scope": "Archived alternative-model study; no confirmation calls in the active plan",
   "writer": "moonshotai/kimi-k2.6",
   "rubric": "qwen/qwen3.5-9b",
   "optimizer": "moonshotai/kimi-k2.6",
