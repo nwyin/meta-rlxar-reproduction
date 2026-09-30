@@ -31,11 +31,15 @@ def audit_request_contract(payload, cfg, schema, prompt_file, where="saved reque
     prompt_file is the manifest hash of the system prompt file. schema=None means a plain-text
     request, which must have no response_format and is never retried with a format repair.
     """
-    changed = [key for key, value in routing_fields(cfg).items() if payload.get(key) != value]
-    if changed:
+    differences = [
+        f"{key} is {payload.get(key)!r}, expected {value!r}"
+        for key, value in routing_fields(cfg).items()
+        if payload.get(key) != value
+    ]
+    if differences:
         raise RunError(
-            f"{where}: request fields {changed} differ from the {cfg['model']} role settings "
-            "(routing/decoding contract)"
+            f"{where}: request breaks the {cfg['model']} routing and decoding contract: "
+            + "; ".join(differences)
         )
     if payload.get("response_format") != json_schema_format(schema):
         expected = "no response_format" if schema is None else "the role's JSON schema"
@@ -90,8 +94,11 @@ def audit_saved_output(record, schema, cfg=None, endpoint=None, prompt_file=None
 def _check_sent_after_freeze(record, frozen_at, where):
     """Validation requests must be sent after freeze.json, so they cannot affect which checkpoint is selected."""
     for attempt in record["attempts"]:
-        sent_at = read_json(attempt["response"]["raw_response"]).get("sent_at")
-        if not sent_at or sent_at < frozen_at:
+        receipt_path = attempt["response"]["raw_response"]
+        sent_at = read_json(receipt_path).get("sent_at")
+        if not sent_at:
+            raise RunError(f"{where}: {receipt_path} has no sent_at time")
+        if sent_at < frozen_at:
             raise RunError(f"{where}: validation request sent at {sent_at}, before freeze.json ({frozen_at})")
 
 
@@ -264,22 +271,22 @@ def audit_xar_run(path):
 def validate_primary_manifest(manifest, design):
     """Check that a run used the models, protocol and starting prompt that the design specifies.
 
-    design is configs/experiments.yaml (with pilot_iterations as iterations for the pilot). Each
-    role's full settings must also still match configs/models.yaml.
+    design is configs/experiments.yaml; for a pilot the caller puts pilot_iterations in place of
+    iterations. Each role's full settings must also still match configs/models.yaml.
     """
     for role in ROLES:
         actual = manifest["roles"][role]
         if actual["model"] != design[role]:
             raise RunError(f"{role} model is {actual['model']}; configs/experiments.yaml says {design[role]}")
         expected = role_config(role)
-        if actual != expected:
-            changed = sorted(
-                key for key in expected.keys() | actual.keys() if actual.get(key) != expected.get(key)
+        changed = sorted(
+            key for key in expected.keys() | actual.keys() if actual.get(key) != expected.get(key)
+        )
+        if changed:
+            details = "; ".join(
+                f"{key} (run used {actual.get(key)!r}, config says {expected.get(key)!r})" for key in changed
             )
-            raise RunError(
-                f"{role} settings differ from configs/models.yaml in {', '.join(changed)}: "
-                f"run used {actual}, config says {expected}"
-            )
+            raise RunError(f"{role} settings differ from configs/models.yaml in {details}")
     for field in ("iterations", "max_meta_prompt_words", "failure_examples"):
         value = manifest["arguments"].get(field)
         if value != design[field]:
