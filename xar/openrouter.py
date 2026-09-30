@@ -84,7 +84,10 @@ def check_endpoint_supports(cfg, endpoint, catalog):
     """Fail unless the endpoint accepts every request field and setting that cfg sends to it."""
     missing = REQUIRED_PARAMETERS - set(endpoint["supported_parameters"])
     if missing:
-        raise RunError(f"{cfg['model']} endpoint {endpoint['tag']} does not support {sorted(missing)}")
+        raise RunError(
+            f"{cfg['model']} endpoint {endpoint['tag']} does not support {sorted(missing)}; "
+            "choose another provider in configs/models.yaml"
+        )
     output_limit = endpoint.get("max_completion_tokens") or endpoint["context_length"]
     if cfg["max_tokens"] > output_limit:
         raise RunError(
@@ -94,7 +97,10 @@ def check_endpoint_supports(cfg, endpoint, catalog):
     efforts = catalog.get("reasoning", {}).get("supported_efforts", [])
     effort = cfg["reasoning"].get("effort")
     if effort is not None and efforts and effort not in efforts:
-        raise RunError(f"{cfg['model']} does not support reasoning effort {effort!r}; it supports {efforts}")
+        raise RunError(
+            f"{cfg['model']} does not support reasoning effort {effort!r}; "
+            f"set one of {efforts} in configs/models.yaml"
+        )
 
 
 def endpoint_for(cfg):
@@ -132,7 +138,8 @@ def budgeted_prices(endpoint):
 # Local tokenizers in data/tokenizers/, keyed by the vendor part of the model slug.
 TOKENIZER_BY_VENDOR = {"qwen": "qwen", "moonshotai": "kimi"}
 
-# Split pattern copied from the official tokenization_kimi.py at the pinned revision.
+# Split pattern copied from the official tokenization_kimi.py at the pinned revision, so counting
+# Kimi tokens does not need to run the model repository's own code.
 KIMI_PATTERN = "|".join(  # noqa: FLY002 -- keep the official pattern's list form
     [
         r"[\p{Han}]+",
@@ -335,7 +342,6 @@ class Ledger:
 READ_TIMEOUT_SECONDS = 600
 CONNECT_TIMEOUT_SECONDS = 30
 MAX_SENDS = 4  # one send plus three retries after connection errors or retryable HTTP statuses
-MAX_BACKOFF_SECONDS = 8
 RETRYABLE_STATUS = {408, 429, 500, 502, 503, 504}
 
 
@@ -540,12 +546,15 @@ class OpenRouter:
                         f"OpenRouter returned HTTP {response.status_code} for {role}; see {attempt_file}"
                     )
             if attempt < MAX_SENDS - 1:
-                time.sleep(min(2**attempt, MAX_BACKOFF_SECONDS))
+                time.sleep(2**attempt)  # 1, 2 and 4 seconds
         raise RunError(f"{role} request failed {MAX_SENDS} times with retryable errors; see {directory}")
 
     def _accept(self, raw, role, request_key, ledger_key, attempt_file):
-        """Settle the ledger with the billed cost, check that the pinned model and provider answered,
-        and save the result next to the attempt file."""
+        """Settle the ledger for a successful response and save it as result.json.
+
+        Fails if the response has no billed cost, or if a model or provider other than the pinned one
+        answered.
+        """
         usage = raw.get("usage", {})
         cost = usage.get("cost")
         if cost is None:
