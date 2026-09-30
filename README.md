@@ -47,8 +47,8 @@ and Qwen tokenizers. Raw text, tokenizers, credentials, and runs stay local.
 
 ```sh
 uv sync --locked
-uv run python -m xar prepare-tokenizers
-uv run python -m xar validate-data
+uv run python run.py prepare-tokenizers
+uv run python run.py validate-data
 uv run pytest -q
 ```
 
@@ -74,12 +74,12 @@ A fresh Muse/Kimi pilot verifies their use together before research.
 ## Run and report
 
 ```sh
-uv run python run_matrix.py --phase all --dry-run
-uv run python run_matrix.py --phase all \
+uv run python run.py all --dry-run
+uv run python run.py all \
   --budget-usd 100 --total-budget-usd 100 --concurrency 4
 ```
 
-Run phases separately with --phase pilot or --phase reproduction. Resume an
+Run phases separately with `run.py pilot` or `run.py reproduce`. Resume an
 unchanged existing run by adding --resume. Budget-only continuations are allowed;
 changes to source code or substantive configuration require a new declared run.
 After account confirmation, the declared fresh pilot is runs/pilot-meta-blog-attested;
@@ -87,8 +87,8 @@ research uses runs/meta-blog-seed0. The rejected runs/pilot-meta-blog is preserv
 Both share runs/budget_ledger.json with the preserved historical attempts.
 
 ```sh
-uv run python -m xar audit-run --source-run runs/meta-blog-seed0
-uv run python run_matrix.py --phase report
+uv run python run.py audit-run --source-run runs/meta-blog-seed0
+uv run python run.py report
 ```
 
 The report compares the complete checkpoint curves with the blog's reported
