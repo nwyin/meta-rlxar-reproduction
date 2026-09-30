@@ -1,72 +1,80 @@
 """Full pilot and research runs against a fake provider, including tamper detection."""
 
+from collections import Counter
+from dataclasses import replace
 from pathlib import Path
-from types import SimpleNamespace
 
 import pytest
-import yaml
-from conftest import dummy_example, install_fake, invoke
+from conftest import call_kind, install_fake, write_dataset
 
-import exp_xar
+import run
 from xar.audit import audit_xar_run
 from xar.data import SECTIONS
+from xar.pipeline import run_xar
 from xar.report import render_report
-from xar.util import ROOT, RunError, canonical, file_hash, read_json, write_json
+from xar.util import ROLES, RunError, read_json, write_json
 
 
-def test_full_pilot_orchestration_and_resume(tmp_path, monkeypatch):
-    fake = install_fake(monkeypatch)
-    dataset, splits = tmp_path / "examples.jsonl", tmp_path / "splits.json"
-    examples = [dummy_example("pilot" + str(p), s, "pilot") for p in range(2) for s in SECTIONS]
-    dataset.write_text("".join(canonical(e) + "\n" for e in examples))
-    write_json(splits, {"papers": {"pilot": ["pilot0", "pilot1"]}})
-    write_json(
-        tmp_path / "human_review.json",
-        {
-            "dataset_hash": file_hash(dataset),
-            "papers": {p: {"decision": "approved"} for p in ("pilot0", "pilot1")},
-        },
+def run_phase(tmp_path, design, phase, papers_by_split, *flags):
+    """Run one phase as `run.py <phase>` would, but on a test dataset under tmp_path."""
+    dataset, splits = write_dataset(tmp_path, papers_by_split)
+    options = run.parse_args(
+        [
+            phase,
+            "--runs-root",
+            str(tmp_path / "runs"),
+            "--budget-usd",
+            "100",
+            "--total-budget-usd",
+            "100",
+            *flags,
+        ]
     )
-    ledger, out = tmp_path / "ledger.json", tmp_path / "xar"
-    common = [
-        "--dataset",
-        str(dataset),
-        "--splits",
-        str(splits),
-        "--budget-usd",
-        "10",
-        "--total-budget-usd",
-        "30",
-        "--budget-ledger",
-        str(ledger),
-    ]
-    argv = [*common, "--output-dir", str(out), "--split", "pilot"]
-    invoke(monkeypatch, exp_xar, argv)
+    settings = replace(run.settings_for(phase, design, options), dataset=str(dataset), splits=str(splits))
+    run_xar(settings)
+    return settings
+
+
+@pytest.fixture
+def pilot(tmp_path, monkeypatch, design):
+    """A completed pilot run (design pilot_iterations updates), and the fake that served it."""
+    fake = install_fake(monkeypatch)
+    settings = run_phase(tmp_path, design, "pilot", {"pilot": ["pilot0", "pilot1"]})
+    return fake, settings
+
+
+def test_pilot_run_completes_and_resume_makes_no_calls(pilot, design):
+    fake, settings = pilot
+    out = Path(settings.output_dir)
     freeze = read_json(out / "freeze.json")
-    assert freeze["selected"] == 0  # All training means tie; earliest checkpoint wins.
-    assert len(freeze["prompt_hashes"]) == 8
+    assert freeze["selected"] == 0  # every checkpoint ties on training, and the earliest wins
+    assert len(freeze["prompt_hashes"]) == design["pilot_iterations"] + 1
+    assert len(list((out / "prompts").glob("*.md"))) == design["pilot_iterations"] + 1
     assert read_json(out / "status.json")["state"] == "complete"
-    assert len(list((out / "prompts").glob("*.md"))) == 8
     audit_xar_run(out)  # raises if the saved run does not check out
-    n = len(fake.payloads)
-    invoke(monkeypatch, exp_xar, [*argv, "--resume"])
-    assert len(fake.payloads) == n
-    # Forgetting --resume fails before preflight writes anything into the run.
+    sent = len(fake.payloads)
+    run_xar(replace(settings, resume=True))
+    assert len(fake.payloads) == sent
+    # Without --resume the run stops before preflight writes anything into it.
     preflights = sorted((out / "preflight").iterdir())
     with pytest.raises(RunError, match="Run exists"):
-        invoke(monkeypatch, exp_xar, argv)
+        run_xar(settings)
     assert sorted((out / "preflight").iterdir()) == preflights
-    response_path = next((out / "scores/main/0/train").glob("*/human.json"))
-    response = read_json(response_path)["attempts"][-1]["response"]
-    request_path = Path(response["raw_response"]).parent / "request.json"
+
+
+def test_audit_rejects_changed_request_temperature(pilot):
+    out = Path(pilot[1].output_dir)
+    grade = read_json(next((out / "scores/main/0/train").glob("*/human.json")))
+    request_path = Path(grade["attempts"][-1]["response"]["raw_response"]).parent / "request.json"
     request = read_json(request_path)
-    original = request["payload"]["temperature"]
     request["payload"]["temperature"] = 0.9
     write_json(request_path, request)
     with pytest.raises(RunError, match="decoding contract"):
         audit_xar_run(out)
-    request["payload"]["temperature"] = original
-    write_json(request_path, request)
+
+
+def test_audit_rejects_wrong_grade_total(pilot):
+    out = Path(pilot[1].output_dir)
     grade_path = out / "scores/main/0/train/pilot0_abstract/human.json"
     grade = read_json(grade_path)
     grade["total"] = 10
@@ -75,69 +83,57 @@ def test_full_pilot_orchestration_and_resume(tmp_path, monkeypatch):
         audit_xar_run(out)
 
 
-def test_blog_driver_excludes_sweep_and_old_writer_cache():
-    import run_matrix
-
-    design = yaml.safe_load((ROOT / "configs/experiments.yaml").read_text())
-    args = SimpleNamespace(
-        runs_root="runs", concurrency=4, budget_usd=100, total_budget_usd=100, dry_run=True, resume=False
-    )
-    for phase, split, iterations in [("pilot", "pilot", "1"), ("reproduction", "research", "7")]:
-        command = run_matrix.build_command(args, design, phase)
-        assert command[command.index("--split") + 1] == split
-        assert command[command.index("--iterations") + 1] == iterations
-        assert command[command.index("--seed") + 1] == "0"
-        for role in ("writer", "rubric", "judge"):
-            assert command[command.index(f"--{role}-model") + 1] == "meta/muse-spark-1.1"
-        assert command[command.index("--optimizer-model") + 1] == "moonshotai/kimi-k2.6"
+def test_check_pilot_records_the_audited_pilot(pilot, design):
+    runs_root = Path(pilot[1].output_dir).parent
+    run.check_pilot(runs_root, design)
+    manifest = read_json(Path(pilot[1].output_dir) / "manifest.json")
+    gate = read_json(runs_root / "meta_blog_pilot_gate.json")
+    assert gate == {"pilot_substantive_hash": manifest["substantive_hash"]}
 
 
-def test_blog_research_report_rebuilds_all_52_sections_and_rejects_tampering(tmp_path, monkeypatch):
+def test_check_pilot_rejects_a_pilot_that_differs_from_the_design(pilot, design):
+    out = Path(pilot[1].output_dir)
+    manifest = read_json(out / "manifest.json")
+    manifest["arguments"]["failure_examples"] += 1
+    write_json(out / "manifest.json", manifest)
+    with pytest.raises(RunError, match="failure_examples"):
+        run.check_pilot(out.parent, design)
+    assert not (out.parent / "meta_blog_pilot_gate.json").exists()
+
+
+@pytest.mark.parametrize(
+    "phase, split, iterations_key",
+    [("pilot", "pilot", "pilot_iterations"), ("reproduce", "research", "iterations")],
+)
+def test_settings_follow_the_design(design, phase, split, iterations_key):
+    options = run.parse_args([phase, "--concurrency", "3", "--dry-run"])
+    settings = run.settings_for(phase, design, options)
+    assert settings.split == split
+    assert settings.iterations == design[iterations_key]
+    assert settings.seed == design["seed"]
+    for role in ROLES:
+        assert getattr(settings, f"{role}_model") == design[role]
+    assert settings.concurrency == 3 and settings.dry_run
+    assert run.settings_for(phase, design, run.parse_args([phase])).concurrency == design["concurrency"]
+
+
+def test_report_from_research_run_and_after_tampering(tmp_path, monkeypatch, design):
     fake = install_fake(monkeypatch)
-    design = yaml.safe_load((ROOT / "configs/experiments.yaml").read_text())
+    # The audit expects the real research size: 8 training and 5 validation papers.
     groups = {
-        "train": [f"pilot0train{i}" for i in range(8)],
+        "train": [f"train{i}" for i in range(8)],
         "validation": [f"validation{i}" for i in range(5)],
     }
-    examples = [
-        dummy_example(p, section, split)
-        for split, papers in groups.items()
-        for p in papers
-        for section in SECTIONS
-    ]
-    dataset, splits = tmp_path / "examples.jsonl", tmp_path / "splits.json"
-    dataset.write_text("".join(canonical(e) + "\n" for e in examples))
-    write_json(splits, {"papers": groups})
-    write_json(
-        tmp_path / "human_review.json",
-        {
-            "dataset_hash": file_hash(dataset),
-            "papers": {e["paper_id"]: {"decision": "approved"} for e in examples},
-        },
-    )
-    runs = tmp_path / "runs"
-    source = runs / design["research_run"]
-    invoke(
-        monkeypatch,
-        exp_xar,
-        [
-            "--dataset",
-            str(dataset),
-            "--splits",
-            str(splits),
-            "--output-dir",
-            str(source),
-            "--budget-ledger",
-            str(runs / "ledger.json"),
-            "--budget-usd",
-            "100",
-            "--total-budget-usd",
-            "100",
-            "--concurrency",
-            "4",
-        ],
-    )
-    assert len(fake.payloads) == 1307
+    settings = run_phase(tmp_path, design, "reproduce", groups, "--concurrency", "4")
+    source, runs = Path(settings.output_dir), tmp_path / "runs"
+    sections = len(SECTIONS) * sum(len(papers) for papers in groups.values())
+    checkpoints = design["iterations"] + 1
+    assert Counter(call_kind(p) for p in fake.payloads) == {
+        "writer": sections,
+        "rubric": sections * checkpoints,
+        "grade": 2 * sections * checkpoints,
+        "optimizer": design["iterations"],
+    }
     assert {p["model"] for p in fake.payloads} == {"meta/muse-spark-1.1", "moonshotai/kimi-k2.6"}
     output = tmp_path / "report"
     render_report(runs, output)

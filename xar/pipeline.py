@@ -10,6 +10,7 @@ import math
 import random
 import re
 import statistics
+from dataclasses import dataclass
 from pathlib import Path
 
 import jsonschema
@@ -478,6 +479,33 @@ def checkpoint_row(iteration, train, validation, selected):
     }
 
 
+@dataclass
+class RunSettings:
+    """Everything run_xar needs for one trajectory; run.py builds it from configs/experiments.yaml.
+
+    The manifest saves every field except output_dir, dry_run and resume under "arguments", and
+    all of those except the two budgets go into its substantive hash, which --resume checks."""
+
+    output_dir: str
+    split: str  # "pilot" or "research"
+    seed: int
+    iterations: int
+    max_meta_prompt_words: int
+    failure_examples: int
+    writer_model: str
+    rubric_model: str
+    optimizer_model: str
+    judge_model: str
+    concurrency: int
+    budget_ledger: str
+    budget_usd: float | None = None
+    total_budget_usd: float | None = None
+    dataset: str = "data/examples.jsonl"
+    splits: str = "data/splits.json"
+    dry_run: bool = False
+    resume: bool = False
+
+
 def planned_requests(examples, iterations):
     """Request counts for the dry-run estimate, not counting format repairs."""
     checkpoints = iterations + 1
@@ -489,16 +517,16 @@ def planned_requests(examples, iterations):
     }
 
 
-def optimize_on_training(api, args, train, candidates, initial):
-    """Score the initial prompt on the training sections, then make args.iterations updates.
+def optimize_on_training(api, settings, train, candidates, initial):
+    """Score the initial prompt on the training sections, then make settings.iterations updates.
 
     Each update is proposed from the previous checkpoint's training feedback and then scored on
     training too. Returns the prompts (index = update number) and their training summaries."""
-    out = Path(args.output_dir)
+    out = Path(settings.output_dir)
     prompts, summaries, rows = [initial], [], None
-    for iteration in range(args.iterations + 1):
+    for iteration in range(settings.iterations + 1):
         if iteration:
-            feedback = build_feedback(train, candidates, rows, prompts[-1], args.failure_examples)
+            feedback = build_feedback(train, candidates, rows, prompts[-1], settings.failure_examples)
             proposal = propose_prompt(
                 api,
                 prompts[-1],
@@ -507,14 +535,14 @@ def optimize_on_training(api, args, train, candidates, initial):
                 initial,
                 iteration,
                 output=out,
-                max_words=args.max_meta_prompt_words,
+                max_words=settings.max_meta_prompt_words,
             )
             prompts.append(proposal)
         path = out / "prompts" / f"iter_{iteration:02d}.md"
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(prompts[-1])
-        rows = evaluate_checkpoint(api, train, candidates, prompts[-1], iteration, out, args.concurrency)
-        summary = summarize(rows, args.seed)
+        rows = evaluate_checkpoint(api, train, candidates, prompts[-1], iteration, out, settings.concurrency)
+        summary = summarize(rows, settings.seed)
         summaries.append(summary)
         print(
             f"Checkpoint {iteration}: train gap {summary['gap']}, "
@@ -552,42 +580,42 @@ def freeze_selection(output, prompts, train_summaries):
     return selected
 
 
-def score_on_validation(api, args, validation, candidates, prompts):
+def score_on_validation(api, settings, validation, candidates, prompts):
     """Score every checkpoint's prompt on the validation sections; one summary per checkpoint."""
     summaries = []
     for iteration, meta_prompt in enumerate(prompts):
         rows = evaluate_checkpoint(
-            api, validation, candidates, meta_prompt, iteration, args.output_dir, args.concurrency
+            api, validation, candidates, meta_prompt, iteration, settings.output_dir, settings.concurrency
         )
-        summaries.append(summarize(rows, args.seed))
+        summaries.append(summarize(rows, settings.seed))
     return summaries
 
 
-def run_xar(args):
+def run_xar(settings):
     """Run one trajectory: write the candidate sections, optimize the meta prompt on training,
     freeze the selected checkpoint, then score every checkpoint on validation.
 
-    With args.dry_run, only prints the cost estimate."""
+    With settings.dry_run, only prints the cost estimate."""
     initial = prompt("rubric_initial")
-    if words(initial) > args.max_meta_prompt_words:
+    if words(initial) > settings.max_meta_prompt_words:
         raise RunError(
             f"prompts/rubric_initial.md has {words(initial)} words; "
-            f"max_meta_prompt_words is {args.max_meta_prompt_words}"
+            f"max_meta_prompt_words is {settings.max_meta_prompt_words}"
         )
-    examples = run_examples(load_examples(args.dataset, args.splits), args.split)
+    examples = run_examples(load_examples(settings.dataset, settings.splits), settings.split)
     train = [e for e in examples if e["split"] == "train"]
     validation = [e for e in examples if e["split"] == "validation"]
-    roles = {role: role_config(role, getattr(args, f"{role}_model")) for role in ROLES}
-    if args.dry_run:
-        estimate(args, roles, examples, planned_requests(examples, args.iterations))
+    roles = {role: role_config(role, getattr(settings, f"{role}_model")) for role in ROLES}
+    if settings.dry_run:
+        estimate(settings, roles, examples, planned_requests(examples, settings.iterations))
         return
-    out = Path(args.output_dir)
+    out = Path(settings.output_dir)
     with run_lock(out):
-        api = initialize_run(args, roles, "xar", {"initial_meta_prompt_hash": digest(initial)})
-        candidates = writer_candidates(api, examples, out, args.concurrency)
-        prompts, train_summaries = optimize_on_training(api, args, train, candidates, initial)
+        api = initialize_run(settings, roles, "xar", {"initial_meta_prompt_hash": digest(initial)})
+        candidates = writer_candidates(api, examples, out, settings.concurrency)
+        prompts, train_summaries = optimize_on_training(api, settings, train, candidates, initial)
         selected = freeze_selection(out, prompts, train_summaries)
-        validation_summaries = score_on_validation(api, args, validation, candidates, prompts)
+        validation_summaries = score_on_validation(api, settings, validation, candidates, prompts)
         table = []
         for iteration, (train_summary, validation_summary) in enumerate(
             zip(train_summaries, validation_summaries, strict=True)
