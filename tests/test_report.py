@@ -8,6 +8,8 @@ def test_report_ignores_other_runs_until_research_starts(tmp_path):
     historical = tmp_path / "runs/pilot-schema-GG2"
     write_json(historical / "manifest.json", {"experiment": "xar", "arguments": {"split": "pilot"}})
     output = tmp_path / "report"
+    output.mkdir()
+    (output / "gap_curves.png").write_text("left over from an earlier report")
     render_report(tmp_path / "runs", output)
     audit = read_json(output / "audit.json")
     assert audit["state"] == "not_started" and audit["error"] is None
@@ -35,3 +37,8 @@ def test_result_sentences_state_sign_and_training_direction():
     assert rows[3] == "| P1 (selected) | -0.25 | -0.16 | 8.00 | 8.16 |"
     flipped = {**summary, "selected_gap": 0.5, "reversed": True}
     assert sign_sentence(table, flipped).startswith("The sign flipped.")
+    later = checkpoints([-0.8, -0.25, -0.4, -0.65], [-1.04, -0.16, 0.2, -0.37])
+    missed = {**summary, "first_positive_iteration": 2}
+    assert sign_sentence(later, missed).endswith("although the validation gap was positive at P2.")
+    already = {**summary, "initial_gap": 0.3}
+    assert sign_sentence(table, already).startswith("The validation gap was already +0.30 at P0")
