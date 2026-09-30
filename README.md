@@ -8,7 +8,8 @@ from eight training and five validation papers, with seven prompt updates.
 
 The active workflow runs a separate one-update operational pilot, then this
 single experiment. The earlier alternative-model study, which never ran beyond
-pilots, is kept at the git tag `alternative-model-study`. Its raw outputs and unresolved cost reservations are preserved locally.
+pilots, is kept at the git tag `alternative-model-study`. Its raw outputs and
+unresolved cost reservations are preserved locally.
 See [PLAN.md](PLAN.md) for the scientific contract and reconstruction choices.
 
 The blog does not publish its original paper IDs, exact prompts, or sampling

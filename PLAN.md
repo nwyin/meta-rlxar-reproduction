@@ -2,7 +2,8 @@
 
 Revised September 29, 2026 at the user's request, before research grading.
 The previous alternative-model study is kept at the git tag
-`alternative-model-study`. Historical paid pilots are retained and excluded from this experiment.
+`alternative-model-study`. Historical paid pilots are retained and excluded
+from this experiment.
 
 ## Target
 
@@ -22,8 +23,7 @@ One trajectory, local seed 0, checkpoints P0 through P7. The default batch has
 no other-model sweep, repeated-seed matrix, additional controls, transfers,
 confirmation evaluation, scaling, or reinforcement learning. The later Qwen RL
 experiments and other writing domains in the blog are outside this target.
-Other endpoint configurations remain available only for historical artifacts
-and explicit utility invocations; the active batch selects only the two models above.
+The active batch uses only the two models above.
 
 The blog reports validation gap -4.2 to +2.76, crossing zero at update 4 and
 peaking at update 5. Rounded absolute validation means move from 3.4 to 5.0 for
