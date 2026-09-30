@@ -59,15 +59,18 @@ def load_examples(dataset, splits):
         if listed_in != [e["split"]]:
             raise RunError(
                 f"{eid} is labelled {e['split']}, but {splits} lists paper {e['paper_id']} "
-                f"under {listed_in or 'no split'}"
+                f"under {', '.join(listed_in) or 'no split'}"
             )
-        if e["context_hash"] != digest(e["context"]) or e["reference_hash"] != digest(e["reference"]):
-            raise RunError(f"{eid}: context or reference text does not match its stored hash")
-        if e["target_words"] != words(e["reference"]) or not e["target_words"]:
+        for field in ("context", "reference"):
+            if e[field + "_hash"] != digest(e[field]):
+                raise RunError(f"{eid}: {field} text does not match its stored {field}_hash")
+        if e["target_words"] != words(e["reference"]):
             raise RunError(
                 f"{eid}: target_words is {e['target_words']}, but the reference has "
                 f"{words(e['reference'])} words"
             )
+        if not e["target_words"]:
+            raise RunError(f"{eid}: the reference is empty")
         if normalize(e["reference"]) in normalize(e["context"]):
             raise RunError(f"{eid}: the withheld reference still appears in the visible paper")
         sections_by_paper.setdefault(e["paper_id"], []).append(e["section_type"])
@@ -119,7 +122,8 @@ def contamination(candidate, reference):
         "longest_verbatim_run_words": longest,
         "eightgram_overlap_fraction": shared / max(1, len(candidate_ngrams)),
         "flagged": longest >= VERBATIM_FLAG_WORDS,
-        # Always False: flagged candidates are reported, not dropped. Saved runs include the key.
+        # Always False: flagged candidates are reported, not dropped. The key stays because the
+        # completed-run audit compares this whole dict with the saved one.
         "exclusion": False,
     }
 
