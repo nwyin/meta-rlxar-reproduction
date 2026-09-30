@@ -1,4 +1,4 @@
-"""Run directories: the manifest, resume checks, the dry-run estimate and the operational summary."""
+"""Run directories: the manifest, resume checks, the dry-run cost estimate and operational_summary.json."""
 
 from __future__ import annotations
 
@@ -6,6 +6,7 @@ import json
 import math
 import statistics
 import subprocess
+from dataclasses import asdict
 from pathlib import Path
 
 from xar.data import load_examples, run_examples, task_data
@@ -35,7 +36,7 @@ def software_hashes():
 
 
 def operational_summary(output):
-    """Count invalid structured replies per role and all API sends; save operational_summary.json."""
+    """Count invalid structured replies per role and all API sends, and save operational_summary.json."""
     output = Path(output)
     records = []  # (role, structured-output record)
     for path in (output / "rubrics").rglob("rubric.json"):
@@ -61,45 +62,54 @@ def operational_summary(output):
     send_statuses = [read_json(path)["status"] for path in (output / "requests").glob("*/attempt_*.json")]
     summary = {
         "format_validation": format_validation,
-        "transport_attempts": len(send_statuses),
-        "unresolved_transport": send_statuses.count("uncertain"),
+        "sends": len(send_statuses),
+        # "uncertain": the request was sent but no response was recorded.
+        "sends_without_response": send_statuses.count("uncertain"),
     }
     write_json(output / "operational_summary.json", summary)
     return summary
 
 
-# Budgets may change when a run is resumed; every other argument must match the saved run.
-BUDGET_ARGS = {"budget_usd", "total_budget_usd"}
+# These may change on --resume, because they do not change the results; every other argument
+# must match the saved run.
+RESUMABLE_ARGS = {"budget_usd", "total_budget_usd", "concurrency", "budget_ledger"}
 # Manifest keys added after substantive_hash is computed.
 UNHASHED_KEYS = {"substantive_hash", "created_at", "git_commit"}
 
 
 def _hashed_view(manifest):
-    """The part of a manifest that substantive_hash covers: all but the budgets, created_at and git_commit."""
+    """The part of a manifest that substantive_hash covers: all but RESUMABLE_ARGS and UNHASHED_KEYS."""
     view = {key: value for key, value in manifest.items() if key not in UNHASHED_KEYS}
-    view["arguments"] = {k: v for k, v in manifest["arguments"].items() if k not in BUDGET_ARGS}
+    view["arguments"] = {k: v for k, v in manifest["arguments"].items() if k not in RESUMABLE_ARGS}
     return view
 
 
 def _changed_settings(saved, manifest):
-    """Names of the hashed manifest fields that differ, e.g. ["arguments.iterations", "roles"]."""
+    """The hashed manifest fields that differ, e.g. ["arguments.iterations (saved 7, now 6)", "roles"]."""
     old, new = _hashed_view(saved), _hashed_view(manifest)
     changed = []
     for key in sorted(old.keys() | new.keys()):
         if old.get(key) == new.get(key):
             continue
-        if key in ("arguments", "software_hashes"):
-            old_items, new_items = old.get(key) or {}, new.get(key) or {}
-            names = sorted(old_items.keys() | new_items.keys())
-            changed += [f"{key}.{name}" for name in names if old_items.get(name) != new_items.get(name)]
-        else:
+        if key not in ("arguments", "software_hashes"):
             changed.append(key)
+            continue
+        old_items, new_items = old.get(key) or {}, new.get(key) or {}
+        for name in sorted(old_items.keys() | new_items.keys()):
+            before, after = old_items.get(name), new_items.get(name)
+            if before == after:
+                continue
+            # Code hashes are long and say nothing more than the file name.
+            values = f" (saved {before!r}, now {after!r})" if key == "arguments" else ""
+            changed.append(f"{key}.{name}{values}")
     return changed
 
 
-def resolved_manifest(args, roles, experiment, extra=None):
-    """The run's manifest: arguments, role settings, pinned endpoints and hashes of data and code."""
-    arguments = {k: v for k, v in vars(args).items() if k not in {"dry_run", "resume", "output_dir"}}
+def resolved_manifest(settings, roles, experiment, extra=None):
+    """The run's manifest: settings, role settings, pinned endpoints and hashes of data and code."""
+    arguments = {
+        k: v for k, v in asdict(settings).items() if k not in {"dry_run", "resume", "output_dir"}
+    }
     endpoints = {}
     for role, cfg in roles.items():
         endpoint, catalog = endpoint_for(cfg)
@@ -109,10 +119,10 @@ def resolved_manifest(args, roles, experiment, extra=None):
         "arguments": arguments,
         "roles": roles,
         "endpoints": endpoints,
-        "dataset_hash": file_hash(args.dataset),
-        "splits_hash": file_hash(args.splits),
-        "dataset": str(Path(args.dataset).resolve()),
-        "splits": str(Path(args.splits).resolve()),
+        "dataset_hash": file_hash(settings.dataset),
+        "splits_hash": file_hash(settings.splits),
+        "dataset": str(Path(settings.dataset).resolve()),
+        "splits": str(Path(settings.splits).resolve()),
         "software_hashes": software_hashes(),
         "schema_version": SCHEMA_VERSION,
         "extra": extra or {},
@@ -121,15 +131,17 @@ def resolved_manifest(args, roles, experiment, extra=None):
     return manifest
 
 
-def _check_human_review(args):
+def _check_human_review(settings):
     """Every paper the run uses must be approved in human_review.json next to the dataset."""
-    review_path = Path(args.dataset).parent / "human_review.json"
+    dataset = settings.dataset
+    review_path = Path(dataset).parent / "human_review.json"
     if not review_path.exists():
         raise RunError(f"Missing {review_path}; record a review decision for each paper before running")
     review = read_json(review_path)
-    if review.get("dataset_hash") != file_hash(args.dataset):
-        raise RunError(f"{review_path} was written for a different {args.dataset}; review the data again")
-    papers = {e["paper_id"] for e in run_examples(load_examples(args.dataset, args.splits), args.split)}
+    if review.get("dataset_hash") != file_hash(dataset):
+        raise RunError(f"{review_path} was written for a different {dataset}; review the data again")
+    examples = run_examples(load_examples(dataset, settings.splits), settings.split)
+    papers = {e["paper_id"] for e in examples}
     decisions = review.get("papers", {})
     pending = sorted(p for p in papers if decisions.get(p, {}).get("decision") != "approved")
     if pending:
@@ -143,45 +155,58 @@ def _git_commit():
         return None
 
 
-def _record_budget_change(output, args):
-    """Append the new budget limits to budget_continuations.json unless they are already the last entry."""
+def _record_budget_change(output, saved, settings):
+    """Log the budgets to budget_continuations.json when they differ from the ones last used.
+
+    The ones last used are the log's last entry, or the saved manifest's if nothing is logged yet.
+    """
     path = output / "budget_continuations.json"
     history = read_json(path) if path.exists() else []
-    limits = {"budget_usd": args.budget_usd, "total_budget_usd": args.total_budget_usd}
-    last = {key: history[-1].get(key) for key in limits} if history else None
-    if last != limits:
+    limits = {"budget_usd": settings.budget_usd, "total_budget_usd": settings.total_budget_usd}
+    last = history[-1] if history else saved["arguments"]
+    if {key: last.get(key) for key in limits} != limits:
         history.append({"at": now(), **limits})
         write_json(path, history)
 
 
-def initialize_run(args, roles, experiment, extra=None):
+def initialize_run(settings, roles, experiment, extra=None):
     """Check the data review and any saved run, run the live preflight, and return the API client.
 
     A new run gets its manifest written here. A resumed run must match the saved manifest except
-    for the budgets; a budget change is logged to budget_continuations.json.
+    for RESUMABLE_ARGS; a budget change is logged to budget_continuations.json.
     """
-    _check_human_review(args)
-    manifest = resolved_manifest(args, roles, experiment, extra)
-    output = Path(args.output_dir)
+    _check_human_review(settings)
+    manifest = resolved_manifest(settings, roles, experiment, extra)
+    output = Path(settings.output_dir)
     manifest_path = output / "manifest.json"
     saved = read_json(manifest_path) if manifest_path.exists() else None
+    # Where a new run goes: the run name in configs/experiments.yaml under --runs-root.
+    elsewhere = "change the run name in configs/experiments.yaml or pass a different --runs-root"
     # Check for an existing run before any network call or write.
     if saved is not None:
-        if not args.resume:
-            raise RunError(f"Run exists in {output}; pass --resume to continue it or use a new --output-dir")
+        if not settings.resume:
+            raise RunError(f"Run exists in {output}; pass --resume to continue it, or {elsewhere}")
         if saved["substantive_hash"] != manifest["substantive_hash"]:
             changed = ", ".join(_changed_settings(saved, manifest)) or "the settings hash"
             raise RunError(
-                f"Settings differ from the saved run in {changed}; use a new --output-dir or revert"
+                f"Settings differ from the saved run in {output}: {changed}. "
+                f"Revert them to resume, or {elsewhere} to start a new run"
             )
-    api = OpenRouter(output, roles, args.seed, args.budget_usd, args.total_budget_usd, args.budget_ledger)
+    api = OpenRouter(
+        output,
+        roles,
+        settings.seed,
+        settings.budget_usd,
+        settings.total_budget_usd,
+        settings.budget_ledger,
+    )
     api.preflight()
     if saved is None:
         manifest["created_at"] = now()
         manifest["git_commit"] = _git_commit()
         write_json(manifest_path, manifest, write_once=True)
-    elif any(saved["arguments"].get(key) != getattr(args, key) for key in BUDGET_ARGS):
-        _record_budget_change(output, args)
+    else:
+        _record_budget_change(output, saved, settings)
     return api
 
 
@@ -206,7 +231,7 @@ def _check_context_fits(role, cfg, endpoint, examples):
             )
 
 
-def estimate(args, roles, examples, counts):
+def estimate(settings, roles, examples, counts):
     """Print a rough cost estimate and check that every example fits each role's context window.
 
     counts maps each role to its number of requests. Returns the printed estimate.
@@ -237,8 +262,8 @@ def estimate(args, roles, examples, counts):
         "roles": roles,
         "per_role": per_role,
         "estimated_usd_with_retry_reserve": typical_total * (1 + RETRY_RESERVE),
-        "budget_usd": args.budget_usd,
-        "total_budget_usd": args.total_budget_usd,
+        "budget_usd": settings.budget_usd,
+        "total_budget_usd": settings.total_budget_usd,
     }
     print(json.dumps(result, indent=2))
     return result

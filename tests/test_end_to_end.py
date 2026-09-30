@@ -1,5 +1,6 @@
 """Full pilot and research runs against a fake provider, including tamper detection."""
 
+import re
 from collections import Counter
 from dataclasses import replace
 from pathlib import Path
@@ -60,6 +61,22 @@ def test_pilot_run_completes_and_resume_makes_no_calls(pilot, design):
     with pytest.raises(RunError, match="Run exists"):
         run_xar(settings)
     assert sorted((out / "preflight").iterdir()) == preflights
+
+
+def test_resume_allows_new_concurrency_and_logs_every_budget_change(pilot):
+    settings, out = pilot.settings, pilot.out
+    for budget in (20, settings.budget_usd, settings.budget_usd):
+        run_xar(replace(settings, resume=True, concurrency=settings.concurrency + 1, budget_usd=budget))
+    history = read_json(out / "budget_continuations.json")
+    assert [entry["budget_usd"] for entry in history] == [20, settings.budget_usd]
+
+
+def test_resume_rejects_changed_iterations_and_names_the_values(pilot):
+    settings = pilot.settings
+    changed = replace(settings, resume=True, iterations=settings.iterations + 1)
+    expected = f"arguments.iterations (saved {settings.iterations}, now {settings.iterations + 1})"
+    with pytest.raises(RunError, match=re.escape(expected)):
+        run_xar(changed)
 
 
 def test_audit_rejects_changed_request_temperature(pilot):
