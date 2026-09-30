@@ -12,6 +12,12 @@ single experiment. The former alternative-model sweep is archived in
 Its raw outputs and unresolved cost reservations are preserved locally.
 See [PLAN.md](PLAN.md) for the scientific contract and reconstruction choices.
 
+**Live access:** read-only preflight passed, but Muse requests returned HTTP 403
+because the account needs 18+ confirmation at
+[OpenRouter preferences](https://openrouter.ai/settings/preferences).
+No Muse section or research score has been generated. See
+[the saved access check](reports/muse_access_check.json).
+
 The blog does not publish its original paper IDs, exact prompts, or sampling
 settings. Our frozen arXiv split, prompts, criterion schema, and decoding are
 explicit reconstruction choices. Matching the numerical result is not guaranteed.
@@ -58,7 +64,8 @@ uv run python run_matrix.py --phase all \
 Run phases separately with --phase pilot or --phase reproduction. Resume an
 unchanged existing run by adding --resume. Budget-only continuations are allowed;
 changes to source code or substantive configuration require a new declared run.
-The default output directories are runs/pilot-meta-blog and runs/meta-blog-seed0.
+After account confirmation, the declared fresh pilot is runs/pilot-meta-blog-attested;
+research uses runs/meta-blog-seed0. The rejected runs/pilot-meta-blog is preserved.
 Both share runs/budget_ledger.json with the preserved historical attempts.
 
 ```sh

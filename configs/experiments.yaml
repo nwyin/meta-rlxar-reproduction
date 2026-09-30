@@ -5,7 +5,8 @@ writer: meta/muse-spark-1.1
 rubric: meta/muse-spark-1.1
 optimizer: moonshotai/kimi-k2.6
 judge: meta/muse-spark-1.1
-seeds: [0]
+seeds:
+- 0
 iterations: 7
 pilot_iterations: 1
 max_meta_prompt_words: 800
@@ -17,7 +18,7 @@ failure_selection: smallest_gap_then_example_id
 proposal_policy: one_proposal_one_repair_rejection_consumes_update
 budget_usd: 100.0
 total_budget_usd: 100.0
-pilot_run: pilot-meta-blog
+pilot_run: pilot-meta-blog-attested
 research_run: meta-blog-seed0
 extra_model_sweep: false
 controls: false

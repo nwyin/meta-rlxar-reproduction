@@ -966,5 +966,8 @@
   "checked_at": "2026-09-30T00:09:38.513495+00:00",
   "source_blog": "https://facebookresearch.github.io/RAM/blogs/unslop/",
   "scope": "Initial Empirical Investigation",
-  "exact_models_available": true
+  "exact_models_available": true,
+  "catalog_available": true,
+  "live_access_verified": false,
+  "access_requirement": "OpenRouter requires age_18plus attestation for Muse Spark 1.1"
 }

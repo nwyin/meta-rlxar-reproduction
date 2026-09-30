@@ -34,29 +34,21 @@
   "frozen_recovery_source": "/tmp/xar-frozen-pilot-b2fb545",
   "frozen_recovery_software_hashes": "Verified exact matches for both existing pilot manifests",
   "latest_active_batch": {
-    "checked_at": "2026-09-29T23:16:05.053627+00:00",
-    "driver": "runs/pilot-schema-driver.log",
-    "prefix": "pilot-schema",
-    "concurrency": 4,
-    "weak_optimizer_probe": "runs/probe-weak-optimizer",
-    "weak_probe_concurrency": 1,
-    "verified_tests": 25,
-    "source_commit": "89cb7aa",
+    "checked_at": "2026-09-30T00:13:57.964330+00:00",
+    "scope": "meta_blog_initial_empirical_investigation",
+    "state": "account_access_required",
+    "source_commit": "beeb812",
     "shared_budget_usd": 100,
-    "provider_schema_checks": "runs/probe-kimi-siliconflow/status.json",
-    "research_and_confirmation_dispatches": 0,
-    "pilot_GG2_progress": {
-      "completed_training_checkpoints": [
-        0,
-        1
-      ],
-      "training_coverage": 4,
-      "required_training_examples": 4,
-      "current_stage": "checkpoint 2 training evaluation",
-      "validation_opened": false
+    "model_roles": {
+      "writer": "meta/muse-spark-1.1",
+      "rubric": "meta/muse-spark-1.1",
+      "optimizer": "moonshotai/kimi-k2.6",
+      "judge": "meta/muse-spark-1.1"
     },
-    "weak_optimizer_schema_status": "valid; accepted bounded proposal",
-    "weak_endpoint_diagnostic": "running; same failing pilot conclusion, prospective SiliconFlow FP8 check"
+    "running_paid_processes": 0,
+    "research_dispatches": 0,
+    "required_external_change": "Complete OpenRouter age_18plus attestation",
+    "next_pilot_run": "runs/pilot-meta-blog-attested"
   },
   "prepared_initial_training_reuse": {
     "worktree": "/tmp/meta-rlxar-p0-reuse-20260929",
@@ -64,7 +56,7 @@
     "implementation_commit": "54a9c89",
     "verified": "25 full tests and lint passed; extended end-to-end test verifies P0 import without writer/train-P0 calls, independent post-freeze validation, seed mismatch rejection, tamper rejection, idempotent resume and no duplicate cost accounting",
     "scope": "Only paired-condition P0 training artifacts; fresh validation and fresh unchanged-prompt controls preserved",
-    "application": "After current frozen pilots, before research matrix dispatch",
+    "application": "Historical alternative-sweep optimization; not used by the active single-trajectory reproduction",
     "root_live_source_unchanged": true
   }
 }

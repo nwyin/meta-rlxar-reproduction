@@ -78,7 +78,10 @@ def main():
             pilot_gate(args.runs_root, design)
         command = build_command(args, design, phase)
         print("Executing:", " ".join(command), flush=True)
-        subprocess.run(command, check=True, cwd=ROOT)
+        try:
+            subprocess.run(command, check=True, cwd=ROOT)
+        except subprocess.CalledProcessError as error:
+            raise ContractError(f"{phase} stopped (exit {error.returncode}); inspect the saved run receipts") from None
     if not args.dry_run:
         render_report(args.runs_root, ROOT / "reports")
 

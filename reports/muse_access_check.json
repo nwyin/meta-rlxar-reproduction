@@ -1,0 +1,62 @@
+{
+  "state": "account_access_required",
+  "at": "2026-09-30T00:13:23.216418+00:00",
+  "reason": "OpenRouter requires age_18plus attestation for Muse Spark 1.1",
+  "settings_url": "https://openrouter.ai/settings/preferences",
+  "generated_sections": 0,
+  "research_started": false,
+  "failed_requests": 4,
+  "conservative_reservations_preserved": true,
+  "next_pilot_run": "pilot-meta-blog-attested",
+  "receipts": [
+    {
+      "path": "runs/pilot-meta-blog/requests/541feddfd348d399a471e555f3afed2fcb42d1a1fdce9be5a28c8b9c36ed21cd/attempt_0.json",
+      "http_status": 403,
+      "error_message": "This model requires you to complete the following before use: 18+ age confirmation. Confirm at https://openrouter.ai/settings/preferences.",
+      "missing_attestation_types": [
+        "age_18plus"
+      ]
+    },
+    {
+      "path": "runs/pilot-meta-blog/requests/99b66e696af706c1bcefa8401093bfd64b98013f1a8aa052c4f982849011717d/attempt_0.json",
+      "http_status": 403,
+      "error_message": "This model requires you to complete the following before use: 18+ age confirmation. Confirm at https://openrouter.ai/settings/preferences.",
+      "missing_attestation_types": [
+        "age_18plus"
+      ]
+    },
+    {
+      "path": "runs/pilot-meta-blog/requests/09ecaaf5dcca9363e0934f3b1107ea03451c4a5ac0efeb9e0b2bd1508b5e8f35/attempt_0.json",
+      "http_status": 403,
+      "error_message": "This model requires you to complete the following before use: 18+ age confirmation. Confirm at https://openrouter.ai/settings/preferences.",
+      "missing_attestation_types": [
+        "age_18plus"
+      ]
+    },
+    {
+      "path": "runs/pilot-meta-blog/requests/981cbdf8c82793a5a39369b3578e644d6d750423a56bb5112e6478f68a9b40b8/attempt_0.json",
+      "http_status": 403,
+      "error_message": "This model requires you to complete the following before use: 18+ age confirmation. Confirm at https://openrouter.ai/settings/preferences.",
+      "missing_attestation_types": [
+        "age_18plus"
+      ]
+    }
+  ],
+  "model": "meta/muse-spark-1.1",
+  "provider": "meta",
+  "successful_preflight": true,
+  "no_silent_model_substitution": true,
+  "operational_summary": {
+    "format_validation": {},
+    "transport_attempts": 4,
+    "inherited_frozen_responses": 0,
+    "raw_usage_cost_usd": 0,
+    "unresolved_transport": 0
+  },
+  "costs": {
+    "charged_or_reserved_usd": 0.7199084375,
+    "actual_complete_usd": 0,
+    "requests": 4,
+    "unresolved": 4
+  }
+}

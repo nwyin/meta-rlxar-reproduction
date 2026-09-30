@@ -69,7 +69,8 @@
     "pricing_source": "saved_endpoint_snapshots",
     "limitations": "Pilot token usage required; optimizer feedback may be larger.",
     "budget_usd": null,
-    "total_budget_usd": 100.0
+    "total_budget_usd": 100.0,
+    "output_dir": "runs/pilot-meta-blog-attested"
   },
   "research": {
     "dry_run": true,
@@ -140,10 +141,15 @@
     "pricing_source": "saved_endpoint_snapshots",
     "limitations": "Pilot token usage required; optimizer feedback may be larger.",
     "budget_usd": null,
-    "total_budget_usd": 100.0
+    "total_budget_usd": 100.0,
+    "output_dir": "runs/meta-blog-seed0"
   },
-  "historical_charged_or_reserved_usd": 5.95643421255,
-  "total_uncached_estimate_with_retry_reserve_including_history": 103.82293111165713,
+  "historical_charged_or_reserved_usd": 6.6763426500500005,
+  "total_uncached_estimate_with_retry_reserve_including_history": 104.54283954915714,
   "authorized_total_ceiling_usd": 100,
-  "note": "Provisional uncached estimates use 5000 output tokens per call; measured pilot usage will refine them. Provider quota is independent."
+  "note": "Provisional uncached estimates use 5000 output tokens per call; measured pilot usage will refine them. Provider quota is independent.",
+  "access_check": "Four Muse HTTP 403 rejections; conservative upper holds preserved, no generated sections.",
+  "provider_key_limit_usd": 50,
+  "provider_key_remaining_usd_before_rejected_access_check": 43.751254431,
+  "provider_limit_reset": "weekly"
 }

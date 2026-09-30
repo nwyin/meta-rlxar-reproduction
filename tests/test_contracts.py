@@ -625,3 +625,43 @@ def test_blog_report_does_not_count_historical_runs(tmp_path):
     assert audit['raw_verified_trajectories'] == 0 and audit['state'] == 'not_started'
     assert shared.read_json(output / 'blog_comparison.json')['reproduction'] is None
     assert not (output / 'gap_curves.png').exists()
+
+
+def test_blog_research_report_rebuilds_all_52_sections_and_rejects_tampering(tmp_path, monkeypatch):
+    fake = install_fake(monkeypatch)
+    design = shared.yaml.safe_load((shared.ROOT / 'configs/experiments.yaml').read_text())
+    groups = {'train': [f'pilot0train{i}' for i in range(8)],
+              'validation': [f'validation{i}' for i in range(5)]}
+    examples = [dummy_example(p, section, split) for split, papers in groups.items()
+                for p in papers for section in shared.SECTIONS]
+    dataset, splits = tmp_path / 'examples.jsonl', tmp_path / 'splits.json'
+    dataset.write_text(''.join(shared.canonical(e)+'\n' for e in examples))
+    shared.write_json(splits, {'papers': groups})
+    shared.write_json(tmp_path / 'human_review.json', {'dataset_hash': shared.file_hash(dataset),
+        'papers': {e['paper_id']: {'decision': 'approved'} for e in examples}})
+    runs = tmp_path / 'runs'
+    source = runs / design['research_run']
+    invoke(monkeypatch, exp_xar, ['--dataset', str(dataset), '--splits', str(splits),
+        '--output-dir', str(source), '--budget-ledger', str(runs / 'ledger.json'),
+        '--budget-usd', '100', '--total-budget-usd', '100', '--concurrency', '4'])
+    assert len(fake.payloads) == 1307
+    assert {p['model'] for p in fake.payloads} == {'meta/muse-spark-1.1', 'moonshotai/kimi-k2.6'}
+    output = tmp_path / 'report'
+    shared.render_report(runs, output)
+    assert shared.read_json(output / 'audit.json')['raw_verified_trajectories'] == 1
+    comparison = shared.read_json(output / 'blog_comparison.json')['reproduction']
+    assert comparison['selected_iteration'] == 0
+    assert comparison['initial_gap'] == 1 and comparison['selected_gap'] == 1
+    assert comparison['descriptive_reversal'] is False
+    assert comparison['validation_peak_used_for_selection'] is False
+    assert comparison['paired_improvement']['interval']['paper_clusters'] == 5
+    assert (output / 'gap_curves.svg').exists()
+    grade_path = next((source / 'scores/main/0/validation').glob('*/human.json'))
+    grade = shared.read_json(grade_path)
+    grade['total'] = 10
+    shared.write_json(grade_path, grade)
+    shared.render_report(runs, output)
+    audit = shared.read_json(output / 'audit.json')
+    assert audit['raw_verified_trajectories'] == 0 and audit['complete'] is False
+    assert shared.read_json(output / 'blog_comparison.json')['reproduction'] is None
+    assert not (output / 'gap_curves.svg').exists()
