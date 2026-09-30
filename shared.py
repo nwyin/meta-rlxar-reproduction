@@ -1138,7 +1138,6 @@ def resolved_manifest(args, roles, experiment, extra=None):
         "dataset": str(Path(args.dataset).resolve()),
         "splits": str(Path(args.splits).resolve()),
         "software_hashes": software_hashes(),
-        "model_tiers": read_json(ROOT / "configs/model_tiers.json"),
         "schema_version": SCHEMA_VERSION,
         "extra": extra or {},
     }
@@ -1545,7 +1544,7 @@ def render_report(runs_root, output):
             validate_primary_manifest(manifest, design)
             if (
                 manifest["arguments"]["split"] != "research"
-                or manifest["arguments"]["seed"] != design["seeds"][0]
+                or manifest["arguments"]["seed"] != design["seed"]
             ):
                 raise ContractError("Declared research split and trajectory required")
             run = audit_xar_run(source)
@@ -1576,7 +1575,7 @@ def render_report(runs_root, output):
                 "initial_model": initial["val_model"],
                 "selected_model": final["val_model"],
                 "paired_improvement": paired_improvement(
-                    run["rows"][(0, "validation")], run["rows"][(selected, "validation")], design["seeds"][0]
+                    run["rows"][(0, "validation")], run["rows"][(selected, "validation")], design["seed"]
                 ),
                 "descriptive_reversal": initial["val_gap"] < 0 < final["val_gap"],
             }
@@ -1857,9 +1856,9 @@ def prepare_data(args):
                 print(f"Excluded {paper_id}: {e}", flush=True)
     write_json(ROOT / "data/exclusions.json", exclusions)
     if len(accepted) != 20:
-        write_json(ROOT / "data/acquisition_incomplete.json", {"eligible": len(accepted), "policy": policy})
         raise ContractError(
-            "Fewer than 20 eligible papers; extend discovery under documented policy before grading"
+            f"Only {len(accepted)} of 20 papers are eligible; see data/exclusions.json "
+            "and add more entries to data/discovery.xml"
         )
     research = accepted[2:15]
     random.Random(20260929).shuffle(research)

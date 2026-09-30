@@ -17,14 +17,6 @@ models:
     endpoint_snapshot: configs/snapshots/moonshotai_kimi-k2.6-endpoints.json
     release: moonshotai/kimi-k2.6-20260420
     seed_supported: false
-  deepseek/deepseek-v4-pro-0813:
-    provider: wafer
-    reasoning:
-      effort: max
-    max_tokens: 16384
-    endpoint_snapshot: configs/snapshots/deepseek_deepseek-v4-pro-0813-endpoints.json
-    release: deepseek/deepseek-v4-pro-20260813
-    seed_supported: true
   z-ai/glm-5.2:
     provider: wafer
     reasoning:
@@ -32,14 +24,6 @@ models:
     max_tokens: 16384
     endpoint_snapshot: configs/snapshots/z-ai_glm-5.2-endpoints.json
     release: z-ai/glm-5.2-20260616
-    seed_supported: true
-  qwen/qwen3.5-27b:
-    provider: alibaba
-    reasoning:
-      enabled: true
-    max_tokens: 16384
-    endpoint_snapshot: configs/snapshots/qwen_qwen3.5-27b-endpoints.json
-    release: qwen/qwen3.5-27b-20260224
     seed_supported: true
   meta/muse-spark-1.1:
     provider: meta

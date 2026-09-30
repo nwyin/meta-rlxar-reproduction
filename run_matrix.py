@@ -33,7 +33,7 @@ def build_command(args, design, phase):
         "--split",
         "pilot" if pilot else "research",
         "--seed",
-        str(design["seeds"][0]),
+        str(design["seed"]),
         "--iterations",
         str(design["pilot_iterations"] if pilot else design["iterations"]),
         "--max-meta-prompt-words",
@@ -91,7 +91,7 @@ def main():
     ):
         raise ContractError("Explicit per-run and total dollar ceilings required for a batch")
     design = yaml.safe_load((ROOT / "configs/experiments.yaml").read_text())
-    if design["scope"] != "meta_blog_initial_empirical_investigation" or design["seeds"] != [0]:
+    if design["scope"] != "meta_blog_initial_empirical_investigation":
         raise ContractError("Active driver requires the single declared blog reproduction")
     if args.phase == "report":
         render_report(args.runs_root, ROOT / "reports")

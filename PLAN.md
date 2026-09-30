@@ -50,11 +50,16 @@ manual inspection was not separately documented. Keep discovery, split, source,
 license, and content hashes unchanged. Raw paper text and run artifacts stay local.
 
 Use the existing neutral initial meta-prompt and wrappers under prompts/.
-Temperatures: W 0.7, G 0.2, O 0.7, J 0. Muse uses explicit medium reasoning;
-Kimi uses enabled reasoning. Both have output limits of 16,384 tokens. Neither
-selected endpoint advertises seed support; record that local seed 0 does not
-make hosted completions deterministic. The blog does not disclose these settings.
-Kimi's hosted FP8 precision and Meta's unknown precision are provider caveats.
+Temperatures: W 0.7, G 0.2, O 0.7, J 0. Both models have output limits of
+16,384 tokens. The blog does not say which reasoning effort or sampling settings
+it used, so these are our choices: Muse runs with medium reasoning effort, and
+Kimi with reasoning enabled. Neither selected endpoint lists seed support, so local
+seed 0 does not make hosted completions deterministic.
+
+Kimi is served by SiliconFlow in FP8. It is the same named model the blog used,
+but the blog does not give the precision or exact weights behind its runs, so
+results can differ for that reason alone. Meta does not publish the precision
+of its Muse endpoint.
 
 Muse's tokenizer is unpublished. Bound its entire payload by UTF-8 byte count,
 plus 25% headroom and chat/schema overhead. Use the pinned official Kimi tokenizer
