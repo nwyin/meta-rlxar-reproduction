@@ -1,111 +1,98 @@
-# Meta blog same-model XAR reproduction
+# Meta blog XAR reproduction
 
-This repository targets the **Initial Empirical Investigation** in
-[Meta's Unslopping AI blog](https://facebookresearch.github.io/RAM/blogs/unslop/):
-Muse Spark 1.1 writes sections, generates rubrics, and judges candidates;
-Kimi K2.6 optimizes the rubric meta-prompt. One trajectory uses 52 sections
-from eight training and five validation papers, with seven prompt updates.
+This repository reproduces the Initial Empirical Investigation in
+[Meta's Unslopping AI blog](https://facebookresearch.github.io/RAM/blogs/unslop/).
+Muse Spark 1.1 writes missing paper sections, generates rubrics and judges; Kimi K2.6 rewrites
+the rubric meta prompt. One trajectory covers 52 sections from 8 training and 5 validation
+papers, with 7 prompt updates. [METHOD.md](METHOD.md) describes the data, the procedure, how
+this differs from the blog, and the limitations.
 
-The active workflow runs a separate one-update operational pilot, then this
-single experiment. The earlier alternative-model study, which never ran beyond
-pilots, is kept at the git tag `alternative-model-study`. Its raw outputs and
-unresolved cost reservations are preserved locally.
-See [PLAN.md](PLAN.md) for the scientific contract and reconstruction choices.
+## Result
 
-The blog does not publish its original paper IDs, exact prompts, or sampling
-settings. Our frozen arXiv split, prompts, criterion schema, and decoding are
-explicit reconstruction choices. Matching the numerical result is not guaranteed.
-This target covers rubric optimization; later RL training and other writing
-domains in the blog require separate work.
+The research run finished on September 29, 2026.
 
-## Completed run: September 29, 2026
+- The checkpoint selected on training was P1. At P1 the validation gap (author score minus
+  model score) was -0.16, up from -1.04 at the initial prompt. The last checkpoint, P7, had a
+  validation gap of -0.37. The gap stayed negative at every checkpoint.
+- The blog's reversal, from -4.2 to +2.76, was not reproduced.
+- The paired improvement from P0 to P1 on validation was 0.88, with a 95% whole-paper
+  bootstrap interval of 0.37 to 1.35. Author scores rose from 7.91 to 8.38 and model scores
+  fell from 8.95 to 8.53.
+- 12 of the 20 validation sections met the ±15% length target. On those 12 the gap went from
+  -1.12 to -0.26.
+- The research run cost $55.60 for 1,389 requests and took 75 minutes. The pilot cost $2.42.
 
-- All 52 sections, seven rubric updates, and eight train/validation checkpoints
-  completed using Muse Spark 1.1 and Kimi K2.6. No additional-model sweep or RL
-  training was performed; the writing samples stayed fixed while rubrics changed.
-- Training selected P1 before any validation evaluation. The held-out
-  human-minus-model gap improved from **-1.04 to -0.16**; every validation
-  checkpoint remained negative. The blog's reported **-4.2 to +2.76** reversal
-  was not reproduced on this reconstruction. Terminal P7 was -0.37.
-- Paired validation improvement was **0.88 points**, with a 95% whole-paper
-  bootstrap interval of **[0.37, 1.35]** over five validation papers. Author
-  scores moved from 7.91 to 8.38, and model scores from 8.95 to 8.53.
-- Seventeen generated sections missed the +/-15% length tolerance after bounded
-  repairs. The length-compliant validation subset also retained a negative gap.
-  Human reference quality was not independently established by expert comparison.
-- Research cost **$55.60** across 1,389 requests and took **75.4 minutes** at
-  concurrency four. The separate operational pilot cost $2.42. Shared spending
-  and retained historical reservations totaled $64.70, within the $100 cap.
-- All raw-response audits and 24 tests passed; no research requests remained
-  unresolved. Detailed reports, plots, the blog draft, and raw run artifacts
-  remain local under `reports/` and `runs/`, both excluded from version control.
+`run.py report` writes the full numbers to `reports/results.md`.
 
 ## Setup
 
-Requires Python 3.11+, `uv`, and the Hugging Face `hf` CLI for the pinned Kimi
-and Qwen tokenizers. Raw text, tokenizers, credentials, and runs stay local.
+You need Python 3.11 or later, [uv](https://docs.astral.sh/uv/), and the Hugging Face `hf`
+CLI (used to download the tokenizers).
 
 ```sh
 uv sync --locked
 uv run python run.py prepare-tokenizers
+uv run python run.py prepare-data
 uv run python run.py validate-data
 uv run pytest -q
 ```
 
-The existing dataset and split are frozen. Source URLs, discovery, metadata,
-license inventory, review decisions, and hashes are version controlled. Do not
-replace papers after observing grades. User acceptance of the paper review
-packet is recorded against the frozen dataset hash in data/human_review.json;
-a detailed independent manual inspection was not separately documented.
-The 20 acquired papers include two pilot and five reserved confirmation papers;
-only the eight train and five validation papers enter the research trajectory.
-These are author-written reference proxies from recent preprints, not the blog's
-original S2ORC examples. Paper text is not publicly redistributed.
+`prepare-tokenizers` downloads the Kimi and Qwen tokenizers pinned in
+`configs/tokenizers.json` into `data/tokenizers/`. `prepare-data` downloads the 20 arXiv HTML
+papers listed in `data/source_manifest.json` into `data/raw/` and rebuilds
+`data/examples.jsonl`. It fails if the result does not match the saved split and manifest,
+for example because arXiv changed a page.
 
-Set OPENROUTER_API_KEY in the ignored .env file. Paid runs need both dollar
-limits on the command line: --budget-usd for the run and --total-budget-usd for
-the ledger shared by all runs. The currently authorized shared total is $100,
-including previous pilots.
-Credentials are excluded from artifacts. The provider's own quota also applies.
-Muse uses the pinned Meta endpoint; Kimi optimization uses SiliconFlow FP8,
-which passed native JSON capability checks in an earlier operational probe.
-A fresh Muse/Kimi pilot verifies their use together before research.
+Copy `.env.example` to `.env` and set `OPENROUTER_API_KEY`.
 
-## Run and report
+## Run
 
 ```sh
 uv run python run.py all --dry-run
-uv run python run.py all \
-  --budget-usd 100 --total-budget-usd 100 --concurrency 4
+uv run python run.py all --budget-usd 100 --total-budget-usd 100
 ```
 
-Run phases separately with `run.py pilot` or `run.py reproduce`. Resume an
-unchanged existing run by adding --resume. Budget-only continuations are allowed;
-changes to source code or substantive configuration require a new declared run.
-After account confirmation, the declared fresh pilot is runs/pilot-meta-blog-attested;
-research uses runs/meta-blog-seed0. The rejected runs/pilot-meta-blog is preserved.
-Both share runs/budget_ledger.json with the preserved historical attempts.
+`--dry-run` prints a cost estimate and sends nothing. `all` runs `pilot` and then
+`reproduce`, which you can also run on their own:
+
+- `run.py pilot` runs one update on the two pilot papers to check the pipeline end to end.
+- `run.py reproduce` audits the pilot, runs the research trajectory, and writes `reports/`.
+
+Paid runs need both limits: `--budget-usd` for this run and `--total-budget-usd` for all runs
+that share `runs/budget_ledger.json`. `--concurrency` sets the number of parallel requests
+(default 4, from `configs/experiments.yaml`). `--resume` continues an interrupted run; it
+stops if anything other than the budgets has changed since the run started.
+
+## Audit
 
 ```sh
 uv run python run.py audit-run --source-run runs/meta-blog-seed0
+uv run python scripts/audit_completed_run.py
 uv run python run.py report
 ```
 
-The report compares the complete checkpoint curves with the blog's reported
-validation gap -4.2 to +2.76, crossing at update 4 and peaking at update 5.
-Checkpoint selection uses training only; the validation maximum is descriptive.
-Incomplete runs cannot support a result claim. The local detailed report is
-`reports/results.md`; reports are generated artifacts and are not committed.
+`audit-run` rebuilds a run's checkpoint table from its saved raw responses and checks the
+request settings, the anonymous grading inputs, the scoring arithmetic, the training-only
+selection and that validation came after it. `scripts/audit_completed_run.py` goes further on
+the completed research run: it checks the manifest's code hashes against the commit that
+produced the run, re-derives the writer inputs, optimizer feedback and proposal checks with
+the current code, and writes the cost, request, latency and length-subset numbers to
+`reports/completion_audit.json`. Neither makes API calls. `report` runs the audit and then writes the report.
 
-Independent writer sections and checkpoint evaluations run concurrently.
-Within-example repairs and the seven optimizer updates remain sequential.
-Concurrency preserves frozen output ordering, anonymous candidate inputs, and
-selection before validation. Fatal failures halt further dispatch; unknown
-calls retain their conservative reservations and cannot be resent automatically.
+## Outputs
 
-Before every batch, read-only preflight checks release, provider, schema support,
-precision, reasoning, limits, and current prices against pinned evidence.
-No model substitution or provider fallback is enabled. Muse uses explicit medium
-reasoning, Kimi enabled reasoning; the blog's exact settings are undisclosed.
-Muse payload sizing uses a conservative UTF-8 byte bound because its tokenizer
-is unpublished. Kimi uses a pinned official tokenizer. Full papers are never truncated.
+| Path | Contents |
+| --- | --- |
+| `runs/pilot-meta-blog-attested/` | the pilot run |
+| `runs/meta-blog-seed0/` | the research run: `manifest.json`, every request and response under `requests/`, sections in `generations/`, `rubrics/`, `scores/`, optimizer `feedback/`, `prompts/`, `freeze.json`, `costs.json` |
+| `runs/budget_ledger.json` | reservations and charges for every run |
+| `reports/` | `results.md`, `checkpoints.csv`, `gap_curves.png` and `.svg`, `blog_comparison.json`, `audit.json` |
+
+`runs/`, `reports/`, the paper text and the tokenizers are not in git.
+
+## Versions
+
+The git tag `meta-blog-seed0` is the commit that produced the research run. The code has been
+cleaned up since; `scripts/audit_completed_run.py` checks that the saved run still re-audits
+with the current code. The tag `alternative-model-study` holds an earlier study with other
+models, which did not go beyond pilots.

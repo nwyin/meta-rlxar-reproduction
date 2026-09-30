@@ -162,7 +162,7 @@ def token_counter(name):
     if file_hash(path) != read_json(ROOT / "configs/tokenizers.json")[name]["checksums"][filename]:
         raise RunError(
             f"{path} does not match its checksum in configs/tokenizers.json; "
-            "rerun python -m xar prepare-tokenizers"
+            "rerun run.py prepare-tokenizers"
         )
     if name == "kimi":
         import tiktoken
