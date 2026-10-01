@@ -53,7 +53,8 @@ A paper is kept if it has:
 - no author or title shared with a paper already kept, and no subject of rubric optimization;
 - a size that fits Kimi K2.6's 262,144-token context in the largest optimizer request (four
   failure examples, each with the whole paper and both versions of the section), counting
-  tokens with both the Kimi and the Qwen3.5 tokenizer and using the larger count.
+  tokens with both the Kimi and the Qwen3.5 tokenizer and using the larger count. This rule
+  is frozen with the corpus; the current feedback policy sends no paper to the optimizer.
 
 A section is one of abstract, introduction, related work or conclusion. Every paper gives an
 abstract and an introduction. Many mathematics and physics papers have no related-work section
@@ -117,7 +118,7 @@ in `prompts/`: `writer.md`, `rubric_initial.md` (the initial meta prompt), `rubr
 
 ## Procedure
 
-1. Write. For each of the 52 sections, Muse gets the context, the section type and the
+1. Write. For each section, Muse gets the context, the section type and the
    target word count. It never sees the author's section. A draft that is cut off or outside
    ±15% of the target goes back with a note giving the allowed word range, at most twice; the
    last draft is kept either way. The sections are written once, before any rubric, and stay
@@ -141,9 +142,13 @@ in `prompts/`: `writer.md`, `rubric_initial.md` (the initial meta prompt), `rubr
 
 4. Feedback. After a checkpoint is scored on the training sections, Kimi gets the current
    meta prompt, the training summary (author and model means, the gap, its interval and the
-   gap per section type) and the 4 training sections with the lowest gap, ties broken by
-   example ID. Each of those comes with the context, both sections, the rubric and both
-   grades. Kimi never sees validation sections or scores.
+   gap per section type), the gap of every training section, and the failing sections: those
+   with a gap of zero or less, lowest first, ties broken by example ID, up to 24. Each of
+   those comes with both sections, the rubric and both grades, but not the paper, so that
+   many failures fit in one request. Kimi never sees validation sections or scores. The
+   completed run `meta-blog-seed0` used the earlier policy: the 4 lowest-gap sections, each
+   with the paper. `feedback_policy` in `configs/experiments.yaml` names the policy and the
+   run manifest records it, so the audit rebuilds each run's feedback with its own policy.
 
 5. Optimize. Kimi returns a new meta prompt of at most 800 words and a rationale. A
    pattern check rejects a proposal that is too long; tells the rubric to prefer the author's
@@ -153,18 +158,20 @@ in `prompts/`: `writer.md`, `rubric_initial.md` (the initial meta prompt), `rubr
    contain. A rejected proposal goes back once with the reasons. If the second one fails too,
    the update is used up and the current prompt carries over unchanged.
 
-6. Repeat. Seven updates give eight checkpoints, P0 (the initial prompt) to P7. If any
-   training section at any checkpoint lacks a rubric or either grade, the run stops before
-   validation.
+6. Repeat. Four updates give 5 checkpoints, P0 (the initial prompt) to P4. The blog's
+   figures run over 7 meta-prompt iterations, 0 to 6, and its gap first turns positive at
+   iteration 4; we stop there to limit cost. The completed run made 7 updates, P0 to P7.
+   If any training section at any checkpoint lacks a rubric or either grade, the run stops
+   before validation.
 
-7. Select, then validate. After P7, the checkpoint with the highest mean training gap is
-   selected, the earliest one on a tie. The choice and the hash of every checkpoint's prompt
-   are written to `freeze.json`. Only then does the run generate rubrics and grades for the 20
-   validation sections, at every checkpoint. The audit checks that every validation request
-   was sent after `freeze.json` was written.
+7. Select, then validate. After the last update, the checkpoint with the highest mean
+   training gap is selected, the earliest one on a tie. The choice and the hash of every
+   checkpoint's prompt are written to `freeze.json`. Only then does the run generate rubrics
+   and grades for the validation sections, at every checkpoint. The audit checks that every
+   validation request was sent after `freeze.json` was written.
 
 Independent sections and checkpoint evaluations run four at a time. The drafts for one
-section and the seven optimizer updates run in order.
+section and the optimizer updates run in order.
 
 Before the research run, `run.py pilot` runs the same pipeline on the first two training papers (one
 acts as training, one as validation) with one update. `run.py reproduce` first audits the pilot and
@@ -214,7 +221,8 @@ data or any setting other than the budgets and concurrency has changed.
 
 The blog does not publish its 13 paper IDs, its prompts, its decoding settings, the rubric
 format, how criterion scores are combined, how many failure examples the optimizer sees, or
-how the final checkpoint is chosen. This reproduction uses the same models and 7 updates, the
+how the final checkpoint is chosen. This reproduction uses the same models and 4 updates, where
+the blog's figures show 7 meta-prompt iterations, 0 to 6 (the completed run made 7 updates), the
 blog's 13 papers with 4 sections each in the completed run (8 training and 5 validation), and
 these choices:
 
@@ -222,12 +230,16 @@ these choices:
   `allenai/s2orc` dataset was not found). The completed run used recent arXiv cs.CL
   preprints. The corpus now in `data/` has 56 papers from 2016 to 2021 across 9 fields, so a
   new run no longer matches the blog's paper count or domain.
-- Prompts: the prompts in `prompts/` were written for this reproduction. The initial meta
-  prompt asks for accuracy, relevance, organization, clarity and use of evidence, and says
-  nothing about human or AI writing.
+- Prompts: the prompts in `prompts/` were written for this reproduction. The blog had GPT-5.6
+  build its initial meta prompt; we had a Claude Fable 5.1 instance build ours, given only the
+  task and the rubric format. It asks for criteria that name the paper's own contributions,
+  methods, results and terms, and says nothing about human or AI writing. The completed run
+  used an earlier hand-written initial prompt (`runs/meta-blog-seed0/prompts/iter_00.md`).
 - Decoding: the temperatures and reasoning settings in the roles table.
 - Rubric and score: 4 to 8 criteria scored 0-10, combined as an unweighted mean.
-- Feedback: the 4 training sections with the lowest gap.
+- Feedback: the failing training sections, up to 24, without the paper. The blog says the
+  optimizer saw "the specific examples where it fails", and does not say how many or what each
+  held.
 - Selection: the best training gap, chosen before any validation request.
 - Length: ±15% of the author's word count, with up to two revisions.
 - Proposal check: the pattern check in step 5.

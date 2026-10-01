@@ -40,6 +40,7 @@ def settings_for(phase, design, options):
         iterations=design[iterations_key],
         max_meta_prompt_words=design["max_meta_prompt_words"],
         failure_examples=design["failure_examples"],
+        feedback_policy=design["feedback_policy"],
         **{f"{role}_model": design[role] for role in ROLES},
         concurrency=options.concurrency or design["concurrency"],
         budget_ledger=str(runs_root / "budget_ledger.json"),

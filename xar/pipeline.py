@@ -20,6 +20,9 @@ from xar.openrouter import role_config
 from xar.runs import estimate, initialize_run, operational_summary
 from xar.stats import summarize
 from xar.util import (
+    FAILING_FEEDBACK,
+    FEEDBACK_POLICIES,
+    LEGACY_FEEDBACK,
     ROLES,
     SCHEMA_VERSION,
     InvalidOutput,
@@ -418,12 +421,20 @@ def propose_prompt(api, current, feedback, examples, initial, iteration, *, outp
     return proposal
 
 
-def build_feedback(examples, candidates, rows, current_prompt, failure_count):
-    """The optimizer's input: the current prompt, its training summary, and the failure_count
-    training sections with the smallest human-minus-model gap, with their rubrics and grades.
+# How build_feedback picks the sections the optimizer sees (the names are in util.py, which runs.py
+# also reads). The completed run meta-blog-seed0 used LEGACY_FEEDBACK: the failure_count lowest-gap
+# sections, each with the whole visible paper. Runs from 2026-10-01 use FAILING_FEEDBACK: every
+# section whose gap is zero or negative, lowest first, up to failure_count, without the paper, plus
+# the gap of every training section. The blog shows its optimizer "the specific examples where it
+# fails"; leaving the paper out makes room for them.
+def build_feedback(examples, candidates, rows, current_prompt, failure_count, policy=LEGACY_FEEDBACK):
+    """The optimizer's input: the current prompt, its training summary, and the training sections
+    the policy selects, with their rubrics and grades.
 
     Only training examples may appear. The completed-run audit rebuilds this and compares it
-    with the saved feedback, so its output must not change."""
+    with the saved feedback, so the output for a given policy must not change."""
+    if policy not in FEEDBACK_POLICIES:
+        raise RunError(f"Unknown feedback_policy {policy!r}; expected one of {', '.join(FEEDBACK_POLICIES)}")
     not_training = sorted({x["example_id"] for x in [*examples, *rows] if x["split"] != "train"})
     if not_training:
         raise RunError(
@@ -436,31 +447,40 @@ def build_feedback(examples, candidates, rows, current_prompt, failure_count):
             "the optimizer needs every training section graded"
         )
     lookup = {e["example_id"]: e for e in examples}
-    failures = sorted(rows, key=lambda r: (r["gap"], r["example_id"]))[:failure_count]
+    by_gap = sorted(rows, key=lambda r: (r["gap"], r["example_id"]))
+    if policy == FAILING_FEEDBACK:
+        by_gap = [r for r in by_gap if r["gap"] <= 0]
     selected = []
-    for row in failures:
+    for row in by_gap[:failure_count]:
         example = lookup[row["example_id"]]
-        selected.append(
-            {
-                "example_id": example["example_id"],
-                "paper_id": example["paper_id"],
-                "section_type": example["section_type"],
-                "target_words": example["target_words"],
-                "visible_paper": example["context"],
-                "human_candidate": example["reference"],
-                "model_candidate": candidates[example["example_id"]]["text"],
-                "rubric": read_json(row["rubric_path"])["value"],
-                "grades": {origin: read_json(path)["value"] for origin, path in row["grade_paths"].items()},
-                "gap": row["gap"],
-            }
-        )
-    return {
+        failure = {
+            "example_id": example["example_id"],
+            "paper_id": example["paper_id"],
+            "section_type": example["section_type"],
+            "target_words": example["target_words"],
+            "visible_paper": example["context"],
+            "human_candidate": example["reference"],
+            "model_candidate": candidates[example["example_id"]]["text"],
+            "rubric": read_json(row["rubric_path"])["value"],
+            "grades": {origin: read_json(path)["value"] for origin, path in row["grade_paths"].items()},
+            "gap": row["gap"],
+        }
+        if policy == FAILING_FEEDBACK:
+            del failure["paper_id"], failure["visible_paper"]
+        selected.append(failure)
+    feedback = {
         "current_prompt": current_prompt,
         "summary": summarize(rows),
         "failures": selected,
         "example_ids_used_for_aggregate": sorted(lookup),
-        "selection": "smallest_gap_then_example_id",
+        "selection": policy,
     }
+    if policy == FAILING_FEEDBACK:
+        feedback["all_training_gaps"] = [
+            {"example_id": r["example_id"], "section_type": r["section_type"], "gap": r["gap"]}
+            for r in by_gap
+        ]
+    return feedback
 
 
 def select_checkpoint(gaps):
@@ -497,6 +517,7 @@ class RunSettings:
     iterations: int
     max_meta_prompt_words: int
     failure_examples: int
+    feedback_policy: str
     writer_model: str
     rubric_model: str
     optimizer_model: str
@@ -533,7 +554,9 @@ def optimize_on_training(api, settings, train, candidates, initial):
     rows = None  # the previous checkpoint's training rows
     for iteration in range(settings.iterations + 1):
         if iteration:
-            feedback = build_feedback(train, candidates, rows, prompts[-1], settings.failure_examples)
+            feedback = build_feedback(
+                train, candidates, rows, prompts[-1], settings.failure_examples, settings.feedback_policy
+            )
             proposal = propose_prompt(
                 api,
                 prompts[-1],

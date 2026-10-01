@@ -20,6 +20,10 @@ import yaml
 ROOT = Path(__file__).resolve().parents[1]
 SCHEMA_VERSION = 1
 ROLES = ("writer", "rubric", "optimizer", "judge")
+# Names of the optimizer feedback policies; pipeline.build_feedback explains them.
+LEGACY_FEEDBACK = "smallest_gap_then_example_id"
+FAILING_FEEDBACK = "failing_gap_without_paper"
+FEEDBACK_POLICIES = (LEGACY_FEEDBACK, FAILING_FEEDBACK)
 
 
 class RunError(RuntimeError):

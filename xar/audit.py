@@ -33,7 +33,17 @@ from xar.pipeline import (
     validate_rubric,
 )
 from xar.stats import summarize
-from xar.util import ROLES, RunError, canonical, digest, file_hash, prompt, read_json, words
+from xar.util import (
+    LEGACY_FEEDBACK,
+    ROLES,
+    RunError,
+    canonical,
+    digest,
+    file_hash,
+    prompt,
+    read_json,
+    words,
+)
 
 
 def check_request_settings(payload, cfg, schema, prompt_hash, where="saved request"):
@@ -271,7 +281,15 @@ def _check_proposals(run, manifest, freeze, train, candidates):
         rows = read_json(run / f"scores/main/{iteration - 1}/train_rows.json")
         directory = run / f"feedback/iter_{iteration:02d}"
         feedback, proposal = read_json(directory / "training.json"), read_json(directory / "proposal.json")
-        expected_feedback = build_feedback(train, candidates, rows, previous, arguments["failure_examples"])
+        # Runs made before feedback_policy existed used the legacy policy.
+        expected_feedback = build_feedback(
+            train,
+            candidates,
+            rows,
+            previous,
+            arguments["failure_examples"],
+            arguments.get("feedback_policy", LEGACY_FEEDBACK),
+        )
         _check(canonical(expected_feedback) == canonical(feedback), f"{where}: feedback differs")
         _check(proposal["parent_prompt_hash"] == digest(previous), f"{where}: parent prompt differs")
         _check(proposal["feedback_hash"] == digest(feedback), f"{where}: feedback hash differs")
@@ -454,7 +472,7 @@ def check_manifest_matches_design(manifest, design):
                 f"{key} (run used {actual.get(key)!r}, config says {expected.get(key)!r})" for key in changed
             )
             raise RunError(f"{role} settings differ from configs/models.yaml in {details}")
-    for field in ("iterations", "max_meta_prompt_words", "failure_examples"):
+    for field in ("iterations", "max_meta_prompt_words", "failure_examples", "feedback_policy"):
         value = manifest["arguments"].get(field)
         if value != design[field]:
             raise RunError(f"Run used {field}={value}; configs/experiments.yaml expects {design[field]}")

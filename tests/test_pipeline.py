@@ -16,7 +16,7 @@ from xar.pipeline import (
     validate_grade,
     writer_candidates,
 )
-from xar.util import BudgetStop, RunError, canonical, read_json, write_json
+from xar.util import FAILING_FEEDBACK, BudgetStop, RunError, canonical, read_json, write_json
 
 MAX_WORDS = 800  # the meta prompt word limit passed to audit_proposal and propose_prompt
 
@@ -78,6 +78,23 @@ def test_build_feedback_picks_smallest_gaps_breaks_ties_by_id_and_rejects_valida
     ]
     feedback = build_feedback(examples, candidates, rows, "initial", 4)
     assert [f["paper_id"] for f in feedback["failures"]] == ["paper4", "paper1", "paper2", "paper3"]
+    assert "visible_paper" in feedback["failures"][0] and "all_training_gaps" not in feedback
+
+    # The failing policy keeps only gaps of zero or less, drops the paper, and lists every gap.
+    failing = build_feedback(examples, candidates, rows, "initial", 3, FAILING_FEEDBACK)
+    assert [f["example_id"] for f in failing["failures"]] == [
+        e["example_id"] for e in (examples[i] for i in (4, 1, 2))
+    ]
+    assert failing["selection"] == FAILING_FEEDBACK
+    assert not {"visible_paper", "paper_id"} & failing["failures"][0].keys()
+    assert [g["gap"] for g in failing["all_training_gaps"]] == [-2, -1, -1, 0]
+    assert (
+        build_feedback(examples, candidates, rows, "initial", 10, FAILING_FEEDBACK)["failures"][-1]["gap"]
+        == 0
+    )
+    with pytest.raises(RunError, match="feedback_policy"):
+        build_feedback(examples, candidates, rows, "initial", 4, "something_else")
+
     examples[0]["split"] = "validation"
     with pytest.raises(RunError, match="only use training"):
         build_feedback(examples, candidates, rows, "initial", 4)

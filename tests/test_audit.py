@@ -14,7 +14,10 @@ def manifest(design):
     """A manifest that matches the design."""
     manifest = {
         "roles": {r: role_config(r) for r in ROLES},
-        "arguments": {k: design[k] for k in ("iterations", "max_meta_prompt_words", "failure_examples")},
+        "arguments": {
+            k: design[k]
+            for k in ("iterations", "max_meta_prompt_words", "failure_examples", "feedback_policy")
+        },
         "extra": {"initial_meta_prompt_hash": digest(prompt("rubric_initial"))},
     }
     check_manifest_matches_design(manifest, design)
@@ -23,8 +26,12 @@ def manifest(design):
 
 def test_manifest_check_rejects_changed_iterations_or_role_settings(manifest, design):
     changed = json.loads(json.dumps(manifest))
-    changed["arguments"]["iterations"] = 6
-    with pytest.raises(RunError, match="iterations=6"):
+    changed["arguments"]["iterations"] = design["iterations"] + 1
+    with pytest.raises(RunError, match=f"iterations={design['iterations'] + 1}"):
+        check_manifest_matches_design(changed, design)
+    changed = json.loads(json.dumps(manifest))
+    del changed["arguments"]["feedback_policy"]
+    with pytest.raises(RunError, match="feedback_policy=None"):
         check_manifest_matches_design(changed, design)
     changed = json.loads(json.dumps(manifest))
     changed["roles"]["rubric"]["reasoning"] = {"enabled": False}

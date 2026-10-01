@@ -145,7 +145,8 @@ assessment.
   text after scoring.
 - Broaden feedback across section types and include previous prompt performance;
   test whether accepting improvements or restarting from the best prompt avoids
-  the observed deterioration.
+  the observed deterioration. (Dropped on 2026-10-01: the blog's optimizer curves are
+  not monotone, so FAIR did not gate acceptance either. See below.)
 - Preserve useful paper-specific criteria while targeting excessive coverage,
   weak sectional focus, and unnecessary detail. Diagnose criterion-level score
   calibration instead of merely forcing lower scores.
@@ -249,4 +250,73 @@ its main checks into `run.py audit-run` (`xar/audit.py`).
   `check_pilot` stopped writing it.
 - Added 3 tamper tests for the moved checks. With the old corpus restored, `audit-run` passes
   for `meta-blog-seed0` and `pilot-meta-blog-attested`.
+
+## 2026-10-01 — New prompts for the next run
+
+We rewrote all 5 files in `prompts/` to fix the problems the 2026-09-30 analysis found. No run
+has used them. The completed run audits against the prompt hashes in its own manifest, so it
+still audits. We spent nothing.
+
+- `optimizer.md` now states the objective the blog gives its optimizer: widen the mean
+  expert-minus-model training gap "for genuine quality reasons, not superficial tells". It
+  tells Kimi how the feedback is laid out, gives a 5-step procedure (diagnose each failing
+  example, ask why the expert made the choices the judge docked, rewrite the mis-scoring
+  guidance, check every rule against the failing examples, consolidate within the word limit),
+  and forbids ratcheting a penalty harder because it was not enough last time. It says the
+  meta-prompt must not mention humans, models, AI, the gap or either candidate, since the
+  rubric generator sees only the paper. The old prompt never named the objective, and the
+  saved trajectory shows Kimi tightening penalties on the references across P4 to P7.
+- `judge.md` now calibrates the scale: 10 is the best writers in the field, 5 is competent,
+  start from the middle anchor and move only as far as the text warrants, and length,
+  breadth and polish count only when a criterion asks. In the completed run every
+  validation mean sat between 7.91 and 8.95, so the rubric changes had little room to show;
+  the blog's judge gave 3.4 and 7.6 at P0. Calibration moves both candidates and has no sign.
+  The quoting rule is tighter to cut the 45 format repairs.
+- `rubric_initial.md` (P0) is now model-written, as the blog's was. The blog says "we
+  prompted GPT-5.6 to build a meta-prompt that given a paper missing the section, generates
+  rubrics specific for judging that section", and that those initial rubrics were "long,
+  paper-specific coverage checklists" under which the human scored 3.4 and the model 7.6. We
+  gave a fresh Claude Fable 5.1 instance the same task and the rubric format, and nothing from
+  our analysis, and took its 290-word output verbatim. It asks the rubric to name the paper's
+  actual contributions, methods, datasets and results. Our old 54-word P0 gave the human 7.9,
+  too gentle to start where the blog started. We first tried a short neutral rewrite today and
+  replaced it with this one the same day.
+- `rubric_wrapper.md` says the meta-prompt decides what criteria look for and the wrapper
+  fixes the form, and asks for anchors a grader can check in the text.
+- `writer.md` follows the blog's task wording: base every claim strictly on the paper's
+  content, no invented numbers, results, methods or citations, stay within ±15%.
+- Phrasing in `optimizer.md` and `judge.md` avoids the `PROPOSAL_RED_FLAGS` patterns where
+  Kimi might echo it into a proposal; "unweighted mean" became "arithmetic mean" for that
+  reason. The scan does not run on these files, only on proposals.
+
+Re-reading the blog's figures gave 3 more changes, all decided with the owner:
+
+- Feedback policy. The blog shows the optimizer "the specific examples where it fails". The
+  old run sent the 4 lowest-gap sections, each with the whole paper. `build_feedback` now has
+  a `feedback_policy`: the new `failing_gap_without_paper` sends every training section with
+  a gap of zero or less, lowest first, up to `failure_examples`, each with both
+  sections, the rubric and both grades but no paper, plus the gap of every training section.
+  The manifest records the policy, and the audit rebuilds each run's feedback with the policy
+  it used, so `meta-blog-seed0` still audits under the legacy policy. `run.py all --dry-run`
+  now also bounds the largest optimizer request by the sum of the longest references. We
+  first set `failure_examples` to 32; the bound came to 247,610 prompt tokens on the research
+  split, over Kimi's 262,144 with output, so it is 24.
+- New run names, `pilot-meta-blog-v2` and `meta-blog-v2-seed0`. The dry-run showed the config
+  still pointed at `meta-blog-seed0`, which is read-only evidence.
+- `iterations` is 4. Every curve in the blog runs over meta-prompt iterations 0 to 6, so its
+  "7 iterations" means 7 checkpoints and 6 updates. We first set 6, then the owner chose 4 to
+  limit cost: the blog's gap first turns positive at iteration 4, and 4 updates should show
+  whether the prompt optimizations move in the same direction, even if they do not get all
+  the way. The dry-run estimate with 6 updates was $181 for the research run; with 4 it is
+  $131.71 (2,244 requests), plus $3.21 for the pilot, both with the 25% retry reserve. No run
+  has started.
+- No acceptance gate. The blog's 3-seed optimizer curves fall after their peak (Kimi +1.75 at
+  iteration 4, then +0.8 and +0.5), so every proposal became the next parent there, as here.
+  We dropped the 2026-09-30 idea of restarting from the best prompt.
+- We did not restore the pairwise baseline prompt.
+
+The old pilot `pilot-meta-blog-attested` no longer matches `configs/experiments.yaml`, so
+`reproduce` will refuse until a new pilot runs. Untested: whether these prompts move the gap.
+Open choice: `max_meta_prompt_words` is 800; the blog holds its meta-prompt to a bound that
+forces consolidation, and P7 reached 437 words last time. We left that unchanged.
 

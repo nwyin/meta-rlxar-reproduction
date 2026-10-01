@@ -12,6 +12,7 @@ from pathlib import Path
 from xar.data import task_data
 from xar.openrouter import OpenRouter, endpoint_for, highest_prices, token_count
 from xar.util import (
+    FAILING_FEEDBACK,
     ROOT,
     SCHEMA_VERSION,
     RunError,
@@ -200,6 +201,7 @@ TYPICAL_OUTPUT_TOKENS = 5000
 WORST_CASE_EXTRA_TOKENS = 12000  # added to the paper's byte count, which already over-counts tokens
 CONTEXT_HEADROOM = 1.25
 CONTEXT_EXTRA_TOKENS = 16000  # room for the rubric or meta prompt sent with the paper
+FEEDBACK_EXAMPLE_EXTRA_TOKENS = 3000  # a 1,000-word rubric and two grades, per failure
 RETRY_RESERVE = 0.25
 
 
@@ -212,6 +214,24 @@ def _check_context_fits(role, cfg, endpoint, examples):
                 f"{role}: {e['example_id']} may need {prompt_tokens} prompt + {cfg['max_tokens']} output "
                 f"tokens, more than the {endpoint['context_length']}-token context of {cfg['provider']}"
             )
+
+
+def _check_feedback_fits(settings, cfg, endpoint, examples):
+    """The optimizer's largest request under FAILING_FEEDBACK: the failure_examples longest
+    sections, each with the author's and the model's version (taken as equally long), a rubric and
+    two grades. The legacy policy, with a paper per failure, was sized when the corpus was built."""
+    if settings.feedback_policy != FAILING_FEEDBACK:
+        return
+    lengths = sorted((token_count(e["reference"], cfg["model"]) for e in examples), reverse=True)
+    failures = min(settings.failure_examples, len(lengths))
+    section_tokens = math.ceil(CONTEXT_HEADROOM * 2 * sum(lengths[:failures]))
+    prompt_tokens = section_tokens + failures * FEEDBACK_EXAMPLE_EXTRA_TOKENS + CONTEXT_EXTRA_TOKENS
+    if prompt_tokens + cfg["max_tokens"] > endpoint["context_length"]:
+        raise RunError(
+            f"optimizer: {failures} failures may need {prompt_tokens} prompt + {cfg['max_tokens']} output "
+            f"tokens, more than the {endpoint['context_length']}-token context of {cfg['provider']}; "
+            "lower failure_examples"
+        )
 
 
 def estimate(settings, roles, examples, counts):
@@ -228,6 +248,8 @@ def estimate(settings, roles, examples, counts):
         endpoint, _ = endpoint_for(cfg)
         if count:
             _check_context_fits(role, cfg, endpoint, examples)
+        if role == "optimizer" and count:
+            _check_feedback_fits(settings, cfg, endpoint, examples)
         price = highest_prices(endpoint)
         typical_output_tokens = min(cfg["max_tokens"], TYPICAL_OUTPUT_TOKENS)
         typical_request = (

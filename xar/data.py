@@ -181,12 +181,14 @@ MIN_SECTION_WORDS = 60
 
 # A paper is usable only if the optimizer's largest request fits Kimi K2.6's context window. That
 # request holds FAILURE_EXAMPLES failures, each with the visible paper, the author's withheld
-# section and the model's version of it (assumed to be the same length as the author's).
+# section and the model's version of it (assumed to be the same length as the author's). This is
+# a frozen selection rule: the current feedback policy sends no paper to the optimizer, and
+# runs.estimate sizes that request. Changing these constants would change the dataset.
 OPTIMIZER_CONTEXT = 262_144
 OPTIMIZER_MAX_OUTPUT = 16_384
 PROMPT_OVERHEAD = 16_000  # instructions, rubrics and grades
 SAFETY_MARGIN = 1.25
-FAILURE_EXAMPLES = 4  # same as failure_examples in configs/experiments.yaml
+FAILURE_EXAMPLES = 4  # failure_examples in configs/experiments.yaml when the corpus was built
 # Papers are sized with the larger of these two token counts. Qwen is left over from the earlier
 # multi-model study; it stays so that the set of eligible papers cannot change.
 SIZING_MODELS = ("qwen/qwen3.5-9b", "moonshotai/kimi-k2.6")
