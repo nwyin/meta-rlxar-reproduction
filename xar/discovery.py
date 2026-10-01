@@ -17,7 +17,7 @@ ARXIV_QUERY = "https://export.arxiv.org/api/query"
 ARXIV_SOURCE_ID = "S4306400194"  # OpenAlex's ID for arXiv itself
 ATOM = {"a": "http://www.w3.org/2005/Atom", "x": "http://arxiv.org/schemas/atom"}
 
-# The filters are in the policy file's text too. 100 to 1,500 citations keeps papers with outside
+# See METHOD.md. 100 to 1,500 citations keeps papers with outside
 # evidence of quality and leaves out the most memorized ones.
 MIN_CITATIONS, MAX_CITATIONS = 100, 1500
 FIRST_POSTED, LAST_POSTED = "2016-01-01", "2021-12-31"

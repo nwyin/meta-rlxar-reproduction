@@ -1,8 +1,7 @@
 {
-  "source": "ar5iv LaTeXML HTML of arXiv papers first posted 2016 to 2021 with a published journal or conference version",
-  "policy_hash": "dc60a6bed693f0dba86776bc8dd92bab032c199d03b15eb0a7404d7301e3f3b7",
+  "source": "ar5iv HTML of arXiv papers first posted 2016 to 2021 with a published journal or conference version",
   "discovery_hash": "16d3abbddcb1bac3c7025b4f266e9665d56ea65a5c28db25ff9ed5cf322ce9e5",
-  "dataset_hash": "5593a57f359ee0e70b675a33474360607616577c6b3f4a57890f029327f0190e",
+  "dataset_hash": "8c03271428e1c5d111781b5ca57c70a676437200d41ca701702142bb5c58978a",
   "papers": [
     {
       "paper_id": "1804.07690",
@@ -29,11 +28,7 @@
       "extraction_version": "ar5iv-v1",
       "retrieved_at": "2026-10-01",
       "redistribution": "not verified; text stays local",
-      "html_hash": "ffdec30610c467a6975bbcfd0434396d6b76f8012b4d0ba49787e5e8643fe517",
-      "inspection": {
-        "agent_extraction_check": "passed",
-        "human_review": "pending"
-      }
+      "html_hash": "ffdec30610c467a6975bbcfd0434396d6b76f8012b4d0ba49787e5e8643fe517"
     },
     {
       "paper_id": "1604.04494",
@@ -61,11 +56,7 @@
       "extraction_version": "ar5iv-v1",
       "retrieved_at": "2026-10-01",
       "redistribution": "not verified; text stays local",
-      "html_hash": "3fb4d7198bc36cda12643e11966989dae751001167461fe4cf7d023eb2586cd3",
-      "inspection": {
-        "agent_extraction_check": "passed",
-        "human_review": "pending"
-      }
+      "html_hash": "3fb4d7198bc36cda12643e11966989dae751001167461fe4cf7d023eb2586cd3"
     },
     {
       "paper_id": "1810.12544",
@@ -95,11 +86,7 @@
       "extraction_version": "ar5iv-v1",
       "retrieved_at": "2026-10-01",
       "redistribution": "not verified; text stays local",
-      "html_hash": "7f9dde10101e542ed3081cebbaa62fc30e898c4ed87af8c5a303a8f84da43341",
-      "inspection": {
-        "agent_extraction_check": "passed",
-        "human_review": "pending"
-      }
+      "html_hash": "7f9dde10101e542ed3081cebbaa62fc30e898c4ed87af8c5a303a8f84da43341"
     },
     {
       "paper_id": "2004.12108",
@@ -129,11 +116,7 @@
       "extraction_version": "ar5iv-v1",
       "retrieved_at": "2026-10-01",
       "redistribution": "not verified; text stays local",
-      "html_hash": "b2aed157575c4ed99648bb996820d5da6a33f336ee348c9e0ce9027fb5433c2c",
-      "inspection": {
-        "agent_extraction_check": "passed",
-        "human_review": "pending"
-      }
+      "html_hash": "b2aed157575c4ed99648bb996820d5da6a33f336ee348c9e0ce9027fb5433c2c"
     },
     {
       "paper_id": "1905.04794",
@@ -164,11 +147,7 @@
       "extraction_version": "ar5iv-v1",
       "retrieved_at": "2026-10-01",
       "redistribution": "not verified; text stays local",
-      "html_hash": "5d8df35598ccd0d560e504222d56169e97158767c993b69b4220859ed44c8d70",
-      "inspection": {
-        "agent_extraction_check": "passed",
-        "human_review": "pending"
-      }
+      "html_hash": "5d8df35598ccd0d560e504222d56169e97158767c993b69b4220859ed44c8d70"
     },
     {
       "paper_id": "2003.04457",
@@ -196,11 +175,7 @@
       "extraction_version": "ar5iv-v1",
       "retrieved_at": "2026-10-01",
       "redistribution": "not verified; text stays local",
-      "html_hash": "cd4a758d1a72c633a92446f50f57b32c71914ad5176b4577c9f3d436c5ad4a49",
-      "inspection": {
-        "agent_extraction_check": "passed",
-        "human_review": "pending"
-      }
+      "html_hash": "cd4a758d1a72c633a92446f50f57b32c71914ad5176b4577c9f3d436c5ad4a49"
     },
     {
       "paper_id": "2102.02514",
@@ -229,11 +204,7 @@
       "extraction_version": "ar5iv-v1",
       "retrieved_at": "2026-10-01",
       "redistribution": "not verified; text stays local",
-      "html_hash": "5bd6d9b97e022ff9ad77ddcab07e21794b4aac111b91fdff5453202bd811fafe",
-      "inspection": {
-        "agent_extraction_check": "passed",
-        "human_review": "pending"
-      }
+      "html_hash": "5bd6d9b97e022ff9ad77ddcab07e21794b4aac111b91fdff5453202bd811fafe"
     },
     {
       "paper_id": "1806.09748",
@@ -263,11 +234,7 @@
       "extraction_version": "ar5iv-v1",
       "retrieved_at": "2026-10-01",
       "redistribution": "not verified; text stays local",
-      "html_hash": "6aa55f193e828b6e071daf0571b7b11997757e4649b5a898127bedac37a39f36",
-      "inspection": {
-        "agent_extraction_check": "passed",
-        "human_review": "pending"
-      }
+      "html_hash": "6aa55f193e828b6e071daf0571b7b11997757e4649b5a898127bedac37a39f36"
     },
     {
       "paper_id": "1902.03729",
@@ -294,11 +261,7 @@
       "extraction_version": "ar5iv-v1",
       "retrieved_at": "2026-10-01",
       "redistribution": "not verified; text stays local",
-      "html_hash": "84ff7727cad1aacf34dce4f3143aab54951f58ed7240e460add1a07a594c4396",
-      "inspection": {
-        "agent_extraction_check": "passed",
-        "human_review": "pending"
-      }
+      "html_hash": "84ff7727cad1aacf34dce4f3143aab54951f58ed7240e460add1a07a594c4396"
     },
     {
       "paper_id": "2008.06306",
@@ -325,11 +288,7 @@
       "extraction_version": "ar5iv-v1",
       "retrieved_at": "2026-10-01",
       "redistribution": "not verified; text stays local",
-      "html_hash": "5d18b1296fb009e5de189d1e1aaee6c6e2bd7e98c106a65b9dcdeb3cce8653d0",
-      "inspection": {
-        "agent_extraction_check": "passed",
-        "human_review": "pending"
-      }
+      "html_hash": "5d18b1296fb009e5de189d1e1aaee6c6e2bd7e98c106a65b9dcdeb3cce8653d0"
     },
     {
       "paper_id": "1904.10839",
@@ -358,11 +317,7 @@
       "extraction_version": "ar5iv-v1",
       "retrieved_at": "2026-10-01",
       "redistribution": "not verified; text stays local",
-      "html_hash": "735ecfec4274540079553aa534ea7d5cb77da5cdb2e395e3cc78ac506f6598ef",
-      "inspection": {
-        "agent_extraction_check": "passed",
-        "human_review": "pending"
-      }
+      "html_hash": "735ecfec4274540079553aa534ea7d5cb77da5cdb2e395e3cc78ac506f6598ef"
     },
     {
       "paper_id": "1610.04514",
@@ -390,11 +345,7 @@
       "extraction_version": "ar5iv-v1",
       "retrieved_at": "2026-10-01",
       "redistribution": "not verified; text stays local",
-      "html_hash": "42f4f2e645b8edfc3748dda9f4c189e41209cf8e7bd17d73f9557b07a4abb574",
-      "inspection": {
-        "agent_extraction_check": "passed",
-        "human_review": "pending"
-      }
+      "html_hash": "42f4f2e645b8edfc3748dda9f4c189e41209cf8e7bd17d73f9557b07a4abb574"
     },
     {
       "paper_id": "1710.02897",
@@ -422,11 +373,7 @@
       "extraction_version": "ar5iv-v1",
       "retrieved_at": "2026-10-01",
       "redistribution": "not verified; text stays local",
-      "html_hash": "1007637a77131a0ebe40c7574800328900db60b9fcf9871ace5840d3a6aedbdc",
-      "inspection": {
-        "agent_extraction_check": "passed",
-        "human_review": "pending"
-      }
+      "html_hash": "1007637a77131a0ebe40c7574800328900db60b9fcf9871ace5840d3a6aedbdc"
     },
     {
       "paper_id": "1809.00891",
@@ -454,11 +401,7 @@
       "extraction_version": "ar5iv-v1",
       "retrieved_at": "2026-10-01",
       "redistribution": "not verified; text stays local",
-      "html_hash": "96f367d23cd21daae1a99398e394a82a5f2a12aa60df39bbb466615690323299",
-      "inspection": {
-        "agent_extraction_check": "passed",
-        "human_review": "pending"
-      }
+      "html_hash": "96f367d23cd21daae1a99398e394a82a5f2a12aa60df39bbb466615690323299"
     },
     {
       "paper_id": "1707.04130",
@@ -484,11 +427,7 @@
       "extraction_version": "ar5iv-v1",
       "retrieved_at": "2026-10-01",
       "redistribution": "not verified; text stays local",
-      "html_hash": "2e1dbbc159eb7cef3b6640ac33b77259822ba2794c59948eafb2c9720840c06a",
-      "inspection": {
-        "agent_extraction_check": "passed",
-        "human_review": "pending"
-      }
+      "html_hash": "2e1dbbc159eb7cef3b6640ac33b77259822ba2794c59948eafb2c9720840c06a"
     },
     {
       "paper_id": "1602.00544",
@@ -516,11 +455,7 @@
       "extraction_version": "ar5iv-v1",
       "retrieved_at": "2026-10-01",
       "redistribution": "not verified; text stays local",
-      "html_hash": "5451266532c4720f4a406f5b233e45fc8652b77f9a364af1de4a97fdf7904dc4",
-      "inspection": {
-        "agent_extraction_check": "passed",
-        "human_review": "pending"
-      }
+      "html_hash": "5451266532c4720f4a406f5b233e45fc8652b77f9a364af1de4a97fdf7904dc4"
     },
     {
       "paper_id": "2103.00549",
@@ -546,11 +481,7 @@
       "extraction_version": "ar5iv-v1",
       "retrieved_at": "2026-10-01",
       "redistribution": "not verified; text stays local",
-      "html_hash": "5b3d591254354bb37582b17c6106150b365ac582f649592d494ef9f73cff9ac3",
-      "inspection": {
-        "agent_extraction_check": "passed",
-        "human_review": "pending"
-      }
+      "html_hash": "5b3d591254354bb37582b17c6106150b365ac582f649592d494ef9f73cff9ac3"
     },
     {
       "paper_id": "1702.01166",
@@ -578,11 +509,7 @@
       "extraction_version": "ar5iv-v1",
       "retrieved_at": "2026-10-01",
       "redistribution": "not verified; text stays local",
-      "html_hash": "29fa3380f83d3331b6dd3c6ea3539d29b782fc482abe3aa64aa4f0db391475bf",
-      "inspection": {
-        "agent_extraction_check": "passed",
-        "human_review": "pending"
-      }
+      "html_hash": "29fa3380f83d3331b6dd3c6ea3539d29b782fc482abe3aa64aa4f0db391475bf"
     },
     {
       "paper_id": "1803.02042",
@@ -610,11 +537,7 @@
       "extraction_version": "ar5iv-v1",
       "retrieved_at": "2026-10-01",
       "redistribution": "not verified; text stays local",
-      "html_hash": "a643c8e7efb67ff09f89c26fe50b815bed3d988d402d2a32235980ab5d74dba8",
-      "inspection": {
-        "agent_extraction_check": "passed",
-        "human_review": "pending"
-      }
+      "html_hash": "a643c8e7efb67ff09f89c26fe50b815bed3d988d402d2a32235980ab5d74dba8"
     },
     {
       "paper_id": "1703.01292",
@@ -641,11 +564,7 @@
       "extraction_version": "ar5iv-v1",
       "retrieved_at": "2026-10-01",
       "redistribution": "not verified; text stays local",
-      "html_hash": "471a3c022245c033379656dad1e203b918e0a5bdd68632cb2ccb4a23eaba469c",
-      "inspection": {
-        "agent_extraction_check": "passed",
-        "human_review": "pending"
-      }
+      "html_hash": "471a3c022245c033379656dad1e203b918e0a5bdd68632cb2ccb4a23eaba469c"
     },
     {
       "paper_id": "1904.06517",
@@ -673,11 +592,7 @@
       "extraction_version": "ar5iv-v1",
       "retrieved_at": "2026-10-01",
       "redistribution": "not verified; text stays local",
-      "html_hash": "954c75f303b3de1a1e61db1c5347fa44b753e048c5e43cb94b2d28e2750c2e85",
-      "inspection": {
-        "agent_extraction_check": "passed",
-        "human_review": "pending"
-      }
+      "html_hash": "954c75f303b3de1a1e61db1c5347fa44b753e048c5e43cb94b2d28e2750c2e85"
     },
     {
       "paper_id": "2005.02362",
@@ -707,11 +622,7 @@
       "extraction_version": "ar5iv-v1",
       "retrieved_at": "2026-10-01",
       "redistribution": "not verified; text stays local",
-      "html_hash": "f81a58d02edf12d0951d51777b53477ce0051a490f8ea4667e68effb7e7db46b",
-      "inspection": {
-        "agent_extraction_check": "passed",
-        "human_review": "pending"
-      }
+      "html_hash": "f81a58d02edf12d0951d51777b53477ce0051a490f8ea4667e68effb7e7db46b"
     },
     {
       "paper_id": "1605.05804",
@@ -740,11 +651,7 @@
       "extraction_version": "ar5iv-v1",
       "retrieved_at": "2026-10-01",
       "redistribution": "not verified; text stays local",
-      "html_hash": "0383c8e21a1fdd1bf53430fccf49e909cc2b436a92a135eaed110df899c51199",
-      "inspection": {
-        "agent_extraction_check": "passed",
-        "human_review": "pending"
-      }
+      "html_hash": "0383c8e21a1fdd1bf53430fccf49e909cc2b436a92a135eaed110df899c51199"
     },
     {
       "paper_id": "2001.02844",
@@ -784,11 +691,7 @@
       "extraction_version": "ar5iv-v1",
       "retrieved_at": "2026-10-01",
       "redistribution": "not verified; text stays local",
-      "html_hash": "be96b1ec8d707fca240a5bbefb4460c591977e45f1e750f2a66065dd0d000b26",
-      "inspection": {
-        "agent_extraction_check": "passed",
-        "human_review": "pending"
-      }
+      "html_hash": "be96b1ec8d707fca240a5bbefb4460c591977e45f1e750f2a66065dd0d000b26"
     },
     {
       "paper_id": "2006.14575",
@@ -815,11 +718,7 @@
       "extraction_version": "ar5iv-v1",
       "retrieved_at": "2026-10-01",
       "redistribution": "not verified; text stays local",
-      "html_hash": "70db6defa595ab8ae2c092be955f6b7f679dc5af22006e8fbe2e38e89534ef49",
-      "inspection": {
-        "agent_extraction_check": "passed",
-        "human_review": "pending"
-      }
+      "html_hash": "70db6defa595ab8ae2c092be955f6b7f679dc5af22006e8fbe2e38e89534ef49"
     },
     {
       "paper_id": "1803.01961",
@@ -846,11 +745,7 @@
       "extraction_version": "ar5iv-v1",
       "retrieved_at": "2026-10-01",
       "redistribution": "not verified; text stays local",
-      "html_hash": "644e7f29da8a0564a69ef76987bb576f6c8207a05fc01e22285742015504c02b",
-      "inspection": {
-        "agent_extraction_check": "passed",
-        "human_review": "pending"
-      }
+      "html_hash": "644e7f29da8a0564a69ef76987bb576f6c8207a05fc01e22285742015504c02b"
     },
     {
       "paper_id": "1702.02151",
@@ -877,11 +772,7 @@
       "extraction_version": "ar5iv-v1",
       "retrieved_at": "2026-10-01",
       "redistribution": "not verified; text stays local",
-      "html_hash": "95747682351dc7112454af59fbe177c5a15e60898d35be79e57aaefd513e692d",
-      "inspection": {
-        "agent_extraction_check": "passed",
-        "human_review": "pending"
-      }
+      "html_hash": "95747682351dc7112454af59fbe177c5a15e60898d35be79e57aaefd513e692d"
     },
     {
       "paper_id": "1912.04304",
@@ -909,11 +800,7 @@
       "extraction_version": "ar5iv-v1",
       "retrieved_at": "2026-10-01",
       "redistribution": "not verified; text stays local",
-      "html_hash": "40a806126af56f6b2e02984da3403909b4bbb610d8ce5d0bb15a824c63cd3518",
-      "inspection": {
-        "agent_extraction_check": "passed",
-        "human_review": "pending"
-      }
+      "html_hash": "40a806126af56f6b2e02984da3403909b4bbb610d8ce5d0bb15a824c63cd3518"
     },
     {
       "paper_id": "1705.10321",
@@ -949,11 +836,7 @@
       "extraction_version": "ar5iv-v1",
       "retrieved_at": "2026-10-01",
       "redistribution": "not verified; text stays local",
-      "html_hash": "915fe1bf3f287f3014e952eb5f4922af8168db433e6a4b36d7ea75c3d91305c7",
-      "inspection": {
-        "agent_extraction_check": "passed",
-        "human_review": "pending"
-      }
+      "html_hash": "915fe1bf3f287f3014e952eb5f4922af8168db433e6a4b36d7ea75c3d91305c7"
     },
     {
       "paper_id": "1608.08218",
@@ -984,11 +867,7 @@
       "extraction_version": "ar5iv-v1",
       "retrieved_at": "2026-10-01",
       "redistribution": "not verified; text stays local",
-      "html_hash": "c2a4190b3499ccf0a467b807f7c76e14097d1ea78992836cd592d536a06d9e9b",
-      "inspection": {
-        "agent_extraction_check": "passed",
-        "human_review": "pending"
-      }
+      "html_hash": "c2a4190b3499ccf0a467b807f7c76e14097d1ea78992836cd592d536a06d9e9b"
     },
     {
       "paper_id": "1804.02083",
@@ -1027,11 +906,7 @@
       "extraction_version": "ar5iv-v1",
       "retrieved_at": "2026-10-01",
       "redistribution": "not verified; text stays local",
-      "html_hash": "4899bb2e7f7c0c8bf365881d16279336b218d29bf1b91dcaa8d396bf1c607271",
-      "inspection": {
-        "agent_extraction_check": "passed",
-        "human_review": "pending"
-      }
+      "html_hash": "4899bb2e7f7c0c8bf365881d16279336b218d29bf1b91dcaa8d396bf1c607271"
     },
     {
       "paper_id": "1803.05483",
@@ -1060,11 +935,7 @@
       "extraction_version": "ar5iv-v1",
       "retrieved_at": "2026-10-01",
       "redistribution": "not verified; text stays local",
-      "html_hash": "fbd2f8306256b602205995a19e61793e11f62656244b5f6554a39628db9c3724",
-      "inspection": {
-        "agent_extraction_check": "passed",
-        "human_review": "pending"
-      }
+      "html_hash": "fbd2f8306256b602205995a19e61793e11f62656244b5f6554a39628db9c3724"
     },
     {
       "paper_id": "1806.02801",
@@ -1093,11 +964,7 @@
       "extraction_version": "ar5iv-v1",
       "retrieved_at": "2026-10-01",
       "redistribution": "not verified; text stays local",
-      "html_hash": "3d05dd8cb83d5984e347c2b739d289510f710637576501855f469491425c23ec",
-      "inspection": {
-        "agent_extraction_check": "passed",
-        "human_review": "pending"
-      }
+      "html_hash": "3d05dd8cb83d5984e347c2b739d289510f710637576501855f469491425c23ec"
     },
     {
       "paper_id": "2003.04516",
@@ -1125,11 +992,7 @@
       "extraction_version": "ar5iv-v1",
       "retrieved_at": "2026-10-01",
       "redistribution": "not verified; text stays local",
-      "html_hash": "b9e2013b67533a0c9a48edadd3c86e822dbe9775a70d60cb7569e025206e5d6a",
-      "inspection": {
-        "agent_extraction_check": "passed",
-        "human_review": "pending"
-      }
+      "html_hash": "b9e2013b67533a0c9a48edadd3c86e822dbe9775a70d60cb7569e025206e5d6a"
     },
     {
       "paper_id": "1603.06944",
@@ -1156,11 +1019,7 @@
       "extraction_version": "ar5iv-v1",
       "retrieved_at": "2026-10-01",
       "redistribution": "not verified; text stays local",
-      "html_hash": "f2c2af31fa09bacf3f3d88037343f2b1ac1519a9d66657fd05e8624686765746",
-      "inspection": {
-        "agent_extraction_check": "passed",
-        "human_review": "pending"
-      }
+      "html_hash": "f2c2af31fa09bacf3f3d88037343f2b1ac1519a9d66657fd05e8624686765746"
     },
     {
       "paper_id": "1907.03342",
@@ -1197,11 +1056,7 @@
       "extraction_version": "ar5iv-v1",
       "retrieved_at": "2026-10-01",
       "redistribution": "not verified; text stays local",
-      "html_hash": "edb0b2dca8aae5b4ad01f84baa7512a9e47f156d6414be3ddc3cccd6be441ad2",
-      "inspection": {
-        "agent_extraction_check": "passed",
-        "human_review": "pending"
-      }
+      "html_hash": "edb0b2dca8aae5b4ad01f84baa7512a9e47f156d6414be3ddc3cccd6be441ad2"
     },
     {
       "paper_id": "1603.00512",
@@ -1230,11 +1085,7 @@
       "extraction_version": "ar5iv-v1",
       "retrieved_at": "2026-10-01",
       "redistribution": "not verified; text stays local",
-      "html_hash": "5a5d57ca6a246a25396249d1194d3c1b07c4654950cd815df9a1dda78792982c",
-      "inspection": {
-        "agent_extraction_check": "passed",
-        "human_review": "pending"
-      }
+      "html_hash": "5a5d57ca6a246a25396249d1194d3c1b07c4654950cd815df9a1dda78792982c"
     },
     {
       "paper_id": "1609.03063",
@@ -1266,11 +1117,7 @@
       "extraction_version": "ar5iv-v1",
       "retrieved_at": "2026-10-01",
       "redistribution": "not verified; text stays local",
-      "html_hash": "9cff3f6567bd10d12bb813e6550eb57d90be4b037792c0847f66d0493370ed0e",
-      "inspection": {
-        "agent_extraction_check": "passed",
-        "human_review": "pending"
-      }
+      "html_hash": "9cff3f6567bd10d12bb813e6550eb57d90be4b037792c0847f66d0493370ed0e"
     },
     {
       "paper_id": "1712.00319",
@@ -1299,11 +1146,7 @@
       "extraction_version": "ar5iv-v1",
       "retrieved_at": "2026-10-01",
       "redistribution": "not verified; text stays local",
-      "html_hash": "b764a1af75121e8f5d2f3b23fa3f460704164e6db5783a7e40f74f423616f880",
-      "inspection": {
-        "agent_extraction_check": "passed",
-        "human_review": "pending"
-      }
+      "html_hash": "b764a1af75121e8f5d2f3b23fa3f460704164e6db5783a7e40f74f423616f880"
     },
     {
       "paper_id": "1801.08358",
@@ -1329,11 +1172,7 @@
       "extraction_version": "ar5iv-v1",
       "retrieved_at": "2026-10-01",
       "redistribution": "not verified; text stays local",
-      "html_hash": "506b478dfcbb3e4e64010cc316e4523765835466d2d3f3a0f3b960e4bd0e3df5",
-      "inspection": {
-        "agent_extraction_check": "passed",
-        "human_review": "pending"
-      }
+      "html_hash": "506b478dfcbb3e4e64010cc316e4523765835466d2d3f3a0f3b960e4bd0e3df5"
     },
     {
       "paper_id": "1605.06111",
@@ -1359,11 +1198,7 @@
       "extraction_version": "ar5iv-v1",
       "retrieved_at": "2026-10-01",
       "redistribution": "not verified; text stays local",
-      "html_hash": "edea6c3969ac504c2ac3ca896b662bdd62aad778f1936d29bffff42436715507",
-      "inspection": {
-        "agent_extraction_check": "passed",
-        "human_review": "pending"
-      }
+      "html_hash": "edea6c3969ac504c2ac3ca896b662bdd62aad778f1936d29bffff42436715507"
     },
     {
       "paper_id": "1708.02245",
@@ -1392,11 +1227,7 @@
       "extraction_version": "ar5iv-v1",
       "retrieved_at": "2026-10-01",
       "redistribution": "not verified; text stays local",
-      "html_hash": "8449879831e23842e10abd07432d1aed4d9e2933b1e1513cc48661b3f9e661e7",
-      "inspection": {
-        "agent_extraction_check": "passed",
-        "human_review": "pending"
-      }
+      "html_hash": "8449879831e23842e10abd07432d1aed4d9e2933b1e1513cc48661b3f9e661e7"
     },
     {
       "paper_id": "1801.09972",
@@ -1423,11 +1254,7 @@
       "extraction_version": "ar5iv-v1",
       "retrieved_at": "2026-10-01",
       "redistribution": "not verified; text stays local",
-      "html_hash": "485a9910a562a814417c5faebb280dc3f70494626c07b0924ad27ee902511cb5",
-      "inspection": {
-        "agent_extraction_check": "passed",
-        "human_review": "pending"
-      }
+      "html_hash": "485a9910a562a814417c5faebb280dc3f70494626c07b0924ad27ee902511cb5"
     },
     {
       "paper_id": "1708.06627",
@@ -1454,11 +1281,7 @@
       "extraction_version": "ar5iv-v1",
       "retrieved_at": "2026-10-01",
       "redistribution": "not verified; text stays local",
-      "html_hash": "8db89e4286529bfa188ac0c576f6dcf4999b0f3d4da30f23ebd633023ac7f57c",
-      "inspection": {
-        "agent_extraction_check": "passed",
-        "human_review": "pending"
-      }
+      "html_hash": "8db89e4286529bfa188ac0c576f6dcf4999b0f3d4da30f23ebd633023ac7f57c"
     },
     {
       "paper_id": "2011.03957",
@@ -1486,11 +1309,7 @@
       "extraction_version": "ar5iv-v1",
       "retrieved_at": "2026-10-01",
       "redistribution": "not verified; text stays local",
-      "html_hash": "1d02a007174781ef7ca9bf4c461a208ee3c4de5ffebd1af58c47e13be7e8dcf4",
-      "inspection": {
-        "agent_extraction_check": "passed",
-        "human_review": "pending"
-      }
+      "html_hash": "1d02a007174781ef7ca9bf4c461a208ee3c4de5ffebd1af58c47e13be7e8dcf4"
     },
     {
       "paper_id": "1907.03505",
@@ -1519,11 +1338,7 @@
       "extraction_version": "ar5iv-v1",
       "retrieved_at": "2026-10-01",
       "redistribution": "not verified; text stays local",
-      "html_hash": "2d7e8218de1fb91c18cb31ffdfed9525c2e4a900ca8c27b3f6445e082b6abef7",
-      "inspection": {
-        "agent_extraction_check": "passed",
-        "human_review": "pending"
-      }
+      "html_hash": "2d7e8218de1fb91c18cb31ffdfed9525c2e4a900ca8c27b3f6445e082b6abef7"
     },
     {
       "paper_id": "1909.04821",
@@ -1554,11 +1369,7 @@
       "extraction_version": "ar5iv-v1",
       "retrieved_at": "2026-10-01",
       "redistribution": "not verified; text stays local",
-      "html_hash": "b1fc2b4712407eb266ed3f682be4cedd11bd6972c8b542fdf9d16f7869083089",
-      "inspection": {
-        "agent_extraction_check": "passed",
-        "human_review": "pending"
-      }
+      "html_hash": "b1fc2b4712407eb266ed3f682be4cedd11bd6972c8b542fdf9d16f7869083089"
     },
     {
       "paper_id": "1710.07405",
@@ -1585,11 +1396,7 @@
       "extraction_version": "ar5iv-v1",
       "retrieved_at": "2026-10-01",
       "redistribution": "not verified; text stays local",
-      "html_hash": "074df6f100250875a4d2e1c47e1456a28c85c4ff2419b379eeb7dc8b5c1d67ec",
-      "inspection": {
-        "agent_extraction_check": "passed",
-        "human_review": "pending"
-      }
+      "html_hash": "074df6f100250875a4d2e1c47e1456a28c85c4ff2419b379eeb7dc8b5c1d67ec"
     },
     {
       "paper_id": "1707.00048",
@@ -1619,11 +1426,7 @@
       "extraction_version": "ar5iv-v1",
       "retrieved_at": "2026-10-01",
       "redistribution": "not verified; text stays local",
-      "html_hash": "e6f4d07055104a4c18a24db192622a51fb8f7b54e52e381c436cf50dc601d904",
-      "inspection": {
-        "agent_extraction_check": "passed",
-        "human_review": "pending"
-      }
+      "html_hash": "e6f4d07055104a4c18a24db192622a51fb8f7b54e52e381c436cf50dc601d904"
     },
     {
       "paper_id": "2104.05868",
@@ -1652,11 +1455,7 @@
       "extraction_version": "ar5iv-v1",
       "retrieved_at": "2026-10-01",
       "redistribution": "not verified; text stays local",
-      "html_hash": "a35c37d2aca0f56ac0dc0956b46fa9e50a32afa0b9d9d1340a3a603267526aa0",
-      "inspection": {
-        "agent_extraction_check": "passed",
-        "human_review": "pending"
-      }
+      "html_hash": "a35c37d2aca0f56ac0dc0956b46fa9e50a32afa0b9d9d1340a3a603267526aa0"
     },
     {
       "paper_id": "1712.09172",
@@ -1685,11 +1484,7 @@
       "extraction_version": "ar5iv-v1",
       "retrieved_at": "2026-10-01",
       "redistribution": "not verified; text stays local",
-      "html_hash": "40cdc855037cf7e1a2799c89bbbab084bf4946907e6ee2d20247e36b28d46e0d",
-      "inspection": {
-        "agent_extraction_check": "passed",
-        "human_review": "pending"
-      }
+      "html_hash": "40cdc855037cf7e1a2799c89bbbab084bf4946907e6ee2d20247e36b28d46e0d"
     },
     {
       "paper_id": "1603.03985",
@@ -1718,11 +1513,7 @@
       "extraction_version": "ar5iv-v1",
       "retrieved_at": "2026-10-01",
       "redistribution": "not verified; text stays local",
-      "html_hash": "7eb59dbbb9dc1f8670e52e668bd322072f05324e17c5a70ec677dd06b9281ae3",
-      "inspection": {
-        "agent_extraction_check": "passed",
-        "human_review": "pending"
-      }
+      "html_hash": "7eb59dbbb9dc1f8670e52e668bd322072f05324e17c5a70ec677dd06b9281ae3"
     },
     {
       "paper_id": "1802.07068",
@@ -1749,11 +1540,7 @@
       "extraction_version": "ar5iv-v1",
       "retrieved_at": "2026-10-01",
       "redistribution": "not verified; text stays local",
-      "html_hash": "3958dbc250071c8eee92bd290e4fbcec86333980907567e7fbba026ff529ee20",
-      "inspection": {
-        "agent_extraction_check": "passed",
-        "human_review": "pending"
-      }
+      "html_hash": "3958dbc250071c8eee92bd290e4fbcec86333980907567e7fbba026ff529ee20"
     },
     {
       "paper_id": "2104.08249",
@@ -1781,11 +1568,7 @@
       "extraction_version": "ar5iv-v1",
       "retrieved_at": "2026-10-01",
       "redistribution": "not verified; text stays local",
-      "html_hash": "81b98b3b7f03c5fda6cd242695f08e1e0de2b180c5c093647cb81f880b46b690",
-      "inspection": {
-        "agent_extraction_check": "passed",
-        "human_review": "pending"
-      }
+      "html_hash": "81b98b3b7f03c5fda6cd242695f08e1e0de2b180c5c093647cb81f880b46b690"
     },
     {
       "paper_id": "1701.03093",
@@ -1824,11 +1607,7 @@
       "extraction_version": "ar5iv-v1",
       "retrieved_at": "2026-10-01",
       "redistribution": "not verified; text stays local",
-      "html_hash": "66cccf64dc913421740ef21a40a1e1bd34264aee60f14d0c55fef9ebd916dc21",
-      "inspection": {
-        "agent_extraction_check": "passed",
-        "human_review": "pending"
-      }
+      "html_hash": "66cccf64dc913421740ef21a40a1e1bd34264aee60f14d0c55fef9ebd916dc21"
     },
     {
       "paper_id": "1704.04413",
@@ -1858,11 +1637,7 @@
       "extraction_version": "ar5iv-v1",
       "retrieved_at": "2026-10-01",
       "redistribution": "not verified; text stays local",
-      "html_hash": "c8598b6413fea9609d7624b9221e585c4de70a8194e7832b289a9a69cd830208",
-      "inspection": {
-        "agent_extraction_check": "passed",
-        "human_review": "pending"
-      }
+      "html_hash": "c8598b6413fea9609d7624b9221e585c4de70a8194e7832b289a9a69cd830208"
     }
   ],
   "examples": [

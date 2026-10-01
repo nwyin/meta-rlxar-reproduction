@@ -6,7 +6,7 @@ Muse Spark 1.1 writes the missing paper sections, generates the rubrics and grad
 Kimi K2.6 rewrites the rubric meta prompt. The completed run covers 52 sections from 8 training
 and 5 validation recent arXiv cs.CL papers, with 7 prompt updates. `data/` now holds a new
 corpus of 56 peer-reviewed papers from 2016 to 2021 across 9 fields (153 sections), built to
-give human references of known quality. No run has used it yet. The owner reviewed all 56 papers together and approved them. [METHOD.md](METHOD.md) describes the data, the procedure, how
+give human references of known quality. No run has used it yet. The owner reviewed all 56 papers together and approved them (see `LOG.md`). [METHOD.md](METHOD.md) describes the data, the procedure, how
 this differs from the blog, and the limitations.
 
 ## Result
@@ -48,14 +48,14 @@ papers with both tokenizers, as the first corpus did, and keeps the larger count
 (about 20 minutes, because arXiv rate-limits). It writes `data/discovery.json` once and
 refuses to replace a different file, so skip it when that file exists. `prepare-data` goes
 through the shortlists in `data/discovery.json`, downloads any missing ar5iv HTML into
-`data/raw/`, and rebuilds `data/examples.jsonl`, `splits.json`, `source_manifest.json`,
-`exclusions.json`, `review.md` and a `human_review.json` with every paper `pending`. It fails
-if the result does not match the saved files, for example because ar5iv changed a page.
-Runs need every paper they use set to `approved` in `data/human_review.json`.
+`data/raw/`, and rebuilds `data/examples.jsonl`, `splits.json` and `source_manifest.json`. It
+prints each rejected candidate and the reason. It fails if the result does not match the saved
+files, for example because ar5iv changed a page. The owner reviewed the 56 papers together and
+approved them; `LOG.md` records that.
 
-To audit the completed run, copy `examples.jsonl`, `splits.json`, `source_manifest.json`,
-`human_review.json` and `acquisition_policy.json` from `data/archive/arxiv-2609-cs-cl/` back
-into `data/` (set the new files aside first), since the run's manifest points there.
+To audit the completed run, copy `examples.jsonl`, `splits.json` and `human_review.json` from
+`data/archive/arxiv-2609-cs-cl/` back into `data/` (set the new `examples.jsonl` and
+`splits.json` aside first), since the run's manifest points there.
 
 Copy `.env.example` to `.env` and set `OPENROUTER_API_KEY`.
 
@@ -142,12 +142,8 @@ prompt history and criteria; see [tools/data-viewer](tools/data-viewer/README.md
 │                                 preflight compares against
 ├── data/
 │   ├── discovery.json            the seeded OpenAlex and arXiv shortlists papers come from
-│   ├── acquisition_policy.json   selection rules, fixed before any grading
-│   ├── exclusions.json           papers rejected during extraction, with reasons
 │   ├── source_manifest.json      URL, metadata and hashes for each selected paper
 │   ├── splits.json               paper IDs for train, validation, confirmation
-│   ├── human_review.json         approval of the extracted papers, by dataset hash
-│   ├── review.md                 table of the papers for the reviewer (not in git)
 │   ├── examples.jsonl            the 153 sections with paper context (not in git)
 │   ├── raw/                      downloaded ar5iv HTML and arXiv metadata (not in git)
 │   ├── archive/                  the earlier cs.CL corpus the completed run used (not in git)

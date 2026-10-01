@@ -8,10 +8,8 @@ __pycache__/
 .ruff_cache/
 data/raw/
 data/examples.jsonl
-data/review.md
 data/tokenizers/
 runs/
 reports/
 .DS_Store
-data/git-deliveries/
 data/archive/

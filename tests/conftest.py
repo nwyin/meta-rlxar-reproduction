@@ -8,7 +8,7 @@ import pytest
 from xar import runs
 from xar.data import SECTIONS
 from xar.openrouter import MODEL_CATALOG, SNAPSHOTS, endpoints_filename
-from xar.util import canonical, digest, file_hash, load_design, read_json, words, write_json
+from xar.util import canonical, digest, load_design, read_json, words, write_json
 
 
 @pytest.fixture
@@ -49,7 +49,7 @@ def rubric():
 
 
 def write_dataset(tmp_path, papers_by_split):
-    """Write a dataset with all four sections of each paper, its splits and an approving review.
+    """Write a dataset with all four sections of each paper, and its splits.
 
     Returns the dataset and splits paths."""
     examples = [
@@ -61,8 +61,6 @@ def write_dataset(tmp_path, papers_by_split):
     dataset, splits = tmp_path / "examples.jsonl", tmp_path / "splits.json"
     dataset.write_text("".join(canonical(e) + "\n" for e in examples))
     write_json(splits, {"papers": papers_by_split})
-    approved = {e["paper_id"]: {"decision": "approved"} for e in examples}
-    write_json(tmp_path / "human_review.json", {"dataset_hash": file_hash(dataset), "papers": approved})
     return dataset, splits
 
 

@@ -216,3 +216,21 @@ Open points:
 - The owner reviewed all 56 papers together and judged them reasonable. We recorded that as
   `approved` for each paper in `data/human_review.json`, as a group decision with no
   grade-based selection. The way is now open to run `--dry-run` for a real cost estimate.
+
+## 2026-10-01 — Removed intermediate data files
+
+At the owner's request we deleted `data/human_review.json`, `exclusions.json`,
+`acquisition_policy.json`, `review.md` and `git-deliveries/`, and kept `data/discovery.json`.
+
+- Removed the review gate from `xar/runs.py`. A run no longer checks for an approval file. The
+  owner's approval of the 56 papers stays recorded above. `scripts/audit_completed_run.py`
+  still checks the completed run's own review file, which is in the archive.
+- `prepare-data` no longer reads a policy file, writes exclusions or writes a review packet.
+  The selection rules are the constants in `xar/discovery.py` and `xar/data.py`, described in
+  `METHOD.md`. The dataset hash changed, because examples no longer carry a stale
+  `inspection` field. Papers, splits and sections did not change.
+- The counts of rejected candidates stay in `METHOD.md` (117, of which 41 had no ar5iv page).
+  The reasons for each are in the build output, not on disk.
+- Tagged `corpus-2026-10-01` on commit `2d3bc80`, the last commit holding the policy, the
+  exclusions and the review file. `main` stays lean, and the tag keeps the verification record.
+

@@ -9,7 +9,7 @@ import subprocess
 from dataclasses import asdict
 from pathlib import Path
 
-from xar.data import load_examples, run_examples, task_data
+from xar.data import task_data
 from xar.openrouter import OpenRouter, endpoint_for, highest_prices, token_count
 from xar.util import (
     ROOT,
@@ -129,23 +129,6 @@ def resolved_manifest(settings, roles, experiment, extra=None):
     return manifest
 
 
-def _check_human_review(settings):
-    """Every paper the run uses must be approved in human_review.json next to the dataset."""
-    dataset = settings.dataset
-    review_path = Path(dataset).parent / "human_review.json"
-    if not review_path.exists():
-        raise RunError(f"Missing {review_path}; record a review decision for each paper before running")
-    review = read_json(review_path)
-    if review.get("dataset_hash") != file_hash(dataset):
-        raise RunError(f"{review_path} was written for a different {dataset}; review the data again")
-    examples = run_examples(load_examples(dataset, settings.splits), settings.split)
-    papers = {e["paper_id"] for e in examples}
-    decisions = review.get("papers", {})
-    pending = sorted(p for p in papers if decisions.get(p, {}).get("decision") != "approved")
-    if pending:
-        raise RunError(f"Papers {pending} are not approved in {review_path}")
-
-
 def _git_commit():
     try:
         return subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip()
@@ -171,12 +154,11 @@ def _record_budget_change(output, saved, settings):
 
 
 def initialize_run(settings, roles, experiment, extra=None):
-    """Check the data review and any saved run, run the live preflight, and return the API client.
+    """Check any saved run, run the live preflight, and return the API client.
 
     A new run gets its manifest written here. A resumed run must match the saved manifest except
     for RESUMABLE_ARGS; a budget change is logged to budget_continuations.json.
     """
-    _check_human_review(settings)
     manifest = resolved_manifest(settings, roles, experiment, extra)
     output = Path(settings.output_dir)
     manifest_path = output / "manifest.json"

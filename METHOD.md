@@ -20,7 +20,7 @@ corpus tests whether a rubric can tell human writing from model writing, not whe
 can recall a paper. The old corpus is archived in `data/archive/arxiv-2609-cs-cl/`.
 
 `run.py discover-data` draws the candidates, and `run.py prepare-data` extracts them. Both
-steps use no model and their choices are fixed in `data/acquisition_policy.json`.
+steps use no model, and their choices are the constants in `xar/discovery.py` and `xar/data.py`.
 
 1. Sample. OpenAlex lists works with an arXiv copy, 100 to 1,500 citations, type article, not
    retracted and published by 2022-11-29. The command takes a random sample of 10,000 of the
@@ -32,7 +32,8 @@ steps use no model and their choices are fixed in `data/acquisition_policy.json`
    is shuffled with a seed and cut to a shortlist of 60 (`data/discovery.json`).
 4. Extract. `prepare-data` walks each shortlist in order, downloads the paper's HTML from
    [ar5iv](https://ar5iv.labs.arxiv.org), and keeps the first papers up to the group's quota.
-   Rejected papers and the reason are in `data/exclusions.json`.
+   `prepare-data` prints each rejected candidate and the reason. Of the 117 rejected, 41 had no
+   ar5iv page and 38 had no headed introduction.
 
 | Group | Papers | Group | Papers |
 | --- | ---: | --- | ---: |
@@ -89,10 +90,15 @@ no pilot split. `run.py pilot` uses the first 2 training papers in `data/splits.
 only 2 papers it needs.
 
 `data/source_manifest.json` records each paper's URL, metadata and hashes, and the hash of
-`data/examples.jsonl`. The paper text is not in the repository. `prepare-data` writes
-`data/review.md`, a table of the papers for review, and `data/human_review.json` with every
-paper marked `pending`. A run will not start until the repository owner sets every paper it
-uses to `approved` there.
+`data/examples.jsonl`. The paper text is not in the repository. The owner reviewed all 56
+papers together and approved them. No file records that, because a run does not check for it;
+`LOG.md` does.
+
+The git tag `corpus-2026-10-01` marks the commit that also holds the files removed from `data/`
+afterward: the selection policy, the reason for each rejected candidate and the review file.
+`git show corpus-2026-10-01:data/exclusions.json` reads one. The papers' text is not in Git,
+because redistribution licenses were not checked. `data/source_manifest.json` has each paper's
+URLs and HTML hash, so anyone can pull the pages again and check them.
 
 ## Roles
 

@@ -360,6 +360,7 @@ NOT_RESEARCH_TITLE = re.compile(
     r"|toolkit|library|data release|catalogue?|dataset|benchmark)\b",
     re.IGNORECASE,
 )
+SOURCE = "ar5iv HTML of arXiv papers first posted 2016 to 2021 with a published journal or conference version"
 SOURCE_URL = "https://ar5iv.labs.arxiv.org/html/"
 DOWNLOAD_PAUSE_SECONDS = 0.5
 MANIFEST_EXAMPLE_FIELDS = (
@@ -403,11 +404,9 @@ def prepare_data():
 
     Walks each field's shortlist in frozen order (downloading any HTML missing from data/raw) and
     keeps the first eligible papers up to the field's quota, listing the rejected ones in
-    data/exclusions.json. Refuses to replace an existing examples.jsonl, splits.json or
-    source_manifest.json with different content. exclusions.json is rewritten only when the set of
-    excluded papers changes, so rewording an exclusion reason does not change the saved file.
+    the log. Refuses to replace an existing examples.jsonl, splits.json or source_manifest.json
+    with different content.
     """
-    policy = read_json(ROOT / "data/acquisition_policy.json")
     shortlists = load_discovery()
     raw_dir = ROOT / "data/raw"
     raw_dir.mkdir(parents=True, exist_ok=True)
@@ -442,9 +441,6 @@ def prepare_data():
                         time.sleep(DOWNLOAD_PAUSE_SECONDS)
                     metadata["html_hash"] = file_hash(path)
                     extracted = extract_paper(path.read_text(), metadata)
-                    # The examples' provenance is this same dict, so this lands in every example.
-                    # Agent checks are not a human review; data/human_review.json records that.
-                    metadata["inspection"] = {"agent_extraction_check": "passed", "human_review": "pending"}
                     accepted.append({"metadata": metadata, "examples": extracted})
                     kept += 1
                     seen_authors.update(authors)
@@ -455,22 +451,17 @@ def prepare_data():
                 except (RunError, httpx.HTTPError) as e:
                     exclusions.append({"paper_id": paper_id, "stratum": stratum, "reason": str(e)})
                     print(f"Excluded {paper_id}: {e}", flush=True)
-    exclusions_path = ROOT / "data/exclusions.json"
-    excluded_ids = [x["paper_id"] for x in exclusions]
-    if not exclusions_path.exists() or [x["paper_id"] for x in read_json(exclusions_path)] != excluded_ids:
-        write_json(exclusions_path, exclusions)
     if len(accepted) != PAPERS_NEEDED:
         counts = Counter(p["metadata"]["stratum"] for p in accepted)
         raise RunError(
             f"Only {len(accepted)} of {PAPERS_NEEDED} papers are eligible ({dict(counts)}); see "
-            "data/exclusions.json and enlarge SHORTLIST_PER_STRATUM in xar/discovery.py"
+            "the Excluded lines above and enlarge SHORTLIST_PER_STRATUM in xar/discovery.py"
         )
     groups = {split: [] for split in SPLIT_SIZES}
     for paper, split in zip(accepted, assign_splits(accepted)):
         groups[split].append(paper)
     splits = {
         "seed": SAMPLE_SEED,
-        "policy_hash": file_hash(ROOT / "data/acquisition_policy.json"),
         "papers": {split: [p["metadata"]["paper_id"] for p in papers] for split, papers in groups.items()},
     }
     records = []
@@ -490,9 +481,7 @@ def prepare_data():
     path.write_text(dataset)
     write_json(ROOT / "data/splits.json", splits, write_once=True)
     source_manifest = {
-        "source": policy["source"],
-        # A digest of the parsed JSON, unlike splits.json's policy_hash, which hashes the file bytes.
-        "policy_hash": digest(policy),
+        "source": SOURCE,
         "discovery_hash": file_hash(ROOT / "data/discovery.json"),
         "dataset_hash": file_hash(path),
         "papers": [p["metadata"] for p in accepted],
@@ -500,58 +489,8 @@ def prepare_data():
     }
     write_json(ROOT / "data/source_manifest.json", source_manifest, write_once=True)
     load_examples(path, ROOT / "data/splits.json")
-    write_review_files(accepted, groups, source_manifest["dataset_hash"])
     counts = Counter(example["split"] for example in records)
     print(f"Wrote {len(records)} examples: " + ", ".join(f"{n} {split}" for split, n in counts.items()))
-
-
-def write_review_files(accepted, groups, dataset_hash):
-    """Write data/review.md for the human reviewer and a data/human_review.json with every paper pending.
-
-    A run starts only when each paper it uses is set to "approved" in human_review.json. An existing
-    human_review.json for the same dataset is kept, so recorded decisions are not lost.
-    """
-    split_of = {p["metadata"]["paper_id"]: split for split, papers in groups.items() for p in papers}
-    lines = [
-        "# Paper review packet",
-        "",
-        "Review each paper's extraction and writing, then set its decision in data/human_review.json.",
-        "Agent checks are not human review. Raw and extracted text stay local.",
-        "",
-        "| Paper | Split | Field | Citations | Published in | Words (abstract / intro / related / conclusion) |",
-        "| --- | --- | --- | ---: | --- | --- |",
-    ]
-    for paper in accepted:
-        m = paper["metadata"]
-        words_by_kind = {e["section_type"]: e["target_words"] for e in paper["examples"]}
-        counts = " / ".join(str(words_by_kind.get(kind, "-")) for kind in SECTIONS)
-        lines.append(
-            f"| [{m['paper_id']}]({m['source_url']}) {m['title']} | {split_of[m['paper_id']]} "
-            f"| {m['primary_category']} | {m['citations']} | {m['venue']} | {counts} |"
-        )
-    (ROOT / "data/review.md").write_text("\n".join(lines) + "\n")
-    path = ROOT / "data/human_review.json"
-    if path.exists() and read_json(path).get("dataset_hash") == dataset_hash:
-        return
-    write_json(
-        path,
-        {
-            "dataset_hash": dataset_hash,
-            "reviewer": None,
-            "reviewed_at": None,
-            "instruction": "Set each decision to approved or rejected, with notes. No choice may use "
-            "model grades.",
-            "papers": {
-                p["metadata"]["paper_id"]: {
-                    "decision": "pending",
-                    "extraction_complete": None,
-                    "writing_suitable": None,
-                    "notes": "",
-                }
-                for p in accepted
-            },
-        },
-    )
 
 
 def prepare_tokenizers():
