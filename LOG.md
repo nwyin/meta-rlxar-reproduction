@@ -9,29 +9,28 @@
   experiment contracts, and result audits.
 - Acquired 20 eligible recent arXiv papers: two pilot, eight training, five
   validation, and five reserved confirmation papers. Each provides abstract,
-  introduction, related-work, and conclusion examples. Data selection,
-  source hashes, review approval, and licenses were recorded.
-- These references are proxies for expert human writing. Selection did not
-  independently establish their writing quality or absence of AI assistance.
+  introduction, related-work, and conclusion examples. We recorded data selection,
+  source hashes, review approval, and licenses.
+- These references are proxies for expert human writing. Selection left their writing quality and absence of AI assistance
+  unestablished.
 - Encountered provider rate limits and transport/schema issues while checking
   alternative models and roles. Preserved failures and declared endpoint changes
   rather than silently substituting providers.
 - Measured latency, tokens, and costs; added bounded parallel generation and
   dispatch while preserving checkpoint comparisons.
 - Pinned a Kimi provider that passed native-schema checks.
-  These were operational checks.
-- The earlier alternative-model study did not progress beyond pilots;
-  its history is retained under the `alternative-model-study` tag.
+- The earlier alternative-model study stopped at pilots;
+  the `alternative-model-study` tag retains its history.
 - Refocused the experiment on the blog's Initial Empirical Investigation:
   Muse Spark 1.1 as writer, rubric generator, and judge; Kimi K2.6 as meta-prompt
   optimizer. Verified Muse access and completed the attested pilot.
 - Froze 52 Muse-generated sections before rubric optimization. The
-  writer outputs stayed fixed through seven prompt updates, P0 through P7.
+  writer outputs stayed fixed through 7 prompt updates, P0 through P7.
 - Recorded the complete baseline and first three updates as they completed.
   P1 improved the training gap; P2 and P3 moved it back in the adverse direction.
-- Documented the completed run in. Training selected P1 before any validation evaluation.
+- Documented the completed run. Training selected P1 before validation.
   Validation improved from **−1.04 at P0 to −0.16 at P1**, but stayed negative at every
-  checkpoint; P7 was **−0.37**. The blog's reported reversal was not reproduced.
+  checkpoint; P7 was **−0.37**. We did not reproduce the blog's reported reversal.
 - The paired P0-to-P1 validation improvement was **+0.88**, with a 95%
   whole-paper bootstrap interval of **+0.37 to +1.35** over five papers. Human
   means rose from 7.91 to 8.38; model means fell from 8.95 to 8.53.
@@ -42,7 +41,7 @@
 
 Evidence: [current results](reports/results.md),
 [checkpoint table](reports/checkpoints.csv), and the `meta-blog-seed0` tag.
-Generated reports and raw runs remain local and are excluded from Git.
+Git excludes generated reports and raw runs, which remain local.
 
 ## 2026-09-30 — Audit, cleanup, documentation, and viewer
 
@@ -64,15 +63,15 @@ Generated reports and raw runs remain local and are excluded from Git.
 
 - Why is the human–model gap small or still negative?
   Reviewed the blog, pipeline, prompts, saved feedback, and scores with two
-  subagents. This was a read-only investigation; no new paid experiment or writer
-  training was performed. The points below distinguish observations from possible
+  subagents. The investigation was read-only: we ran no new paid experiment and
+  trained no writer. Below, observations stay separate from possible
   explanations.
 
 ### What the blog's iterations mean
 
-The blog's initial −4.2 to +2.76 gap reversal occurs during **seven rubric
+The blog's initial −4.2 to +2.76 gap reversal occurs during **7 rubric
 meta-prompt optimization iterations**, before writer RL. Its later paper-writing
-leaderboard includes two writer-training rounds and a third rubric round for
+leaderboard includes two writer-training rounds and a 3rd rubric round for
 assessment. 
 
 ### Observations and possible explanations
@@ -91,7 +90,7 @@ assessment.
    [xar/data.py](xar/data.py) flattens the whole conclusion container, so the
    declarations become candidate prose and contribute to the target word count.
    Model counterparts write scholarly conclusions without those declarations.
-   This is a task-boundary confound, rather than an accidental merge of unrelated
+   This is a task-boundary confound rather than an accidental merge of unrelated
    sibling sections.
 
 3. **Later prompts intensify penalties against that human-only material.**
@@ -124,11 +123,11 @@ assessment.
    writing. Meanwhile, four worst examples dominate feedback, and the optimizer
    sees the current prompt without a history of better checkpoints. Every
    accepted revision becomes the next parent even if its measured gap worsens.
-   All seven proposals passed on the first attempt, so rejected updates do not
+   All 7 proposals passed on the 1st attempt, so rejected updates do not
    explain the stalled trajectory.
 
 5. **Reference quality and score calibration differ from the reported setup.**
-   Recent preprints are not independently verified expert-writing references;
+   No one has independently verified recent preprints as expert-writing references;
    some explicitly disclose AI-assisted writing. Our validation means remain
    between 7.91 and 8.95 across checkpoints, whereas the blog reports much lower
    baseline human scores and a substantial decline in model scores. Dataset,
