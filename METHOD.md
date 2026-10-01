@@ -12,41 +12,87 @@ This file describes what the code does. The README has the results and the comma
 
 ## Data
 
-The papers are recent arXiv cs.CL preprints that have an HTML version. `data/discovery.xml`
-is a saved arXiv query (cs.CL, newest first, 60 records). `run.py prepare-data` goes through
-it in order and keeps the first 20 papers that:
+The corpus replaces the one used in the completed run `meta-blog-seed0`, which held recent
+arXiv cs.CL preprints of unknown writing quality, some with AI-use statements. The new papers
+were first posted on arXiv in 2016 to 2021 and have a published journal or conference version.
+No chat model existed to write them. The writer may have seen them in pretraining, so the
+corpus tests whether a rubric can tell human writing from model writing, not whether the model
+can recall a paper. The old corpus is archived in `data/archive/arxiv-2609-cs-cl/`.
 
-- have one abstract and exactly one top-level introduction, related-work and conclusion
-  section, each at least 60 words long;
-- have at least 10 bibliography entries and no LaTeXML error markers;
-- share no authors and no title with a paper already kept;
-- are not about rubric optimization;
-- fit Kimi K2.6's 262,144-token context in the largest optimizer request (four failure
-  examples, each with the whole paper and both versions of the section), counting tokens
-  with both the Kimi and the Qwen3.5 tokenizer and using the larger count.
+`run.py discover-data` draws the candidates, and `run.py prepare-data` extracts them. Both
+steps use no model and their choices are fixed in `data/acquisition_policy.json`.
 
-Rejected papers and the reason are listed in `data/exclusions.json`.
+1. Sample. OpenAlex lists works with an arXiv copy, 100 to 1,500 citations, type article, not
+   retracted and published by 2022-11-29. The command takes a random sample of 10,000 of the
+   31,205 matches (seed 20261001). The 1,500 cap leaves out the most memorized papers.
+2. Check against arXiv. A paper stays if it was first posted in 2016 to 2021, last revised on
+   arXiv by 2022-11-29 (ChatGPT launched on 2022-11-30), has at most 20 authors, and OpenAlex
+   lists a published journal or conference version.
+3. Group by field. arXiv's primary category puts each paper in one of 9 groups, and each group
+   is shuffled with a seed and cut to a shortlist of 60 (`data/discovery.json`).
+4. Extract. `prepare-data` walks each shortlist in order, downloads the paper's HTML from
+   [ar5iv](https://ar5iv.labs.arxiv.org), and keeps the first papers up to the group's quota.
+   Rejected papers and the reason are in `data/exclusions.json`.
 
-A section is one of abstract, introduction, related work or conclusion, so each paper gives
-four examples. The example's reference is the author's section text. Its context is the rest
-of the paper with that section replaced by a placeholder such as `[Missing introduction
-section]`. Formulas are replaced by their TeX source and whitespace is normalized; nothing
-else is edited. The target length is the reference's word count.
+| Group | Papers | Group | Papers |
+| --- | ---: | --- | ---: |
+| cs and eess | 9 | astro-ph | 6 |
+| math | 8 | cond-mat | 7 |
+| stat, econ, q-fin | 3 | hep, gr-qc, nucl | 7 |
+| q-bio | 5 | quant-ph | 5 |
+| | | physics, nlin | 6 |
 
-The split, in `data/splits.json`:
+A paper is kept if it has:
 
-| Papers | Use |
-| --- | --- |
-| first 2 | pilot |
-| next 13, shuffled with seed 20260929 | 8 training, 5 validation |
-| last 5 | confirmation; not used |
+- one abstract and one top-level introduction, plus a related-work section and a conclusion
+  when the paper has them, each at least 60 words long;
+- at least 10 bibliography entries and no LaTeXML error markers;
+- no title that suggests a survey, review, tutorial, overview, software, data release,
+  catalogue, dataset or benchmark;
+- no author or title shared with a paper already kept, and no subject of rubric optimization;
+- a size that fits Kimi K2.6's 262,144-token context in the largest optimizer request (four
+  failure examples, each with the whole paper and both versions of the section), counting
+  tokens with both the Kimi and the Qwen3.5 tokenizer and using the larger count.
 
-The research run therefore has 32 training and 20 validation sections, 52 in all.
+A section is one of abstract, introduction, related work or conclusion. Every paper gives an
+abstract and an introduction. Many mathematics and physics papers have no related-work section
+or no conclusion, so a paper gives fewer than 4 examples when it lacks them. The 56 papers give
+153 examples: 56 abstracts, 56 introductions, 36 conclusions and 5 related-work sections.
+Related-work results therefore rest on 5 sections.
+
+The example's reference is the author's section text. Its context is the rest of the paper
+with that section replaced by a placeholder such as `[Missing introduction section]`.
+Extraction changes formatting only:
+
+- Formulas become their TeX source and whitespace is normalized.
+- Text is joined as written, with spaces only at paragraph, list and table boundaries.
+- Every citation takes one numeric style: "[3, 7]" in the text and "[n]" in the reference
+  list. Journal styles differ and LaTeXML renders some badly, so a model's clean prose would
+  otherwise stand out on formatting alone.
+- The reference leaves out figures, tables, algorithm listings and acknowledgements inside the
+  section. The context keeps them elsewhere. A section whose text still contains the word
+  "acknowledgements" is rejected.
+
+The target length is the reference's word count after these steps.
+
+The papers are dealt to splits in field order, in even steps along the list, so that each split
+holds papers from most fields (`data/splits.json`):
+
+| Papers | Sections | Use |
+| --- | ---: | --- |
+| 35 | 96 | training |
+| 16 | 44 | validation |
+| 5 | 13 | confirmation; not used |
+
+The research run therefore has 140 sections, 96 for training and 44 for validation. There is
+no pilot split. `run.py pilot` uses the first 2 training papers in `data/splits.json`, the
+only 2 papers it needs.
 
 `data/source_manifest.json` records each paper's URL, metadata and hashes, and the hash of
-`data/examples.jsonl`. The paper text is not in the repository. The repository owner reviewed
-the 20 extracted papers together and approved them all at once; `data/human_review.json`
-records that approval against the dataset hash, and a run will not start unless every paper it uses is approved there.
+`data/examples.jsonl`. The paper text is not in the repository. `prepare-data` writes
+`data/review.md`, a table of the papers for review, and `data/human_review.json` with every
+paper marked `pending`. A run will not start until the repository owner sets every paper it
+uses to `approved` there.
 
 ## Roles
 
@@ -114,8 +160,8 @@ in `prompts/`: `writer.md`, `rubric_initial.md` (the initial meta prompt), `rubr
 Independent sections and checkpoint evaluations run four at a time. The drafts for one
 section and the seven optimizer updates run in order.
 
-Before the research run, `run.py pilot` runs the same pipeline on the two pilot papers (one
-training, one validation) with one update. `run.py reproduce` first audits the pilot and
+Before the research run, `run.py pilot` runs the same pipeline on the first two training papers (one
+acts as training, one as validation) with one update. `run.py reproduce` first audits the pilot and
 checks that it used the same models and settings. The pilot's scores are not used for
 anything.
 
@@ -162,11 +208,14 @@ data or any setting other than the budgets and concurrency has changed.
 
 The blog does not publish its 13 paper IDs, its prompts, its decoding settings, the rubric
 format, how criterion scores are combined, how many failure examples the optimizer sees, or
-how the final checkpoint is chosen. This reproduction uses the same models, the same counts
-(13 papers, 4 sections each, 8 training and 5 validation papers, 7 updates) and these choices:
+how the final checkpoint is chosen. This reproduction uses the same models and 7 updates, the
+blog's 13 papers with 4 sections each in the completed run (8 training and 5 validation), and
+these choices:
 
 - Papers: the blog used S2ORC. S2ORC bulk access was not available (the Hugging Face
-  `allenai/s2orc` dataset was not found), so the papers are recent arXiv preprints.
+  `allenai/s2orc` dataset was not found). The completed run used recent arXiv cs.CL
+  preprints. The corpus now in `data/` has 56 papers from 2016 to 2021 across 9 fields, so a
+  new run no longer matches the blog's paper count or domain.
 - Prompts: the prompts in `prompts/` were written for this reproduction. The initial meta
   prompt asks for accuracy, relevance, organization, clarity and use of evidence, and says
   nothing about human or AI writing.
@@ -181,13 +230,23 @@ how the final checkpoint is chosen. This reproduction uses the same models, the 
 
 ## Limitations
 
-- The author sections stand in for expert writing. They come from recent preprints, and
-  whether each was peer reviewed or written with AI help is unknown. No expert compared them
-  with the model's sections, and the review in `data/human_review.json` approved the papers
-  as a group, not one by one.
+- The author sections stand in for expert writing. Each paper is peer reviewed and predates
+  chat models, but citation count and venue are proxies for quality, not measures of it. No
+  expert has compared the sections with the model's. The owner reviewed the new papers and approved them
+  as a group, not one by one, as for the old corpus.
+- The writer may have seen these papers in pretraining. A highly cited paper is more likely to
+  be memorized, which would pull the model's section toward the author's and shrink the gap.
+  The 100 to 1,500 citation band limits this, and the 30-word copy flag measures verbatim
+  recall. The bias is not removed.
+- The corpus leaves out papers whose introduction has no heading (Nature letters, for
+  example), papers ar5iv could not convert, and papers over the context limit. 41 of the 117
+  rejected candidates had no ar5iv page. The corpus skews toward papers whose LaTeX converts
+  cleanly.
+- Some authors may have used language editing before 2022. That is human work, not model work.
+- Only 5 related-work sections exist, and math papers give 2 sections each.
 - There is one trajectory. Neither endpoint supports a sampling seed, so a rerun will not
   produce the same text; seed 0 fixes only the grading order and the bootstrap.
-- Validation has five papers, so its intervals are wide.
+- Validation has 16 papers in the new corpus (the pilot's validation paper is a training paper, so its scores say nothing about generalization) and had five in the completed run, so the completed run's intervals are wide.
 - Some generated sections miss the length target even after two revisions. The report shows
   results with and without them.
 - The proposal check matches patterns. It cannot rule out a prompt that rewards signs of

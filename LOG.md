@@ -150,3 +150,69 @@ assessment.
   weak sectional focus, and unnecessary detail. Diagnose criterion-level score
   calibration instead of merely forcing lower scores.
 
+## 2026-10-01 — New corpus of pre-2022 peer-reviewed papers
+
+We replaced the corpus because the log's analysis found the old references unreliable:
+unreviewed recent preprints, some with AI-use statements, and administrative text inside
+conclusions. We spent nothing and made no model calls. We did not touch `runs/`.
+
+- Chose the design with the owner: arXiv papers first posted 2016 to 2021 with a published
+  journal or conference version, 100 to 1,500 citations, last revised on arXiv by 2022-11-29,
+  at most 20 authors, spread over 9 fields (cs, math, stat and econ, q-bio, astro-ph,
+  cond-mat, hep and gravity, quant-ph, other physics). We accept that the writer may have
+  seen these papers. The goal is to tell human from model writing, not to hide the papers.
+- Added `xar/discovery.py` and `run.py discover-data`. It took a seeded sample of 10,000 of
+  31,205 OpenAlex matches, read arXiv metadata, and froze a 60-paper shortlist per field in
+  `data/discovery.json`. arXiv rate-limited the 1st attempt (HTTP 429 at 7,200 of 10,000 IDs)
+  and nothing was saved, so we added retries with backoff and a metadata cache.
+- Rewrote `prepare-data` to read the shortlists, fetch ar5iv HTML, and deal the papers to
+  splits in field order. Papers are 56: training 35, validation 16, confirmation 5 (13
+  sections). There is no pilot split; the pilot uses the first 2 training papers. They give
+  153 sections: 56 abstracts, 56 introductions, 36 conclusions and 5 related-work
+  sections. Papers may lack related work or a conclusion, so the loader now requires only the
+  abstract and the introduction.
+- Prototype on 30 candidates passed 10. Failures were ar5iv redirects with no HTML (6) and
+  introductions with no heading (5, mostly Nature-style letters). In the build, 117 candidates
+  were rejected, and 41 of them had no ar5iv page.
+- Reading the first build, we found 3 extraction problems that would have let LaTeXML
+  artifacts, not writing, drive the gap, and fixed each before the final build:
+  1. Figure and table captions and acknowledgement blocks sat inside introductions and
+     conclusions, like the administrative text in the old corpus. One conclusion was 1,298
+     words, mostly acknowledgements. The reference now leaves out figures, tables,
+     listings and acknowledgements, and rejects a section that still says "acknowledgements".
+  2. Citation formats varied and some rendered badly (bibliography keys such as
+     "0 ; 1 ; 1bis", fragments such as "e.g.,)"). Every citation now has one numeric style.
+  3. Text extraction put a space between inline elements, giving "T HE", "MoS 2" and
+     "( x )". The old corpus had this too. Text is now joined as written.
+- Removed the audit's fixed 32 and 20 section counts, because the dataset hash already
+  guards the data and the new corpus has other sizes.
+- Archived the old corpus in `data/archive/arxiv-2609-cs-cl/` (git-ignored). With its files
+  copied back, `run.py audit-run runs/meta-blog-seed0` and
+  `scripts/audit_completed_run.py` both pass. That script rewrote
+  `reports/completion_audit.json`. The README says how to restore the files.
+- `data/human_review.json` marks all 56 papers `pending`. No run can start until the owner
+  reviews them and sets each to `approved`. Agent checks (extraction, boundaries, a scan for
+  debris) are not that review.
+
+Open points:
+
+- The 100 to 1,500 band reduces but does not remove memorization. We can measure verbatim
+  copying with the existing 30-word flag once a run exists. Nothing is measured yet.
+- Cost of a new run is untested. The research split has 140 sections with a mean context
+  about 31% shorter than the old corpus, so total context is about 1.9 times the old run's.
+  By that crude scale, the old run's $55.60 would become about $103. Run `--dry-run`
+  after the review for the real estimate.
+- The blog's 4-section structure no longer holds for
+  math papers, which give 2 sections each.
+- Changed the split after the first build: 5 confirmation papers (not 14) and no pilot split.
+  The extra papers went to training. `run_examples` still reads a labelled pilot split in the
+  old dataset, so the completed pilot run still audits.
+- While re-checking the old run's audits, a shell slip overwrote and then deleted the new
+  `examples.jsonl`, `splits.json`, `source_manifest.json`, `human_review.json` and
+  `acquisition_policy.json`. We rewrote the policy and rebuilt the rest with `prepare-data` from
+  `data/discovery.json` and the cached HTML. The rebuild gave the same split counts and pilot
+  papers. The archive and `runs/` were not changed. After a proper swap, `audit-run` passed for
+  `meta-blog-seed0` and `pilot-meta-blog-attested`, as did `scripts/audit_completed_run.py`.
+- The owner reviewed all 56 papers together and judged them reasonable. We recorded that as
+  `approved` for each paper in `data/human_review.json`, as a group decision with no
+  grade-based selection. The way is now open to run `--dry-run` for a real cost estimate.

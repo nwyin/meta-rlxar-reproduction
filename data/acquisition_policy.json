@@ -1,23 +1,36 @@
 {
   "frozen_before_grading": true,
-  "source": "arXiv open-access CS HTML subset",
-  "source_deviation": "S2ORC bulk access was not configured. Official S2ORC directs acquisition through Semantic Scholar. The allenai/s2orc Hugging Face lookup returned not found. Do not substitute an undocumented mirror.",
-  "discovery_query": "cat:cs.CL, submittedDate descending, first 60 records",
-  "discovery_snapshot": "data/discovery.xml",
+  "source": "ar5iv LaTeXML HTML of arXiv papers first posted 2016 to 2021 with a published journal or conference version",
+  "purpose": "Reference sections that are human-written, technical and peer reviewed. No chat model existed to write them. Models may have seen the papers in pretraining, so the corpus tests whether a rubric can tell human from model writing, not whether the model can recall the paper.",
+  "discovery": {
+    "script": "xar/discovery.py, run as `run.py discover-data`; output in data/discovery.json",
+    "openalex_filter": "has an arXiv location, 100 to 1,500 citations, type article, not retracted, published 2016-01-01 to 2022-11-29",
+    "sample": "seeded random sample of 10,000 matching works (seed 20261001)",
+    "arxiv_filter": "first posted 2016 to 2021, last revised on or before 2022-11-29 (ChatGPT launched 2022-11-30), at most 20 authors, primary archive in one of the fields below",
+    "published_version": "OpenAlex lists a journal or conference location marked publishedVersion",
+    "fields": "cs and eess 9, math 8, stat/econ/q-fin 3, q-bio 5, astro-ph 6, cond-mat 7, hep/gr-qc/nucl 7, quant-ph 5, physics and nlin 6",
+    "order": "Each field's eligible works are shuffled with a seed derived from the sample seed and the field name; the first 60 form its shortlist"
+  },
   "eligibility": [
-    "Versioned arXiv HTML with one abstract and unambiguous top-level introduction, related work, and conclusion sections",
-    "Complete bibliography and no obvious extraction debris",
-    "At least 60 words per target section and at least 10 bibliography entries",
-    "Whole visible contexts and four-failure feedback fit every pinned endpoint without truncation",
-    "No duplicate titles, manuscript versions, or author overlap with previously selected papers",
-    "No paper whose subject directly studies rubric optimization or this XAR procedure"
+    "Walk each field's shortlist in order and keep the first papers up to the field's quota",
+    "ar5iv HTML with one abstract and unambiguous top-level introduction, with a related-work section and a conclusion section when the paper has them; at least 60 words per target section",
+    "At least 10 bibliography entries and no LaTeXML error markers or replacement characters",
+    "No title that suggests a survey, review, tutorial, overview, software, data release, catalogue, dataset or benchmark",
+    "No shared authors or title with a paper already selected; no paper about rubric optimization or this XAR procedure",
+    "Whole visible contexts and four-failure feedback fit every pinned endpoint without truncation"
   ],
-  "selection": "First 20 eligible papers in frozen discovery order; first 2 are pilots; shuffle next 13 with seed 20260929 for 8 train and 5 validation; last 5 are confirmation",
-  "replacement_order": "Frozen discovery order, with every exclusion recorded before generation",
-  "normalization": "Whitespace normalization and equivalent HTML math/heading handling only; no expert rewriting",
-  "redistribution": "Raw papers and extracted text stay local unless an individually verified license allows release; publish URLs, hashes, and reconstruction commands",
-  "inspection": "Record agent extraction/suitability inspection separately from human review; human suitability review remains an explicit acceptance gate",
-  "limitations": "Recent preprints may lack peer review. Report publication status for every selected paper and do not claim guaranteed expert writing.",
-  "context_screen": "Pinned official Qwen/Kimi tokenizers; maximum count with 25% headroom, four complete failure contexts and candidate pairs, 16000 feedback overhead tokens, and 16384 output tokens. Every actual request is checked again.",
-  "amendment_before_grading": "Initial UTF-8-byte-as-token screen was needlessly restrictive; all rejection logs from that pass are preserved separately. No candidate generation or grading occurred before this amendment."
+  "selection": "Papers in field order, each field in shortlist order, are dealt to train 35, validation 16 and confirmation 5 in even steps along the list, so each split has papers from most fields; the pilot is the first 2 training papers",
+  "normalization": "Whitespace normalization, equivalent HTML math/heading handling, one numeric citation style, text joined as written, and removal of figures, tables, listings and acknowledgements from the withheld reference; no expert rewriting",
+  "redistribution": "Raw papers and extracted text stay local; publish identifiers, hashes and reconstruction commands. Licenses were not checked",
+  "inspection": "Record agent extraction checks separately from human review; human suitability review remains an explicit acceptance gate",
+  "limitations": [
+    "Highly cited papers may be memorized by the writer; the 30-word copy flag measures verbatim recall",
+    "Citation count and peer review are proxies for writing quality, not measures of it",
+    "ar5iv serves the latest arXiv version it converted, which can differ from the published text",
+    "Authors may have used editing services or non-native-speaker polishing before 2022; that is human work",
+    "Papers without a related-work section or a conclusion give fewer than 4 sections, so math papers contribute fewer examples",
+    "Papers whose introduction has no heading, such as Nature letters, and papers ar5iv could not convert are excluded",
+    "Selection favors papers whose LaTeX source converts cleanly, which skews against heavy custom macros"
+  ],
+  "context_screen": "Pinned official Qwen/Kimi tokenizers; maximum count with 25% headroom, four complete failure contexts and candidate pairs, 16000 feedback overhead tokens, and 16384 output tokens. Every actual request is checked again."
 }

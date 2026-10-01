@@ -583,7 +583,7 @@ function datasetView(run, dataset, params) {
 
   return h("div", { class: "stack" },
     h("div", null, h("h1", null, "Dataset"),
-      h("p", { class: "muted" }, `${dataset.examples.size} sections from ${Object.values(bySplit).flat().length} arXiv papers. Each paper gives four sections; the writer sees the paper with one section removed.`)),
+      h("p", { class: "muted" }, `${dataset.examples.size} sections from ${Object.values(bySplit).flat().length} papers. Each paper gives an abstract, an introduction and, when it has them, related work and a conclusion; the writer sees the paper with one section removed.`)),
     order.filter((split) => bySplit[split]).map((split) => h("div", { class: "stack" },
       h("h2", null, `${splitName(split)} `, h("span", { class: "muted small" }, `${bySplit[split].length} papers — ${blurbs[split] ?? ""}`)),
       h("div", { class: "grid papers" }, bySplit[split].map((paperId) => {

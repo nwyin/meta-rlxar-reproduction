@@ -9,6 +9,7 @@ from pathlib import Path
 
 from xar.audit import audit_xar_run, check_manifest_matches_design
 from xar.data import load_examples, prepare_data, prepare_tokenizers
+from xar.discovery import discover_candidates
 from xar.pipeline import RunSettings, run_xar
 from xar.report import render_report
 from xar.util import (
@@ -87,7 +88,7 @@ def run_phases(options):
 
 EPILOG = """\
 Setup: copy .env.example to .env and set OPENROUTER_API_KEY.
-Order: prepare-tokenizers, prepare-data, validate-data, pilot, reproduce (or all), report."""
+Order: prepare-tokenizers, discover-data, prepare-data, validate-data, pilot, reproduce (or all), report."""
 
 
 def parse_args(argv=None):
@@ -155,7 +156,10 @@ def parse_args(argv=None):
     )
     audit.add_argument("run_dir", help="a run directory, e.g. runs/meta-blog-seed0")
     commands.add_parser("validate-data", help="check data/examples.jsonl against data/splits.json")
-    commands.add_parser("prepare-data", help="rebuild data/examples.jsonl from data/raw")
+    commands.add_parser(
+        "discover-data", help="sample candidate papers from OpenAlex and arXiv into data/discovery.json"
+    )
+    commands.add_parser("prepare-data", help="rebuild data/examples.jsonl from data/discovery.json")
     commands.add_parser(
         "prepare-tokenizers",
         help="download the tokenizers pinned in configs/tokenizers.json into data/tokenizers/",
@@ -179,6 +183,8 @@ def main(argv=None):
     elif options.command == "validate-data":
         examples = load_examples(ROOT / "data/examples.jsonl", ROOT / "data/splits.json")
         print(f"Validated {len(examples)} examples")
+    elif options.command == "discover-data":
+        discover_candidates()
     elif options.command == "prepare-data":
         prepare_data()
     elif options.command == "prepare-tokenizers":

@@ -20,10 +20,6 @@ from xar.pipeline import (
 from xar.stats import summarize
 from xar.util import ROLES, RunError, canonical, digest, file_hash, prompt, read_json
 
-# Sections per split in the research run (8 training and 5 validation papers). A pilot run is
-# smaller and is not held to these.
-RESEARCH_SPLIT_SIZES = {"train": 32, "validation": 20}
-
 
 def check_request_settings(payload, cfg, schema, prompt_hash, where="saved request"):
     """Check that a saved request payload used the role's settings, schema and system prompt.
@@ -206,9 +202,9 @@ def audit_xar_run(path):
     examples = run_examples(load_examples(manifest["dataset"], manifest["splits"]), arguments["split"])
     by_split = {split: [e for e in examples if e["split"] == split] for split in ("train", "validation")}
     if arguments["split"] != "pilot":
-        sizes = {split: len(group) for split, group in by_split.items()}
-        if sizes != RESEARCH_SPLIT_SIZES:
-            raise RunError(f"Research run has {sizes} sections per split; expected {RESEARCH_SPLIT_SIZES}")
+        empty = [split for split, group in by_split.items() if not group]
+        if empty:
+            raise RunError(f"Research run has no {' or '.join(empty)} sections")
 
     candidates = read_json(run / "generations/candidates.json")["candidates"]
     for example in examples:

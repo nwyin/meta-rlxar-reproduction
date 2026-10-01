@@ -3,13 +3,16 @@
 This repository reproduces the Initial Empirical Investigation in
 [Meta's Unslopping AI blog](https://facebookresearch.github.io/RAM/blogs/unslop/).
 Muse Spark 1.1 writes the missing paper sections, generates the rubrics and grades the sections;
-Kimi K2.6 rewrites the rubric meta prompt. One run covers 52 sections from 8 training and 5 validation papers,
-with 7 prompt updates. [METHOD.md](METHOD.md) describes the data, the procedure, how
+Kimi K2.6 rewrites the rubric meta prompt. The completed run covers 52 sections from 8 training
+and 5 validation recent arXiv cs.CL papers, with 7 prompt updates. `data/` now holds a new
+corpus of 56 peer-reviewed papers from 2016 to 2021 across 9 fields (153 sections), built to
+give human references of known quality. No run has used it yet. The owner reviewed all 56 papers together and approved them. [METHOD.md](METHOD.md) describes the data, the procedure, how
 this differs from the blog, and the limitations.
 
 ## Result
 
-The research run finished on September 29, 2026.
+The research run finished on September 29, 2026. It used the earlier cs.CL corpus, archived in
+`data/archive/arxiv-2609-cs-cl/`.
 
 - The checkpoint selected on training was P1. At P1 the validation gap (author score minus
   model score) was -0.16, up from -1.04 at the initial prompt. The last checkpoint, P7, had a
@@ -32,6 +35,7 @@ CLI (used to download the tokenizers).
 ```sh
 uv sync --locked
 uv run python run.py prepare-tokenizers
+uv run python run.py discover-data
 uv run python run.py prepare-data
 uv run python run.py validate-data
 uv run pytest -q
@@ -39,11 +43,19 @@ uv run pytest -q
 
 `prepare-tokenizers` downloads the Kimi and Qwen tokenizers pinned in
 `configs/tokenizers.json` into `data/tokenizers/`. No run uses Qwen; `prepare-data` sizes
-papers with both tokenizers, as the original selection did, so the same papers qualify.
-`prepare-data` goes through the arXiv results saved in `data/discovery.xml`, downloads any
-missing HTML into `data/raw/`, and rebuilds `data/examples.jsonl` from the first 20 eligible
-papers. It fails if the result does not match the saved split and manifest, for example
-because arXiv changed a page.
+papers with both tokenizers, as the first corpus did, and keeps the larger count.
+`discover-data` samples candidate papers from OpenAlex and checks them against the arXiv API
+(about 20 minutes, because arXiv rate-limits). It writes `data/discovery.json` once and
+refuses to replace a different file, so skip it when that file exists. `prepare-data` goes
+through the shortlists in `data/discovery.json`, downloads any missing ar5iv HTML into
+`data/raw/`, and rebuilds `data/examples.jsonl`, `splits.json`, `source_manifest.json`,
+`exclusions.json`, `review.md` and a `human_review.json` with every paper `pending`. It fails
+if the result does not match the saved files, for example because ar5iv changed a page.
+Runs need every paper they use set to `approved` in `data/human_review.json`.
+
+To audit the completed run, copy `examples.jsonl`, `splits.json`, `source_manifest.json`,
+`human_review.json` and `acquisition_policy.json` from `data/archive/arxiv-2609-cs-cl/` back
+into `data/` (set the new files aside first), since the run's manifest points there.
 
 Copy `.env.example` to `.env` and set `OPENROUTER_API_KEY`.
 
@@ -57,7 +69,7 @@ uv run python run.py all --budget-usd 100 --total-budget-usd 100
 `--dry-run` prints a cost estimate and sends nothing. `all` runs `pilot` and then
 `reproduce`, which you can also run on their own:
 
-- `run.py pilot` runs one update on the two pilot papers to check the pipeline end to end.
+- `run.py pilot` runs one update on the first two training papers to check the pipeline end to end.
 - `run.py reproduce` audits the completed pilot run, then runs the full experiment on the
   training and validation papers and writes the report to `reports/`.
 
@@ -97,13 +109,14 @@ prompt history and criteria; see [tools/data-viewer](tools/data-viewer/README.md
 ```
 .
 ├── run.py                        CLI: pilot, reproduce, all, report, validate-data,
-│                                 prepare-data, prepare-tokenizers, audit-run
+│                                 discover-data, prepare-data, prepare-tokenizers, audit-run
 ├── xar/                          the pipeline, as a package
 │   ├── pipeline.py               the method: write sections, generate rubrics, grade,
 │   │                             build optimizer feedback, rewrite the prompt, select P*
 │   ├── openrouter.py             model settings, endpoint checks, pricing, token counts,
 │   │                             the budget ledger and the OpenRouter client
-│   ├── data.py                   builds the dataset from arXiv HTML; loads and splits it
+│   ├── discovery.py              samples candidate papers from OpenAlex and arXiv
+│   ├── data.py                   builds the dataset from ar5iv HTML; loads and splits it
 │   ├── runs.py                   run directories: manifest, resume checks, cost estimate
 │   ├── audit.py                  re-checks a saved run against its raw API responses
 │   ├── stats.py                  checkpoint means and paired whole-paper bootstrap
@@ -128,15 +141,16 @@ prompt history and criteria; see [tools/data-viewer](tools/data-viewer/README.md
 │   └── snapshots/                saved OpenRouter catalog and endpoint listings that
 │                                 preflight compares against
 ├── data/
-│   ├── discovery.xml             the saved arXiv query results papers were chosen from
+│   ├── discovery.json            the seeded OpenAlex and arXiv shortlists papers come from
 │   ├── acquisition_policy.json   selection rules, fixed before any grading
-│   ├── exclusions.json           papers rejected during selection, with reasons
+│   ├── exclusions.json           papers rejected during extraction, with reasons
 │   ├── source_manifest.json      URL, metadata and hashes for each selected paper
-│   ├── splits.json               paper IDs for pilot, train, validation, confirmation
+│   ├── splits.json               paper IDs for train, validation, confirmation
 │   ├── human_review.json         approval of the extracted papers, by dataset hash
-│   ├── license_inventory.json    license label of each paper
-│   ├── examples.jsonl            the 80 sections with paper context (not in git)
-│   ├── raw/                      downloaded arXiv HTML (not in git)
+│   ├── review.md                 table of the papers for the reviewer (not in git)
+│   ├── examples.jsonl            the 153 sections with paper context (not in git)
+│   ├── raw/                      downloaded ar5iv HTML and arXiv metadata (not in git)
+│   ├── archive/                  the earlier cs.CL corpus the completed run used (not in git)
 │   └── tokenizers/               downloaded tokenizers (not in git)
 ├── runs/                         run outputs and the shared budget ledger (not in git)
 ├── reports/                      generated report (not in git)

@@ -10,7 +10,7 @@ import pytest
 from conftest import call_kind, install_fake, write_dataset
 
 import run
-from xar.audit import RESEARCH_SPLIT_SIZES, audit_xar_run
+from xar.audit import audit_xar_run
 from xar.data import SECTIONS
 from xar.pipeline import run_xar
 from xar.report import render_report
@@ -145,8 +145,7 @@ def test_paid_runs_require_both_budgets(phase, capsys):
 def test_report_from_research_run_and_after_tampering(tmp_path, monkeypatch, design):
     fake = install_fake(monkeypatch)
     groups = {
-        split: [f"{split}{i}" for i in range(count // len(SECTIONS))]
-        for split, count in RESEARCH_SPLIT_SIZES.items()
+        split: [f"{split}{i}" for i in range(count)] for split, count in {"train": 8, "validation": 5}.items()
     }
     settings = run_phase(tmp_path, design, "reproduce", groups, "--concurrency", "4")
     source, runs = Path(settings.output_dir), tmp_path / "runs"

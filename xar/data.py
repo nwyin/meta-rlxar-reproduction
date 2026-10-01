@@ -4,17 +4,16 @@ from __future__ import annotations
 
 import json
 import math
-import random
 import re
 import subprocess
 import time
-import xml.etree.ElementTree as ET
 from collections import Counter
 from pathlib import Path
 
 import httpx
 from bs4 import BeautifulSoup
 
+from xar.discovery import SAMPLE_SEED, STRATA, load_discovery
 from xar.openrouter import token_count
 from xar.util import (
     ROOT,
@@ -29,6 +28,9 @@ from xar.util import (
 )
 
 SECTIONS = ("abstract", "introduction", "related_work", "conclusion")
+# Many papers, mathematics and physics ones especially, have no related-work section or no
+# conclusion. Every paper gives an abstract and an introduction, and each other section it has.
+REQUIRED_SECTIONS = ("abstract", "introduction")
 
 # contamination() measures overlap in 8-word n-grams and flags a candidate that copies a run of
 # 30 or more consecutive words from the author's section.
@@ -40,7 +42,8 @@ def load_examples(dataset, splits):
     """Read the examples from `dataset` (JSON lines) and check them against `splits`.
 
     Checks that no paper is in two splits, each example's split and content hashes match, the
-    withheld section is absent from the visible paper, and every paper has each section once.
+    withheld section is absent from the visible paper, and every paper has each of its sections
+    once (by example ID), and always the abstract and the introduction.
     """
     papers_by_split = read_json(splits)["papers"]
     split_counts = Counter(paper for papers in papers_by_split.values() for paper in papers)
@@ -75,9 +78,9 @@ def load_examples(dataset, splits):
             raise RunError(f"{eid}: the withheld reference still appears in the visible paper")
         sections_by_paper.setdefault(e["paper_id"], []).append(e["section_type"])
     for paper, sections in sections_by_paper.items():
-        if sorted(sections) != sorted(SECTIONS):
+        if not set(REQUIRED_SECTIONS) <= set(sections):
             raise RunError(
-                f"Paper {paper} has sections {sorted(sections)}; expected one each of {list(SECTIONS)}"
+                f"Paper {paper} has sections {sorted(sections)}; expected {list(REQUIRED_SECTIONS)}"
             )
     return examples
 
@@ -128,20 +131,27 @@ def contamination(candidate, reference):
     }
 
 
+# The pilot is a smoke test on the first training papers, not a split of its own.
+PILOT_PAPERS = 2
+
+
 def run_examples(examples, split):
     """The examples a run uses, labelled train or validation.
 
-    A research run uses the train and validation papers as saved. A pilot run uses the pilot
-    papers: the first (sorted by ID) becomes training and the rest become validation.
+    A research run uses the train and validation papers as saved. A pilot run uses the papers
+    labelled pilot in an older dataset, or else the first PILOT_PAPERS training papers; the first
+    (sorted by ID) becomes training and the rest become validation.
     """
     if split not in ("pilot", "research"):
         raise RunError(f"Unknown split {split!r}; expected 'pilot' or 'research'")
     if split == "pilot":
-        pilot = [e for e in examples if e["split"] == "pilot"]
-        papers = sorted({e["paper_id"] for e in pilot})
-        if len(papers) < 2:
+        papers = list(dict.fromkeys(e["paper_id"] for e in examples if e["split"] == "pilot"))
+        papers = papers or list(dict.fromkeys(e["paper_id"] for e in examples if e["split"] == "train"))
+        papers = sorted(papers[:PILOT_PAPERS])
+        pilot = [e for e in examples if e["paper_id"] in papers]
+        if len(papers) < PILOT_PAPERS:
             raise RunError(
-                f"The pilot needs at least 2 papers (one to train on, one to validate), "
+                f"The pilot needs {PILOT_PAPERS} papers (one to train on, one to validate), "
                 f"but the dataset has {len(papers)}"
             )
         return [{**e, "split": "train" if e["paper_id"] == papers[0] else "validation"} for e in pilot]
@@ -156,9 +166,16 @@ HEADING_TAG = re.compile(r"^h[1-6]$")
 # Top-level section headings (numbering removed, case-folded) that mark each target section.
 TARGET_HEADINGS = {
     "introduction": r"introduction",
-    "related_work": r"related works?",
-    "conclusion": r"conclusions?( and future work)?",
+    "related_work": r"related works?|background and related works?|related work and background"
+    r"|prior work|previous work",
+    "conclusion": r"(concluding remarks|conclusions?|summary)"
+    r"( and (conclusions?|discussion|outlook|future work|future directions|perspectives?))?"
+    r"|discussion and conclusions?|conclusions? and discussion",
 }
+# Arabic or Roman section numbers ("2.", "IV", "A.") in front of a heading, and a closing period.
+SECTION_NUMBER = re.compile(r"^\s*(?:\d+(?:\.\d+)*\.?|[ivx]+\.?|[a-z]\.)\s+|[.:]\s*$", re.IGNORECASE)
+# An acknowledgement the markup does not set apart, such as a bold run-in label inside a paragraph.
+ACKNOWLEDGEMENTS = re.compile(r"\backnowledg(?:e)?ments?\b", re.IGNORECASE)
 MIN_BIBLIOGRAPHY_ITEMS = 10
 MIN_SECTION_WORDS = 60
 
@@ -175,11 +192,21 @@ FAILURE_EXAMPLES = 4  # same as failure_examples in configs/experiments.yaml
 SIZING_MODELS = ("qwen/qwen3.5-9b", "moonshotai/kimi-k2.6")
 
 
-def html_text(node, strip_heading=False):
+# Figures, tables, algorithm listings and acknowledgements inside a section are not its prose, so
+# they are left out of the withheld reference (the visible context keeps them elsewhere).
+NON_PROSE = ".ltx_figure, .ltx_table, .ltx_float, .ltx_listing, .ltx_tabular, .ltx_acknowledgements"
+
+
+# Elements that start a new line of text. Everything else is inline, so "<b>T</b>HE" reads "THE".
+BLOCK_TAGS = "p, div, li, ul, ol, dl, dt, dd, section, article, header, h1, h2, h3, h4, h5, h6, br, tr, td, th, table, figure, figcaption, blockquote, pre"
+
+
+def html_text(node, strip_heading=False, strip_non_prose=False):
     """Plain, normalized text of an HTML element, with each formula replaced by its TeX source.
 
     Works on a copy, so `node` is left unchanged. Scripts, navigation, footers and LaTeXML error
-    markers are dropped, and with strip_heading so is the element's first heading.
+    markers are dropped, and with strip_heading so is the element's first heading and with
+    strip_non_prose so are the NON_PROSE elements.
     """
     fragment = BeautifulSoup(str(node), "html.parser")
     if strip_heading:
@@ -192,9 +219,37 @@ def html_text(node, strip_heading=False):
             math_node.replace_with(tex.get_text())
         else:
             math_node.replace_with(math_node.get("alttext", math_node.get_text(" ")))
-    for element in fragment.select("script, style, nav, footer, .ltx_ERROR"):
+    unwanted = "script, style, nav, footer, .ltx_ERROR" + (", " + NON_PROSE if strip_non_prose else "")
+    for element in fragment.select(unwanted):
         element.decompose()
-    return normalize(fragment.get_text(" ", strip=True))
+    for element in fragment.select(BLOCK_TAGS):
+        element.insert_before(" ")
+        element.insert_after(" ")
+    return normalize(fragment.get_text())
+
+
+def number_citations(document):
+    """Give every citation in a parsed page one numeric style, in place.
+
+    Each in-text citation becomes its bibliography numbers, such as "[3, 7]", and each reference
+    label becomes "[n]". Journal styles differ ("Smith et al. 2010", "(1)", "e.g.,)"), and LaTeXML
+    renders some of them badly; a model that writes clean prose would otherwise stand out from the
+    authors on formatting alone. Only formatting changes, never the wording. A citation that links
+    to no reference is left as it is.
+    """
+    numbers = {item["id"]: n for n, item in enumerate(document.select(".ltx_bibitem[id]"), start=1)}
+    for item_id, n in numbers.items():
+        tag = document.find(id=item_id).select_one(".ltx_tag_bibitem")
+        if tag:
+            tag.string = f"[{n}]"
+    for cite in document.select(".ltx_cite"):
+        if cite.find_parent(class_="ltx_cite"):
+            continue
+        cited = sorted(
+            {numbers[a["href"][1:]] for a in cite.select("a[href^='#']") if a["href"][1:] in numbers}
+        )
+        if cited:
+            cite.replace_with("[" + ", ".join(map(str, cited)) + "]")
 
 
 def largest_token_count(text):
@@ -202,7 +257,7 @@ def largest_token_count(text):
 
 
 def extract_paper(html, metadata):
-    """Split one arXiv LaTeXML page into four examples, one per section in SECTIONS.
+    """Split one LaTeXML page (ar5iv or arXiv HTML) into examples, one per section in SECTIONS it has.
 
     Each example's reference is the text of one section, and its context is the rest of the paper
     with that section replaced by a placeholder. Raises RunError saying why a paper is unusable.
@@ -210,6 +265,7 @@ def extract_paper(html, metadata):
     document = BeautifulSoup(html, "html.parser").select_one(".ltx_document")
     if document is None:
         raise RunError("Page has no LaTeXML document (.ltx_document)")
+    number_citations(document)
     abstracts = document.select(".ltx_abstract")
     if len(abstracts) != 1:
         raise RunError(f"Page has {len(abstracts)} abstracts; expected 1")
@@ -220,13 +276,13 @@ def extract_paper(html, metadata):
         heading_tag = section.find(HEADING_TAG)
         if not heading_tag:
             continue
-        heading = re.sub(r"^\s*[\d.]+\s*", "", heading_tag.get_text(" ", strip=True)).casefold()
+        heading = SECTION_NUMBER.sub("", heading_tag.get_text(" ", strip=True)).strip().casefold()
         for kind, pattern in TARGET_HEADINGS.items():
             if re.fullmatch(pattern, heading):
                 if kind in targets:
                     raise RunError(f"Found a second top-level {kind} section, headed {heading!r}")
                 targets[kind] = section
-    missing = [kind for kind in SECTIONS if kind not in targets]
+    missing = [kind for kind in REQUIRED_SECTIONS if kind not in targets]
     if missing:
         raise RunError(f"Top-level sections not found: {', '.join(missing)}")
     bibliography_items = len(document.select(".ltx_bibitem"))
@@ -242,7 +298,9 @@ def extract_paper(html, metadata):
         )
     examples = []
     for kind, target in targets.items():
-        reference = html_text(target, strip_heading=True)
+        reference = html_text(target, strip_heading=True, strip_non_prose=True)
+        if ACKNOWLEDGEMENTS.search(reference):
+            raise RunError(f"{kind} contains acknowledgements the markup does not set apart")
         if words(reference) < MIN_SECTION_WORDS:
             raise RunError(f"{kind} has {words(reference)} words; at least {MIN_SECTION_WORDS} required")
         # find(id=None) would match the first element without an id, so require one.
@@ -290,18 +348,20 @@ def extract_paper(html, metadata):
     return examples
 
 
-PAPERS_NEEDED = 20
-# Accepted papers in discovery order: the first 2 are pilots, the last 5 are held back for
-# confirmation, and the middle 13 are shuffled with SPLIT_SEED into 8 train and 5 validation papers.
-PILOT_PAPERS = slice(0, 2)
-RESEARCH_PAPERS = slice(2, 15)
-CONFIRMATION_PAPERS = slice(15, 20)
-TRAIN_PAPERS = 8
-SPLIT_SEED = 20260929
+PAPERS_NEEDED = sum(STRATA.values())
+# Papers in field order, each field in its frozen shortlist order, are dealt to the splits in these
+# numbers, so that every split holds papers from most fields.
+SPLIT_SIZES = {"train": 35, "validation": 16, "confirmation": 5}
 # Papers about rubric optimization itself are left out, since they could describe the method.
 OFF_LIMITS_TITLE = re.compile(r"rubric|XAR|unslopp", re.IGNORECASE)
-DOWNLOAD_PAUSE_SECONDS = 0.25
-ATOM = {"a": "http://www.w3.org/2005/Atom", "x": "http://arxiv.org/schemas/atom"}
+# Surveys, tutorials, software and data releases are structured differently from research papers.
+NOT_RESEARCH_TITLE = re.compile(
+    r"\b(survey|review|tutorial|overview|roadmap|perspective|primer|lecture notes|software|package"
+    r"|toolkit|library|data release|catalogue?|dataset|benchmark)\b",
+    re.IGNORECASE,
+)
+SOURCE_URL = "https://ar5iv.labs.arxiv.org/html/"
+DOWNLOAD_PAUSE_SECONDS = 0.5
 MANIFEST_EXAMPLE_FIELDS = (
     "example_id",
     "paper_id",
@@ -313,94 +373,103 @@ MANIFEST_EXAMPLE_FIELDS = (
 )
 
 
-def discovery_metadata(entry):
-    """Provenance for one arXiv Atom entry. These fields are part of the hashed dataset."""
-    paper_id = entry.find("a:id", ATOM).text.split("/abs/")[-1]
-    journal_ref = entry.find("x:journal_ref", ATOM)
+def paper_metadata(candidate):
+    """Provenance for one candidate from data/discovery.json. These fields are part of the hashed dataset."""
+    paper_id = candidate["paper_id"]
     return {
-        "paper_id": paper_id,
-        "title": normalize(entry.find("a:title", ATOM).text),
-        "authors": [
-            normalize(author.find("a:name", ATOM).text) for author in entry.findall("a:author", ATOM)
-        ],
-        "source_url": "https://arxiv.org/html/" + paper_id,
+        **candidate,
+        "source_url": SOURCE_URL + paper_id,
         "abstract_url": "https://arxiv.org/abs/" + paper_id,
-        "year": int(entry.find("a:published", ATOM).text[:4]),
-        "venue": journal_ref.text if journal_ref is not None else "arXiv preprint; peer review not verified",
-        "extraction_version": "latexhtml-v1",
-        "retrieved_at": "2026-09-29",
+        "year": int(candidate["first_posted"][:4]),
+        "venue": candidate["published_venue"],
+        "extraction_version": "ar5iv-v1",
+        "retrieved_at": time.strftime("%Y-%m-%d"),
         "redistribution": "not verified; text stays local",
     }
 
 
-def prepare_data():
-    """Build data/examples.jsonl and its split and source manifests from data/discovery.xml.
+def assign_splits(papers):
+    """Split names for `papers`, in order: SPLIT_SIZES' counts, spread evenly along the list."""
+    slots = sorted(
+        ((index + 0.5) / size, split) for split, size in SPLIT_SIZES.items() for index in range(size)
+    )
+    if len(papers) != len(slots):
+        raise RunError(f"{len(papers)} papers cannot fill the {len(slots)} slots in SPLIT_SIZES")
+    return [split for _, split in slots]
 
-    Takes the first PAPERS_NEEDED eligible papers in discovery order (downloading any HTML missing
-    from data/raw) and lists the rejected ones in data/exclusions.json. Refuses to replace an
-    existing examples.jsonl, splits.json or source_manifest.json with different content.
-    exclusions.json is rewritten only when the set of excluded papers changes, so rewording an
-    exclusion reason does not change the saved file.
+
+def prepare_data():
+    """Build data/examples.jsonl and its split and source manifests from data/discovery.json.
+
+    Walks each field's shortlist in frozen order (downloading any HTML missing from data/raw) and
+    keeps the first eligible papers up to the field's quota, listing the rejected ones in
+    data/exclusions.json. Refuses to replace an existing examples.jsonl, splits.json or
+    source_manifest.json with different content. exclusions.json is rewritten only when the set of
+    excluded papers changes, so rewording an exclusion reason does not change the saved file.
     """
     policy = read_json(ROOT / "data/acquisition_policy.json")
-    entries = ET.parse(ROOT / "data/discovery.xml").getroot().findall("a:entry", ATOM)
+    shortlists = load_discovery()
     raw_dir = ROOT / "data/raw"
     raw_dir.mkdir(parents=True, exist_ok=True)
     accepted, exclusions, seen_authors, seen_titles = [], [], set(), set()
     with httpx.Client(timeout=60, follow_redirects=True) as client:
-        for entry in entries:
-            metadata = discovery_metadata(entry)
-            paper_id, title, authors = metadata["paper_id"], metadata["title"], metadata["authors"]
-            try:
-                shared_authors = sorted(set(authors) & seen_authors)
-                if shared_authors:
-                    raise RunError(
-                        f"Shares authors with an earlier selected paper: {', '.join(shared_authors)}"
-                    )
-                if title.casefold() in seen_titles:
-                    raise RunError("Same title as an earlier selected paper")
-                if OFF_LIMITS_TITLE.search(title):
-                    raise RunError("Title is about rubric optimization, the method under study")
-                path = raw_dir / (paper_id + ".html")
-                if not path.exists():
-                    response = client.get(metadata["source_url"])
-                    response.raise_for_status()
-                    path.write_text(response.text)
-                    time.sleep(DOWNLOAD_PAUSE_SECONDS)
-                metadata["html_hash"] = file_hash(path)
-                extracted = extract_paper(path.read_text(), metadata)
-                # The examples' provenance is this same dict, so this lands in every example.
-                # "pending" is stale (data/human_review.json records the approval), but it is part
-                # of the hashed dataset, so it stays.
-                metadata["inspection"] = {"agent_extraction_check": "passed", "human_review": "pending"}
-                accepted.append({"metadata": metadata, "examples": extracted})
-                seen_authors.update(authors)
-                seen_titles.add(title.casefold())
-                print(f"Eligible {len(accepted)}/{PAPERS_NEEDED}: {paper_id} {title}", flush=True)
-                if len(accepted) == PAPERS_NEEDED:
+        for stratum, quota in STRATA.items():
+            kept = 0
+            for candidate in shortlists[stratum]:
+                if kept == quota:
                     break
-            except (RunError, httpx.HTTPError) as e:
-                exclusions.append({"paper_id": paper_id, "reason": str(e), "before_grading": True})
-                print(f"Excluded {paper_id}: {e}", flush=True)
+                metadata = paper_metadata(candidate)
+                paper_id, title, authors = metadata["paper_id"], metadata["title"], metadata["authors"]
+                try:
+                    shared_authors = sorted(set(authors) & seen_authors)
+                    if shared_authors:
+                        raise RunError(
+                            f"Shares authors with an earlier selected paper: {', '.join(shared_authors)}"
+                        )
+                    if title.casefold() in seen_titles:
+                        raise RunError("Same title as an earlier selected paper")
+                    if OFF_LIMITS_TITLE.search(title):
+                        raise RunError("Title is about rubric optimization, the method under study")
+                    if NOT_RESEARCH_TITLE.search(title):
+                        raise RunError("Title suggests a survey, tutorial, software or data release")
+                    path = raw_dir / (paper_id + ".html")
+                    if not path.exists():
+                        response = client.get(metadata["source_url"])
+                        response.raise_for_status()
+                        if "/html/" not in str(response.url):
+                            raise RunError("ar5iv has no HTML for this paper (it redirected to the abstract)")
+                        path.write_text(response.text)
+                        time.sleep(DOWNLOAD_PAUSE_SECONDS)
+                    metadata["html_hash"] = file_hash(path)
+                    extracted = extract_paper(path.read_text(), metadata)
+                    # The examples' provenance is this same dict, so this lands in every example.
+                    # Agent checks are not a human review; data/human_review.json records that.
+                    metadata["inspection"] = {"agent_extraction_check": "passed", "human_review": "pending"}
+                    accepted.append({"metadata": metadata, "examples": extracted})
+                    kept += 1
+                    seen_authors.update(authors)
+                    seen_titles.add(title.casefold())
+                    print(
+                        f"Eligible {len(accepted)}/{PAPERS_NEEDED}: {stratum} {paper_id} {title}", flush=True
+                    )
+                except (RunError, httpx.HTTPError) as e:
+                    exclusions.append({"paper_id": paper_id, "stratum": stratum, "reason": str(e)})
+                    print(f"Excluded {paper_id}: {e}", flush=True)
     exclusions_path = ROOT / "data/exclusions.json"
     excluded_ids = [x["paper_id"] for x in exclusions]
     if not exclusions_path.exists() or [x["paper_id"] for x in read_json(exclusions_path)] != excluded_ids:
         write_json(exclusions_path, exclusions)
     if len(accepted) != PAPERS_NEEDED:
+        counts = Counter(p["metadata"]["stratum"] for p in accepted)
         raise RunError(
-            f"Only {len(accepted)} of {PAPERS_NEEDED} papers are eligible; see data/exclusions.json "
-            "and add more entries to data/discovery.xml"
+            f"Only {len(accepted)} of {PAPERS_NEEDED} papers are eligible ({dict(counts)}); see "
+            "data/exclusions.json and enlarge SHORTLIST_PER_STRATUM in xar/discovery.py"
         )
-    research = accepted[RESEARCH_PAPERS]
-    random.Random(SPLIT_SEED).shuffle(research)
-    groups = {
-        "pilot": accepted[PILOT_PAPERS],
-        "train": research[:TRAIN_PAPERS],
-        "validation": research[TRAIN_PAPERS:],
-        "confirmation": accepted[CONFIRMATION_PAPERS],
-    }
+    groups = {split: [] for split in SPLIT_SIZES}
+    for paper, split in zip(accepted, assign_splits(accepted)):
+        groups[split].append(paper)
     splits = {
-        "seed": SPLIT_SEED,
+        "seed": SAMPLE_SEED,
         "policy_hash": file_hash(ROOT / "data/acquisition_policy.json"),
         "papers": {split: [p["metadata"]["paper_id"] for p in papers] for split, papers in groups.items()},
     }
@@ -415,25 +484,74 @@ def prepare_data():
     if path.exists() and path.read_text() != dataset:
         raise RunError(
             f"The rebuilt dataset differs from the existing {path}, so it was not replaced. Check for "
-            "changes to data/raw, data/discovery.xml or the extraction code. To build a new dataset, "
+            "changes to data/raw, data/discovery.json or the extraction code. To build a new dataset, "
             "move examples.jsonl, splits.json and source_manifest.json out of data/ first."
         )
     path.write_text(dataset)
     write_json(ROOT / "data/splits.json", splits, write_once=True)
     source_manifest = {
         "source": policy["source"],
-        "source_deviation": policy["source_deviation"],
         # A digest of the parsed JSON, unlike splits.json's policy_hash, which hashes the file bytes.
         "policy_hash": digest(policy),
-        "discovery_hash": file_hash(ROOT / "data/discovery.xml"),
+        "discovery_hash": file_hash(ROOT / "data/discovery.json"),
         "dataset_hash": file_hash(path),
         "papers": [p["metadata"] for p in accepted],
         "examples": [{field: e[field] for field in MANIFEST_EXAMPLE_FIELDS} for e in records],
     }
     write_json(ROOT / "data/source_manifest.json", source_manifest, write_once=True)
     load_examples(path, ROOT / "data/splits.json")
+    write_review_files(accepted, groups, source_manifest["dataset_hash"])
     counts = Counter(example["split"] for example in records)
     print(f"Wrote {len(records)} examples: " + ", ".join(f"{n} {split}" for split, n in counts.items()))
+
+
+def write_review_files(accepted, groups, dataset_hash):
+    """Write data/review.md for the human reviewer and a data/human_review.json with every paper pending.
+
+    A run starts only when each paper it uses is set to "approved" in human_review.json. An existing
+    human_review.json for the same dataset is kept, so recorded decisions are not lost.
+    """
+    split_of = {p["metadata"]["paper_id"]: split for split, papers in groups.items() for p in papers}
+    lines = [
+        "# Paper review packet",
+        "",
+        "Review each paper's extraction and writing, then set its decision in data/human_review.json.",
+        "Agent checks are not human review. Raw and extracted text stay local.",
+        "",
+        "| Paper | Split | Field | Citations | Published in | Words (abstract / intro / related / conclusion) |",
+        "| --- | --- | --- | ---: | --- | --- |",
+    ]
+    for paper in accepted:
+        m = paper["metadata"]
+        words_by_kind = {e["section_type"]: e["target_words"] for e in paper["examples"]}
+        counts = " / ".join(str(words_by_kind.get(kind, "-")) for kind in SECTIONS)
+        lines.append(
+            f"| [{m['paper_id']}]({m['source_url']}) {m['title']} | {split_of[m['paper_id']]} "
+            f"| {m['primary_category']} | {m['citations']} | {m['venue']} | {counts} |"
+        )
+    (ROOT / "data/review.md").write_text("\n".join(lines) + "\n")
+    path = ROOT / "data/human_review.json"
+    if path.exists() and read_json(path).get("dataset_hash") == dataset_hash:
+        return
+    write_json(
+        path,
+        {
+            "dataset_hash": dataset_hash,
+            "reviewer": None,
+            "reviewed_at": None,
+            "instruction": "Set each decision to approved or rejected, with notes. No choice may use "
+            "model grades.",
+            "papers": {
+                p["metadata"]["paper_id"]: {
+                    "decision": "pending",
+                    "extraction_complete": None,
+                    "writing_suitable": None,
+                    "notes": "",
+                }
+                for p in accepted
+            },
+        },
+    )
 
 
 def prepare_tokenizers():
