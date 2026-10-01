@@ -11,8 +11,8 @@
   validation, and five reserved confirmation papers. Each provides abstract,
   introduction, related-work, and conclusion examples. We recorded data selection,
   source hashes, review approval, and licenses.
-- These references are proxies for expert human writing. Selection left their writing quality and absence of AI assistance
-  unestablished.
+- These references are proxies for expert human writing. Selection left their
+  writing quality and absence of AI assistance unestablished.
 - Encountered provider rate limits and transport/schema issues while checking
   alternative models and roles. Preserved failures and declared endpoint changes
   rather than silently substituting providers.
