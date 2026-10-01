@@ -182,9 +182,9 @@ The report gives, for training and validation at every checkpoint, the author me
 mean and the gap. The paired improvement is the mean, over validation sections, of the gap at
 the selected checkpoint minus the gap at P0. Its 95% interval is a percentile bootstrap that
 resamples whole papers (2,000 replicates, seed 0), so on validation it rests on five papers.
-`results.md` also gives the validation gap on the sections that met the length target, and
-`reports/completion_audit.json` gives the numbers for two subsets: the sections that met the
-length target, and the sections not flagged for copying.
+`results.md` also gives the validation gap on the sections that met the length target. A subset
+without the sections flagged for copying was computed once, by a script since removed
+(`scripts/audit_completed_run.py` at commit `9aef12b`).
 
 ## Budget and request handling
 

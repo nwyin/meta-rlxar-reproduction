@@ -234,3 +234,19 @@ At the owner's request we deleted `data/human_review.json`, `exclusions.json`,
 - Tagged `corpus-2026-10-01` on commit `2d3bc80`, the last commit holding the policy, the
   exclusions and the review file. `main` stays lean, and the tag keeps the verification record.
 
+## 2026-10-01 — One audit
+
+We deleted `scripts/audit_completed_run.py` and its `reports/completion_audit.json`, and moved
+its main checks into `run.py audit-run` (`xar/audit.py`).
+
+- Moved: re-deriving each writer candidate from its raw responses, with the check that the
+  writer saw only the task data; rebuilding the optimizer's feedback and proposal audit from
+  training scores; and the request-key, cost and budget-ledger checks against `costs.json`.
+- Dropped, which loses some robustness: the check of saved code hashes against the commit that
+  produced a run, the review-file and pilot-gate checks, the writer-before-training order
+  check, the shared-ledger total check, and the extra summary numbers (latency, wall clock,
+  sensitivity table, unflagged subset). `meta_blog_pilot_gate.json` had no other reader, so
+  `check_pilot` stopped writing it.
+- Added 3 tamper tests for the moved checks. With the old corpus restored, `audit-run` passes
+  for `meta-blog-seed0` and `pilot-meta-blog-attested`.
+

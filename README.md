@@ -53,9 +53,9 @@ prints each rejected candidate and the reason. It fails if the result does not m
 files, for example because ar5iv changed a page. The owner reviewed the 56 papers together and
 approved them; `LOG.md` records that.
 
-To audit the completed run, copy `examples.jsonl`, `splits.json` and `human_review.json` from
-`data/archive/arxiv-2609-cs-cl/` back into `data/` (set the new `examples.jsonl` and
-`splits.json` aside first), since the run's manifest points there.
+To audit the completed run, copy `examples.jsonl` and `splits.json` from
+`data/archive/arxiv-2609-cs-cl/` back into `data/` (set the new ones aside first), since the
+run's manifest points there.
 
 Copy `.env.example` to `.env` and set `OPENROUTER_API_KEY`.
 
@@ -85,19 +85,21 @@ budgets and `--concurrency` may differ from the saved run, and any other change 
 
 ```sh
 uv run python run.py audit-run runs/meta-blog-seed0
-uv run python scripts/audit_completed_run.py
 uv run python run.py report
 ```
 
-`audit-run` rebuilds a run's checkpoint table from its saved raw responses and checks the
-request settings, that judge requests do not say which section is the author's, the scoring
-arithmetic, that the checkpoint was selected on training data only, and that every validation
-request came after that selection. `scripts/audit_completed_run.py` goes further on
-the completed research run: it checks the manifest's code hashes against the commit that
-produced the run, re-derives the writer inputs, optimizer feedback and proposal checks with
-the current code, and writes the cost, request, latency and length-subset numbers to
-`reports/completion_audit.json`. Neither makes API calls. `report` repeats the `audit-run` checks on the research run and then
-writes the report; it does not run `scripts/audit_completed_run.py`.
+`audit-run` makes no API calls. It rebuilds a run's checkpoint table from its saved raw responses
+and checks:
+
+- the request settings, and that judge requests do not say which section is the author's;
+- that the writer saw only the task data, and that its texts, length flags and copy flags
+  follow from the raw responses;
+- that the optimizer's feedback and proposals re-derive from training scores alone;
+- the scoring arithmetic, and that the checkpoint was selected on training data only;
+- that every validation request came after that selection;
+- that request keys, costs and the budget ledger agree.
+
+`report` repeats the `audit-run` checks on the research run and then writes the report.
 
 ## Browsing runs
 
@@ -122,9 +124,6 @@ prompt history and criteria; see [tools/data-viewer](tools/data-viewer/README.md
 │   ├── stats.py                  checkpoint means and paired whole-paper bootstrap
 │   ├── report.py                 writes reports/ (results.md, checkpoints.csv, figure)
 │   └── util.py                   paths, errors, hashing, JSON I/O, parallel map
-├── scripts/
-│   └── audit_completed_run.py    deep re-audit of runs/meta-blog-seed0 against the commit
-│                                 that produced it; writes reports/completion_audit.json
 ├── tools/data-viewer/            local browser viewer for runs (serve.py + HTML/JS)
 ├── tests/                        pytest suite; one file per module, fakes in conftest.py,
 │                                 full pilot and research runs in test_end_to_end.py
@@ -162,13 +161,13 @@ prompt history and criteria; see [tools/data-viewer](tools/data-viewer/README.md
 | `runs/pilot-meta-blog-attested/` | the pilot run |
 | `runs/meta-blog-seed0/` | the research run: `manifest.json`, every request and response under `requests/`, sections in `generations/`, `rubrics/`, `scores/`, optimizer `feedback/`, `prompts/`, `freeze.json`, `costs.json` |
 | `runs/budget_ledger.json` | reservations and charges for every run |
-| `reports/` | `results.md`, `checkpoints.csv`, `gap_curves.png` and `.svg`, `blog_comparison.json`, `audit.json`, and `completion_audit.json` from the audit script |
+| `reports/` | `results.md`, `checkpoints.csv`, `gap_curves.png` and `.svg`, `blog_comparison.json`, and `audit.json` |
 
 `runs/`, `reports/`, the paper text and the tokenizers are not in git.
 
 ## Versions
 
 The git tag `meta-blog-seed0` is the commit that produced the research run. The code has been
-cleaned up since; `scripts/audit_completed_run.py` checks that the saved run still re-audits
-with the current code. The tag `alternative-model-study` holds an earlier study with other
+cleaned up since, and `run.py audit-run` checks that the saved run still re-audits with the
+current code. The tag `alternative-model-study` holds an earlier study with other
 models, which did not go beyond pilots.

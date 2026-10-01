@@ -20,7 +20,6 @@ from xar.util import (
     load_design,
     main_guard,
     parse_concurrency,
-    write_json,
 )
 
 # phase -> (run directory key, data split, iterations key) in experiments.yaml
@@ -55,9 +54,7 @@ def check_pilot(runs_root, design):
     """Audit the pilot run and check that it used the settings in experiments.yaml.
 
     reproduce calls this first. Only the pilot's settings and audit result are checked, not its
-    scores. On success it saves the hash of the pilot's settings (the manifest's substantive_hash)
-    to meta_blog_pilot_gate.json. Nothing in the pipeline reads that file; it is a record for
-    scripts/audit_completed_run.py."""
+    scores."""
     run = audit_xar_run(Path(runs_root) / design["pilot_run"])
     manifest = run["manifest"]
     check_manifest_matches_design(manifest, {**design, "iterations": design["pilot_iterations"]})
@@ -66,10 +63,6 @@ def check_pilot(runs_root, design):
         raise RunError(
             f"{design['pilot_run']} used the {split} split; the pilot must run on the pilot papers"
         )
-    write_json(
-        Path(runs_root) / "meta_blog_pilot_gate.json",
-        {"pilot_substantive_hash": manifest["substantive_hash"]},
-    )
 
 
 def run_phases(options):

@@ -3,22 +3,37 @@
 from __future__ import annotations
 
 import json
+import math
 from pathlib import Path
 
 import jsonschema
 
-from xar.data import load_examples, run_examples, task_data
-from xar.openrouter import FORMAT_REPAIR, json_schema_format, role_config, routing_fields
+from xar.data import contamination, load_examples, run_examples, task_data
+from xar.openrouter import (
+    FORMAT_REPAIR,
+    json_schema_format,
+    ledger_key,
+    max_request_cost,
+    role_config,
+    routing_fields,
+)
 from xar.pipeline import (
     GRADE_SCHEMA,
+    PROPOSAL_ATTEMPTS,
+    PROPOSAL_SCHEMA,
     RUBRIC_SCHEMA,
+    WRITER_ATTEMPTS,
+    audit_proposal,
+    build_feedback,
     checkpoint_row,
+    length_revision_note,
+    length_window,
     select_checkpoint,
     validate_grade,
     validate_rubric,
 )
 from xar.stats import summarize
-from xar.util import ROLES, RunError, canonical, digest, file_hash, prompt, read_json
+from xar.util import ROLES, RunError, canonical, digest, file_hash, prompt, read_json, words
 
 
 def check_request_settings(payload, cfg, schema, prompt_hash, where="saved request"):
@@ -181,12 +196,168 @@ def _audit_section(run, manifest, frozen_at, example, candidate, iteration, meta
     }
 
 
+def _check(ok, message):
+    """Like assert, but not stripped by python -O."""
+    if not ok:
+        raise RunError(message)
+
+
+def _check_writer(manifest, candidates, examples_by_id):
+    """Re-derive each writer candidate from its raw responses.
+
+    The writer's input must be exactly the task data (never the author's section), plus the previous
+    section and a length note on a retry. The text, hash, length flags, retry rules and copy check
+    must all follow from the saved responses.
+    """
+    hashes, writer = manifest["software_hashes"], manifest["roles"]["writer"]
+    _check(set(candidates) == set(examples_by_id), "Writer candidates do not match the run's examples")
+    for eid, candidate in candidates.items():
+        example, attempts = examples_by_id[eid], candidate["attempts"]
+        _check(1 <= len(attempts) <= WRITER_ATTEMPTS, f"{eid}: {len(attempts)} writer attempts")
+        _check(candidate["accepted_attempt"] == len(attempts) - 1, f"{eid}: accepted attempt is not the last")
+        _check(
+            not any(attempt["length_compliant"] for attempt in attempts[:-1]),
+            f"{eid}: writer retried after a section that met the length target",
+        )
+        _check(
+            candidate["length_compliant"] or len(attempts) == WRITER_ATTEMPTS,
+            f"{eid}: writer stopped before meeting the length target or using every attempt",
+        )
+        low, high = length_window(example["target_words"])
+        for index, attempt in enumerate(attempts):
+            where = f"{eid} attempt {index}"
+            raw_path = attempt["response"]["raw_response"]
+            text = read_json(raw_path)["response"]["choices"][0]["message"]["content"].strip()
+            _check(text == attempt["text"], f"{where}: saved text differs from the response")
+            _check(digest(text) == attempt["text_hash"], f"{where}: text hash differs")
+            _check(words(text) == attempt["words"], f"{where}: word count differs")
+            _check(
+                attempt["length_compliant"] == (low <= words(text) <= high),
+                f"{where}: length_compliant flag is wrong",
+            )
+            payload = read_json(Path(raw_path).parent / "request.json")["payload"]
+            check_request_settings(payload, writer, None, hashes["prompts/writer.md"], where=where)
+            expected_input = task_data(example)
+            if index:
+                expected_input.update(
+                    previous_section=attempts[index - 1]["text"],
+                    length_revision=length_revision_note(example["target_words"]),
+                )
+            _check(
+                canonical(expected_input) == payload["messages"][1]["content"],
+                f"{where}: writer input differs from the task data",
+            )
+        _check(candidate["text"] == attempts[-1]["text"], f"{eid}: candidate text is not the last attempt")
+        _check(candidate["complete"], f"{eid}: candidate is incomplete")
+        _check(
+            candidate["contamination"] == contamination(candidate["text"], example["reference"]),
+            f"{eid}: contamination check differs",
+        )
+
+
+def _check_proposals(run, manifest, freeze, train, candidates):
+    """Rebuild each update's optimizer feedback and proposal audit from the saved scores.
+
+    The feedback must follow from training rows alone, each proposal must come from its raw
+    response with the audit the current code gives it, and the accepted prompt must be the one the
+    audit implies.
+    """
+    arguments = manifest["arguments"]
+    max_words = arguments["max_meta_prompt_words"]
+    initial = (run / "prompts/iter_00.md").read_text()
+    for iteration in range(1, arguments["iterations"] + 1):
+        where = f"iteration {iteration}"
+        previous = (run / f"prompts/iter_{iteration - 1:02d}.md").read_text()
+        rows = read_json(run / f"scores/main/{iteration - 1}/train_rows.json")
+        directory = run / f"feedback/iter_{iteration:02d}"
+        feedback, proposal = read_json(directory / "training.json"), read_json(directory / "proposal.json")
+        expected_feedback = build_feedback(train, candidates, rows, previous, arguments["failure_examples"])
+        _check(canonical(expected_feedback) == canonical(feedback), f"{where}: feedback differs")
+        _check(proposal["parent_prompt_hash"] == digest(previous), f"{where}: parent prompt differs")
+        _check(proposal["feedback_hash"] == digest(feedback), f"{where}: feedback hash differs")
+        _check(proposal["update_consumed"], f"{where}: update not consumed")
+        attempts = proposal["attempts"]
+        _check(1 <= len(attempts) <= PROPOSAL_ATTEMPTS, f"{where}: {len(attempts)} attempts")
+        expected_input = canonical({"feedback": feedback, "max_meta_prompt_words": max_words})
+        for attempt in attempts:
+            payload = audit_saved_output(
+                attempt,
+                PROPOSAL_SCHEMA,
+                manifest["roles"]["optimizer"],
+                manifest["endpoints"]["optimizer"],
+                manifest["software_hashes"]["prompts/optimizer.md"],
+                where=where,
+            )
+            _check(payload["messages"][1]["content"] == expected_input, f"{where}: optimizer input differs")
+            _check(
+                attempt["audit"] == audit_proposal(attempt["value"]["prompt"], train, initial, max_words),
+                f"{where}: proposal audit differs",
+            )
+        final = attempts[-1]
+        _check(proposal["accepted"] == final["audit"]["accepted"], f"{where}: accepted flag differs")
+        expected_prompt = final["value"]["prompt"] if proposal["accepted"] else previous
+        _check(
+            proposal["prompt"] == expected_prompt, f"{where}: saved prompt is not the one the audit implies"
+        )
+        _check(
+            proposal["prompt_hash"] == freeze["prompt_hashes"][iteration],
+            f"{where}: prompt hash differs from freeze.json",
+        )
+
+
+def _check_costs(run, manifest):
+    """Check every saved request against the budget ledger, and the run's cost file against both.
+
+    A request's key is the hash of what was sent. Each send must have succeeded and been reserved
+    and settled in order, at a cost within its reservation, and costs.json must equal the sum.
+    """
+    ledger = read_json(manifest["arguments"]["budget_ledger"])["entries"]
+    total, requests = 0, 0
+    for path in run.glob("requests/*/request.json"):
+        request = read_json(path)
+        role, payload = request["role"], request["payload"]
+        hashed = {
+            "payload": payload,
+            "identity": request["identity"],
+            "schema_version": manifest["schema_version"],
+        }
+        _check(
+            request["key"] == path.parent.name == digest(hashed), f"{path}: key does not match its contents"
+        )
+        max_cost = max_request_cost(payload, manifest["endpoints"][role]["endpoint"])
+        for attempt_path in path.parent.glob("attempt_*.json"):
+            sent = read_json(attempt_path)
+            _check(sent["status"] == "success", f"{attempt_path}: status is {sent['status']}")
+            key = ledger_key(run, request["key"], attempt_path.stem.removeprefix("attempt_"))
+            entry, cost = ledger[key], sent["response"]["usage"]["cost"]
+            _check(entry["state"] == "complete", f"{key}: ledger entry is {entry['state']}")
+            _check(
+                math.isclose(entry["charge"], cost), f"{key}: ledger charge {entry['charge']} != cost {cost}"
+            )
+            _check(
+                math.isclose(entry["upper"], max_cost), f"{key}: ledger reservation is not the maximum cost"
+            )
+            _check(cost <= max_cost, f"{key}: cost {cost} exceeds the maximum request cost {max_cost}")
+            _check(
+                entry["created_at"] <= sent["sent_at"] <= sent["timestamp"] <= entry["settled_at"],
+                f"{key}: reserve, send, receive and settle times are out of order",
+            )
+            total += cost
+            requests += 1
+    costs = read_json(run / "costs.json")
+    _check(math.isclose(costs["actual_complete_usd"], total), "costs.json total differs from the responses")
+    _check(costs["unresolved"] == 0, f"costs.json has {costs['unresolved']} unresolved requests")
+    _check(costs["requests"] == requests, f"costs.json counts {costs['requests']} requests; found {requests}")
+
+
 def audit_xar_run(path):
     """Re-check a saved XAR run and rebuild its checkpoint table from the raw API responses.
 
     Every rubric and grade must match its raw response, its request must use the manifest's role
     settings and prompts, validation requests must postdate freeze.json, and the recomputed grade
-    totals, training gaps and selected checkpoint must equal the saved ones. Raises RunError if not.
+    totals, training gaps and selected checkpoint must equal the saved ones. The writer candidates,
+    optimizer feedback and proposals are re-derived, and request keys, costs and the budget ledger
+    must agree. Raises RunError if not.
     """
     run = Path(path)
     manifest = read_json(run / "manifest.json")
@@ -215,6 +386,7 @@ def audit_xar_run(path):
         if candidate["text_hash"] != digest(candidate["text"]):
             raise RunError(f"{eid}: writer candidate text does not match its text_hash")
 
+    _check_writer(manifest, candidates, {e["example_id"]: e for e in examples})
     frozen_at = freeze.get("frozen_at")
     if not frozen_at:
         raise RunError(f"{run / 'freeze.json'} has no frozen_at time")
@@ -253,6 +425,8 @@ def audit_xar_run(path):
             f"freeze.json selected checkpoint {freeze['selected']}, "
             f"but the highest training gap is at checkpoint {selected}"
         )
+    _check_proposals(run, manifest, freeze, by_split["train"], candidates)
+    _check_costs(run, manifest)
     return {
         "manifest": manifest,
         "freeze": freeze,

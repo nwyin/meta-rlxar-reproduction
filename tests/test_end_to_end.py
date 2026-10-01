@@ -100,12 +100,38 @@ def test_audit_rejects_wrong_grade_total(pilot):
         audit_xar_run(out)
 
 
-def test_check_pilot_records_the_audited_pilot(pilot, design):
-    runs_root = pilot.out.parent
-    run.check_pilot(runs_root, design)
-    manifest = read_json(pilot.out / "manifest.json")
-    gate = read_json(runs_root / "meta_blog_pilot_gate.json")
-    assert gate == {"pilot_substantive_hash": manifest["substantive_hash"]}
+def test_audit_rejects_a_writer_text_that_differs_from_its_response(pilot):
+    out = pilot.out
+    candidates = read_json(out / "generations/candidates.json")["candidates"]
+    raw_path = next(iter(candidates.values()))["attempts"][0]["response"]["raw_response"]
+    sent = read_json(raw_path)
+    sent["response"]["choices"][0]["message"]["content"] += " An added sentence."
+    write_json(raw_path, sent)
+    with pytest.raises(RunError, match="saved text differs from the response"):
+        audit_xar_run(out)
+
+
+def test_audit_rejects_a_cost_file_that_differs_from_the_responses(pilot):
+    out = pilot.out
+    costs = read_json(out / "costs.json")
+    costs["actual_complete_usd"] += 1
+    write_json(out / "costs.json", costs)
+    with pytest.raises(RunError, match="costs.json total differs"):
+        audit_xar_run(out)
+
+
+def test_audit_rejects_optimizer_feedback_that_does_not_follow_from_the_scores(pilot):
+    out = pilot.out
+    path = out / "feedback/iter_01/training.json"
+    feedback = read_json(path)
+    feedback["unexpected_field"] = "added after the fact"
+    write_json(path, feedback)
+    with pytest.raises(RunError, match="iteration 1: feedback differs"):
+        audit_xar_run(out)
+
+
+def test_check_pilot_accepts_an_audited_pilot_that_matches_the_design(pilot, design):
+    run.check_pilot(pilot.out.parent, design)
 
 
 def test_check_pilot_rejects_a_pilot_that_differs_from_the_design(pilot, design):
@@ -115,7 +141,6 @@ def test_check_pilot_rejects_a_pilot_that_differs_from_the_design(pilot, design)
     write_json(out / "manifest.json", manifest)
     with pytest.raises(RunError, match="failure_examples"):
         run.check_pilot(out.parent, design)
-    assert not (out.parent / "meta_blog_pilot_gate.json").exists()
 
 
 @pytest.mark.parametrize(
