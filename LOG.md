@@ -2,52 +2,43 @@
 
 ## 2026-09-29
 
-- Froze the initial XAR design, prompts, model snapshots, and acquisition policy
-  (`a08357f`). The initial scope included alternative-model experiments and
-  transfer checks.
+- Froze the initial XAR design, prompts, model snapshots, and acquisition policy.
+  The initial scope included alternative-model experiments and transfer checks.
 - Implemented the auditable pipeline, froze paper splits, and verified mocked
-  trajectories (`9687dd9`). Added batch dry runs, endpoint freshness checks,
-  experiment contracts, and result audits (`00d180d`, `eed4b59`).
+  trajectories. Added batch dry runs, endpoint freshness checks,
+  experiment contracts, and result audits.
 - Acquired 20 eligible recent arXiv papers: two pilot, eight training, five
   validation, and five reserved confirmation papers. Each provides abstract,
-  introduction, related-work, and conclusion examples. The research split has
-  52 sections. Data selection, source hashes, review approval, and licenses were
-  recorded; the license inventory was added in `3f63f21`.
+  introduction, related-work, and conclusion examples. Data selection,
+  source hashes, review approval, and licenses were recorded.
 - These references are proxies for expert human writing. Selection did not
   independently establish their writing quality or absence of AI assistance.
-- Recorded the authorized $100 shared ceiling and refreshed live pricing before
-  pilot execution (`4ababb1`, `eae5572`).
 - Encountered provider rate limits and transport/schema issues while checking
   alternative models and roles. Preserved failures and declared endpoint changes
-  rather than silently substituting providers (`b2fb545`, `4d66ef7`, `37424d8`).
+  rather than silently substituting providers.
 - Measured latency, tokens, and costs; added bounded parallel generation and
-  dispatch while preserving checkpoint comparisons (`cb4b78c`, `59b1677`,
-  `afbcff8`, `ba3722b`).
-- Pinned a Kimi provider that passed native-schema checks (`89cb7aa`). These were
-  operational checks, not evidence of reproducing the blog's scientific result.
-- The earlier alternative-model study did not progress beyond pilots; its
-  history is retained under the `alternative-model-study` tag.
+  dispatch while preserving checkpoint comparisons.
+- Pinned a Kimi provider that passed native-schema checks.
+  These were operational checks.
+- The earlier alternative-model study did not progress beyond pilots;
+  its history is retained under the `alternative-model-study` tag.
 - Refocused the experiment on the blog's Initial Empirical Investigation:
   Muse Spark 1.1 as writer, rubric generator, and judge; Kimi K2.6 as meta-prompt
-  optimizer (`beeb812`). Verified Muse access and completed the attested pilot
-  (`eb8b38b`, `df67621`, `eb06148`).
-- Froze 52 Muse-generated sections before rubric optimization (`1546674`). The
+  optimizer. Verified Muse access and completed the attested pilot.
+- Froze 52 Muse-generated sections before rubric optimization. The
   writer outputs stayed fixed through seven prompt updates, P0 through P7.
-- Recorded the complete baseline and first three updates as they completed
-  (`fee6b02`, `be424bb`, `bc621b4`, `22e04c9`). P1 improved the training gap;
-  P2 and P3 moved it back in the adverse direction.
-- Documented the completed run in `f66e610`. Training selected P1 before any
-  validation evaluation. Validation improved from **−1.04 at P0 to −0.16 at P1**,
-  but stayed negative at every checkpoint; P7 was **−0.37**. The blog's reported
-  reversal was not reproduced.
+- Recorded the complete baseline and first three updates as they completed.
+  P1 improved the training gap; P2 and P3 moved it back in the adverse direction.
+- Documented the completed run in. Training selected P1 before any validation evaluation.
+  Validation improved from **−1.04 at P0 to −0.16 at P1**, but stayed negative at every
+  checkpoint; P7 was **−0.37**. The blog's reported reversal was not reproduced.
 - The paired P0-to-P1 validation improvement was **+0.88**, with a 95%
   whole-paper bootstrap interval of **+0.37 to +1.35** over five papers. Human
   means rose from 7.91 to 8.38; model means fell from 8.95 to 8.53.
 - Seventeen of 52 generated sections missed the ±15% length target after bounded
   revisions. The length-compliant validation subset also retained a negative gap.
 - The research run cost **$55.60**, made **1,389 requests**, and took about
-  **75 minutes**. The separate pilot cost **$2.42**. The completion commit
-  reported passing raw-response audits and 29 tests.
+  **75 minutes**. The separate pilot cost **$2.42**.
 
 Evidence: [current results](reports/results.md),
 [checkpoint table](reports/checkpoints.csv), and the `meta-blog-seed0` tag.
@@ -56,22 +47,20 @@ Generated reports and raw runs remain local and are excluded from Git.
 ## 2026-09-30 — Audit, cleanup, documentation, and viewer
 
 - Added a completed-run audit that checks saved code hashes against the commit
-  that produced the run, allowing later cleanup without losing provenance
-  (`225aec0`). Strengthened it to report measured values and rederive saved
-  inputs and feedback (`5df3d3f`, `c2ac18c`).
+  that produced the run, allowing later cleanup without losing provenance.
+  Strengthened it to report measured values and rederive saved
+  inputs and feedback.
 - Fixed ledger overspend handling, resume checks, pilot reporting, and section-ID
-  handling (`1746456`). Removed unsupported endpoint sampling seeds (`1f9baf8`).
+  handling. Removed unsupported endpoint sampling seeds.
 - Removed unused alternative-study scripts and stale configuration, then split
-  `shared.py` into the `xar` package (`e6ea7e7`, `38db55c`, `33e73e1`). Simplified
-  pipeline stages, auditing, request handling, and tests.
-- Consolidated the CLI into `run.py` (`698be96`), generated the complete result
-  report and comparison figure (`0d0871a`), and rewrote the README and method
-  documentation (`d0b405a`).
-- Required budgets before paid runs and clarified resume behavior (`08e42ee`,
-  `4255cc0`, `77330f8`). The final correction keeps the ledger path fixed on
-  resume; budgets and concurrency may change (`371c11f`).
+  `shared.py` into the `xar` package. Simplified pipeline stages, auditing,
+  request handling, and tests.
+- Consolidated the CLI into `run.py`, generated the complete result report and
+  comparison figure, and rewrote the README and method documentation.
+- Required budgets before paid runs and clarified resume behavior.
+  The final correction keeps the ledger path fixed on resume; budgets and concurrency may change.
 - Added the local viewer for papers, runs, rubrics, and prompt history
-  (`1657ef5`) and documented the repository layout (`097fd12`).
+  and documented the repository layout.
 
 - Why is the human–model gap small or still negative?
   Reviewed the blog, pipeline, prompts, saved feedback, and scores with two
