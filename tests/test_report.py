@@ -1,6 +1,6 @@
 """Report rendering without a completed research run, and the generated result sentences."""
 
-from xar.report import checkpoint_table, render_report, sign_sentence, training_trend
+from xar.report import checkpoint_table, optimizer_time, render_report, sign_sentence, training_trend
 from xar.util import read_json, write_json
 
 
@@ -41,3 +41,12 @@ def test_result_sentences_state_sign_and_training_direction():
     assert sign_sentence(later, missed).endswith("although the validation gap was positive at P2.")
     already = {**summary, "initial_gap": 0.3}
     assert sign_sentence(table, already).startswith("The validation gap was already +0.30 at P0")
+
+
+def test_optimizer_time_skips_sends_without_a_duration(tmp_path):
+    request = tmp_path / "requests" / "abc"
+    request.mkdir(parents=True)
+    write_json(request / "request.json", {"role": "optimizer"})
+    write_json(request / "attempt_0.json", {"status": "uncertain", "error": "ReadTimeout"})
+    write_json(request / "attempt_1.json", {"status": "success", "duration_seconds": 12.0})
+    assert optimizer_time(tmp_path) == (1, 12.0)

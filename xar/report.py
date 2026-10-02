@@ -164,8 +164,8 @@ def results_text(run, summary, design, run_dir, runs_root):
     }
     validation_sections = len(run["rows"][(0, "validation")])
     setup = (
-        f"This run repeats the first rubric-learning experiment in [Meta's blog]({design['blog_url']}) "
-        f"with the same models. {describe_roles(names)}. The run used {len(candidates)} sections from "
+        f"This run repeats the first rubric-learning experiment in [Meta's blog]({design['blog_url']}). "
+        f"{describe_roles(names)}. The run used {len(candidates)} sections from "
         f"{papers['train']} training and {papers['validation']} validation papers, with {last} "
         "prompt updates. Checkpoint P0 is the starting prompt, and Pn is the prompt after n updates."
     )
@@ -395,13 +395,16 @@ def wallclock_seconds(run_dir, manifest):
 
 
 def optimizer_time(run_dir):
-    """Number of optimizer requests and the seconds spent waiting for their responses."""
+    """Number of optimizer requests and the seconds spent waiting for their responses.
+
+    A send that got no response has no duration and counts as 0; a send still in flight when the
+    process died has none either."""
     calls, seconds = 0, 0.0
     for request in (run_dir / "requests").glob("*/request.json"):
         if read_json(request)["role"] == "optimizer":
             calls += 1
             seconds += sum(
-                read_json(path)["duration_seconds"] for path in request.parent.glob("attempt_*.json")
+                read_json(path).get("duration_seconds", 0.0) for path in request.parent.glob("attempt_*.json")
             )
     return calls, seconds
 

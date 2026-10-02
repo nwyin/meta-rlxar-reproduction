@@ -552,3 +552,42 @@ before. The corrupted proposal now fails the check. 2 tests added.
 
 The owner then chose Kimi K2.6 as optimizer again, the blog's choice, over keeping
 MiMo-V2.6-Flash behind the new check. It adds about $0.80 and about 10 minutes over 4 rewrites.
+
+## 2026-10-02 — Research run meta-blog-v2-seed0 complete: the gap closed but did not cross zero
+
+`run.py all` with Muse Spark 1.3 contributor (writer, rubric generator, judge), Kimi K2.6
+(optimizer) and MiMo-V2.6-Pro (cross judge) ran the pilot from 03:34 to 03:59 UTC ($0.43), then
+the research run. We stopped the research run at 04:02 after 38 sections, to leave the harness's
+2-hour process limit and raise concurrency, and resumed it detached at 04:03 with
+`reproduce --resume --concurrency 32`; the manifest still records the original 16, and the
+report quotes that. The machine slept from about 05:35 to 14:59 UTC with Kimi's repair request
+for the 4th rewrite in flight; on wake the read timeout fired, the request was sent again and
+succeeded. The run finished at 16:07 UTC, status complete, $10.04 over 2,574 billed requests, with
+49 resends that may have been billed too, at most $1.17. The report step then failed on the
+timed-out send, which has no duration; `optimizer_time` now counts such sends as 0 and the
+report was written by `run.py report`.
+
+Results, from `reports/results.md`:
+
+| Checkpoint | Training gap | Validation gap | Validation author | Validation Muse |
+| --- | ---: | ---: | ---: | ---: |
+| P0 | −1.95 | −1.89 | 5.94 | 7.83 |
+| P1 | −1.59 | −1.55 | 6.40 | 7.95 |
+| P2 | −1.37 | −1.16 | 6.52 | 7.68 |
+| P3 (selected) | −0.20 | −0.08 | 6.36 | 6.44 |
+| P4 | −0.22 | −0.17 | 6.49 | 6.66 |
+
+Observations: the sign did not flip in 4 updates. The validation gap went from −1.89 at P0 to
+−0.08 at P3, an improvement of +1.81 over 44 paired sections (95% bootstrap interval +1.46 to
++2.08 over the 16 validation papers), and the validation curve tracked the training curve at
+every checkpoint. The Muse score fell from 7.83 to 6.44 while the author score rose from 5.94
+to 6.36, the same directions as the blog's 7.6 → 2.7 and 3.4 → 5.0 but a fraction of the size.
+The cross judge, MiMo-V2.6-Pro, saw −1.63 at P0 and −0.37 at P3 on the same rubrics, so the
+closing of the gap holds under a second judge of another family, though it closes less. The
+4th update was flat on training (−0.22) and worse on validation (−0.17), and its first proposal
+was 929 words and had to be repaired to 743. The judge needed 60 format repairs in 1,636 replies.
+
+Explanation, ours: the blog's curve crossed zero at its 4th iteration from a much lower start
+(−4.2); ours started at −1.89 and reached −0.08 in the same number of updates, so the slope is
+comparable and the run stopped where the blog's crossed. Whether more updates would cross is
+untested. The blog had 7 iterations; `iterations: 4` was a cost choice.
