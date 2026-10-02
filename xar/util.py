@@ -24,7 +24,8 @@ ROLES = ("writer", "rubric", "optimizer", "judge", "cross_judge")
 # Names of the optimizer feedback policies; pipeline.build_feedback explains them.
 LEGACY_FEEDBACK = "smallest_gap_then_example_id"
 FAILING_FEEDBACK = "failing_gap_without_paper"
-FEEDBACK_POLICIES = (LEGACY_FEEDBACK, FAILING_FEEDBACK)
+WORST_WITH_PAPER_FEEDBACK = "failing_gap_paper_for_worst"
+FEEDBACK_POLICIES = (LEGACY_FEEDBACK, FAILING_FEEDBACK, WORST_WITH_PAPER_FEEDBACK)
 
 
 class RunError(RuntimeError):

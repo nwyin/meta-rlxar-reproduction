@@ -14,10 +14,7 @@ into criteria.
 
 Name specifics in the criteria and anchors. Refer to the paper's actual contributions,
 methods, datasets, results, terms, and cited work, so the grader can verify a candidate
-against the paper rather than rely on general impressions. Include one criterion for
-factual consistency with the rest of the paper: a candidate must not contradict or invent
-results, methods, or claims. Include one criterion for fit with the paper's structure and
-style, including the target word count and the hand-offs to adjacent sections.
+against the paper rather than rely on general impressions.
 
 Write anchors that describe observable features of a candidate at that level, not
 adjectives. The low anchor should describe a plausible but inadequate candidate, the high

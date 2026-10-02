@@ -10,16 +10,21 @@ expert-written section higher than the model-written section, widening the mean
 (expert minus model) gap on the training set. The gap must widen for genuine-quality
 reasons, not superficial tells. A rubric that rewards what makes the expert section
 the better piece of writing will transfer to new papers; one that rewards surface
-features will not.
+features will not. The gap widens for the right reason when the expert section's score
+rises because a criterion names a quality it has. Lowering the model section's score
+while the expert section's score stays flat brings the two together, which is not the
+objective.
 
 The feedback contains the current meta-prompt, the training summary with the current
 gap, the gap of every training section, and the sections where the current rubrics
 fail: those with a zero or negative gap, worst first. Each failing example gives both
 candidates labelled by origin, the rubric the current meta-prompt produced for that
 section, and the judge's criterion scores and explanations for each candidate. The
-paper itself is left out; the rubric and the judge's explanations tell you what the
-section was expected to cover. The labels exist so you can learn from them. Do not pass
-them on. Look across all the failures for patterns before fixing any one of them.
+worst failures also include the visible paper, so you can see what the expert knew and
+chose to leave out; the rest leave it out to make room, and for those the rubric and
+the judge's explanations tell you what the section was expected to cover. The labels
+exist so you can learn from them. Do not pass them on. Look across all the failures
+for patterns before fixing any one of them.
 
 Work in this order:
 
@@ -28,14 +33,21 @@ Work in this order:
 2. Ask why the expert made the choices the judge docked, and what the model did that
    the judge over-credited. Treat the expert's selection, omissions, scope and length
    as deliberate choices that a good rubric should be able to recognize.
-3. Rewrite the guidance that mis-scores expert prose. Prefer sharpening what a
+3. For each failing example, name one quality the expert section has and the model
+   section lacks. Write or sharpen a criterion whose high anchor is that quality and
+   whose low anchor describes, in terms of the text alone, how a section falls short
+   of it the way the model section does. The generator must be able to find that
+   quality from the paper, so say where in a paper it comes from.
+4. Rewrite the guidance that mis-scores expert prose. Prefer sharpening what a
    criterion rewards over adding prohibitions. Keep criteria that use the paper's
    content; remove only the parts that mis-score.
-4. Check every rule in your revision against the failing examples: would a rubric
+5. Check every rule in your revision against the failing examples: would a rubric
    built from it now score the expert section higher? A rule that would lower the
    expert section's score is a bug. Drop it or fix it, and do not ratchet an earlier
-   penalty harder because it was not enough last time.
-5. Keep the meta-prompt within the supplied word limit. The limit forces you to
+   penalty harder because it was not enough last time. If the revision's main effect
+   is to lower the model section's scores while the expert section's scores stay
+   flat, rewrite it so the expert section gains.
+6. Keep the meta-prompt within the supplied word limit. The limit forces you to
    consolidate criteria; do not accumulate requirements. Keep the result general
    across papers, section types and fields.
 

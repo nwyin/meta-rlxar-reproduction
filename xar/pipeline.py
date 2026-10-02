@@ -25,6 +25,7 @@ from xar.util import (
     LEGACY_FEEDBACK,
     ROLES,
     SCHEMA_VERSION,
+    WORST_WITH_PAPER_FEEDBACK,
     InvalidOutput,
     RunError,
     Skipped,
@@ -423,12 +424,17 @@ def propose_prompt(api, current, feedback, examples, initial, iteration, *, outp
     return proposal
 
 
-# How build_feedback picks the sections the optimizer sees (the names are in util.py, which runs.py
+# How build_feedback picks the sections the optimizer sees (the names are in util.py, which run.py
 # also reads). The completed run meta-blog-seed0 used LEGACY_FEEDBACK: the failure_count lowest-gap
-# sections, each with the whole visible paper. Runs from 2026-10-01 use FAILING_FEEDBACK: every
+# sections, each with the whole visible paper. meta-blog-v2-seed0 used FAILING_FEEDBACK: every
 # section whose gap is zero or negative, lowest first, up to failure_count, without the paper, plus
 # the gap of every training section. The blog shows its optimizer "the specific examples where it
-# fails"; leaving the paper out makes room for them.
+# fails"; leaving the paper out makes room for them. Runs from 2026-10-02 use
+# WORST_WITH_PAPER_FEEDBACK: the same selection, with the paper kept for the PAPER_FAILURES worst,
+# so the optimizer can see what the expert knew and chose to leave out.
+PAPER_FAILURES = 4
+
+
 def build_feedback(examples, candidates, rows, current_prompt, failure_count, policy=LEGACY_FEEDBACK):
     """The optimizer's input: the current prompt, its training summary, and the training sections
     the policy selects, with their rubrics and grades.
@@ -449,10 +455,10 @@ def build_feedback(examples, candidates, rows, current_prompt, failure_count, po
         )
     lookup = {e["example_id"]: e for e in examples}
     by_gap = sorted(rows, key=lambda r: (r["gap"], r["example_id"]))
-    if policy == FAILING_FEEDBACK:
+    if policy != LEGACY_FEEDBACK:
         by_gap = [r for r in by_gap if r["gap"] <= 0]
     selected = []
-    for row in by_gap[:failure_count]:
+    for rank, row in enumerate(by_gap[:failure_count]):
         example = lookup[row["example_id"]]
         failure = {
             "example_id": example["example_id"],
@@ -466,7 +472,7 @@ def build_feedback(examples, candidates, rows, current_prompt, failure_count, po
             "grades": {origin: read_json(path)["value"] for origin, path in row["grade_paths"].items()},
             "gap": row["gap"],
         }
-        if policy == FAILING_FEEDBACK:
+        if policy == FAILING_FEEDBACK or (policy == WORST_WITH_PAPER_FEEDBACK and rank >= PAPER_FAILURES):
             del failure["paper_id"], failure["visible_paper"]
         selected.append(failure)
     feedback = {
@@ -476,7 +482,7 @@ def build_feedback(examples, candidates, rows, current_prompt, failure_count, po
         "example_ids_used_for_aggregate": sorted(lookup),
         "selection": policy,
     }
-    if policy == FAILING_FEEDBACK:
+    if policy != LEGACY_FEEDBACK:
         feedback["all_training_gaps"] = [
             {"example_id": r["example_id"], "section_type": r["section_type"], "gap": r["gap"]}
             for r in by_gap

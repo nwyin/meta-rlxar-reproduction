@@ -629,3 +629,46 @@ Data note found by the judge: the reference abstract of 1605.05804 ends with "Su
 two authors contributed equally to this work Correspondence: dmt@ucsd.edu", an extraction
 artifact, and the judge docked its fit score for it. A scan of all 153 references for such
 metadata patterns found only this one.
+
+## 2026-10-02 — Prompt changes aimed at a reversal; the GT probe script moved to a branch
+
+Branch `gt-rubric-probe` holds `scripts/probe_gt_rubrics.py`, the post hoc probe above, with
+repo-relative paths. It stays off `main`.
+
+Decision, owner's: change the writer, rubric, judge and optimizer prompts along the lines of 4 of
+the 5 prompt proposals discussed with the owner, skipping the proposal to anchor rubrics on the paper's main
+result. These edit `prompts/`, `configs/experiments.yaml` and the feedback code, so the next
+run gets new prompt hashes and a new policy name in its manifest.
+
+- Writer: dropped "base every claim strictly on the paper" and "cite only sources present in
+  the supplied context". The writer now gets the task alone, as the blog describes it. Reason:
+  the instruction made the model a recall engine, so a rubric built from the paper had
+  nothing to catch, and factual consistency was satisfied by construction.
+- Rubric initial prompt (P0): dropped the 2 mandated criteria, factual consistency and fit.
+  Reason: factual consistency was the largest criterion class at P3, 204 of 725 criterion
+  scores, and ran 0.42 against the expert, because the expert quotes figures and tables the
+  context strips. The optimizer kept it through 4 rewrites because P0 required it.
+- Judge: replaced "start from the middle anchor and move only as far as the text gives you
+  reason to" with "a candidate that fails the purpose of a criterion scores 0 to 3 on it,
+  however fluent, accurate or complete it is otherwise", and added that claims about figures
+  and tables cannot be checked and do not count against a candidate. Reason: both candidates
+  sat at 6.4 at P3; the blog's model score fell to 2.7, which this judge was told not to give.
+- Optimizer: the objective now says the gap widens for the right reason when the expert's
+  score rises because a criterion names a quality it has, and that lowering the model's score
+  while the expert's stays flat is not the objective. New step 3 asks, for each failure, for
+  one quality the expert section has and the model section lacks, a criterion whose high
+  anchor is that quality, and where in a paper the generator can find it. Step 5 rejects a
+  revision whose main effect is to lower the model's scores. Reason: P1 to P3 closed the gap
+  by taking points off the model, 7.74 to 6.48, while the expert moved 5.81 to 6.32.
+- Feedback policy `failing_gap_paper_for_worst`, new in `xar/pipeline.py` and set in
+  `configs/experiments.yaml`: the same failing sections as before, with the visible paper kept
+  for the 4 worst (`PAPER_FAILURES`). Reason: without the paper the optimizer cannot tell
+  what the expert knew and chose to omit; its 4 rationales all diagnosed form. The earlier
+  policies stay in the code so old manifests still name a known policy. Test added.
+- Not done: the anchoring-on-the-main-result change, proposal 3 of the 5, at
+  the owner's choice, and the 1605.05804 extraction artifact in `data/`.
+
+Prompt word counts: writer 51, rubric initial 232, judge 253, optimizer 780. The hard
+constraints in the optimizer prompt and the proposal red flags are unchanged; nothing added
+hints at authorship or surface tells. Tests 63 pass, ruff clean. `run.py pilot --dry-run`
+estimates $0.50 with the retry reserve. No paid run was started.

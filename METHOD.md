@@ -133,7 +133,10 @@ in `prompts/`: `writer.md`, `rubric_initial.md` (the initial meta prompt), `rubr
 ## Procedure
 
 1. Write. For each section, the writer gets the context, the section type and the
-   target word count. It never sees the author's section. A draft that is cut off or outside
+   target word count, and is told only to write the section so that it fits the rest of the
+   paper. It never sees the author's section. The run `meta-blog-v2-seed0` also told it to
+   base every claim on the paper and cite only sources in it; that made the model a recall
+   engine with nothing for a rubric to catch, so the instruction was dropped on 2026-10-02. A draft that is cut off or outside
    ±15% of the target goes back with a note giving the allowed word range, at most twice; the
    last draft is kept either way. The sections are written once, before any rubric, and stay
    the same at every checkpoint. A draft that copies 30 or more consecutive words from the
@@ -147,7 +150,11 @@ in `prompts/`: `writer.md`, `rubric_initial.md` (the initial meta prompt), `rubr
 3. Judge. Muse grades the author's section and its own section in separate requests,
    against the same rubric, in a seeded random order. The request does not say which section
    is which. The judge returns a 0-10 score and a short justification for every criterion, and
-   any text it quotes must occur in the section or the paper. The section's score is the
+   any text it quotes must occur in the section or the paper. Since 2026-10-02 the judge
+   prompt says a section that fails a criterion's purpose scores 0 to 3 however fluent it is,
+   and that claims about the paper's figures and tables, which the context omits, do not count
+   against a section. The earlier prompt told the judge to start from the middle anchor,
+   which compressed both candidates toward 6. The section's score is the
    unweighted mean of its criterion scores, computed in code.
 
    A rubric or grade that is cut off, is not valid JSON or fails these checks is requested
@@ -158,11 +165,14 @@ in `prompts/`: `writer.md`, `rubric_initial.md` (the initial meta prompt), `rubr
    meta prompt, the training summary (author and model means, the gap, its interval and the
    gap per section type), the gap of every training section, and the failing sections: those
    with a gap of zero or less, lowest first, ties broken by example ID, up to 24. Each of
-   those comes with both sections, the rubric and both grades, but not the paper, so that
-   many failures fit in one request. The optimizer never sees validation sections or scores. The
-   completed run `meta-blog-seed0` used the earlier policy: the 4 lowest-gap sections, each
-   with the paper. `feedback_policy` in `configs/experiments.yaml` names the policy and the
-   run manifest records it.
+   those comes with both sections, the rubric and both grades. The 4 worst also come with
+   the paper, so the optimizer can see what the author knew and chose to leave out; the rest
+   leave it out so that many failures fit in one request. The optimizer never sees validation
+   sections or scores. The run `meta-blog-v2-seed0` left the paper out of every failure, and
+   its optimizer's 4 rationales all diagnosed form, not content. The completed run
+   `meta-blog-seed0` used the earliest policy: the 4 lowest-gap sections, each with the paper.
+   `feedback_policy` in `configs/experiments.yaml` names the policy and the run manifest
+   records it.
 
 5. Optimize. The optimizer returns a new meta prompt of at most 800 words and a rationale. A
    pattern check rejects a proposal that is too long; tells the rubric to prefer the author's
@@ -267,9 +277,9 @@ these choices:
   (see Roles).
 - Decoding: the temperatures and reasoning settings in the roles table.
 - Rubric and score: 4 to 8 criteria scored 0-10, combined as an unweighted mean.
-- Feedback: the failing training sections, up to 24, without the paper. The blog says the
-  optimizer saw "the specific examples where it fails", and does not say how many or what each
-  held.
+- Feedback: the failing training sections, up to 24, with the paper for the 4 worst. The blog
+  says the optimizer saw "the specific examples where it fails", and does not say how many or
+  what each held.
 - Selection: the best training gap, chosen before any validation request.
 - Length: ±15% of the author's word count, with up to two revisions.
 - Proposal check: the pattern check in step 5.

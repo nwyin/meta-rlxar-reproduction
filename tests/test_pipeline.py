@@ -7,6 +7,7 @@ import jsonschema
 import pytest
 from conftest import dummy_example, rubric
 
+from xar import pipeline
 from xar.openrouter import role_config
 from xar.pipeline import (
     audit_proposal,
@@ -16,7 +17,15 @@ from xar.pipeline import (
     validate_grade,
     writer_candidates,
 )
-from xar.util import FAILING_FEEDBACK, RunError, UncertainSend, canonical, read_json, write_json
+from xar.util import (
+    FAILING_FEEDBACK,
+    WORST_WITH_PAPER_FEEDBACK,
+    RunError,
+    UncertainSend,
+    canonical,
+    read_json,
+    write_json,
+)
 
 MAX_WORDS = 800  # the meta prompt word limit passed to audit_proposal and propose_prompt
 
@@ -52,7 +61,7 @@ def test_validate_grade_rejects_extra_fields():
         validate_grade({**grade(), "total": 10}, rubric(), "supported text")
 
 
-def test_build_feedback_picks_smallest_gaps_breaks_ties_by_id_and_rejects_validation(tmp_path):
+def test_build_feedback_picks_smallest_gaps_breaks_ties_by_id_and_rejects_validation(tmp_path, monkeypatch):
     examples = [dummy_example("paper" + str(i)) for i in range(5)]
     gaps = {"paper0": 2, "paper1": -1, "paper2": -1, "paper3": 0, "paper4": -2}
     candidates = {e["example_id"]: {"text": "Generated"} for e in examples}
@@ -92,6 +101,14 @@ def test_build_feedback_picks_smallest_gaps_breaks_ties_by_id_and_rejects_valida
         build_feedback(examples, candidates, rows, "initial", 10, FAILING_FEEDBACK)["failures"][-1]["gap"]
         == 0
     )
+    # The worst-with-paper policy selects the same sections and keeps the paper for the worst ones.
+    worst = build_feedback(examples, candidates, rows, "initial", 3, WORST_WITH_PAPER_FEEDBACK)
+    assert [f["example_id"] for f in worst["failures"]] == [f["example_id"] for f in failing["failures"]]
+    assert [g["gap"] for g in worst["all_training_gaps"]] == [-2, -1, -1, 0]
+    assert all({"visible_paper", "paper_id"} <= f.keys() for f in worst["failures"])
+    monkeypatch.setattr(pipeline, "PAPER_FAILURES", 2)
+    worst = build_feedback(examples, candidates, rows, "initial", 3, WORST_WITH_PAPER_FEEDBACK)
+    assert [("visible_paper" in f) for f in worst["failures"]] == [True, True, False]
     with pytest.raises(RunError, match="feedback_policy"):
         build_feedback(examples, candidates, rows, "initial", 4, "something_else")
 
