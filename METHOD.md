@@ -109,7 +109,7 @@ URLs and HTML hash, so anyone can pull the pages again and check them.
 | Rubric generator | Muse Spark 1.3, contributor tier | meta/muse-spark-1.3-contributor-20260902 | meta | 0.2 | effort medium | 16,384 |
 | Judge | Muse Spark 1.3, contributor tier | meta/muse-spark-1.3-contributor-20260902 | meta | 0 | effort medium | 16,384 |
 | Cross judge | MiMo-V2.6-Pro | xiaomi/mimo-v2.6-pro-20260921 | xiaomi/fp8 | 0 | enabled | 16,384 |
-| Optimizer | MiMo-V2.6-Flash | xiaomi/mimo-v2.6-flash-20260921 | xiaomi/fp8 | 0.7 | enabled | 16,384 |
+| Optimizer | Kimi K2.6 | moonshotai/kimi-k2.6-20260420 | siliconflow/fp8 | 0.7 | enabled | 16,384 |
 
 The blog used Muse Spark 1.1 as writer, rubric generator and judge, and Kimi K2.6 as optimizer,
 and the completed run `meta-blog-seed0` matched that. The next run uses Muse Spark 1.3 in those
@@ -117,13 +117,12 @@ and the completed run `meta-blog-seed0` matched that. The next run uses Muse Spa
 against $1.25 and $4.25 for the standard tier of the same model. The tier's name suggests Meta
 may keep the traffic; we accept that for a reproduction. Muse Spark 1.3 scores 48 at max effort
 on the Artificial Analysis Intelligence Index v4.3, the highest of any model this pipeline can
-run; we run it at medium effort, as the completed run ran 1.1. The optimizer is MiMo-V2.6-Flash
-(index 38), chosen for cost before the Muse tier was found, although the blog warns that "Kimi
-and Opus can find a positive gap, but Muse Spark 1.1 struggles. Likely, weaker models struggle
-even more." A flat curve here therefore cannot separate the method from the optimizer. The cross
-judge is MiMo-V2.6-Pro (index 46), the top open-weights model on the index and a different
-family from Muse, as the blog's cross-judge table set GPT-5.6 against Muse; it is the check on
-the judge (step 8).
+run; we run it at medium effort, as the completed run ran 1.1. The optimizer is Kimi K2.6, as
+in the blog. We tried MiMo-V2.6-Flash (index 38) there for cost; it corrupted 1 of its 2
+rewrites, and the blog warns that "Kimi and Opus can find a positive gap, but Muse Spark 1.1
+struggles. Likely, weaker models struggle even more." The cross judge is MiMo-V2.6-Pro (index
+46), the top open-weights model on the index and a different family from Muse, as the blog's
+cross-judge table set GPT-5.6 against Muse; it is the check on the judge (step 8).
 
 All requests go through OpenRouter. The models and their settings are in `configs/models.yaml`,
 the rest of the experiment (seed, number of updates, word limits, run names) in
@@ -264,9 +263,8 @@ these choices:
   methods, results and terms, and says nothing about human or AI writing. The completed run
   used an earlier hand-written initial prompt (`runs/meta-blog-seed0/prompts/iter_00.md`).
 - Models: Muse Spark 1.3 on the contributor tier instead of Muse Spark 1.1 as writer, rubric
-  generator and judge; MiMo-V2.6-Flash instead of Kimi K2.6 as optimizer, for cost, although
-  the blog reports that weaker optimizers fail at this task; MiMo-V2.6-Pro as cross judge (see
-  Roles).
+  generator and judge; Kimi K2.6 as optimizer, as in the blog; MiMo-V2.6-Pro as cross judge
+  (see Roles).
 - Decoding: the temperatures and reasoning settings in the roles table.
 - Rubric and score: 4 to 8 criteria scored 0-10, combined as an unweighted mean.
 - Feedback: the failing training sections, up to 24, without the paper. The blog says the
@@ -275,7 +273,7 @@ these choices:
 - Selection: the best training gap, chosen before any validation request.
 - Length: ±15% of the author's word count, with up to two revisions.
 - Proposal check: the pattern check in step 5.
-- Serving: both MiMo models run on Xiaomi's own endpoint in FP8. The
+- Serving: Kimi runs on SiliconFlow in FP8 and MiMo-V2.6-Pro on Xiaomi's own endpoint in FP8. The
   blog does not say what precision or weights it used, and Meta does not publish the precision
   of its Muse endpoint.
 

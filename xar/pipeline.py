@@ -320,6 +320,9 @@ PROPOSAL_RED_FLAGS = {
     # Overrides the wrapper, or weights or rescales the 0-10 criterion scores.
     "wrapper_override": r"(?:ignore|override|replace)\s+(?:the\s+)?(?:wrapper|system|grading|schema)|"
     r"(?:weighted\s+(?:mean|average)|unequal\s+weight|score\s+(?:from\s+)?0\s*(?:to|[-–])\s*100)",
+    # Model-side markup leaked into the prompt text, or a prompt cut off inside it. Seen from
+    # MiMo-V2.6-Flash: a prompt ending "...<tool_call><function=json>{" inside valid JSON.
+    "leaked_markup": r"<tool_call|<function=|</function|<\|im_|\{\s*$",
 }
 SPAN = 12  # a run of this many words copied from a training paper counts as leakage
 MIN_IDENTIFIER_LENGTH = 5  # shorter paper IDs, titles or author names match by chance
@@ -328,9 +331,9 @@ MIN_IDENTIFIER_LENGTH = 5  # shorter paper IDs, titles or author names match by 
 def audit_proposal(text, examples, initial_prompt, max_words):
     """Statically check an optimizer proposal before it can become the next meta prompt.
 
-    Rejects a prompt that is longer than max_words, matches PROPOSAL_RED_FLAGS, names a training
-    paper or its authors, or copies SPAN consecutive words from a training paper (unless the
-    initial prompt already contains them)."""
+    Rejects a prompt that is longer than max_words, matches PROPOSAL_RED_FLAGS (including leaked
+    tool-call markup), names a training paper or its authors, or copies SPAN consecutive words
+    from a training paper (unless the initial prompt already contains them)."""
     word_count = words(text)
     reasons, flags = [], []
     if word_count > max_words:

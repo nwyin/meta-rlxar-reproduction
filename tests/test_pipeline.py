@@ -108,8 +108,18 @@ def test_build_feedback_picks_smallest_gaps_breaks_ties_by_id_and_rejects_valida
         "Unique Author prefers clear writing",
         " ".join("excess" for _ in range(MAX_WORDS + 1)),
         dummy_example()["reference"],
+        "Read the paper first (use the key `meta_prompt`).<tool_call><function=json>{",
+        "Read the paper first, then {",
     ],
-    ids=["prefers-human", "weighted-average", "names-author", "too-long", "copies-reference"],
+    ids=[
+        "prefers-human",
+        "weighted-average",
+        "names-author",
+        "too-long",
+        "copies-reference",
+        "leaked-tool-call",
+        "cut-off-brace",
+    ],
 )
 def test_audit_proposal_rejects(text):
     assert not audit_proposal(text, [dummy_example()], "initial", MAX_WORDS)["accepted"]

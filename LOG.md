@@ -515,3 +515,40 @@ response and were sent again, every one a TLS `bad record mac` read error, on Me
 the 2nd pilot and Xiaomi's here, so the fault is on this machine's side or the network, not a
 provider; the resends may have been billed, at most $0.30 in all. The resend policy is what
 let this run finish.
+
+## 2026-10-02 — The contributor tier is a training-data endpoint; the sweep stopped at once
+
+`run.py all` with Muse Spark 1.3 contributor stopped on the first writer sends with HTTP 404
+from OpenRouter: "0 endpoints out of 1 requested are available matching your guardrail
+restrictions and data policy ... Paid model training violation (account settings): 1 endpoint
+excluded; configurable at https://openrouter.ai/settings/privacy". That settles what the tier
+is: an endpoint on which the provider may train on the traffic, and the owner's OpenRouter
+account excludes such endpoints. Nothing was billed. The stopped run is kept as
+`runs/pilot-meta-blog-v2-contributor-404`. The choice is the owner's: allow training-data
+endpoints in the account's privacy settings, or use the standard `meta/muse-spark-1.3` tier at
+$1.25/M in and $4.25/M out, or return to the MiMo configuration.
+The owner allowed training-data endpoints in the account's privacy settings and asked to go
+on with the contributor tier.
+
+## 2026-10-02 — MiMo-V2.6-Flash returned a corrupted meta prompt; the sweep was stopped
+
+The sweep's pilot, with Muse Spark 1.3 contributor as writer, rubric generator and judge, scored
+P0 at −2.17 on training in under 3 minutes, then P1 at −2.82, worse. The optimizer's reply was
+valid JSON, but its `prompt` field was an 88-word fragment that stopped mid-sentence with
+"(a different note: use the key `meta_prompt` when returning the JSON).<tool_call><function=json>{",
+while its `rationale` was intact and its reasoning said it had written about 490 words. The
+model emitted tool-call markup inside the structured output and the endpoint stitched the
+remainder into valid JSON. The static proposal check accepted it, because it only checked the
+word bound, the red-flag patterns and training leakage. In the MiMo pilot the same model had
+returned a sound 568-word prompt, so the fault is intermittent: 1 of 2 samples. We stopped
+`run.py all` during the pilot's validation scoring, before the research phase, because each
+rewrite builds on the previous proposal, so one corrupted prompt would have carried into every
+later checkpoint. The stopped run is kept as `runs/pilot-meta-blog-v2-corrupt-proposal`.
+
+Fix: `PROPOSAL_RED_FLAGS` gains `leaked_markup`, which rejects a proposal containing
+`<tool_call`, `<function=`, `</function`, `<|im_` or ending in an open brace. A rejected
+proposal is sent back once with the reason, and if rejected again the current prompt stays, as
+before. The corrupted proposal now fails the check. 2 tests added.
+
+The owner then chose Kimi K2.6 as optimizer again, the blog's choice, over keeping
+MiMo-V2.6-Flash behind the new check. It adds about $0.80 and about 10 minutes over 4 rewrites.
