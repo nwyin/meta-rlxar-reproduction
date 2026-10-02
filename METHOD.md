@@ -105,17 +105,25 @@ URLs and HTML hash, so anyone can pull the pages again and check them.
 
 | Role | Model | Release | Provider | Temperature | Reasoning | Max output tokens |
 | --- | --- | --- | --- | --- | --- | --- |
-| Writer | Muse Spark 1.1 | meta/muse-spark-1.1-20260709 | meta | 0.7 | effort medium | 16,384 |
-| Rubric generator | Muse Spark 1.1 | meta/muse-spark-1.1-20260709 | meta | 0.2 | effort medium | 16,384 |
-| Judge | Qwen3.8 Flash | qwen/qwen3.8-flash-20260826 | alibaba | 0 | budget 4,096 tokens | 16,384 |
-| Cross judge | Muse Spark 1.1 | meta/muse-spark-1.1-20260709 | meta | 0 | effort medium | 16,384 |
+| Writer | Muse Spark 1.3, contributor tier | meta/muse-spark-1.3-contributor-20260902 | meta | 0.7 | effort medium | 16,384 |
+| Rubric generator | Muse Spark 1.3, contributor tier | meta/muse-spark-1.3-contributor-20260902 | meta | 0.2 | effort medium | 16,384 |
+| Judge | Muse Spark 1.3, contributor tier | meta/muse-spark-1.3-contributor-20260902 | meta | 0 | effort medium | 16,384 |
+| Cross judge | MiMo-V2.6-Pro | xiaomi/mimo-v2.6-pro-20260921 | xiaomi/fp8 | 0 | enabled | 16,384 |
 | Optimizer | MiMo-V2.6-Flash | xiaomi/mimo-v2.6-flash-20260921 | xiaomi/fp8 | 0.7 | enabled | 16,384 |
 
-The completed run `meta-blog-seed0` judged with Muse Spark 1.1, as the blog did. The judge is now
-Qwen3.8 Flash, at about an 8th of Muse's price per token, and the judge is the largest cost: 2
-grades per section per checkpoint, each with the whole paper attached. The blog measured
-Qwen3.5-27B as a paper judge and found it close to Muse and GPT-5.6; it did not measure Qwen3.8
-Flash. The cross judge is the check on that choice (step 8).
+The blog used Muse Spark 1.1 as writer, rubric generator and judge, and Kimi K2.6 as optimizer,
+and the completed run `meta-blog-seed0` matched that. The next run uses Muse Spark 1.3 in those
+3 roles, on OpenRouter's `contributor` tier, which Meta prices at $0.10/M in and $0.20/M out
+against $1.25 and $4.25 for the standard tier of the same model. The tier's name suggests Meta
+may keep the traffic; we accept that for a reproduction. Muse Spark 1.3 scores 48 at max effort
+on the Artificial Analysis Intelligence Index v4.3, the highest of any model this pipeline can
+run; we run it at medium effort, as the completed run ran 1.1. The optimizer is MiMo-V2.6-Flash
+(index 38), chosen for cost before the Muse tier was found, although the blog warns that "Kimi
+and Opus can find a positive gap, but Muse Spark 1.1 struggles. Likely, weaker models struggle
+even more." A flat curve here therefore cannot separate the method from the optimizer. The cross
+judge is MiMo-V2.6-Pro (index 46), the top open-weights model on the index and a different
+family from Muse, as the blog's cross-judge table set GPT-5.6 against Muse; it is the check on
+the judge (step 8).
 
 All requests go through OpenRouter. The models and their settings are in `configs/models.yaml`,
 the rest of the experiment (seed, number of updates, word limits, run names) in
@@ -125,14 +133,14 @@ in `prompts/`: `writer.md`, `rubric_initial.md` (the initial meta prompt), `rubr
 
 ## Procedure
 
-1. Write. For each section, Muse gets the context, the section type and the
+1. Write. For each section, the writer gets the context, the section type and the
    target word count. It never sees the author's section. A draft that is cut off or outside
    ±15% of the target goes back with a note giving the allowed word range, at most twice; the
    last draft is kept either way. The sections are written once, before any rubric, and stay
    the same at every checkpoint. A draft that copies 30 or more consecutive words from the
    author's section is flagged, and kept.
 
-2. Generate a rubric. At each checkpoint, Muse gets the wrapper, the current meta prompt,
+2. Generate a rubric. At each checkpoint, the rubric generator gets the wrapper, the current meta prompt,
    and the same context, section type and word count. It sees neither candidate section. A
    rubric has 4 to 8 criteria with unique IDs, each with a description and low, middle and high
    anchors, and at most 1,000 words in total.
@@ -176,7 +184,7 @@ in `prompts/`: `writer.md`, `rubric_initial.md` (the initial meta prompt), `rubr
    checkpoint's prompt are written to `freeze.json`. Only then does the run generate rubrics
    and grades for the validation sections, at every checkpoint.
 
-8. Cross-judge. Muse Spark 1.1 grades the validation sections again at P0 and the selected
+8. Cross-judge. MiMo-V2.6-Pro grades the validation sections again at P0 and the selected
    checkpoint, against the same rubrics the judge used, blind and in a seeded random order as in
    step 3. Only the judge differs. `cross_check.json` holds both judges' author and model means
    and gaps at those checkpoints. If the two judges agree on the sign and roughly the size of the
@@ -215,9 +223,9 @@ file stays as the record of the earlier runs.
 
 Every request has a worst-case cost: its counted input tokens times 1.25, plus 1,024 tokens
 for the chat template, plus the maximum output, at the endpoint's highest listed price plus
-25%. Kimi's tokens are counted with its official tokenizer. Muse's, Qwen3.8 Flash's and
-MiMo's tokenizers are not pinned locally, so their input is counted as UTF-8 bytes, which is
-more than the token count. A request that might not fit the endpoint's context stops the run;
+25%. Kimi's tokens are counted with its official tokenizer. Muse's and MiMo's tokenizers are
+not pinned locally, so their input is counted as UTF-8 bytes, which is more than the token
+count. A request that might not fit the endpoint's context stops the run;
 papers are never truncated.
 
 If a request was sent but no response came back, or the response has no cost, the run stops,
@@ -255,8 +263,10 @@ these choices:
   task and the rubric format. It asks for criteria that name the paper's own contributions,
   methods, results and terms, and says nothing about human or AI writing. The completed run
   used an earlier hand-written initial prompt (`runs/meta-blog-seed0/prompts/iter_00.md`).
-- Judge: Qwen3.8 Flash instead of Muse Spark 1.1, for cost, with Muse as a cross judge on
-  validation at 2 checkpoints. The blog has no measurement of Qwen3.8 Flash as a judge.
+- Models: Muse Spark 1.3 on the contributor tier instead of Muse Spark 1.1 as writer, rubric
+  generator and judge; MiMo-V2.6-Flash instead of Kimi K2.6 as optimizer, for cost, although
+  the blog reports that weaker optimizers fail at this task; MiMo-V2.6-Pro as cross judge (see
+  Roles).
 - Decoding: the temperatures and reasoning settings in the roles table.
 - Rubric and score: 4 to 8 criteria scored 0-10, combined as an unweighted mean.
 - Feedback: the failing training sections, up to 24, without the paper. The blog says the
@@ -265,7 +275,7 @@ these choices:
 - Selection: the best training gap, chosen before any validation request.
 - Length: ±15% of the author's word count, with up to two revisions.
 - Proposal check: the pattern check in step 5.
-- Serving: MiMo runs on Xiaomi's own endpoint in FP8, and Qwen3.8 Flash on Alibaba's. The
+- Serving: both MiMo models run on Xiaomi's own endpoint in FP8. The
   blog does not say what precision or weights it used, and Meta does not publish the precision
   of its Muse endpoint.
 

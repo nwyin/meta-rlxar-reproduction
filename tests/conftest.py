@@ -88,6 +88,7 @@ PROVIDER_NAMES = {
     "meta": "Meta",
     "alibaba": "Alibaba",
     "xiaomi/fp8": "Xiaomi",
+    "fireworks": "Fireworks",
 }
 
 

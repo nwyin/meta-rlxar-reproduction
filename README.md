@@ -2,10 +2,11 @@
 
 This repository reproduces the Initial Empirical Investigation in
 [Meta's Unslopping AI blog](https://facebookresearch.github.io/RAM/blogs/unslop/).
-Muse Spark 1.1 writes the missing paper sections and generates the rubrics; Qwen3.8 Flash grades
-the sections, and Muse grades the validation sections again at 2 checkpoints as a cross-check;
-MiMo-V2.6-Flash rewrites the rubric meta prompt. The completed run used Muse for all 3 Muse roles,
-as the blog did. The completed run covers 52 sections from 8 training
+Muse Spark 1.3, on OpenRouter's contributor tier, writes the missing paper sections, generates
+the rubrics and grades the sections; MiMo-V2.6-Pro grades the validation sections again at 2
+checkpoints as a cross-check; MiMo-V2.6-Flash rewrites the rubric meta prompt. The completed run
+used Muse Spark 1.1 in the same 3 roles and Kimi K2.6 as optimizer, as the blog did; the changes
+are a cost decision, recorded in `METHOD.md`. The completed run covers 52 sections from 8 training
 and 5 validation recent arXiv cs.CL papers, with 7 prompt updates. `data/` now holds a new
 corpus of 56 peer-reviewed papers from 2016 to 2021 across 9 fields (153 sections), built to
 give human references of known quality. No run has used it yet. The owner reviewed all 56 papers together and approved them (see `LOG.md`). [METHOD.md](METHOD.md) describes the data, the procedure, how
@@ -116,10 +117,10 @@ prompt history and criteria; see [tools/data-viewer](tools/data-viewer/README.md
 ├── tests/                        pytest suite; one file per module, fakes in conftest.py,
 │                                 full pilot and research runs in test_end_to_end.py
 ├── prompts/                      model prompts (hashed into each run's manifest)
-│   ├── writer.md                 Muse writes the missing section
+│   ├── writer.md                 the writer drafts the missing section
 │   ├── rubric_initial.md         P0, the starting rubric meta prompt
-│   ├── rubric_wrapper.md         wraps the meta prompt when Muse generates a rubric
-│   ├── judge.md                  Muse grades one anonymous section against a rubric
+│   ├── rubric_wrapper.md         wraps the meta prompt when a rubric is generated
+│   ├── judge.md                  the judge grades one anonymous section against a rubric
 │   └── optimizer.md              MiMo rewrites the meta prompt from training feedback
 ├── configs/
 │   ├── experiments.yaml          run names, iterations, seed, concurrency, blog numbers

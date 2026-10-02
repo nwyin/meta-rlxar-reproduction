@@ -4,6 +4,7 @@ import json
 
 import httpx
 import pytest
+from conftest import PROVIDER_NAMES
 
 from xar import openrouter
 from xar.openrouter import (
@@ -20,6 +21,8 @@ from xar.openrouter import (
     role_config,
 )
 from xar.util import RunError, UncertainSend, read_json
+
+WRITER_PROVIDER = PROVIDER_NAMES[role_config("writer")["provider"]]  # the name OpenRouter reports
 
 
 def mock_api(tmp_path, role, handler):
@@ -54,7 +57,7 @@ def test_a_send_with_no_response_is_recorded_and_sent_again(tmp_path, monkeypatc
             200,
             json={
                 "model": payload["model"],
-                "provider": "Meta",
+                "provider": WRITER_PROVIDER,
                 "usage": {"cost": 0.25},
                 "choices": [{"finish_reason": "stop", "message": {"content": "ok"}}],
             },
@@ -92,7 +95,7 @@ def test_resume_sends_again_after_a_send_that_was_in_flight(tmp_path, monkeypatc
             200,
             json={
                 "model": payload["model"],
-                "provider": "Meta",
+                "provider": WRITER_PROVIDER,
                 "usage": {"cost": 0.05},
                 "choices": [{"finish_reason": "stop", "message": {"content": "ok"}}],
             },
@@ -118,7 +121,7 @@ def test_costs_sum_the_billed_sends_and_reject_a_missing_cost(tmp_path):
             200,
             json={
                 "model": payload["model"],
-                "provider": "Meta",
+                "provider": WRITER_PROVIDER,
                 "usage": next(replies),
                 "choices": [{"finish_reason": "stop", "message": {"content": "ok"}}],
             },
@@ -148,7 +151,7 @@ def test_invalid_reply_is_repaired_once_with_the_error(tmp_path):
             200,
             json={
                 "model": payload["model"],
-                "provider": "Alibaba",  # the judge's endpoint
+                "provider": PROVIDER_NAMES[role_config("judge")["provider"]],
                 "usage": {"cost": 0.0001},
                 "choices": [{"finish_reason": "stop", "message": {"content": content}}],
             },
@@ -210,7 +213,7 @@ def test_rate_limits_wait_out_the_backoff_or_a_longer_retry_after(tmp_path, monk
             200,
             json={
                 "model": payload["model"],
-                "provider": "Meta",
+                "provider": WRITER_PROVIDER,
                 "usage": {"cost": 0.01},
                 "choices": [{"finish_reason": "stop", "message": {"content": "ok"}}],
             },

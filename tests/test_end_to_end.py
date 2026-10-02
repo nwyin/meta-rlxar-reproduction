@@ -111,9 +111,7 @@ def test_report_from_saved_research_run(tmp_path, monkeypatch, design):
         "grade": 2 * sections * checkpoints + 2 * validation_sections,
         "optimizer": design["iterations"],
     }
-    assert {p["model"] for p in fake.payloads} == {
-        design[role] for role in ("writer", "optimizer", "judge", "cross_judge")
-    }
+    assert {p["model"] for p in fake.payloads} == {design[role] for role in ROLES}
     cross = read_json(source / "cross_check.json")["checkpoints"]
     assert [entry["iteration"] for entry in cross] == [0]
     assert cross[0]["judge"]["gap"] == cross[0]["cross_judge"]["gap"] == 1

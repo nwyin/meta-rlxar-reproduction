@@ -435,3 +435,83 @@ P1 selected; validation gap −0.83 at both checkpoints under Qwen3.8 Flash, and
 −0.58 under the Muse cross judge. Judge grades took 41 seconds each with the 4,096-token
 thinking budget, using about 2,100 reasoning tokens. 1 of 49 judge replies needed a format
 repair.
+
+## 2026-10-02 — Cheaper rubric generator and cross judge; the optimizer stays weak by choice
+
+The owner is cost constrained. After the optimizer switch, rubric generation with Muse was the
+largest line, $32.89 of the $55.36 typical estimate, because every rubric carries the whole
+paper at Muse's $1.25/M input, 700 times. We crossed the Artificial Analysis Intelligence Index
+(v4.3.2, read 2026-10-02) with the pinned OpenRouter catalog and the live endpoint listings,
+keeping only models whose endpoint supports temperature, reasoning, max_tokens, response_format
+and structured_outputs:
+
+- Rubric generator: `z-ai/glm-5.3-flash`, index 42, the highest-ranked flash-class model on
+  OpenRouter at $0.15/M in and $0.50/M out. Z.AI's own endpoint lacks `structured_outputs`
+  and BaseTen's tag appears twice in the listing, which `find_endpoint` rejects, so it runs
+  on `fireworks` (precision not stated, 99.9% uptime). Reasoning effort `high`; the model
+  offers only `max`, `high` and `low`.
+- Cross judge: `xiaomi/mimo-v2.6-pro`, index 46, the top open-weights model on the index, on
+  `xiaomi/fp8` at $0.435/M in and $0.87/M out. It is from a different family than the judge.
+- Rejected: `openai/gpt-6-luna` (index 38, $0.10/M) because no OpenAI endpoint accepts
+  `temperature`; `qwen/qwen3.8-flash-next` (index 40) is not on OpenRouter.
+- Not changed: the writer stays Muse Spark 1.1. Its writing is what the rubrics judge, and it
+  is about $3 of the run.
+
+Snapshots saved: `configs/snapshots/z-ai_glm-5.3-flash-endpoints.json` and
+`xiaomi_mimo-v2.6-pro-endpoints.json`. The research estimate is now $25.58 with the retry
+reserve ($20.46 typical: writer $6.58, rubric $3.91, judge $7.61, cross judge $2.34,
+optimizer $0.02), and the pilot $1.03.
+
+On the optimizer: a re-read of the blog found its meta-optimizer ablation, "Kimi and Opus can
+find a positive gap, but Muse Spark 1.1 struggles. Likely, weaker models struggle even more."
+MiMo-V2.6-Flash (index 38) is weaker than Kimi K2.6. The owner chose to keep it for cost and
+to state this in the write-up. METHOD.md now says that a flat curve under these models cannot
+separate the method from the models.
+
+Untested, all of it: none of GLM-5.3-Flash, MiMo-V2.6-Pro, MiMo-V2.6-Flash or Qwen3.8 Flash has
+been run in any role here. The next pilot is the first evidence.
+
+## 2026-10-02 — MiMo-V2.6-Pro as writer and rubric generator
+
+The owner then asked for a stronger stand-in than GLM-5.3-Flash and for a cheaper writer than
+Muse. MiMo-V2.6-Pro (index 46, next to Muse Spark 1.3's 48) now fills all 3 of the blog's Muse
+roles: writer, rubric generator and cross judge. That keeps the blog's premise that the writing
+being judged is near-frontier, and keeps the writer and the cross judge the same model, as the
+blog's writer and judge were. GLM-5.3-Flash is no longer used; its snapshot stays. The research
+estimate is $26.43 with the retry reserve (writer $1.86, rubric $9.31, judge $7.61, cross judge
+$2.34, optimizer $0.02) and the pilot $0.85.
+
+Observation on speed: Muse was the fastest model in the pilot, about 290 output tokens a second
+(2,300 tokens in 8 seconds a section). Artificial Analysis lists MiMo-V2.6-Pro at 42 tokens a
+second, so the writer and rubric stages will be slower, not faster; with 16 requests in parallel
+the rubric stage is the one that matters, about 6 waves per training checkpoint. The next pilot
+measures it.
+
+## 2026-10-02 — Muse Spark 1.3 contributor tier as writer, rubric generator and judge
+
+While the MiMo pilot ran, a catalog check found `meta/muse-spark-1.3-contributor`: the same
+Muse Spark 1.3 release as `meta/muse-spark-1.3`, on Meta's own endpoint with every parameter
+the pipeline needs, at $0.10/M in and $0.20/M out instead of $1.25 and $4.25. That is cheaper
+than every stand-in we had chosen, and Muse Spark 1.3 scores 48 at max effort on the Artificial
+Analysis index, above MiMo-V2.6-Pro's 46. The owner chose it for the 3 roles the blog gave
+Muse: writer, rubric generator and judge, at medium effort as before. Qwen3.8 Flash is no
+longer used; its snapshot stays. MiMo-V2.6-Pro stays as cross judge, a different family, and
+MiMo-V2.6-Flash as optimizer, by the owner's earlier decision. Snapshot saved:
+`configs/snapshots/meta_muse-spark-1.3-contributor-endpoints.json`.
+
+What "contributor" means is not stated in OpenRouter's listing beyond "cost-efficient
+contributor tier ... for experimentation"; we read it as Meta keeping the traffic, and accept
+that. Observation from the earlier pilots: Muse 1.1 produced about 290 output tokens a second,
+far above MiMo-V2.6-Pro's 42, so this should also be the fastest configuration so far.
+
+The MiMo pilot (MiMo-V2.6-Pro writing, generating rubrics and cross-judging, Qwen3.8 Flash
+judging, MiMo-V2.6-Flash optimizing) finished in 31 minutes, 02:47 to 03:19 UTC, against 14
+for the Muse/Kimi pilot, for $0.72 over 79 billed requests. It is kept as
+`runs/pilot-meta-blog-v2-mimo`. Request times: writer 41 s, rubric 86 s (maximum 322), judge
+46 s, cross judge 83 s, optimizer 137 s against Kimi's 322. Training gap −3.23 at P0 and −1.71
+at P1, P1 selected; validation gap −2.63 then −1.08 under Qwen, −1.67 then −0.92 under
+MiMo-V2.6-Pro, so both judges moved the same way on these 4 sections. 5 sends lost their
+response and were sent again, every one a TLS `bad record mac` read error, on Meta's endpoint in
+the 2nd pilot and Xiaomi's here, so the fault is on this machine's side or the network, not a
+provider; the resends may have been billed, at most $0.30 in all. The resend policy is what
+let this run finish.
