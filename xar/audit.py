@@ -12,7 +12,6 @@ from xar.data import contamination, load_examples, run_examples, task_data
 from xar.openrouter import (
     FORMAT_REPAIR,
     json_schema_format,
-    ledger_key,
     max_request_cost,
     role_config,
     routing_fields,
@@ -324,12 +323,11 @@ def _check_proposals(run, manifest, freeze, train, candidates):
 
 
 def _check_costs(run, manifest):
-    """Check every saved request against the budget ledger, and the run's cost file against both.
+    """Check every saved request's key and billed cost, and the run's cost file against them.
 
-    A request's key is the hash of what was sent. Each send must have succeeded and been reserved
-    and settled in order, at a cost within its reservation, and costs.json must equal the sum.
+    A request's key is the hash of what was sent. Each send must have succeeded at a cost within
+    the pinned pricing's maximum for that request, and costs.json must equal the sum.
     """
-    ledger = read_json(manifest["arguments"]["budget_ledger"])["entries"]
     total, requests = 0, 0
     for path in run.glob("requests/*/request.json"):
         request = read_json(path)
@@ -346,19 +344,13 @@ def _check_costs(run, manifest):
         for attempt_path in path.parent.glob("attempt_*.json"):
             sent = read_json(attempt_path)
             _check(sent["status"] == "success", f"{attempt_path}: status is {sent['status']}")
-            key = ledger_key(run, request["key"], attempt_path.stem.removeprefix("attempt_"))
-            entry, cost = ledger[key], sent["response"]["usage"]["cost"]
-            _check(entry["state"] == "complete", f"{key}: ledger entry is {entry['state']}")
+            cost = sent["response"]["usage"]["cost"]
             _check(
-                math.isclose(entry["charge"], cost), f"{key}: ledger charge {entry['charge']} != cost {cost}"
+                cost <= max_cost, f"{attempt_path}: cost {cost} exceeds the maximum request cost {max_cost}"
             )
             _check(
-                math.isclose(entry["upper"], max_cost), f"{key}: ledger reservation is not the maximum cost"
-            )
-            _check(cost <= max_cost, f"{key}: cost {cost} exceeds the maximum request cost {max_cost}")
-            _check(
-                entry["created_at"] <= sent["sent_at"] <= sent["timestamp"] <= entry["settled_at"],
-                f"{key}: reserve, send, receive and settle times are out of order",
+                sent["sent_at"] <= sent["timestamp"],
+                f"{attempt_path}: send and receive times are out of order",
             )
             total += cost
             requests += 1
@@ -374,8 +366,8 @@ def audit_xar_run(path):
     Every rubric and grade must match its raw response, its request must use the manifest's role
     settings and prompts, validation requests must postdate freeze.json, and the recomputed grade
     totals, training gaps and selected checkpoint must equal the saved ones. The writer candidates,
-    optimizer feedback and proposals are re-derived, and request keys, costs and the budget ledger
-    must agree. Raises RunError if not.
+    optimizer feedback and proposals are re-derived, and request keys and costs must agree. Raises
+    RunError if not.
     """
     run = Path(path)
     manifest = read_json(run / "manifest.json")

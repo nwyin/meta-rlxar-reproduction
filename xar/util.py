@@ -30,8 +30,8 @@ class RunError(RuntimeError):
     """The run cannot continue: bad settings, bad saved data, or an unexpected API result."""
 
 
-class BudgetStop(RunError):
-    """Continuing could exceed a budget or pay twice for the same request."""
+class UncertainSend(RunError):
+    """A request was sent but its outcome or cost is unknown; sending again could pay twice."""
 
 
 class InvalidOutput(RunError):

@@ -193,19 +193,23 @@ resamples whole papers (2,000 replicates, seed 0), so on validation it rests on 
 without the sections flagged for copying was computed once, by a script since removed
 (`scripts/audit_completed_run.py` at commit `9aef12b`).
 
-## Budget and request handling
+## Cost and request handling
+
+Spending is capped by the OpenRouter key's limit, set on openrouter.ai. The code enforces no
+budget of its own; it records the cost OpenRouter reports for every response and writes the
+run's total to `costs.json`. Until 2026-10-01 it also reserved each request's worst-case cost in
+`runs/budget_ledger.json` and refused sends past `--budget-usd` and `--total-budget-usd`. That
+file stays as the record of the earlier runs.
 
 Every request has a worst-case cost: its counted input tokens times 1.25, plus 1,024 tokens
 for the chat template, plus the maximum output, at the endpoint's highest listed price plus
 25%. Kimi's tokens are counted with its official tokenizer. Muse's tokenizer is not public,
-so its input is counted as UTF-8 bytes, which is more than the token count. A request that
-might not fit the endpoint's context stops the run; papers are never truncated.
+so its input is counted as UTF-8 bytes, which is more than the token count. The audit checks
+that no billed cost exceeded it. A request that might not fit the endpoint's context stops the
+run; papers are never truncated.
 
-Before each send, the worst-case cost is reserved in `runs/budget_ledger.json`, which all runs
-share. The send is refused if it would take this run past `--budget-usd` or all runs past
-`--total-budget-usd`. When the response arrives, the reservation is replaced by the cost
-OpenRouter reports. If a request was sent but no response came back, or the response has no
-cost, the reservation stays and the run stops. Such a request is never resent automatically.
+If a request was sent but no response came back, or the response has no cost, the run stops,
+because whether it was billed is unknown. Such a request is never resent automatically.
 
 Before a run's first request, a preflight fetches OpenRouter's live model catalog and endpoint
 listings and compares them with the snapshots in `configs/snapshots/`. It stops the run if a
@@ -215,7 +219,7 @@ sends, the context shrank, the quantization changed or a price rose by more than
 Each request names a single provider with fallbacks turned off, and a response from any other
 model or provider stops the run. Every request, response and cost is saved in the run
 directory. `--resume` reuses saved responses, and refuses to continue if the code, prompts,
-data or any setting other than the budgets and concurrency has changed.
+data or any setting other than the concurrency has changed.
 
 ## Differences from the blog
 

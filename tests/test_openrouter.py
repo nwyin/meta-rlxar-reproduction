@@ -1,6 +1,5 @@
-"""Budget ledger, transport recovery, format repair and preflight checks; no external model calls."""
+"""Transport recovery, cost recording, format repair and preflight checks; no external model calls."""
 
-import concurrent.futures
 import json
 
 import httpx
@@ -10,7 +9,6 @@ from xar.openrouter import (
     MODEL_CATALOG,
     PRICING_HEADROOM,
     SNAPSHOTS,
-    Ledger,
     OpenRouter,
     check_model_allowed,
     endpoint_for,
@@ -18,7 +16,7 @@ from xar.openrouter import (
     highest_prices,
     role_config,
 )
-from xar.util import BudgetStop, RunError, read_json
+from xar.util import RunError, UncertainSend, read_json
 
 
 def mock_api(tmp_path, role, handler):
@@ -27,9 +25,6 @@ def mock_api(tmp_path, role, handler):
         tmp_path / "run",
         {role: role_config(role)},
         seed=0,
-        budget=10,
-        total_budget=10,
-        ledger_path=tmp_path / "ledger.json",
         client=httpx.Client(transport=httpx.MockTransport(handler)),
     )
 
@@ -40,52 +35,6 @@ def test_check_model_allowed_rejects_excluded_families_and_routers():
             check_model_allowed(model)
 
 
-def test_reservations_stop_at_run_and_total_budgets(tmp_path):
-    ledger = Ledger(tmp_path / "ledger.json", "run", run_limit=1, total_limit=1.5)
-    ledger.reserve("request1", 0.75)
-    with pytest.raises(BudgetStop):
-        ledger.reserve("request2", 0.3)
-    ledger.settle("request1", 0.2)
-    ledger.reserve("request2", 0.6)
-    with pytest.raises(BudgetStop, match="unsettled"):
-        ledger.reserve("request2", 0.6)
-    second = Ledger(tmp_path / "ledger.json", "run2", run_limit=2, total_limit=1.5)
-    with pytest.raises(BudgetStop):
-        second.reserve("request3", 0.8)
-
-
-def test_overspend_is_saved_before_budget_stop(tmp_path):
-    path = tmp_path / "ledger.json"
-    ledger = Ledger(path, "run", run_limit=10, total_limit=10)
-    ledger.reserve("request", 1.0)
-    with pytest.raises(BudgetStop, match="reservation"):
-        ledger.settle("request", 2.0)
-    entry = read_json(path)["entries"]["request"]
-    assert entry["state"] == "pricing_bound_violation"
-    assert entry["charge"] == 2.0
-    # Reading the summary does not rewrite the ledger.
-    before = path.stat().st_ino  # a save replaces the file with a new one
-    assert ledger.summary()["charged_or_reserved_usd"] == 2.0
-    assert path.stat().st_ino == before
-
-
-def test_parallel_reservations_share_one_budget(tmp_path):
-    path = tmp_path / "global_ledger.json"
-
-    def reserve(i):
-        ledger = Ledger(path, str(i), run_limit=1, total_limit=1)
-        try:
-            ledger.reserve(str(i), 0.4)
-            return True
-        except BudgetStop:
-            return False
-
-    with concurrent.futures.ThreadPoolExecutor(max_workers=8) as pool:
-        assert sum(pool.map(reserve, range(8))) == 2
-    entries = read_json(path)["entries"]
-    assert sum(e["charge"] for e in entries.values()) == 0.8
-
-
 def test_timeout_is_never_resent_and_blocks_later_calls(tmp_path):
     sends = []
 
@@ -94,15 +43,38 @@ def test_timeout_is_never_resent_and_blocks_later_calls(tmp_path):
         raise httpx.ReadTimeout("timed out")
 
     api = mock_api(tmp_path, "writer", handler)
-    with pytest.raises(BudgetStop, match="unknown"):
+    with pytest.raises(UncertainSend, match="unknown"):
         api.call("writer", "Instructions", {"paper": "first"}, None, "first")
-    with pytest.raises(BudgetStop, match="unresolved"):
+    with pytest.raises(UncertainSend, match="unresolved"):
         api.call("writer", "Instructions", {"paper": "first"}, None, "first")
     with pytest.raises(RunError, match="Not sent"):
         api.call("writer", "Instructions", {"paper": "second"}, None, "second")
     assert len(sends) == 1
-    # The timed-out send keeps its reservation.
-    assert len(read_json(tmp_path / "ledger.json")["entries"]) == 1
+    # The timed-out send stays on record as unresolved, and nothing was billed for certain.
+    assert api.costs() == {"actual_complete_usd": 0.0, "requests": 0, "unresolved": 1}
+
+
+def test_costs_sum_the_billed_sends_and_reject_a_missing_cost(tmp_path):
+    replies = iter([{"cost": 0.25}, {"cost": 0.5}, {}])
+
+    def handler(request):
+        payload = json.loads(request.content)
+        return httpx.Response(
+            200,
+            json={
+                "model": payload["model"],
+                "provider": "Meta",
+                "usage": next(replies),
+                "choices": [{"finish_reason": "stop", "message": {"content": "ok"}}],
+            },
+        )
+
+    api = mock_api(tmp_path, "writer", handler)
+    api.call("writer", "Instructions", {"paper": "first"}, None, "first")
+    api.call("writer", "Instructions", {"paper": "second"}, None, "second")
+    assert api.costs() == {"actual_complete_usd": 0.75, "requests": 2, "unresolved": 0}
+    with pytest.raises(UncertainSend, match="usage.cost"):
+        api.call("writer", "Instructions", {"paper": "third"}, None, "third")
 
 
 def test_invalid_reply_is_repaired_once_with_the_error(tmp_path):
@@ -161,6 +133,5 @@ def test_preflight_accepts_price_changes_up_to_the_headroom(tmp_path, factor, ac
         assert observed["prompt"] == pinned["prompt"]
         assert api.endpoint["judge"] == endpoint
     else:
-        with pytest.raises(RunError, match="completion price .* is above the budgeted"):
+        with pytest.raises(RunError, match="completion price .* is above the allowed"):
             api.preflight()
-    assert not (tmp_path / "ledger.json").exists()

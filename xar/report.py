@@ -195,11 +195,7 @@ def results_text(run, summary, design, run_dir, runs_root):
         "The numbers for every checkpoint are in [checkpoints.csv](checkpoints.csv)."
     )
     costs = cost_sentence(
-        read_json(run_dir / "costs.json"),
-        run_dir,
-        manifest,
-        runs_root / design["pilot_run"],
-        read_json(runs_root / "budget_ledger.json")["entries"],
+        read_json(run_dir / "costs.json"), run_dir, manifest, runs_root / design["pilot_run"]
     )
     details = (
         f"{format_sentence(read_json(run_dir / 'operational_summary.json'), run)} {costs}\n\n"
@@ -355,36 +351,20 @@ def format_sentence(operations, run):
     return " ".join(sentences)
 
 
-def cost_sentence(costs, run_dir, manifest, pilot, ledger):
-    """Cost and time of the research run, the pilot's cost, and the total over all runs in the ledger."""
+def cost_sentence(costs, run_dir, manifest, pilot):
+    """Cost and time of the research run, and the pilot's cost."""
     minutes = wallclock_seconds(run_dir, manifest) / 60
     optimizer_calls, optimizer_seconds = optimizer_time(run_dir)
-    # A resume may raise the concurrency; budget_continuations.json logs each change.
-    log = run_dir / "budget_continuations.json"
-    concurrency = max(
-        [manifest["arguments"]["concurrency"]]
-        + [
-            entry["concurrency"]
-            for entry in (read_json(log) if log.exists() else [])
-            if "concurrency" in entry
-        ]
-    )
     sentence = (
         f"The research run made {costs['requests']:,} paid requests, cost "
         f"${costs['actual_complete_usd']:,.2f} and took {minutes:.0f} minutes with up to "
-        f"{concurrency} requests in parallel. The {optimizer_calls} optimizer "
+        f"{manifest['arguments']['concurrency']} requests in parallel. The {optimizer_calls} optimizer "
         f"requests ran one after another and took {optimizer_seconds / 60:.0f} of those minutes."
     )
     if (pilot / "costs.json").exists():
         pilot_cost = read_json(pilot / "costs.json")["actual_complete_usd"]
         sentence += f" The pilot run cost ${pilot_cost:,.2f}."
-    charged = sum(e["charge"] for e in ledger.values() if e["state"] == "complete")
-    held = sum(e["charge"] for e in ledger.values() if e["state"] != "complete")
-    return sentence + (
-        f" Across all runs in this repository, including earlier probes, the budget ledger records "
-        f"${charged:,.2f} charged and ${held:,.2f} still held for requests whose final cost is unknown, "
-        f"${charged + held:,.2f} in total."
-    )
+    return sentence
 
 
 def wallclock_seconds(run_dir, manifest):

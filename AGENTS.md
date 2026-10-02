@@ -34,8 +34,9 @@ Run tests and lint before every commit.
 ## Spending money
 
 - Never start a paid run without being asked. Run `--dry-run` first and report the estimate.
-- Paid runs need both `--budget-usd` and `--total-budget-usd`. Never raise a budget on your own.
-- Never delete or edit `runs/budget_ledger.json`.
+- Spending is capped by the OpenRouter key's limit, set on openrouter.ai, not by this code. Never
+  change that limit yourself.
+- Never delete or edit `runs/budget_ledger.json`. It is the record of the runs before 2026-10-01.
 - Do not print or commit `.env` or API keys.
 
 ## Protect the experiment

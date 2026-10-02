@@ -1,9 +1,7 @@
-"""Model settings, pinned endpoints, pricing, token counts, the budget ledger and the OpenRouter client."""
+"""Model settings, pinned endpoints, pricing, token counts and the OpenRouter client."""
 
 from __future__ import annotations
 
-import contextlib
-import fcntl
 import functools
 import json
 import math
@@ -20,10 +18,10 @@ from dotenv import load_dotenv
 from xar.util import (
     ROOT,
     SCHEMA_VERSION,
-    BudgetStop,
     InvalidOutput,
     RunError,
     Skipped,
+    UncertainSend,
     canonical,
     digest,
     file_hash,
@@ -116,7 +114,7 @@ def endpoint_for(cfg):
 
 
 PRICE_KEYS = ("prompt", "completion", "request")
-# Budget for price rises of up to 25% after the snapshot was taken.
+# Allow price rises of up to 25% after the snapshot was taken.
 PRICING_HEADROOM = 1.25
 
 
@@ -131,8 +129,8 @@ def highest_prices(endpoint):
     return prices
 
 
-def budgeted_prices(endpoint):
-    """The prices the budget assumes: the highest listed price plus PRICING_HEADROOM."""
+def allowed_prices(endpoint):
+    """The highest prices the run accepts: the highest listed price plus PRICING_HEADROOM."""
     return {key: price * PRICING_HEADROOM for key, price in highest_prices(endpoint).items()}
 
 
@@ -188,7 +186,7 @@ def token_count(text, model):
     name = TOKENIZER_BY_VENDOR.get(model.split("/")[0])
     if name is None:
         # Models without a local tokenizer (currently Muse Spark) are counted by UTF-8 bytes, which
-        # over-estimates tokens, so budget and context checks stay on the safe side.
+        # over-estimates tokens, so cost and context checks stay on the safe side.
         return len(text.encode())
     return token_counter(name)(text)
 
@@ -216,7 +214,7 @@ def max_request_cost(payload, endpoint):
             f"{payload['model']} prompt may need {input_tokens} tokens, but endpoint {endpoint['tag']} "
             f"allows {endpoint['max_prompt_tokens']}"
         )
-    price = budgeted_prices(endpoint)
+    price = allowed_prices(endpoint)
     return input_tokens * price["prompt"] + output_tokens * price["completion"] + price["request"]
 
 
@@ -246,103 +244,9 @@ def json_schema_format(schema):
     return {"type": "json_schema", "json_schema": {"name": "xar_output", "strict": True, "schema": schema}}
 
 
-def ledger_key(output, request_key, attempt):
-    """The budget ledger entry for one send of one request in the run at output."""
-    return f"{Path(output).resolve()}/{request_key}/{attempt}"
-
-
 # Added to the system prompt when a structured reply is retried; the audit strips it off again.
 FORMAT_REPAIR = "\nFORMAT REPAIR: Return complete valid JSON matching the schema. "
 MAX_REPAIR_ERROR_CHARS = 500  # validation error length pasted into the repair prompt
-
-
-class Ledger:
-    """Budget ledger shared by all runs.
-
-    Before each send, a request reserves its worst-case cost; the reservation is replaced by the
-    billed cost when the response arrives. A send whose outcome is unknown keeps its reservation.
-    A file lock makes updates safe across threads and processes.
-    """
-
-    def __init__(self, path, run_id, run_limit, total_limit):
-        self.path = Path(path)
-        self.run_id = run_id
-        self.run_limit = run_limit
-        self.total_limit = total_limit
-        self.path.parent.mkdir(parents=True, exist_ok=True)
-        self.thread_lock = threading.Lock()
-
-    @contextlib.contextmanager
-    def locked(self):
-        """Load the ledger under an exclusive lock without saving it."""
-        with self.thread_lock, self.path.with_suffix(".lock").open("a+") as lock:
-            fcntl.flock(lock, fcntl.LOCK_EX)  # released when the lock file closes
-            yield read_json(self.path) if self.path.exists() else {"entries": {}}
-
-    @contextlib.contextmanager
-    def transaction(self):
-        """Load the ledger under the lock; save it only if the block finishes without raising."""
-        with self.locked() as data:
-            yield data
-            write_json(self.path, data)
-
-    def reserve(self, key, amount):
-        """Reserve amount USD for the send key, or raise BudgetStop if either budget would be exceeded."""
-        with self.transaction() as data:
-            if key in data["entries"]:
-                raise BudgetStop(
-                    f"{key} already has an unsettled ledger entry; check the OpenRouter activity log "
-                    "before sending it again"
-                )
-            entries = list(data["entries"].values())
-            spent_all = sum(e["charge"] for e in entries)
-            spent_run = sum(e["charge"] for e in entries if e["run_id"] == self.run_id)
-            if spent_all + amount > self.total_limit or spent_run + amount > self.run_limit:
-                raise BudgetStop(
-                    f"Reserving ${amount:.4f} for the next request would exceed a budget: this run has "
-                    f"${spent_run:.4f} of ${self.run_limit:.2f} charged or reserved, all runs "
-                    f"${spent_all:.4f} of ${self.total_limit:.2f}"
-                )
-            data["entries"][key] = {
-                "run_id": self.run_id,
-                "charge": amount,
-                "upper": amount,
-                "state": "reserved",
-                "created_at": now(),
-            }
-
-    def settle(self, key, cost, state="complete"):
-        """Replace a reservation with the provider's actual cost (None keeps the reservation).
-
-        A negative or non-finite cost raises RunError. A cost above the reservation is saved with
-        state pricing_bound_violation, and then BudgetStop is raised.
-        """
-        with self.transaction() as data:
-            entry = data["entries"][key]
-            if cost is not None:
-                if cost < 0 or not math.isfinite(cost):
-                    raise RunError(f"Provider reported an invalid cost {cost!r} for {key}")
-                entry["charge"] = cost
-                if cost > entry["upper"]:
-                    state = "pricing_bound_violation"
-            entry.update(state=state, settled_at=now())
-        # Raise only after the transaction has saved the overspend.
-        if state == "pricing_bound_violation":
-            raise BudgetStop(
-                f"{key} cost ${cost:.4f}, more than its ${entry['upper']:.4f} reservation; "
-                "refresh the endpoint pricing snapshots before sending more requests"
-            )
-
-    def summary(self):
-        """This run's charges and request counts; reads the ledger without rewriting it."""
-        with self.locked() as data:
-            entries = [e for e in data["entries"].values() if e["run_id"] == self.run_id]
-            return {
-                "charged_or_reserved_usd": sum(e["charge"] for e in entries),
-                "actual_complete_usd": sum(e["charge"] for e in entries if e["state"] == "complete"),
-                "requests": len(entries),
-                "unresolved": sum(e["state"] != "complete" for e in entries),
-            }
 
 
 READ_TIMEOUT_SECONDS = 600
@@ -352,17 +256,15 @@ RETRYABLE_STATUS = {408, 429, 500, 502, 503, 504}
 
 
 class OpenRouter:
-    """OpenRouter client that caches every request under output/requests and charges the ledger."""
+    """OpenRouter client that caches every request, send and billed cost under output/requests.
 
-    def __init__(self, output, roles, seed, budget, total_budget, ledger_path, client=None):
+    Spending is limited by the OpenRouter key's own limit, set on openrouter.ai, not here."""
+
+    def __init__(self, output, roles, seed, client=None):
         load_dotenv(ROOT / ".env")
         self.key = os.getenv("OPENROUTER_API_KEY")
         if not self.key and client is None:
             raise RunError("OPENROUTER_API_KEY is not set; add it to .env")
-        if budget is None or total_budget is None or budget <= 0 or total_budget <= 0:
-            raise RunError(
-                f"Budgets must be positive USD amounts; got {budget} for this run and {total_budget} in total"
-            )
         self.output = Path(output)
         self.roles = roles
         self.seed = seed
@@ -374,8 +276,19 @@ class OpenRouter:
         self.model_info = {}
         for role, cfg in roles.items():
             self.endpoint[role], self.model_info[role] = endpoint_for(cfg)
-        self.ledger = Ledger(ledger_path, str(self.output.resolve()), budget, total_budget)
         self.dispatch_stopped = threading.Event()
+
+    def costs(self):
+        """This run's billed cost and request counts, from the saved sends under output/requests."""
+        total, requests, unresolved = 0.0, 0, 0
+        for path in self.output.glob("requests/*/attempt_*.json"):
+            sent = read_json(path)
+            if sent["status"] == "success":
+                total += sent["response"]["usage"]["cost"]
+                requests += 1
+            elif sent["status"] == "uncertain":
+                unresolved += 1
+        return {"actual_complete_usd": total, "requests": requests, "unresolved": unresolved}
 
     def payload(self, role, system, data, schema):
         payload = {
@@ -429,12 +342,12 @@ class OpenRouter:
                     f"to {current['context_length']} tokens; refresh configs/snapshots and start a new run"
                 )
             prices = highest_prices(current)
-            limits = budgeted_prices(pinned)
+            limits = allowed_prices(pinned)
             for key in PRICE_KEYS:
                 if prices[key] > limits[key]:
                     raise RunError(
                         f"{role} endpoint {current['tag']} {key} price {prices[key]} is above the "
-                        f"budgeted {limits[key]} (snapshot price plus {PRICING_HEADROOM - 1:.0%}); "
+                        f"allowed {limits[key]} (snapshot price plus {PRICING_HEADROOM - 1:.0%}); "
                         "refresh configs/snapshots and start a new run"
                     )
             if current.get("quantization") != pinned.get("quantization"):
@@ -463,9 +376,9 @@ class OpenRouter:
     def _call(self, role, system, data, schema, identity):
         """Send a request at most MAX_SENDS times, recording every send in an attempt file.
 
-        The request is keyed by its payload and identity. Each send reserves its worst-case cost in
-        the ledger first. On resume, saved attempt files decide what happens: a success is reused,
-        a send with unknown outcome stops the run, and only retryable failures are sent again.
+        The request is keyed by its payload and identity. On resume, saved attempt files decide what
+        happens: a success is reused, a send with unknown outcome stops the run, and only retryable
+        failures are sent again.
         """
         payload = self.payload(role, system, data, schema)
         request_key = digest({"payload": payload, "identity": identity, "schema_version": SCHEMA_VERSION})
@@ -485,16 +398,15 @@ class OpenRouter:
             },
             write_once=True,
         )
-        max_cost = max_request_cost(payload, self.endpoint[role])
+        max_cost = max_request_cost(payload, self.endpoint[role])  # also checks the request fits
         for attempt in range(MAX_SENDS):
             attempt_file = directory / f"attempt_{attempt}.json"
-            send_key = ledger_key(self.output, request_key, attempt)
             if attempt_file.exists():
                 prior = read_json(attempt_file)
                 if prior["status"] == "success":
-                    return self._accept(prior["response"], role, request_key, send_key, attempt_file)
+                    return self._accept(prior["response"], role, attempt_file)
                 if prior["status"] == "uncertain":
-                    raise BudgetStop(
+                    raise UncertainSend(
                         f"Send outcome unresolved: {attempt_file} may have been billed but has no response; "
                         "check the OpenRouter activity log before retrying"
                     )
@@ -505,7 +417,6 @@ class OpenRouter:
                 raise Skipped(
                     f"Not sent: another request failed, so the {role} request {request_key} was skipped"
                 )
-            self.ledger.reserve(send_key, max_cost)
             sent_at = now()
             write_json(attempt_file, {"status": "uncertain", "sent_at": sent_at, "upper_usd": max_cost})
             headers = {"X-OpenRouter-Title": "Independent XAR reproduction"}
@@ -516,13 +427,11 @@ class OpenRouter:
                 response = self.client.post(API_BASE + "/chat/completions", json=payload, headers=headers)
             except (httpx.ConnectError, httpx.ConnectTimeout):
                 # The connection never opened, so nothing was sent or billed.
-                self.ledger.settle(send_key, 0, "complete")
                 write_json(attempt_file, {"status": "connect_error", "retryable": True, "timestamp": now()})
             except (httpx.ReadTimeout, httpx.WriteTimeout, httpx.RemoteProtocolError):
-                self.ledger.settle(send_key, None, "uncertain")
-                raise BudgetStop(
-                    f"The {role} request was sent but got no response, so whether it was billed is unknown; "
-                    f"its reservation is kept. Check the OpenRouter activity log ({attempt_file})"
+                raise UncertainSend(
+                    f"The {role} request was sent but got no response, so whether it was billed is unknown. "
+                    f"Check the OpenRouter activity log ({attempt_file})"
                 ) from None
             else:
                 try:
@@ -544,9 +453,7 @@ class OpenRouter:
                     },
                 )
                 if success:
-                    return self._accept(raw, role, request_key, send_key, attempt_file)
-                # The provider may still bill a failed request, so the reservation stays.
-                self.ledger.settle(send_key, None, "http_error_reserved")
+                    return self._accept(raw, role, attempt_file)
                 if not retryable:
                     raise RunError(
                         f"OpenRouter returned HTTP {response.status_code} for {role}; see {attempt_file}"
@@ -555,21 +462,19 @@ class OpenRouter:
                 time.sleep(2**attempt)  # 1, 2 and 4 seconds
         raise RunError(f"{role} request failed {MAX_SENDS} times with retryable errors; see {directory}")
 
-    def _accept(self, raw, role, request_key, send_key, attempt_file):
-        """Settle the ledger for a successful response and save it as result.json.
+    def _accept(self, raw, role, attempt_file):
+        """Check a successful response and save it as result.json.
 
         Fails if the response has no billed cost, or if a model or provider other than the pinned one
         answered.
         """
         usage = raw.get("usage", {})
         cost = usage.get("cost")
-        if cost is None:
-            self.ledger.settle(send_key, None, "cost_unknown")
-            raise BudgetStop(
-                f"The {role} response has no usage.cost, so its reservation is kept; "
-                f"check the OpenRouter activity log for {attempt_file} before sending more requests"
+        if cost is None or cost < 0 or not math.isfinite(cost):
+            raise UncertainSend(
+                f"The {role} response reports no valid usage.cost ({cost!r}); check the OpenRouter "
+                f"activity log for {attempt_file} before sending more requests"
             )
-        self.ledger.settle(send_key, float(cost))
         model_info = self.model_info[role]
         model = raw.get("model")
         if model not in {model_info["id"], model_info["canonical_slug"]}:
@@ -587,7 +492,7 @@ class OpenRouter:
         result = {
             "content": choice["message"].get("content") or "",
             "finish_reason": choice.get("finish_reason"),
-            "request_key": request_key,
+            "request_key": attempt_file.parent.name,
             "response_id": raw.get("id"),
             "usage": usage,
             "model": model,

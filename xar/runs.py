@@ -71,9 +71,9 @@ def operational_summary(output):
     return summary
 
 
-# These may change on --resume, because they do not change the results; every other argument
+# This may change on --resume, because it does not change the results; every other argument
 # must match the saved run.
-RESUMABLE_ARGS = {"budget_usd", "total_budget_usd", "concurrency"}
+RESUMABLE_ARGS = {"concurrency"}
 # Manifest keys added after substantive_hash is computed.
 UNHASHED_KEYS = {"substantive_hash", "created_at", "git_commit"}
 
@@ -137,28 +137,11 @@ def _git_commit():
         return None
 
 
-def _record_budget_change(output, saved, settings):
-    """Log the budgets and concurrency to budget_continuations.json when they differ from the
-    ones last used: the log's last entry, or the saved manifest's if nothing is logged yet.
-    """
-    path = output / "budget_continuations.json"
-    history = read_json(path) if path.exists() else []
-    limits = {
-        "budget_usd": settings.budget_usd,
-        "total_budget_usd": settings.total_budget_usd,
-        "concurrency": settings.concurrency,
-    }
-    last = history[-1] if history else saved["arguments"]
-    if {key: last.get(key) for key in limits} != limits:
-        history.append({"at": now(), **limits})
-        write_json(path, history)
-
-
 def initialize_run(settings, roles, experiment, extra=None):
     """Check any saved run, run the live preflight, and return the API client.
 
     A new run gets its manifest written here. A resumed run must match the saved manifest except
-    for RESUMABLE_ARGS; a budget change is logged to budget_continuations.json.
+    for RESUMABLE_ARGS.
     """
     manifest = resolved_manifest(settings, roles, experiment, extra)
     output = Path(settings.output_dir)
@@ -176,21 +159,12 @@ def initialize_run(settings, roles, experiment, extra=None):
                 f"Settings differ from the saved run in {output}: {changed}. "
                 f"Revert them to resume, or {elsewhere} to start a new run"
             )
-    api = OpenRouter(
-        output,
-        roles,
-        settings.seed,
-        settings.budget_usd,
-        settings.total_budget_usd,
-        settings.budget_ledger,
-    )
+    api = OpenRouter(output, roles, settings.seed)
     api.preflight()
     if saved is None:
         manifest["created_at"] = now()
         manifest["git_commit"] = _git_commit()
         write_json(manifest_path, manifest, write_once=True)
-    else:
-        _record_budget_change(output, saved, settings)
     return api
 
 
@@ -267,8 +241,6 @@ def estimate(settings, roles, examples, counts):
         "roles": roles,
         "per_role": per_role,
         "estimated_usd_with_retry_reserve": typical_total * (1 + RETRY_RESERVE),
-        "budget_usd": settings.budget_usd,
-        "total_budget_usd": settings.total_budget_usd,
     }
     print(json.dumps(result, indent=2))
     return result

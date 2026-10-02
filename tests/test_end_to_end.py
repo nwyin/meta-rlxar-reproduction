@@ -20,18 +20,7 @@ from xar.util import ROLES, RunError, read_json, write_json
 def run_phase(tmp_path, design, phase, papers_by_split, *flags):
     """Run one phase as `run.py <phase>` would, but on a test dataset under tmp_path."""
     dataset, splits = write_dataset(tmp_path, papers_by_split)
-    options = run.parse_args(
-        [
-            phase,
-            "--runs-root",
-            str(tmp_path / "runs"),
-            "--budget-usd",
-            "100",
-            "--total-budget-usd",
-            "100",
-            *flags,
-        ]
-    )
+    options = run.parse_args([phase, "--runs-root", str(tmp_path / "runs"), *flags])
     settings = replace(run.settings_for(phase, design, options), dataset=str(dataset), splits=str(splits))
     run_xar(settings)
     return settings
@@ -63,12 +52,10 @@ def test_pilot_run_completes_and_resume_makes_no_calls(pilot, design):
     assert sorted((out / "preflight").iterdir()) == preflights
 
 
-def test_resume_allows_new_concurrency_and_logs_every_budget_change(pilot):
-    settings, out = pilot.settings, pilot.out
-    for budget in (20, settings.budget_usd, settings.budget_usd):
-        run_xar(replace(settings, resume=True, concurrency=settings.concurrency + 1, budget_usd=budget))
-    history = read_json(out / "budget_continuations.json")
-    assert [entry["budget_usd"] for entry in history] == [20, settings.budget_usd]
+def test_resume_allows_new_concurrency(pilot):
+    settings = pilot.settings
+    run_xar(replace(settings, resume=True, concurrency=settings.concurrency + 1))
+    assert read_json(pilot.out / "manifest.json")["arguments"]["concurrency"] == settings.concurrency
 
 
 def test_resume_rejects_changed_iterations_and_names_the_values(pilot):
@@ -158,13 +145,6 @@ def test_settings_follow_the_design(design, phase, split, iterations_key):
     assert settings.concurrency == 3 and settings.dry_run
     default = run.settings_for(phase, design, run.parse_args([phase, "--dry-run"]))
     assert default.concurrency == design["concurrency"]
-
-
-@pytest.mark.parametrize("phase", ["pilot", "reproduce", "all"])
-def test_paid_runs_require_both_budgets(phase, capsys):
-    with pytest.raises(SystemExit):
-        run.parse_args([phase, "--budget-usd", "10"])
-    assert "--total-budget-usd are required unless --dry-run" in capsys.readouterr().err
 
 
 def test_report_from_research_run_and_after_tampering(tmp_path, monkeypatch, design):

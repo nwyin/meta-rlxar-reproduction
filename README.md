@@ -63,7 +63,7 @@ Copy `.env.example` to `.env` and set `OPENROUTER_API_KEY`.
 
 ```sh
 uv run python run.py all --dry-run
-uv run python run.py all --budget-usd 100 --total-budget-usd 100
+uv run python run.py all
 ```
 
 `--dry-run` prints a cost estimate and sends nothing. `all` runs `pilot` and then
@@ -73,11 +73,11 @@ uv run python run.py all --budget-usd 100 --total-budget-usd 100
 - `run.py reproduce` audits the completed pilot run, then runs the full experiment on the
   training and validation papers and writes the report to `reports/`.
 
-Paid runs need both limits: `--budget-usd` for this run and `--total-budget-usd` for all runs
-that share `runs/budget_ledger.json`. `--concurrency` sets the number of parallel requests
-(default 4, from `configs/experiments.yaml`). `--resume` continues an interrupted run; only the
-budgets and `--concurrency` may differ from the saved run, and any other change stops it. `--runs-root`
-(default `runs/`) sets where the runs and the ledger are kept, and `--output-dir` (default
+Spending is capped by the OpenRouter key's limit, set on openrouter.ai; the code records every
+billed cost but enforces no budget of its own. `--concurrency` sets the number of parallel requests
+(default 4, from `configs/experiments.yaml`). `--resume` continues an interrupted run; only
+`--concurrency` may differ from the saved run, and any other change stops it. `--runs-root`
+(default `runs/`) sets where the runs are kept, and `--output-dir` (default
 `reports/`) where `reproduce`, `all` and `report` write the report. `uv run python run.py
 --help` lists every command and option.
 
@@ -97,7 +97,7 @@ and checks:
 - that the optimizer's feedback and proposals re-derive from training scores alone;
 - the scoring arithmetic, and that the checkpoint was selected on training data only;
 - that every validation request came after that selection;
-- that request keys, costs and the budget ledger agree.
+- that request keys and the billed costs agree with `costs.json`.
 
 `report` repeats the `audit-run` checks on the research run and then writes the report.
 
@@ -116,7 +116,7 @@ prompt history and criteria; see [tools/data-viewer](tools/data-viewer/README.md
 │   ├── pipeline.py               the method: write sections, generate rubrics, grade,
 │   │                             build optimizer feedback, rewrite the prompt, select P*
 │   ├── openrouter.py             model settings, endpoint checks, pricing, token counts,
-│   │                             the budget ledger and the OpenRouter client
+│   │                             and the OpenRouter client
 │   ├── discovery.py              samples candidate papers from OpenAlex and arXiv
 │   ├── data.py                   builds the dataset from ar5iv HTML; loads and splits it
 │   ├── runs.py                   run directories: manifest, resume checks, cost estimate
@@ -147,7 +147,7 @@ prompt history and criteria; see [tools/data-viewer](tools/data-viewer/README.md
 │   ├── raw/                      downloaded ar5iv HTML and arXiv metadata (not in git)
 │   ├── archive/                  the earlier cs.CL corpus the completed run used (not in git)
 │   └── tokenizers/               downloaded tokenizers (not in git)
-├── runs/                         run outputs and the shared budget ledger (not in git)
+├── runs/                         run outputs (not in git)
 ├── reports/                      generated report (not in git)
 ├── METHOD.md                     method, reconstruction choices and limitations
 ├── pyproject.toml, uv.lock       dependencies
@@ -160,7 +160,7 @@ prompt history and criteria; see [tools/data-viewer](tools/data-viewer/README.md
 | --- | --- |
 | `runs/pilot-meta-blog-attested/` | the pilot run |
 | `runs/meta-blog-seed0/` | the research run: `manifest.json`, every request and response under `requests/`, sections in `generations/`, `rubrics/`, `scores/`, optimizer `feedback/`, `prompts/`, `freeze.json`, `costs.json` |
-| `runs/budget_ledger.json` | reservations and charges for every run |
+| `runs/budget_ledger.json` | reservations and charges for the runs before 2026-10-01, when the code enforced budgets |
 | `reports/` | `results.md`, `checkpoints.csv`, `gap_curves.png` and `.svg`, `blog_comparison.json`, and `audit.json` |
 
 `runs/`, `reports/`, the paper text and the tokenizers are not in git.

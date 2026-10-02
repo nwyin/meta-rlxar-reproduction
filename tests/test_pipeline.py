@@ -16,7 +16,7 @@ from xar.pipeline import (
     validate_grade,
     writer_candidates,
 )
-from xar.util import FAILING_FEEDBACK, BudgetStop, RunError, canonical, read_json, write_json
+from xar.util import FAILING_FEEDBACK, RunError, UncertainSend, canonical, read_json, write_json
 
 MAX_WORDS = 800  # the meta prompt word limit passed to audit_proposal and propose_prompt
 
@@ -257,11 +257,11 @@ def test_parallel_writer_failure_stops_new_sections_and_keeps_finished_ones(tmp_
             if self.fail:
                 self.barrier.wait(timeout=5)
                 if eid == examples[0]["example_id"]:
-                    raise BudgetStop("Budget exhausted before send")
+                    raise UncertainSend("Timed out before send")
             return writer_reply(data["target_words"], eid)
 
     failed = InterruptedWriter(True)
-    with pytest.raises(BudgetStop, match="before send"):
+    with pytest.raises(UncertainSend, match="before send"):
         writer_candidates(failed, examples, tmp_path, concurrency=2)
     assert set(failed.calls) == {e["example_id"] for e in examples[:2]}
     assert (tmp_path / "generations" / (examples[1]["example_id"] + ".json")).exists()

@@ -43,9 +43,6 @@ def settings_for(phase, design, options):
         feedback_policy=design["feedback_policy"],
         **{f"{role}_model": design[role] for role in ROLES},
         concurrency=options.concurrency or design["concurrency"],
-        budget_ledger=str(runs_root / "budget_ledger.json"),
-        budget_usd=options.budget_usd,
-        total_budget_usd=options.total_budget_usd,
         dry_run=options.dry_run,
         resume=options.resume,
     )
@@ -93,14 +90,6 @@ def parse_args(argv=None):
     commands = parser.add_subparsers(dest="command", required=True, metavar="command")
     run_options = argparse.ArgumentParser(add_help=False)
     run_options.add_argument(
-        "--budget-usd", type=float, help="USD limit for this run (required unless --dry-run)"
-    )
-    run_options.add_argument(
-        "--total-budget-usd",
-        type=float,
-        help="USD limit summed over every run in <runs-root>/budget_ledger.json (required unless --dry-run)",
-    )
-    run_options.add_argument(
         "--concurrency",
         type=parse_concurrency,
         help=f"parallel requests, 1-{MAX_CONCURRENCY} (default: concurrency in experiments.yaml)",
@@ -111,13 +100,9 @@ def parse_args(argv=None):
     run_options.add_argument(
         "--resume",
         action="store_true",
-        help="continue an existing run; only the budgets and --concurrency may change",
+        help="continue an existing run; only --concurrency may change",
     )
-    run_options.add_argument(
-        "--runs-root",
-        default="runs",
-        help="directory for the runs and the shared budget ledger (default: runs/)",
-    )
+    run_options.add_argument("--runs-root", default="runs", help="directory for the runs (default: runs/)")
     report_options = argparse.ArgumentParser(add_help=False)
     report_options.add_argument(
         "--output-dir",
@@ -158,11 +143,7 @@ def parse_args(argv=None):
         "prepare-tokenizers",
         help="download the tokenizers pinned in configs/tokenizers.json into data/tokenizers/",
     )
-    options = parser.parse_args(argv)
-    is_run = options.command in PHASES or options.command == "all"
-    if is_run and not options.dry_run and None in (options.budget_usd, options.total_budget_usd):
-        parser.error("--budget-usd and --total-budget-usd are required unless --dry-run")
-    return options
+    return parser.parse_args(argv)
 
 
 def main(argv=None):

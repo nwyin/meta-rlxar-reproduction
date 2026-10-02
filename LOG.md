@@ -320,3 +320,15 @@ The old pilot `pilot-meta-blog-attested` no longer matches `configs/experiments.
 Open choice: `max_meta_prompt_words` is 800; the blog holds its meta-prompt to a bound that
 forces consolidation, and P7 reached 437 words last time. We left that unchanged.
 
+## 2026-10-01 — Removed the local budget
+
+At the owner's request, the code no longer enforces a budget. The OpenRouter key's limit, set on
+openrouter.ai, caps spending. We removed the `Ledger` class, the reservations, `--budget-usd`,
+`--total-budget-usd` and `budget_continuations.json`. The client still saves every send and the
+cost OpenRouter reports, `costs.json` now sums those saved sends, and a send with no response or
+no cost still stops the run (`UncertainSend`, the old `BudgetStop`). The audit still checks each
+request's key and that its billed cost is within the pinned pricing's maximum; it no longer
+checks the ledger, which loses the reserve-settle ordering check. `runs/budget_ledger.json`
+stays untouched as the record of the earlier runs. With the old corpus restored, `audit-run`
+passes for `meta-blog-seed0` and `pilot-meta-blog-attested`.
+

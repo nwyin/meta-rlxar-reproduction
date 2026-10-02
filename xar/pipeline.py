@@ -508,8 +508,8 @@ class RunSettings:
     the command-line options.
 
     The manifest saves every field except output_dir, dry_run and resume under "arguments". All
-    of those except the budgets and concurrency (runs.RESUMABLE_ARGS) go into the
-    manifest's settings hash (substantive_hash), which --resume checks."""
+    of those except concurrency (runs.RESUMABLE_ARGS) go into the manifest's settings hash
+    (substantive_hash), which --resume checks."""
 
     output_dir: str
     split: str  # "pilot" or "research"
@@ -523,9 +523,6 @@ class RunSettings:
     optimizer_model: str
     judge_model: str
     concurrency: int
-    budget_ledger: str
-    budget_usd: float | None = None
-    total_budget_usd: float | None = None
     dataset: str = "data/examples.jsonl"
     splits: str = "data/splits.json"
     dry_run: bool = False
@@ -655,6 +652,6 @@ def run_xar(settings):
             table.append({**row, "val_coverage": validation_summary["paired_coverage"]})
         write_table(out / "scores/checkpoints.csv", table)
         operational_summary(out)
-        write_json(out / "costs.json", api.ledger.summary())
+        write_json(out / "costs.json", api.costs())
         complete = all(summary["complete"] for summary in validation_summaries)
         write_json(out / "status.json", {"state": "complete" if complete else "incomplete"})
