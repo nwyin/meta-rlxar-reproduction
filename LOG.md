@@ -591,3 +591,41 @@ Explanation, ours: the blog's curve crossed zero at its 4th iteration from a muc
 (−4.2); ours started at −1.89 and reached −0.08 in the same number of updates, so the slope is
 comparable and the run stopped where the blog's crossed. Whether more updates would cross is
 untested. The blog had 7 iterations; `iterations: 4` was a cost choice.
+
+## 2026-10-02 — Post hoc probe: GT rubrics on 7 validation sections
+
+Post hoc, at the owner's request. The blog's "Ground Truth (GT) rubrics are built by including
+the hidden section as input when generating rubrics via the meta-prompt, thereby biasing scores
+towards the human-written completion." We ran that variant with a standalone script
+(`/private/tmp/claude-501/probe_gt_rubrics.py`, outside the pipeline) on 2 validation papers of
+`meta-blog-v2-seed0`: 1605.05804, where the model led by 0.8 at P3, and 1604.04494, where the
+expert led. Same P3 meta prompt, same wrapper plus one sentence naming the attached
+`hidden_section`, same rubric generator and judge (Muse Spark 1.3 contributor), blind grading
+in a seeded order. 22 requests, $0.06, written to `runs/probe-gt-rubrics`.
+
+| Section | P3 human | P3 model | P3 gap | GT human | GT model | GT gap |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| 1604.04494 abstract | 9.00 | 8.67 | +0.33 | 9.20 | 8.20 | +1.00 |
+| 1604.04494 introduction | 8.80 | 7.00 | +1.80 | 9.00 | 6.60 | +2.40 |
+| 1604.04494 related work | 5.60 | 5.40 | +0.20 | 7.00 | 7.60 | −0.60 |
+| 1604.04494 conclusion | 7.40 | 6.60 | +0.80 | 8.17 | 6.50 | +1.67 |
+| 1605.05804 abstract | 5.80 | 7.80 | −2.00 | 8.20 | 6.60 | +1.60 |
+| 1605.05804 introduction | 5.20 | 5.80 | −0.60 | 4.80 | 5.00 | −0.20 |
+| 1605.05804 conclusion | 5.80 | 5.60 | +0.20 | 6.67 | 4.83 | +1.83 |
+| mean | 6.80 | 6.70 | +0.10 | 7.58 | 6.48 | +1.10 |
+
+Observations: the mean gap went from +0.10 to +1.10; 5 of 7 sections moved toward the expert,
+and the abstract where the model led by 2.0 flipped to +1.6. The expert mean rose 0.78 and the
+model mean fell 0.22. The GT rubrics kept the same 5 criterion roles as the P3 rubrics (problem,
+approach, finding, accuracy, fit) but their anchors name what the expert selected, for example
+"nonlinear biphasic eNOS/NO activation" as the finding, and the judge then docked the model
+for "exhaustive nomenclature and reaction-step inventory". Explanation, ours: the expert
+qualities exist and this judge can see them once a rubric names them; what the main loop
+lacked was a rubric generator and optimizer able to infer the expert's selection from the paper
+alone. The blog's own caveat applies: these rubrics are biased toward the expert text by
+construction, so this is an upper bound, not a result.
+
+Data note found by the judge: the reference abstract of 1605.05804 ends with "Submitted ∗These
+two authors contributed equally to this work Correspondence: dmt@ucsd.edu", an extraction
+artifact, and the judge docked its fit score for it. A scan of all 153 references for such
+metadata patterns found only this one.
