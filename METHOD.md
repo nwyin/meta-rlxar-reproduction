@@ -107,8 +107,15 @@ URLs and HTML hash, so anyone can pull the pages again and check them.
 | --- | --- | --- | --- | --- | --- | --- |
 | Writer | Muse Spark 1.1 | meta/muse-spark-1.1-20260709 | meta | 0.7 | effort medium | 16,384 |
 | Rubric generator | Muse Spark 1.1 | meta/muse-spark-1.1-20260709 | meta | 0.2 | effort medium | 16,384 |
-| Judge | Muse Spark 1.1 | meta/muse-spark-1.1-20260709 | meta | 0 | effort medium | 16,384 |
+| Judge | Qwen3.8 Flash | qwen/qwen3.8-flash-20260826 | alibaba | 0 | enabled | 16,384 |
+| Cross judge | Muse Spark 1.1 | meta/muse-spark-1.1-20260709 | meta | 0 | effort medium | 16,384 |
 | Optimizer | Kimi K2.6 | moonshotai/kimi-k2.6-20260420 | siliconflow/fp8 | 0.7 | enabled | 16,384 |
+
+The completed run `meta-blog-seed0` judged with Muse Spark 1.1, as the blog did. The judge is now
+Qwen3.8 Flash, at about an 8th of Muse's price per token, and the judge is the largest cost: 2
+grades per section per checkpoint, each with the whole paper attached. The blog measured
+Qwen3.5-27B as a paper judge and found it close to Muse and GPT-5.6; it did not measure Qwen3.8
+Flash. The cross judge is the check on that choice (step 8).
 
 All requests go through OpenRouter. The models and their settings are in `configs/models.yaml`,
 the rest of the experiment (seed, number of updates, word limits, run names) in
@@ -169,6 +176,13 @@ in `prompts/`: `writer.md`, `rubric_initial.md` (the initial meta prompt), `rubr
    checkpoint's prompt are written to `freeze.json`. Only then does the run generate rubrics
    and grades for the validation sections, at every checkpoint. The audit checks that every
    validation request was sent after `freeze.json` was written.
+
+8. Cross-judge. Muse Spark 1.1 grades the validation sections again at P0 and the selected
+   checkpoint, against the same rubrics the judge used, blind and in a seeded random order as in
+   step 3. Only the judge differs. `cross_check.json` holds both judges' author and model means
+   and gaps at those checkpoints. If the two judges agree on the sign and roughly the size of the
+   gap, the result does not rest on the cheaper judge. This follows the blog's cross-judge table,
+   which found rubrics optimized under one strong judge hold under another.
 
 Independent sections and checkpoint evaluations run four at a time. The drafts for one
 section and the optimizer updates run in order.
@@ -239,6 +253,8 @@ these choices:
   task and the rubric format. It asks for criteria that name the paper's own contributions,
   methods, results and terms, and says nothing about human or AI writing. The completed run
   used an earlier hand-written initial prompt (`runs/meta-blog-seed0/prompts/iter_00.md`).
+- Judge: Qwen3.8 Flash instead of Muse Spark 1.1, for cost, with Muse as a cross judge on
+  validation at 2 checkpoints. The blog has no measurement of Qwen3.8 Flash as a judge.
 - Decoding: the temperatures and reasoning settings in the roles table.
 - Rubric and score: 4 to 8 criteria scored 0-10, combined as an unweighted mean.
 - Feedback: the failing training sections, up to 24, without the paper. The blog says the

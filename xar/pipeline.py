@@ -234,13 +234,14 @@ def generate_rubric(api, example, meta_prompt, identity, output):
     return record
 
 
-def grade_candidate(api, example, rubric_record, text, identity, output):
+def grade_candidate(api, example, rubric_record, text, identity, output, role="judge"):
+    """Grade one anonymous section against a rubric; role is "judge" or "cross_judge"."""
     if rubric_record["status"] != "valid":
         result = {"status": "missing", "value": None, "attempts": [], "reason": "invalid_rubric"}
     else:
         rubric = rubric_record["value"]
         result = api.structured(
-            "judge",
+            role,
             prompt("judge"),
             {**task_data(example), "rubric": rubric, "candidate": text},
             GRADE_SCHEMA,
@@ -251,7 +252,7 @@ def grade_candidate(api, example, rubric_record, text, identity, output):
         "example_id": example["example_id"],
         "candidate_hash": digest(text),
         "rubric_hash": rubric_record["rubric_hash"],
-        "judge_configuration": api.roles["judge"],
+        "judge_configuration": api.roles[role],
         "identity": identity,
         **result,
     }
@@ -522,6 +523,7 @@ class RunSettings:
     rubric_model: str
     optimizer_model: str
     judge_model: str
+    cross_judge_model: str
     concurrency: int
     dataset: str = "data/examples.jsonl"
     splits: str = "data/splits.json"
@@ -529,7 +531,7 @@ class RunSettings:
     resume: bool = False
 
 
-def planned_requests(examples, iterations):
+def planned_requests(examples, iterations, validation_count):
     """Request counts for the dry-run estimate, not counting format repairs."""
     checkpoints = iterations + 1
     return {
@@ -537,6 +539,7 @@ def planned_requests(examples, iterations):
         "rubric": len(examples) * checkpoints,
         "judge": 2 * len(examples) * checkpoints,  # one grade each for the human and model section
         "optimizer": iterations,
+        "cross_judge": 2 * validation_count * CROSS_CHECKPOINTS,
     }
 
 
@@ -619,6 +622,78 @@ def score_on_validation(api, settings, validation, candidates, prompts):
     return summaries
 
 
+CROSS_CHECKPOINTS = 2  # the cross judge grades at P0 and the selected checkpoint (1 when they coincide)
+
+
+def cross_checkpoints(selected):
+    """The checkpoints the cross judge grades, in order."""
+    return sorted({0, selected})
+
+
+def cross_check_validation(api, settings, validation, candidates, selected, validation_summaries):
+    """Grade the validation sections again with the cross_judge role, at P0 and the selected
+    checkpoint, against the same rubrics the judge used. Only the judge differs, so the two gaps
+    say whether the judge's result holds under another model. Runs after the freeze, like the
+    rest of validation. Writes cross_check.json and returns its entries."""
+    root = Path(settings.output_dir)
+    entries = []
+    for iteration in cross_checkpoints(selected):
+
+        def grade(example, iteration=iteration):
+            eid = example["example_id"]
+            candidate = candidates[eid]
+            label = f"cross/{iteration}/validation/{eid}"
+            rubric_path = root / "rubrics" / f"main/{iteration}/validation/{eid}" / "rubric.json"
+            rubric = read_json(rubric_path)
+            origins = ["human", "model"]
+            order_seed = int(digest({"seed": api.seed, "label": label})[:16], 16)
+            random.Random(order_seed).shuffle(origins)
+            grade_paths = {origin: root / "scores" / label / (origin + ".json") for origin in origins}
+            totals = {}
+            for slot, origin in enumerate(origins):
+                text = example["reference"] if origin == "human" else candidate["text"]
+                identity = {"grade": label, "slot": slot}
+                record = grade_candidate(
+                    api, example, rubric, text, identity, grade_paths[origin], "cross_judge"
+                )
+                totals[origin] = record["total"]
+            human, model = totals["human"], totals["model"]
+            return {
+                "example_id": eid,
+                "paper_id": example["paper_id"],
+                "section_type": example["section_type"],
+                "split": example["split"],
+                "checkpoint": iteration,
+                "human": human,
+                "model": model,
+                "gap": human - model if human is not None and model is not None else None,
+                "length_compliant": candidate["length_compliant"],
+                "contamination_flagged": candidate["contamination"]["flagged"],
+                "rubric_path": str(rubric_path),
+                "grade_paths": {origin: str(path) for origin, path in grade_paths.items()},
+            }
+
+        rows = bounded_map(grade, validation, settings.concurrency, api.dispatch_stopped)
+        write_json(root / "scores" / "cross" / str(iteration) / "validation_rows.json", rows)
+        entries.append(
+            {
+                "iteration": iteration,
+                "judge": summarize_means(validation_summaries[iteration]),
+                "cross_judge": summarize_means(summarize(rows, settings.seed)),
+            }
+        )
+    write_json(
+        root / "cross_check.json",
+        {"judge": api.roles["judge"], "cross_judge": api.roles["cross_judge"], "checkpoints": entries},
+    )
+    return entries
+
+
+def summarize_means(summary):
+    """The human mean, model mean, gap and coverage of a checkpoint summary."""
+    return {key: summary[key] for key in ("human", "model", "gap", "paired_coverage")}
+
+
 def run_xar(settings):
     """Run one trajectory: write the candidate sections, optimize the meta prompt on training,
     freeze the selected checkpoint, then score every checkpoint on validation.
@@ -635,7 +710,7 @@ def run_xar(settings):
     validation = [e for e in examples if e["split"] == "validation"]
     roles = {role: role_config(role, getattr(settings, f"{role}_model")) for role in ROLES}
     if settings.dry_run:
-        estimate(settings, roles, examples, planned_requests(examples, settings.iterations))
+        estimate(settings, roles, examples, planned_requests(examples, settings.iterations, len(validation)))
         return
     out = Path(settings.output_dir)
     with run_lock(out):
@@ -644,6 +719,7 @@ def run_xar(settings):
         prompts, train_summaries = optimize_on_training(api, settings, train, candidates, initial)
         selected = freeze_selection(out, prompts, train_summaries)
         validation_summaries = score_on_validation(api, settings, validation, candidates, prompts)
+        cross_check_validation(api, settings, validation, candidates, selected, validation_summaries)
         table = []
         for iteration, (train_summary, validation_summary) in enumerate(
             zip(train_summaries, validation_summaries, strict=True)

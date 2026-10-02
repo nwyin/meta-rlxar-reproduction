@@ -20,6 +20,7 @@ JOBS = {
     "rubric": "generated the rubrics",
     "optimizer": "rewrote the rubric prompt at each update",
     "judge": "graded the sections",
+    "cross_judge": "graded the validation sections again at 2 checkpoints",
 }
 
 
@@ -162,7 +163,10 @@ def results_text(run, summary, design, run_dir, runs_root):
     manifest, table, candidates = run["manifest"], run["table"], run["candidates"]
     selected, last = summary["selected_iteration"], table[-1]["iteration"]
     blog = design["reported_validation"]
-    names = {role: display_name(manifest["endpoints"][role]) for role in ROLES}
+    # Runs made before a role existed have no endpoint for it.
+    names = {
+        role: display_name(manifest["endpoints"][role]) for role in ROLES if role in manifest["endpoints"]
+    }
     papers = {
         split: len({r["paper_id"] for r in run["rows"][(0, split)]}) for split in ("train", "validation")
     }
@@ -199,6 +203,7 @@ def results_text(run, summary, design, run_dir, runs_root):
     )
     details = (
         f"{format_sentence(read_json(run_dir / 'operational_summary.json'), run)} {costs}\n\n"
+        f"{cross_sentence(run.get('cross'), names)}"
         "Before writing these numbers, the report re-checked the run against every saved response; "
         "the result is in [audit.json](audit.json). The blog's values and this run's summary are in "
         "[blog_comparison.json](blog_comparison.json)."
@@ -249,7 +254,7 @@ def display_name(endpoint):
 
 def describe_roles(names):
     jobs = {}
-    for role in ROLES:
+    for role in names:
         jobs.setdefault(names[role], []).append(JOBS[role])
     clauses = []
     for name, tasks in jobs.items():
@@ -351,6 +356,24 @@ def format_sentence(operations, run):
     return " ".join(sentences)
 
 
+def cross_sentence(cross, names):
+    """Both judges' validation gaps at the cross-checked checkpoints, or nothing for a run without them."""
+    if not cross:
+        return ""
+    parts = []
+    for entry in cross:
+        judge, other = entry["judge"], entry["cross_judge"]
+        parts.append(
+            f"at P{entry['iteration']} the gap was {judge['gap']:+.2f} under {names['judge']} "
+            f"(author {judge['human']:.2f}, model {judge['model']:.2f}) and {other['gap']:+.2f} under "
+            f"{names['cross_judge']} (author {other['human']:.2f}, model {other['model']:.2f})"
+        )
+    return (
+        f"Cross-judge check: {names['cross_judge']} graded the validation sections again against the "
+        f"same rubrics; {'; '.join(parts)}.\n\n"
+    )
+
+
 def cost_sentence(costs, run_dir, manifest, pilot):
     """Cost and time of the research run, and the pilot's cost."""
     minutes = wallclock_seconds(run_dir, manifest) / 60
@@ -424,6 +447,8 @@ def serving_limitation(manifest):
     """State each model's provider and weight precision, as OpenRouter reported them."""
     notes = {}
     for role in ROLES:
+        if role not in manifest["endpoints"]:
+            continue
         endpoint = manifest["endpoints"][role]["endpoint"]
         name, provider = display_name(manifest["endpoints"][role]), endpoint["provider_name"]
         if endpoint["quantization"] == "unknown":

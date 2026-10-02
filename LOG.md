@@ -332,3 +332,20 @@ checks the ledger, which loses the reserve-settle ordering check. `runs/budget_l
 stays untouched as the record of the earlier runs. With the old corpus restored, `audit-run`
 passes for `meta-blog-seed0` and `pilot-meta-blog-attested`.
 
+## 2026-10-01 — Qwen3.8 Flash as judge, Muse as cross judge
+
+The judge was Muse Spark 1.1 at $1.25/M input and $4.25/M output, and the judge line was about
+$66 of the $105 pre-reserve research estimate: 1,400 grades, each with a ~20k-token paper. The
+owner chose `qwen/qwen3.8-flash` ($0.15/M in, $0.47/M out, `alibaba` endpoint, 1M context),
+which puts the judge line near $8. The blog did not measure this model as a judge; its one
+cheap paper judge was Qwen3.5-27B (+1.38, close to Muse's +1.64).
+
+- New role `cross_judge`, Muse Spark 1.1 at temperature 0. After the freeze it grades the
+  validation sections at P0 and the selected checkpoint against the judge's own rubrics, blind,
+  in a seeded order. `cross_check.json` holds both judges' means and gaps. For the research
+  split that is 176 grades, about $8. The audit re-derives the cross grades and checks they came
+  after the freeze. Old runs have no `cross_judge` role; the audit skips the check for them.
+- Saved `configs/snapshots/qwen_qwen3.8-flash-endpoints.json` from the live listing; the pinned
+  catalog of 2026-09-29 already lists the model.
+- Untested: whether Qwen3.8 Flash sees the gap. The cross-check exists to find out cheaply.
+

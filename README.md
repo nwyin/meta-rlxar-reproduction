@@ -2,8 +2,10 @@
 
 This repository reproduces the Initial Empirical Investigation in
 [Meta's Unslopping AI blog](https://facebookresearch.github.io/RAM/blogs/unslop/).
-Muse Spark 1.1 writes the missing paper sections, generates the rubrics and grades the sections;
-Kimi K2.6 rewrites the rubric meta prompt. The completed run covers 52 sections from 8 training
+Muse Spark 1.1 writes the missing paper sections and generates the rubrics; Qwen3.8 Flash grades
+the sections, and Muse grades the validation sections again at 2 checkpoints as a cross-check;
+Kimi K2.6 rewrites the rubric meta prompt. The completed run used Muse for all 3 Muse roles,
+as the blog did. The completed run covers 52 sections from 8 training
 and 5 validation recent arXiv cs.CL papers, with 7 prompt updates. `data/` now holds a new
 corpus of 56 peer-reviewed papers from 2016 to 2021 across 9 fields (153 sections), built to
 give human references of known quality. No run has used it yet. The owner reviewed all 56 papers together and approved them (see `LOG.md`). [METHOD.md](METHOD.md) describes the data, the procedure, how

@@ -83,7 +83,7 @@ def snapshot_response(request):
 
 
 # Provider tags from configs/models.yaml and the names OpenRouter reports for them.
-PROVIDER_NAMES = {"siliconflow/fp8": "SiliconFlow", "meta": "Meta"}
+PROVIDER_NAMES = {"siliconflow/fp8": "SiliconFlow", "meta": "Meta", "alibaba": "Alibaba"}
 
 
 class FakeProvider:

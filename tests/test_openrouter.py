@@ -88,7 +88,7 @@ def test_invalid_reply_is_repaired_once_with_the_error(tmp_path):
             200,
             json={
                 "model": payload["model"],
-                "provider": "Meta",
+                "provider": "Alibaba",  # the judge's endpoint
                 "usage": {"cost": 0.0001},
                 "choices": [{"finish_reason": "stop", "message": {"content": content}}],
             },

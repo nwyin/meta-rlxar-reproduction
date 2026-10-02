@@ -25,6 +25,7 @@ from xar.pipeline import (
     audit_proposal,
     build_feedback,
     checkpoint_row,
+    cross_checkpoints,
     length_revision_note,
     length_window,
     select_checkpoint,
@@ -322,6 +323,76 @@ def _check_proposals(run, manifest, freeze, train, candidates):
         )
 
 
+def _check_cross(run, manifest, frozen_at, validation, candidates, selected):
+    """Re-derive the cross judge's validation grades at P0 and the selected checkpoint.
+
+    Each grade must come from the cross_judge role with the judge prompt, be sent after the
+    freeze, use the judge's rubric for that section, and re-total; the saved rows and
+    cross_check.json must match. Runs made before the role existed have nothing to check."""
+    roles, endpoints, hashes = manifest["roles"], manifest["endpoints"], manifest["software_hashes"]
+    if "cross_judge" not in roles:
+        return None
+    saved = read_json(run / "cross_check.json")
+    _check(saved["cross_judge"] == roles["cross_judge"], "cross_check.json: cross_judge role differs")
+    entries = {entry["iteration"]: entry for entry in saved["checkpoints"]}
+    _check(sorted(entries) == cross_checkpoints(selected), "cross_check.json: wrong checkpoints")
+    for iteration in cross_checkpoints(selected):
+        rows = []
+        for example in validation:
+            eid = example["example_id"]
+            candidate = candidates[eid]
+            rubric = read_json(run / f"rubrics/main/{iteration}/validation/{eid}/rubric.json")
+            totals = {}
+            for origin, text in (("human", example["reference"]), ("model", candidate["text"])):
+                grade_path = run / f"scores/cross/{iteration}/validation/{eid}/{origin}.json"
+                grade = read_json(grade_path)
+                _check(
+                    grade["judge_configuration"] == roles["cross_judge"], f"{grade_path}: not the cross judge"
+                )
+                payload = audit_saved_output(
+                    grade,
+                    GRADE_SCHEMA,
+                    roles["cross_judge"],
+                    endpoints["cross_judge"],
+                    hashes["prompts/judge.md"],
+                    where=grade_path,
+                )
+                _check_sent_after_freeze(grade, frozen_at, grade_path)
+                expected_input = {**task_data(example), "rubric": rubric["value"], "candidate": text}
+                _check(
+                    json.loads(payload["messages"][1]["content"]) == expected_input,
+                    f"{grade_path}: request input is not the task data, the judge's rubric and {origin} text",
+                )
+                totals[origin] = validate_grade(
+                    grade["value"], rubric["value"], text + " " + example["context"]
+                )
+                _check(grade["total"] == totals[origin], f"{grade_path}: grade arithmetic mismatch")
+            rows.append(
+                {
+                    "example_id": eid,
+                    "paper_id": example["paper_id"],
+                    "section_type": example["section_type"],
+                    "split": "validation",
+                    **totals,
+                    "gap": totals["human"] - totals["model"],
+                    "length_compliant": candidate["length_compliant"],
+                    "contamination_flagged": candidate["contamination"]["flagged"],
+                }
+            )
+        saved_rows = read_json(run / f"scores/cross/{iteration}/validation_rows.json")
+        _check(
+            [r["gap"] for r in saved_rows] == [r["gap"] for r in rows],
+            f"cross checkpoint {iteration}: saved gaps differ from the recomputed ones",
+        )
+        summary = summarize(rows, manifest["arguments"]["seed"])
+        for key in ("human", "model", "gap"):
+            _check(
+                math.isclose(entries[iteration]["cross_judge"][key], summary[key]),
+                f"cross_check.json: {key} at checkpoint {iteration} differs from the recomputed value",
+            )
+    return saved["checkpoints"]
+
+
 def _check_costs(run, manifest):
     """Check every saved request's key and billed cost, and the run's cost file against them.
 
@@ -436,6 +507,7 @@ def audit_xar_run(path):
             f"but the highest training gap is at checkpoint {selected}"
         )
     _check_proposals(run, manifest, freeze, by_split["train"], candidates)
+    cross = _check_cross(run, manifest, frozen_at, by_split["validation"], candidates, selected)
     _check_costs(run, manifest)
     return {
         "manifest": manifest,
@@ -443,6 +515,7 @@ def audit_xar_run(path):
         "table": table,
         "rows": all_rows,
         "candidates": candidates,
+        "cross": cross,
     }
 
 
@@ -454,7 +527,7 @@ def check_manifest_matches_design(manifest, design):
     iterations.
     """
     for role in ROLES:
-        actual = manifest["roles"][role]
+        actual = manifest["roles"].get(role, {})
         expected = role_config(role)
         changed = sorted(
             key for key in expected.keys() | actual.keys() if actual.get(key) != expected.get(key)

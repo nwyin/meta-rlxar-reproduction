@@ -155,14 +155,21 @@ def test_report_from_research_run_and_after_tampering(tmp_path, monkeypatch, des
     settings = run_phase(tmp_path, design, "reproduce", groups, "--concurrency", "4")
     source, runs = Path(settings.output_dir), tmp_path / "runs"
     sections = len(SECTIONS) * sum(len(papers) for papers in groups.values())
+    validation_sections = len(SECTIONS) * len(groups["validation"])
     checkpoints = design["iterations"] + 1
+    # Every checkpoint ties, so P0 is selected and the cross judge grades one checkpoint.
     assert Counter(call_kind(p) for p in fake.payloads) == {
         "writer": sections,
         "rubric": sections * checkpoints,
-        "grade": 2 * sections * checkpoints,
+        "grade": 2 * sections * checkpoints + 2 * validation_sections,
         "optimizer": design["iterations"],
     }
-    assert {p["model"] for p in fake.payloads} == {"meta/muse-spark-1.1", "moonshotai/kimi-k2.6"}
+    assert {p["model"] for p in fake.payloads} == {
+        design[role] for role in ("writer", "optimizer", "judge", "cross_judge")
+    }
+    cross = read_json(source / "cross_check.json")["checkpoints"]
+    assert [entry["iteration"] for entry in cross] == [0]
+    assert cross[0]["judge"]["gap"] == cross[0]["cross_judge"]["gap"] == 1
     output = tmp_path / "report"
     render_report(runs, output)
     assert read_json(output / "audit.json")["state"] == "passed"
@@ -172,6 +179,16 @@ def test_report_from_research_run_and_after_tampering(tmp_path, monkeypatch, des
     assert comparison["reversed"] is False
     assert comparison["paired_improvement"]["interval"]["paper_clusters"] == len(groups["validation"])
     assert (output / "gap_curves.svg").exists()
+    assert "Cross-judge check" in (output / "results.md").read_text()
+    cross_grade_path = next((source / "scores/cross/0/validation").glob("*/human.json"))
+    cross_grade = read_json(cross_grade_path)
+    cross_grade["total"] = 10
+    write_json(cross_grade_path, cross_grade)
+    with pytest.raises(RunError, match="scores/cross/0/validation.*arithmetic"):
+        audit_xar_run(source)
+    cross_grade["total"] = 7
+    write_json(cross_grade_path, cross_grade)
+    audit_xar_run(source)
     grade_path = next((source / "scores/main/0/validation").glob("*/human.json"))
     grade = read_json(grade_path)
     grade["total"] = 10
