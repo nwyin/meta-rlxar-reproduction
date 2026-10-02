@@ -743,3 +743,28 @@ candidates, but the judge applies it mostly to the expert, because the rubrics s
 each section's purpose from the body's framing and the expert's section does not restate it.
 The freer writer changed little: Muse's drafts met the length band more often and still scored
 6.8 at P0. Giving the optimizer the paper did not change what it diagnosed.
+
+## 2026-10-02 — Revise prompts around the reader and section purpose
+
+The owner reviewed and approved revisions to 4 files in `prompts/`, then asked us to commit
+and run the revised prompts once, comparing the results with `meta-blog-v3-seed0`.
+The initial rubric prompt now asks what this section contributes for its intended reader,
+keeps concrete anchors, and distinguishes illustrative details from required inventories.
+The optimizer may improve the gap through either candidate's scores and must identify
+concrete quality contrasts. The judge must justify omission penalties and distinguish
+unverifiable claims from demonstrated errors. The writer again grounds its claims in the
+paper. The rubric wrapper and output schemas stay the same.
+
+These changes test a prompting hypothesis: the earlier rubric rewarded explaining body
+content even when a section's readers needed a different selection. That explanation remains
+untested. The comparison changes several prompts together and cannot isolate their effects.
+
+We changed the run names in `configs/experiments.yaml` to `pilot-meta-blog-v4` and
+`meta-blog-v4-seed0` to preserve the earlier runs. The sweep uses the existing pilot followed
+by 1 research trajectory, seed 0, with 4 prompt updates and 32 concurrent requests. The
+models, providers, data, feedback policy and scoring code stay the same as v3. Confirmation
+data stays unused. We will select the checkpoint on training before evaluating validation.
+
+Before launch, all 63 tests passed and ruff reported no errors. The dry run estimated $0.24
+for the pilot and $8.73 for research, $8.97 in total including the retry reserve. Reports for
+this run go to `reports/meta-blog-v4-seed0/`, preserving the v3 report in `reports/`.
