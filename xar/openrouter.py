@@ -244,15 +244,25 @@ def json_schema_format(schema):
     return {"type": "json_schema", "json_schema": {"name": "xar_output", "strict": True, "schema": schema}}
 
 
-# Added to the system prompt when a structured reply is retried; the audit strips it off again.
+# Added to the system prompt when a structured reply is retried.
 FORMAT_REPAIR = "\nFORMAT REPAIR: Return complete valid JSON matching the schema. "
 MAX_REPAIR_ERROR_CHARS = 500  # validation error length pasted into the repair prompt
 
 
 READ_TIMEOUT_SECONDS = 600
 CONNECT_TIMEOUT_SECONDS = 30
-MAX_SENDS = 4  # one send plus three retries after connection errors or retryable HTTP statuses
+MAX_SENDS = 6  # one send plus 5 retries after connection errors or retryable HTTP statuses
 RETRYABLE_STATUS = {408, 429, 500, 502, 503, 504}
+BACKOFF_SECONDS = (2, 5, 15, 30, 60)  # before the 2nd to 6th send; a longer Retry-After header wins
+MAX_RETRY_AFTER_SECONDS = 120
+
+
+def backoff_seconds(attempt, retry_after=None):
+    """Seconds to wait after failed send `attempt`: the schedule, or a longer Retry-After, capped."""
+    wait = BACKOFF_SECONDS[attempt]
+    if retry_after is not None and retry_after.strip().isdigit():
+        wait = max(wait, min(int(retry_after), MAX_RETRY_AFTER_SECONDS))
+    return wait
 
 
 class OpenRouter:
@@ -279,8 +289,10 @@ class OpenRouter:
         self.dispatch_stopped = threading.Event()
 
     def costs(self):
-        """This run's billed cost and request counts, from the saved sends under output/requests."""
-        total, requests, unresolved = 0.0, 0, 0
+        """This run's billed cost and request counts, from the saved sends under output/requests.
+
+        Sends that got no response are counted as unresolved, with the most they could have cost."""
+        total, requests, unresolved, upper = 0.0, 0, 0, 0.0
         for path in self.output.glob("requests/*/attempt_*.json"):
             sent = read_json(path)
             if sent["status"] == "success":
@@ -288,7 +300,13 @@ class OpenRouter:
                 requests += 1
             elif sent["status"] == "uncertain":
                 unresolved += 1
-        return {"actual_complete_usd": total, "requests": requests, "unresolved": unresolved}
+                upper += sent["upper_usd"]
+        return {
+            "actual_complete_usd": total,
+            "requests": requests,
+            "unresolved": unresolved,
+            "unresolved_upper_usd": upper,
+        }
 
     def payload(self, role, system, data, schema):
         payload = {
@@ -376,9 +394,10 @@ class OpenRouter:
     def _call(self, role, system, data, schema, identity):
         """Send a request at most MAX_SENDS times, recording every send in an attempt file.
 
-        The request is keyed by its payload and identity. On resume, saved attempt files decide what
-        happens: a success is reused, a send with unknown outcome stops the run, and only retryable
-        failures are sent again.
+        The request is keyed by its payload and identity. Saved attempt files decide what happens,
+        on resume too: a success is reused, and a connection error, a retryable HTTP status or a
+        send that got no response is sent again after a wait. A send with no response may have been
+        billed, so it stays on record as uncertain with its cost upper bound (costs() sums them).
         """
         payload = self.payload(role, system, data, schema)
         request_key = digest({"payload": payload, "identity": identity, "schema_version": SCHEMA_VERSION})
@@ -405,12 +424,7 @@ class OpenRouter:
                 prior = read_json(attempt_file)
                 if prior["status"] == "success":
                     return self._accept(prior["response"], role, attempt_file)
-                if prior["status"] == "uncertain":
-                    raise UncertainSend(
-                        f"Send outcome unresolved: {attempt_file} may have been billed but has no response; "
-                        "check the OpenRouter activity log before retrying"
-                    )
-                if not prior.get("retryable"):
+                if prior["status"] != "uncertain" and not prior.get("retryable"):
                     raise RunError(f"An earlier {role} send failed and cannot be retried; see {attempt_file}")
                 continue
             if self.dispatch_stopped.is_set():
@@ -423,16 +437,25 @@ class OpenRouter:
             if self.key:
                 headers["Authorization"] = "Bearer " + self.key
             started = time.monotonic()
+            retry_after = None
             try:
                 response = self.client.post(API_BASE + "/chat/completions", json=payload, headers=headers)
-            except (httpx.ConnectError, httpx.ConnectTimeout):
+            except (httpx.ConnectError, httpx.ConnectTimeout, httpx.PoolTimeout):
                 # The connection never opened, so nothing was sent or billed.
                 write_json(attempt_file, {"status": "connect_error", "retryable": True, "timestamp": now()})
-            except (httpx.ReadTimeout, httpx.WriteTimeout, httpx.RemoteProtocolError):
-                raise UncertainSend(
-                    f"The {role} request was sent but got no response, so whether it was billed is unknown. "
-                    f"Check the OpenRouter activity log ({attempt_file})"
-                ) from None
+            except (httpx.TimeoutException, httpx.NetworkError, httpx.RemoteProtocolError) as error:
+                # Sent, but no response came back. OpenRouter may still have billed it, at most
+                # upper_usd, so the send stays on record as uncertain and the request goes out again.
+                write_json(
+                    attempt_file,
+                    {
+                        "status": "uncertain",
+                        "sent_at": sent_at,
+                        "upper_usd": max_cost,
+                        "error": f"{type(error).__name__}: {error}",
+                        "timestamp": now(),
+                    },
+                )
             else:
                 try:
                     raw = response.json()
@@ -458,8 +481,11 @@ class OpenRouter:
                     raise RunError(
                         f"OpenRouter returned HTTP {response.status_code} for {role}; see {attempt_file}"
                     )
+                retry_after = response.headers.get("Retry-After")
             if attempt < MAX_SENDS - 1:
-                time.sleep(2**attempt)  # 1, 2 and 4 seconds
+                wait = backoff_seconds(attempt, retry_after)
+                print(f"Retryable failure for {role} (see {attempt_file.name}); waiting {wait} s", flush=True)
+                time.sleep(wait)
         raise RunError(f"{role} request failed {MAX_SENDS} times with retryable errors; see {directory}")
 
     def _accept(self, raw, role, attempt_file):

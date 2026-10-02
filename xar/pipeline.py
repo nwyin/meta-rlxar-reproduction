@@ -40,8 +40,7 @@ from xar.util import (
     write_table,
 )
 
-# Output schemas. Their canonical JSON is part of every request key, so the saved runs only
-# re-audit while these produce exactly the same schemas.
+# Output schemas. Their canonical JSON is part of every request key.
 TEXT = {"type": "string", "minLength": 1}
 SCORE = {"type": "number", "minimum": 0, "maximum": 10}
 
@@ -331,8 +330,7 @@ def audit_proposal(text, examples, initial_prompt, max_words):
 
     Rejects a prompt that is longer than max_words, matches PROPOSAL_RED_FLAGS, names a training
     paper or its authors, or copies SPAN consecutive words from a training paper (unless the
-    initial prompt already contains them). The completed-run audit recomputes this result and
-    compares it with the saved one, so its output must not change."""
+    initial prompt already contains them)."""
     word_count = words(text)
     reasons, flags = [], []
     if word_count > max_words:
@@ -432,8 +430,7 @@ def build_feedback(examples, candidates, rows, current_prompt, failure_count, po
     """The optimizer's input: the current prompt, its training summary, and the training sections
     the policy selects, with their rubrics and grades.
 
-    Only training examples may appear. The completed-run audit rebuilds this and compares it
-    with the saved feedback, so the output for a given policy must not change."""
+    Only training examples may appear."""
     if policy not in FEEDBACK_POLICIES:
         raise RunError(f"Unknown feedback_policy {policy!r}; expected one of {', '.join(FEEDBACK_POLICIES)}")
     not_training = sorted({x["example_id"] for x in [*examples, *rows] if x["split"] != "train"})
@@ -593,8 +590,7 @@ def optimize_on_training(api, settings, train, candidates, initial):
 def freeze_selection(output, prompts, train_summaries):
     """Select the checkpoint with the best training gap and record it in freeze.json.
 
-    Called before any validation request: the audit checks that every validation request was
-    sent after frozen_at, which shows that validation scores played no part in the choice."""
+    Called before any validation request, so selection uses training scores alone."""
     gaps = [summary["gap"] for summary in train_summaries]
     selected = select_checkpoint(gaps)
     path = Path(output) / "freeze.json"

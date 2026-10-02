@@ -7,7 +7,7 @@ max_meta_prompt_words: 800
 failure_examples: 24
 # How the optimizer's feedback is picked; see FEEDBACK_POLICIES in xar/pipeline.py.
 feedback_policy: failing_gap_without_paper
-concurrency: 4
+concurrency: 16
 # The completed run meta-blog-seed0 and its pilot pilot-meta-blog-attested are read-only evidence.
 pilot_run: pilot-meta-blog-v2
 research_run: meta-blog-v2-seed0

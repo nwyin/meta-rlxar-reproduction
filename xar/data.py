@@ -125,8 +125,7 @@ def contamination(candidate, reference):
         "longest_verbatim_run_words": longest,
         "eightgram_overlap_fraction": shared / max(1, len(candidate_ngrams)),
         "flagged": longest >= VERBATIM_FLAG_WORDS,
-        # Always False: flagged candidates are reported, not dropped. The key stays because the
-        # completed-run audit compares this whole dict with the saved one.
+        # Flagged candidates are reported, not dropped.
         "exclusion": False,
     }
 

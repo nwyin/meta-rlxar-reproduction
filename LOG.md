@@ -349,3 +349,89 @@ cheap paper judge was Qwen3.5-27B (+1.38, close to Muse's +1.64).
   catalog of 2026-09-29 already lists the model.
 - Untested: whether Qwen3.8 Flash sees the gap. The cross-check exists to find out cheaply.
 
+
+## 2026-10-02 — Pilot stopped for speed; judge thinking budget, backoff and concurrency
+
+We started `pilot-meta-blog-v2` at concurrency 4 and stopped it after 7 minutes, during
+validation scoring, at the owner's request. The judge grades took 121 seconds each on average
+(maximum 186), because Qwen3.8 Flash spent about 8,800 reasoning tokens a grade with no budget
+set; the writer took 7 seconds a section and the rubric generator 11. At that rate the research
+run would take about 13 hours at concurrency 4, almost all of it judging. The stopped run is
+kept as `runs/pilot-meta-blog-v2-stopped`: 45 billed requests, $0.81, plus 4 judge sends that
+were in flight when we killed the process and may have been billed, at most $0.016 each. Its
+training gaps were −2.83 at P0 and −1.88 at P1, on 4 sections, so they say little.
+
+Three changes, so the next pilot runs under the settings the research run will use:
+
+- `configs/models.yaml`: the judge's reasoning is now a 4,096-token thinking budget
+  (`reasoning.max_tokens`) instead of unbounded. The catalog lists Qwen3.8 Flash as supporting
+  a reasoning token budget and no effort levels. This changes the judge, not only its speed;
+  the pilot's Muse cross-check is the first evidence on whether the budgeted judge agrees with a
+  stronger one.
+- `configs/experiments.yaml`: `concurrency` 4 → 16. Concurrency is not part of the settings
+  hash, and the manifest records the value used.
+- `xar/openrouter.py`: a retryable failure (connection error, 408, 429, 5xx) is now sent again
+  up to 5 times with waits of 2, 5, 15, 30 and 60 seconds, or a longer Retry-After up to 120
+  seconds, instead of 3 retries with 1, 2 and 4 second waits. Higher concurrency makes rate
+  limits likelier, and a failed send stops the whole run.
+
+The 2nd pilot, at concurrency 16, stopped 24 seconds in with
+`[SSL: SSLV3_ALERT_BAD_RECORD_MAC]` on the 14th writer send, a TLS read error. We kept it as
+`runs/pilot-meta-blog-v2-ssl`: 13 billed writer sends, and 1 send with no response that may have
+been billed, at most $0.24. The code treated a send with no response as fatal and refused to
+resume past it, to never pay twice, and the audit rejected any request with more than one send.
+That rule made a run of 2,420 requests unable to survive one dropped response, so we changed
+it:
+
+- A send that gets no response (timeout, read or write error, broken connection) is saved as
+  `uncertain` with the error and its cost upper bound, then sent again after the backoff, on
+  resume too. The double charge is bounded by that upper bound per lost response.
+- `costs.json` gains `unresolved_upper_usd`, the sum of those bounds, and the report states
+  the count and the bound. `UncertainSend` now only covers a response without a billed cost.
+- The audit allows recorded failures before a request's final successful send, and checks
+  `costs.json` against the unresolved count and bound. The earlier audit rejected every retried
+  request, so it would have failed any run that hit a 429. With the old corpus restored,
+  `audit-run` still passes for `meta-blog-seed0` and `pilot-meta-blog-attested`.
+
+## 2026-10-01 — Remove the completed-run audit
+
+We removed `xar/audit.py`, `audit-run`, and the pilot audit gate at the owner's request.
+Reporting now loads saved score rows and the saved checkpoint selection. It uses the run's
+seed for statistics and accepts historical runs independently of the current dataset and
+model settings. Reports no longer produce `audit.json` or claim to verify raw responses.
+The live pipeline still validates model outputs and checks optimizer proposals.
+
+We removed the audit tests and updated the report test to cover loading saved results after
+an individual grade file is removed. We left the run evidence and existing reports untouched.
+
+All 60 tests pass, and Ruff passes. We loaded `runs/meta-blog-seed0` with the new loader
+and compared its checkpoint means with its saved CSV; they match. This check only read the
+completed run. We made no API calls and spent nothing.
+
+## 2026-10-02 — MiMo-V2.6-Flash as optimizer
+
+The 3rd pilot finished in 14 minutes for $1.71 with no retries. Kimi K2.6 took 322 seconds for
+its one rewrite, 8,694 of its 9,383 output tokens reasoning, which is longer than the
+checkpoint's scoring that followed it. The research run makes 4 such calls one after another.
+At the owner's request the optimizer is now `xiaomi/mimo-v2.6-flash` on the `xiaomi/fp8`
+endpoint ($0.14/M in, $0.28/M out, 1M context), with reasoning enabled as Kimi had. We saved
+`configs/snapshots/xiaomi_mimo-v2.6-flash-endpoints.json` from the live listing; the pinned
+catalog of 2026-09-29 lists the model. Of its 6 endpoints, `novita/fp8` lacks
+`structured_outputs` and `venice/fp8` lacks `response_format`, which the optimizer request
+needs; we chose the model's own provider over `deepinfra/fp8`, `gmicloud/bf16` and the cheaper
+`darkbloom/fp4`.
+
+- The optimizer line falls from about $0.80 to about $0.07 for the research run; the estimate
+  is $69.20 with the retry reserve. The speed gain is untested until the next run.
+- MiMo has no pinned tokenizer, so its requests are counted as UTF-8 bytes, an over-estimate;
+  the dry run's feedback fit check passes against its 1M context. The corpus sizing rule still
+  counts with the Kimi and Qwen tokenizers, as frozen with the corpus.
+- Untested: whether MiMo's rewrites are as good as Kimi's. The blog does not say what model
+  optimized its meta prompt. Nothing in the pipeline measures optimizer quality except the
+  training gap it produces, so a weaker optimizer shows up as a flatter curve.
+
+Pilot results, 4 training and 4 validation sections: training gap −2.08 at P0 and −0.46 at P1,
+P1 selected; validation gap −0.83 at both checkpoints under Qwen3.8 Flash, and −1.46 then
+−0.58 under the Muse cross judge. Judge grades took 41 seconds each with the 4,096-token
+thinking budget, using about 2,100 reasoning tokens. 1 of 49 judge replies needed a format
+repair.

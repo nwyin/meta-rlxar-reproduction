@@ -9,10 +9,15 @@ models:
     reasoning:
       enabled: true
     max_tokens: 16384
+  xiaomi/mimo-v2.6-flash:
+    provider: xiaomi/fp8
+    reasoning:
+      enabled: true
+    max_tokens: 16384
   qwen/qwen3.8-flash:
     provider: alibaba
     reasoning:
-      enabled: true
+      max_tokens: 4096  # thinking budget; unbounded, the judge spent ~8,800 reasoning tokens a grade
     max_tokens: 16384
 # The judge is Qwen3.8 Flash, chosen for cost; the blog judged with Muse. cross_judge grades the
 # validation sections again with Muse at P0 and the selected checkpoint, after the freeze.
@@ -24,7 +29,7 @@ roles:
     model: meta/muse-spark-1.1
     temperature: 0.2
   optimizer:
-    model: moonshotai/kimi-k2.6
+    model: xiaomi/mimo-v2.6-flash
     temperature: 0.7
   judge:
     model: qwen/qwen3.8-flash

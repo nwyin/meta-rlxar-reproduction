@@ -32,7 +32,7 @@ class RunError(RuntimeError):
 
 
 class UncertainSend(RunError):
-    """A request was sent but its outcome or cost is unknown; sending again could pay twice."""
+    """A response came back without a usable billed cost, so what the run paid is unknown."""
 
 
 class InvalidOutput(RunError):

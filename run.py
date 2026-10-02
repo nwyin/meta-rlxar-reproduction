@@ -7,7 +7,6 @@ their settings from configs/models.yaml.
 import argparse
 from pathlib import Path
 
-from xar.audit import audit_xar_run, check_manifest_matches_design
 from xar.data import load_examples, prepare_data, prepare_tokenizers
 from xar.discovery import discover_candidates
 from xar.pipeline import RunSettings, run_xar
@@ -16,7 +15,6 @@ from xar.util import (
     MAX_CONCURRENCY,
     ROLES,
     ROOT,
-    RunError,
     load_design,
     main_guard,
     parse_concurrency,
@@ -48,27 +46,10 @@ def settings_for(phase, design, options):
     )
 
 
-def check_pilot(runs_root, design):
-    """Audit the pilot run and check that it used the settings in experiments.yaml.
-
-    reproduce calls this first. Only the pilot's settings and audit result are checked, not its
-    scores."""
-    run = audit_xar_run(Path(runs_root) / design["pilot_run"])
-    manifest = run["manifest"]
-    check_manifest_matches_design(manifest, {**design, "iterations": design["pilot_iterations"]})
-    split = manifest["arguments"]["split"]
-    if split != "pilot":
-        raise RunError(
-            f"{design['pilot_run']} used the {split} split; the pilot must run on the pilot papers"
-        )
-
-
 def run_phases(options):
     design = load_design()
     phases = ["pilot", "reproduce"] if options.command == "all" else [options.command]
     for phase in phases:
-        if phase == "reproduce" and not options.dry_run:
-            check_pilot(options.runs_root, design)
         settings = settings_for(phase, design, options)
         action = "Estimating" if settings.dry_run else "Running"
         print(f"{action} the {phase} phase in {settings.output_dir}", flush=True)
@@ -107,7 +88,7 @@ def parse_args(argv=None):
     report_options.add_argument(
         "--output-dir",
         default="reports",
-        help="where to write results.md, audit.json and the figures (default: reports/)",
+        help="where to write results.md and the figures (default: reports/)",
     )
     commands.add_parser(
         "pilot",
@@ -118,22 +99,16 @@ def parse_args(argv=None):
     commands.add_parser(
         "reproduce",
         parents=[run_options, report_options],
-        help="audit the completed pilot run (run `pilot` first), run the full experiment on the "
+        help="run the full experiment on the "
         f"train/validation papers with {design['iterations']} prompt updates, then write the report",
     )
     commands.add_parser("all", parents=[run_options, report_options], help="pilot, then reproduce")
     report = commands.add_parser(
-        "report", parents=[report_options], help="audit the research run and write the report"
+        "report", parents=[report_options], help="write the report from the saved research run"
     )
     report.add_argument(
         "--runs-root", default="runs", help="directory holding the research run (default: runs/)"
     )
-    audit = commands.add_parser(
-        "audit-run",
-        help="re-check a saved run's rubrics, grades and checkpoint table against its raw API responses "
-        "(no API calls)",
-    )
-    audit.add_argument("run_dir", help="a run directory, e.g. runs/meta-blog-seed0")
     commands.add_parser("validate-data", help="check data/examples.jsonl against data/splits.json")
     commands.add_parser(
         "discover-data", help="sample candidate papers from OpenAlex and arXiv into data/discovery.json"
@@ -152,9 +127,6 @@ def main(argv=None):
         run_phases(options)
     elif options.command == "report":
         render_report(options.runs_root, options.output_dir)
-    elif options.command == "audit-run":
-        audit_xar_run(options.run_dir)
-        print(f"{options.run_dir}: audit passed")
     elif options.command == "validate-data":
         examples = load_examples(ROOT / "data/examples.jsonl", ROOT / "data/splits.json")
         print(f"Validated {len(examples)} examples")

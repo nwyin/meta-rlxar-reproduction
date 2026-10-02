@@ -83,7 +83,12 @@ def snapshot_response(request):
 
 
 # Provider tags from configs/models.yaml and the names OpenRouter reports for them.
-PROVIDER_NAMES = {"siliconflow/fp8": "SiliconFlow", "meta": "Meta", "alibaba": "Alibaba"}
+PROVIDER_NAMES = {
+    "siliconflow/fp8": "SiliconFlow",
+    "meta": "Meta",
+    "alibaba": "Alibaba",
+    "xiaomi/fp8": "Xiaomi",
+}
 
 
 class FakeProvider:
@@ -94,12 +99,16 @@ class FakeProvider:
 
     def __init__(self):
         self.payloads = []
+        self.drop_responses = 0  # chat requests whose response is lost after the send
 
     def handle(self, request):
         if request.method == "GET":
             return httpx.Response(200, json=snapshot_response(request))
         payload = json.loads(request.content)
         self.payloads.append(payload)
+        if self.drop_responses:
+            self.drop_responses -= 1
+            raise httpx.ReadError("[SSL: SSLV3_ALERT_BAD_RECORD_MAC] bad record mac")
         assert payload["provider"]["allow_fallbacks"] is False
         assert payload["provider"]["require_parameters"] is True
         assert len(payload["provider"]["only"]) == 1

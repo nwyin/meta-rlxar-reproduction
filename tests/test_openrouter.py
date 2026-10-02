@@ -5,7 +5,10 @@ import json
 import httpx
 import pytest
 
+from xar import openrouter
 from xar.openrouter import (
+    BACKOFF_SECONDS,
+    MAX_SENDS,
     MODEL_CATALOG,
     PRICING_HEADROOM,
     SNAPSHOTS,
@@ -35,23 +38,75 @@ def test_check_model_allowed_rejects_excluded_families_and_routers():
             check_model_allowed(model)
 
 
-def test_timeout_is_never_resent_and_blocks_later_calls(tmp_path):
+def test_a_send_with_no_response_is_recorded_and_sent_again(tmp_path, monkeypatch):
+    waits = []
+    monkeypatch.setattr(openrouter.time, "sleep", waits.append)
     sends = []
 
     def handler(request):
         sends.append(request)
-        raise httpx.ReadTimeout("timed out")
+        if len(sends) == 1:
+            raise httpx.ReadTimeout("timed out")
+        if len(sends) == 2:
+            raise httpx.ReadError("[SSL: SSLV3_ALERT_BAD_RECORD_MAC] bad record mac")
+        payload = json.loads(request.content)
+        return httpx.Response(
+            200,
+            json={
+                "model": payload["model"],
+                "provider": "Meta",
+                "usage": {"cost": 0.25},
+                "choices": [{"finish_reason": "stop", "message": {"content": "ok"}}],
+            },
+        )
 
     api = mock_api(tmp_path, "writer", handler)
-    with pytest.raises(UncertainSend, match="unknown"):
-        api.call("writer", "Instructions", {"paper": "first"}, None, "first")
-    with pytest.raises(UncertainSend, match="unresolved"):
-        api.call("writer", "Instructions", {"paper": "first"}, None, "first")
-    with pytest.raises(RunError, match="Not sent"):
-        api.call("writer", "Instructions", {"paper": "second"}, None, "second")
-    assert len(sends) == 1
-    # The timed-out send stays on record as unresolved, and nothing was billed for certain.
-    assert api.costs() == {"actual_complete_usd": 0.0, "requests": 0, "unresolved": 1}
+    result = api.call("writer", "Instructions", {"paper": "first"}, None, "first")
+    assert result["content"] == "ok" and len(sends) == 3
+    assert waits == [BACKOFF_SECONDS[0], BACKOFF_SECONDS[1]]
+    attempts = [read_json(f) for f in sorted(tmp_path.glob("run/requests/*/attempt_*.json"))]
+    assert [a["status"] for a in attempts] == ["uncertain", "uncertain", "success"]
+    assert attempts[0]["error"].startswith("ReadTimeout") and attempts[1]["error"].startswith("ReadError")
+    # The two sends without a response may have been billed, up to their cost bound each.
+    costs = api.costs()
+    assert costs["actual_complete_usd"] == 0.25 and costs["requests"] == 1 and costs["unresolved"] == 2
+    assert costs["unresolved_upper_usd"] == pytest.approx(2 * attempts[0]["upper_usd"])
+
+
+def test_resume_sends_again_after_a_send_that_was_in_flight(tmp_path, monkeypatch):
+    monkeypatch.setattr(openrouter.time, "sleep", lambda seconds: None)
+    api = mock_api(tmp_path, "writer", lambda request: httpx.Response(429, json={"error": {}}))
+    with pytest.raises(RunError, match=f"failed {MAX_SENDS} times"):
+        api.call("writer", "Instructions", {"paper": "text"}, None, "task")
+    directory = next(tmp_path.glob("run/requests/*"))
+    # Make the record look like a process that died mid-send: one placeholder without a response.
+    for attempt in sorted(directory.glob("attempt_*.json"))[1:]:
+        attempt.unlink()
+    (directory / "attempt_0.json").write_text(
+        json.dumps({"status": "uncertain", "sent_at": "t", "upper_usd": 0.1})
+    )
+
+    def handler(request):
+        payload = json.loads(request.content)
+        return httpx.Response(
+            200,
+            json={
+                "model": payload["model"],
+                "provider": "Meta",
+                "usage": {"cost": 0.05},
+                "choices": [{"finish_reason": "stop", "message": {"content": "ok"}}],
+            },
+        )
+
+    resumed = mock_api(tmp_path, "writer", handler)
+    result = resumed.call("writer", "Instructions", {"paper": "text"}, None, "task")
+    assert result["raw_response"].endswith("attempt_1.json")
+    assert resumed.costs() == {
+        "actual_complete_usd": 0.05,
+        "requests": 1,
+        "unresolved": 1,
+        "unresolved_upper_usd": 0.1,
+    }
 
 
 def test_costs_sum_the_billed_sends_and_reject_a_missing_cost(tmp_path):
@@ -72,7 +127,12 @@ def test_costs_sum_the_billed_sends_and_reject_a_missing_cost(tmp_path):
     api = mock_api(tmp_path, "writer", handler)
     api.call("writer", "Instructions", {"paper": "first"}, None, "first")
     api.call("writer", "Instructions", {"paper": "second"}, None, "second")
-    assert api.costs() == {"actual_complete_usd": 0.75, "requests": 2, "unresolved": 0}
+    assert api.costs() == {
+        "actual_complete_usd": 0.75,
+        "requests": 2,
+        "unresolved": 0,
+        "unresolved_upper_usd": 0.0,
+    }
     with pytest.raises(UncertainSend, match="usage.cost"):
         api.call("writer", "Instructions", {"paper": "third"}, None, "third")
 
@@ -135,3 +195,41 @@ def test_preflight_accepts_price_changes_up_to_the_headroom(tmp_path, factor, ac
     else:
         with pytest.raises(RunError, match="completion price .* is above the allowed"):
             api.preflight()
+
+
+def test_rate_limits_wait_out_the_backoff_or_a_longer_retry_after(tmp_path, monkeypatch):
+    waits = []
+    monkeypatch.setattr(openrouter.time, "sleep", waits.append)
+    replies = iter([(429, {"Retry-After": "20"}), (429, {}), (503, {"Retry-After": "oops"})])
+
+    def handler(request):
+        for status, headers in replies:
+            return httpx.Response(status, headers=headers, json={"error": {"message": "busy"}})
+        payload = json.loads(request.content)
+        return httpx.Response(
+            200,
+            json={
+                "model": payload["model"],
+                "provider": "Meta",
+                "usage": {"cost": 0.01},
+                "choices": [{"finish_reason": "stop", "message": {"content": "ok"}}],
+            },
+        )
+
+    api = mock_api(tmp_path, "writer", handler)
+    result = api.call("writer", "Instructions", {"paper": "text"}, None, "task")
+    assert result["content"] == "ok" and result["raw_response"].endswith("attempt_3.json")
+    # Retry-After wins over the schedule when it is longer; a non-numeric header is ignored.
+    assert waits == [20, BACKOFF_SECONDS[1], BACKOFF_SECONDS[2]]
+    statuses = [read_json(f)["status"] for f in sorted(tmp_path.glob("run/requests/*/attempt_*.json"))]
+    assert statuses == ["http_error", "http_error", "http_error", "success"]
+
+
+def test_a_request_fails_after_the_last_retry(tmp_path, monkeypatch):
+    waits = []
+    monkeypatch.setattr(openrouter.time, "sleep", waits.append)
+    api = mock_api(tmp_path, "writer", lambda request: httpx.Response(429, json={"error": {}}))
+    with pytest.raises(RunError, match=f"failed {MAX_SENDS} times"):
+        api.call("writer", "Instructions", {"paper": "text"}, None, "task")
+    assert waits == list(BACKOFF_SECONDS)
+    assert openrouter.backoff_seconds(0, "600") == openrouter.MAX_RETRY_AFTER_SECONDS

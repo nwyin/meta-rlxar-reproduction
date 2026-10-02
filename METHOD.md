@@ -107,9 +107,9 @@ URLs and HTML hash, so anyone can pull the pages again and check them.
 | --- | --- | --- | --- | --- | --- | --- |
 | Writer | Muse Spark 1.1 | meta/muse-spark-1.1-20260709 | meta | 0.7 | effort medium | 16,384 |
 | Rubric generator | Muse Spark 1.1 | meta/muse-spark-1.1-20260709 | meta | 0.2 | effort medium | 16,384 |
-| Judge | Qwen3.8 Flash | qwen/qwen3.8-flash-20260826 | alibaba | 0 | enabled | 16,384 |
+| Judge | Qwen3.8 Flash | qwen/qwen3.8-flash-20260826 | alibaba | 0 | budget 4,096 tokens | 16,384 |
 | Cross judge | Muse Spark 1.1 | meta/muse-spark-1.1-20260709 | meta | 0 | effort medium | 16,384 |
-| Optimizer | Kimi K2.6 | moonshotai/kimi-k2.6-20260420 | siliconflow/fp8 | 0.7 | enabled | 16,384 |
+| Optimizer | MiMo-V2.6-Flash | xiaomi/mimo-v2.6-flash-20260921 | xiaomi/fp8 | 0.7 | enabled | 16,384 |
 
 The completed run `meta-blog-seed0` judged with Muse Spark 1.1, as the blog did. The judge is now
 Qwen3.8 Flash, at about an 8th of Muse's price per token, and the judge is the largest cost: 2
@@ -147,17 +147,17 @@ in `prompts/`: `writer.md`, `rubric_initial.md` (the initial meta prompt), `rubr
    once more with the error appended. If the second reply fails too, that rubric or grade is
    missing.
 
-4. Feedback. After a checkpoint is scored on the training sections, Kimi gets the current
+4. Feedback. After a checkpoint is scored on the training sections, the optimizer gets the current
    meta prompt, the training summary (author and model means, the gap, its interval and the
    gap per section type), the gap of every training section, and the failing sections: those
    with a gap of zero or less, lowest first, ties broken by example ID, up to 24. Each of
    those comes with both sections, the rubric and both grades, but not the paper, so that
-   many failures fit in one request. Kimi never sees validation sections or scores. The
+   many failures fit in one request. The optimizer never sees validation sections or scores. The
    completed run `meta-blog-seed0` used the earlier policy: the 4 lowest-gap sections, each
    with the paper. `feedback_policy` in `configs/experiments.yaml` names the policy and the
-   run manifest records it, so the audit rebuilds each run's feedback with its own policy.
+   run manifest records it.
 
-5. Optimize. Kimi returns a new meta prompt of at most 800 words and a rationale. A
+5. Optimize. The optimizer returns a new meta prompt of at most 800 words and a rationale. A
    pattern check rejects a proposal that is too long; tells the rubric to prefer the author's
    section, penalize the model's or work out who wrote it; overrides the wrapper or changes
    the weighting or the 0-10 scale; names a training paper, its title or an author; or copies
@@ -174,8 +174,7 @@ in `prompts/`: `writer.md`, `rubric_initial.md` (the initial meta prompt), `rubr
 7. Select, then validate. After the last update, the checkpoint with the highest mean
    training gap is selected, the earliest one on a tie. The choice and the hash of every
    checkpoint's prompt are written to `freeze.json`. Only then does the run generate rubrics
-   and grades for the validation sections, at every checkpoint. The audit checks that every
-   validation request was sent after `freeze.json` was written.
+   and grades for the validation sections, at every checkpoint.
 
 8. Cross-judge. Muse Spark 1.1 grades the validation sections again at P0 and the selected
    checkpoint, against the same rubrics the judge used, blind and in a seeded random order as in
@@ -188,9 +187,8 @@ Independent sections and checkpoint evaluations run four at a time. The drafts f
 section and the optimizer updates run in order.
 
 Before the research run, `run.py pilot` runs the same pipeline on the first two training papers (one
-acts as training, one as validation) with one update. `run.py reproduce` first audits the pilot and
-checks that it used the same models and settings. The pilot's scores are not used for
-anything.
+acts as training, one as validation) with one update. `run.py reproduce` runs independently.
+The pilot's scores stay separate from the research run.
 
 ## Metric
 
@@ -217,10 +215,10 @@ file stays as the record of the earlier runs.
 
 Every request has a worst-case cost: its counted input tokens times 1.25, plus 1,024 tokens
 for the chat template, plus the maximum output, at the endpoint's highest listed price plus
-25%. Kimi's tokens are counted with its official tokenizer. Muse's tokenizer is not public,
-so its input is counted as UTF-8 bytes, which is more than the token count. The audit checks
-that no billed cost exceeded it. A request that might not fit the endpoint's context stops the
-run; papers are never truncated.
+25%. Kimi's tokens are counted with its official tokenizer. Muse's, Qwen3.8 Flash's and
+MiMo's tokenizers are not pinned locally, so their input is counted as UTF-8 bytes, which is
+more than the token count. A request that might not fit the endpoint's context stops the run;
+papers are never truncated.
 
 If a request was sent but no response came back, or the response has no cost, the run stops,
 because whether it was billed is unknown. Such a request is never resent automatically.
@@ -231,7 +229,11 @@ model now points to a different release, the provider no longer supports a setti
 sends, the context shrank, the quantization changed or a price rose by more than 25%.
 
 Each request names a single provider with fallbacks turned off, and a response from any other
-model or provider stops the run. Every request, response and cost is saved in the run
+model or provider stops the run. A connection error, a retryable status (408, 429, 5xx) or a
+send that gets no response (a timeout or a broken connection) is sent again up to 5 times,
+waiting 2, 5, 15, 30 and 60 seconds, or longer if a Retry-After header asks, up to 120
+seconds. A send with no response may still have been billed, so it stays on record as
+unresolved with its cost upper bound; `costs.json` counts them. Every request, response and cost is saved in the run
 directory. `--resume` reuses saved responses, and refuses to continue if the code, prompts,
 data or any setting other than the concurrency has changed.
 
@@ -263,8 +265,9 @@ these choices:
 - Selection: the best training gap, chosen before any validation request.
 - Length: ±15% of the author's word count, with up to two revisions.
 - Proposal check: the pattern check in step 5.
-- Serving: Kimi runs on SiliconFlow in FP8. The blog does not say what precision or
-  weights it used, and Meta does not publish the precision of its Muse endpoint.
+- Serving: MiMo runs on Xiaomi's own endpoint in FP8, and Qwen3.8 Flash on Alibaba's. The
+  blog does not say what precision or weights it used, and Meta does not publish the precision
+  of its Muse endpoint.
 
 ## Limitations
 

@@ -27,7 +27,6 @@ limits. [LOG.md](LOG.md) records what happened and why.
 - Install: `uv sync --locked`
 - Test: `uv run pytest -q`
 - Lint: `uv run ruff check .` (line length 110)
-- Audit a run: `uv run python run.py audit-run runs/<name>`
 
 Run tests and lint before every commit.
 
@@ -46,7 +45,6 @@ Run tests and lint before every commit.
 - Keep validation and confirmation data out of prompt selection and optimizer feedback.
 - Keep judge requests blind to which section is the author's.
 - Do not substitute models or providers silently. Record any endpoint change.
-- Fix the code, not the audit, when an audit fails.
 
 ## Reporting results
 

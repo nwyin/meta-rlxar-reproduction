@@ -11,8 +11,7 @@ def test_report_ignores_other_runs_until_research_starts(tmp_path):
     output.mkdir()
     (output / "gap_curves.png").write_text("left over from an earlier report")
     render_report(tmp_path / "runs", output)
-    audit = read_json(output / "audit.json")
-    assert audit["state"] == "not_started" and audit["error"] is None
+    assert not (output / "audit.json").exists()
     assert read_json(output / "blog_comparison.json")["reproduction"] is None
     assert "has not started" in (output / "results.md").read_text()
     assert not (output / "gap_curves.png").exists()

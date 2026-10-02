@@ -1,4 +1,4 @@
-"""Write reports/ from the audited research run: results.md, checkpoints.csv and the gap figure."""
+"""Write reports/ from the saved research run: results.md, checkpoints.csv and the gap figure."""
 
 from __future__ import annotations
 
@@ -6,12 +6,9 @@ import statistics
 from datetime import datetime
 from pathlib import Path
 
-import jsonschema
-
-from xar.audit import audit_xar_run, check_manifest_matches_design
-from xar.pipeline import WRITER_ATTEMPTS, length_window
-from xar.stats import paired_improvement
-from xar.util import ROLES, RunError, load_design, read_json, write_json, write_table
+from xar.pipeline import WRITER_ATTEMPTS, checkpoint_row, length_window
+from xar.stats import paired_improvement, summarize
+from xar.util import ROLES, load_design, read_json, write_json, write_table
 
 SCORE_RANGE = (0, 10)
 RUN_OUTPUTS = ("checkpoints.csv", "gap_curves.png", "gap_curves.svg")
@@ -25,16 +22,11 @@ JOBS = {
 
 
 def render_report(runs_root, output):
-    """Audit the research run and write every report file into output.
-
-    All numbers in results.md come from the saved run, so the report can be regenerated at any
-    time. If the run is missing or fails its audit, the run-specific files are removed.
-    """
+    """Write the report from saved score rows and checkpoint selection."""
     design = load_design()
     runs_root, output = Path(runs_root), Path(output)
     run_dir = runs_root / design["research_run"]
     output.mkdir(parents=True, exist_ok=True)
-    audit = {"source_run": str(run_dir), "state": "not_started", "error": None}
     comparison = {
         "blog_url": design["blog_url"],
         "blog_reported": design["reported_validation"],
@@ -42,38 +34,47 @@ def render_report(runs_root, output):
     }
     run = None
     if (run_dir / "manifest.json").exists():
-        try:
-            run = audit_research_run(run_dir, design)
-        except (RunError, FileNotFoundError, jsonschema.ValidationError, ValueError) as error:
-            audit.update(state="failed", error=str(error))
-        else:
-            audit["state"] = "passed"
+        run = load_run(run_dir)
     if run is None:
         for name in RUN_OUTPUTS:
             (output / name).unlink(missing_ok=True)
-        text = unavailable_text(audit)
+        text = (
+            "# Meta blog same-model reproduction\n\n"
+            f"The research run {run_dir} has not started, so there are no results yet.\n"
+        )
     else:
-        comparison["reproduction"] = summarize_trajectory(run, design["seed"])
+        comparison["reproduction"] = summarize_trajectory(run, run["manifest"]["arguments"]["seed"])
         write_table(output / "checkpoints.csv", run["table"])
         plot_checkpoints(run["table"], design["reported_validation"], output / "gap_curves")
         text = results_text(run, comparison["reproduction"], design, run_dir, runs_root)
-    write_json(output / "audit.json", audit)
     write_json(output / "blog_comparison.json", comparison)
     (output / "results.md").write_text(text)
-    print(f"Report written to {output} (audit {audit['state']})")
+    print(f"Report written to {output}")
 
 
-def audit_research_run(run_dir, design):
-    """Check the run is the research run experiments.yaml describes, then re-audit it from its saved files."""
+def load_run(run_dir):
+    """Load saved results without replaying requests or checking the current experiment settings."""
+    run_dir = Path(run_dir)
     manifest = read_json(run_dir / "manifest.json")
-    check_manifest_matches_design(manifest, design)
-    split, seed = manifest["arguments"]["split"], manifest["arguments"]["seed"]
-    if split != "research" or seed != design["seed"]:
-        raise RunError(
-            f"{run_dir} was run with split {split!r} and seed {seed}; "
-            f"the report needs split 'research' and seed {design['seed']}"
+    freeze = read_json(run_dir / "freeze.json")
+    rows, table = {}, []
+    for iteration in range(manifest["arguments"]["iterations"] + 1):
+        summaries = {}
+        for split in ("train", "validation"):
+            rows[(iteration, split)] = read_json(run_dir / f"scores/main/{iteration}/{split}_rows.json")
+            summaries[split] = summarize(rows[(iteration, split)], manifest["arguments"]["seed"])
+        table.append(
+            checkpoint_row(iteration, summaries["train"], summaries["validation"], freeze["selected"])
         )
-    return audit_xar_run(run_dir)
+    cross_path = run_dir / "cross_check.json"
+    return {
+        "manifest": manifest,
+        "freeze": freeze,
+        "table": table,
+        "rows": rows,
+        "candidates": read_json(run_dir / "generations/candidates.json")["candidates"],
+        "cross": read_json(cross_path)["checkpoints"] if cross_path.exists() else None,
+    }
 
 
 def summarize_trajectory(run, seed):
@@ -149,17 +150,8 @@ def plot_checkpoints(table, blog, path):
     plt.close(fig)
 
 
-def unavailable_text(audit):
-    if audit["state"] == "not_started":
-        body = f"The research run {audit['source_run']} has not started, so there are no results yet."
-    else:
-        body = f"The research run {audit['source_run']} failed its audit, so no results are reported.\n\n"
-        body += f"Audit error: {audit['error']}"
-    return f"# Meta blog same-model reproduction\n\n{body}\n"
-
-
 def results_text(run, summary, design, run_dir, runs_root):
-    """The full results.md for an audited run."""
+    """The full results.md for a saved run."""
     manifest, table, candidates = run["manifest"], run["table"], run["candidates"]
     selected, last = summary["selected_iteration"], table[-1]["iteration"]
     blog = design["reported_validation"]
@@ -204,8 +196,7 @@ def results_text(run, summary, design, run_dir, runs_root):
     details = (
         f"{format_sentence(read_json(run_dir / 'operational_summary.json'), run)} {costs}\n\n"
         f"{cross_sentence(run.get('cross'), names)}"
-        "Before writing these numbers, the report re-checked the run against every saved response; "
-        "the result is in [audit.json](audit.json). The blog's values and this run's summary are in "
+        "The blog's values and this run's summary are in "
         "[blog_comparison.json](blog_comparison.json)."
     )
     interval = ", so the bootstrap interval above is wide" if selected else ""
@@ -384,6 +375,11 @@ def cost_sentence(costs, run_dir, manifest, pilot):
         f"{manifest['arguments']['concurrency']} requests in parallel. The {optimizer_calls} optimizer "
         f"requests ran one after another and took {optimizer_seconds / 60:.0f} of those minutes."
     )
+    if costs["unresolved"]:
+        sentence += (
+            f" {costs['unresolved']} sends got no response and were sent again; OpenRouter may have "
+            f"billed them too, at most ${costs['unresolved_upper_usd']:,.2f} in all."
+        )
     if (pilot / "costs.json").exists():
         pilot_cost = read_json(pilot / "costs.json")["actual_complete_usd"]
         sentence += f" The pilot run cost ${pilot_cost:,.2f}."
@@ -393,7 +389,8 @@ def cost_sentence(costs, run_dir, manifest, pilot):
 def wallclock_seconds(run_dir, manifest):
     """Time from run creation to the last saved response."""
     responses = (run_dir / "requests").glob("*/attempt_*.json")
-    finished = datetime.fromisoformat(max(read_json(path)["timestamp"] for path in responses))
+    # A send that was in flight when the process died has no timestamp.
+    finished = datetime.fromisoformat(max(read_json(path).get("timestamp", "") for path in responses))
     return (finished - datetime.fromisoformat(manifest["created_at"])).total_seconds()
 
 

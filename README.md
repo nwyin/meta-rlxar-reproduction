@@ -4,7 +4,7 @@ This repository reproduces the Initial Empirical Investigation in
 [Meta's Unslopping AI blog](https://facebookresearch.github.io/RAM/blogs/unslop/).
 Muse Spark 1.1 writes the missing paper sections and generates the rubrics; Qwen3.8 Flash grades
 the sections, and Muse grades the validation sections again at 2 checkpoints as a cross-check;
-Kimi K2.6 rewrites the rubric meta prompt. The completed run used Muse for all 3 Muse roles,
+MiMo-V2.6-Flash rewrites the rubric meta prompt. The completed run used Muse for all 3 Muse roles,
 as the blog did. The completed run covers 52 sections from 8 training
 and 5 validation recent arXiv cs.CL papers, with 7 prompt updates. `data/` now holds a new
 corpus of 56 peer-reviewed papers from 2016 to 2021 across 9 fields (153 sections), built to
@@ -44,8 +44,9 @@ uv run pytest -q
 ```
 
 `prepare-tokenizers` downloads the Kimi and Qwen tokenizers pinned in
-`configs/tokenizers.json` into `data/tokenizers/`. No run uses Qwen; `prepare-data` sizes
-papers with both tokenizers, as the first corpus did, and keeps the larger count.
+`configs/tokenizers.json` into `data/tokenizers/`. Runs no longer use either model;
+`prepare-data` sizes papers with both tokenizers, as the first corpus did, and keeps the larger
+count.
 `discover-data` samples candidate papers from OpenAlex and checks them against the arXiv API
 (about 20 minutes, because arXiv rate-limits). It writes `data/discovery.json` once and
 refuses to replace a different file, so skip it when that file exists. `prepare-data` goes
@@ -54,10 +55,6 @@ through the shortlists in `data/discovery.json`, downloads any missing ar5iv HTM
 prints each rejected candidate and the reason. It fails if the result does not match the saved
 files, for example because ar5iv changed a page. The owner reviewed the 56 papers together and
 approved them; `LOG.md` records that.
-
-To audit the completed run, copy `examples.jsonl` and `splits.json` from
-`data/archive/arxiv-2609-cs-cl/` back into `data/` (set the new ones aside first), since the
-run's manifest points there.
 
 Copy `.env.example` to `.env` and set `OPENROUTER_API_KEY`.
 
@@ -72,36 +69,26 @@ uv run python run.py all
 `reproduce`, which you can also run on their own:
 
 - `run.py pilot` runs one update on the first two training papers to check the pipeline end to end.
-- `run.py reproduce` audits the completed pilot run, then runs the full experiment on the
+- `run.py reproduce` runs the full experiment on the
   training and validation papers and writes the report to `reports/`.
 
 Spending is capped by the OpenRouter key's limit, set on openrouter.ai; the code records every
 billed cost but enforces no budget of its own. `--concurrency` sets the number of parallel requests
-(default 4, from `configs/experiments.yaml`). `--resume` continues an interrupted run; only
+(default 16, from `configs/experiments.yaml`). `--resume` continues an interrupted run; only
 `--concurrency` may differ from the saved run, and any other change stops it. `--runs-root`
 (default `runs/`) sets where the runs are kept, and `--output-dir` (default
 `reports/`) where `reproduce`, `all` and `report` write the report. `uv run python run.py
 --help` lists every command and option.
 
-## Audit
+## Report
 
 ```sh
-uv run python run.py audit-run runs/meta-blog-seed0
 uv run python run.py report
 ```
 
-`audit-run` makes no API calls. It rebuilds a run's checkpoint table from its saved raw responses
-and checks:
-
-- the request settings, and that judge requests do not say which section is the author's;
-- that the writer saw only the task data, and that its texts, length flags and copy flags
-  follow from the raw responses;
-- that the optimizer's feedback and proposals re-derive from training scores alone;
-- the scoring arithmetic, and that the checkpoint was selected on training data only;
-- that every validation request came after that selection;
-- that request keys and the billed costs agree with `costs.json`.
-
-`report` repeats the `audit-run` checks on the research run and then writes the report.
+`report` loads the research run's saved score rows and checkpoint selection and writes the
+report. It makes no API calls and does not replay or audit the saved requests. Historical runs
+can be reported without restoring their dataset or matching the current model settings.
 
 ## Browsing runs
 
@@ -113,7 +100,7 @@ prompt history and criteria; see [tools/data-viewer](tools/data-viewer/README.md
 ```
 .
 ├── run.py                        CLI: pilot, reproduce, all, report, validate-data,
-│                                 discover-data, prepare-data, prepare-tokenizers, audit-run
+│                                 discover-data, prepare-data, prepare-tokenizers
 ├── xar/                          the pipeline, as a package
 │   ├── pipeline.py               the method: write sections, generate rubrics, grade,
 │   │                             build optimizer feedback, rewrite the prompt, select P*
@@ -122,7 +109,6 @@ prompt history and criteria; see [tools/data-viewer](tools/data-viewer/README.md
 │   ├── discovery.py              samples candidate papers from OpenAlex and arXiv
 │   ├── data.py                   builds the dataset from ar5iv HTML; loads and splits it
 │   ├── runs.py                   run directories: manifest, resume checks, cost estimate
-│   ├── audit.py                  re-checks a saved run against its raw API responses
 │   ├── stats.py                  checkpoint means and paired whole-paper bootstrap
 │   ├── report.py                 writes reports/ (results.md, checkpoints.csv, figure)
 │   └── util.py                   paths, errors, hashing, JSON I/O, parallel map
@@ -134,7 +120,7 @@ prompt history and criteria; see [tools/data-viewer](tools/data-viewer/README.md
 │   ├── rubric_initial.md         P0, the starting rubric meta prompt
 │   ├── rubric_wrapper.md         wraps the meta prompt when Muse generates a rubric
 │   ├── judge.md                  Muse grades one anonymous section against a rubric
-│   └── optimizer.md              Kimi rewrites the meta prompt from training feedback
+│   └── optimizer.md              MiMo rewrites the meta prompt from training feedback
 ├── configs/
 │   ├── experiments.yaml          run names, iterations, seed, concurrency, blog numbers
 │   ├── models.yaml               each role's model, provider, temperature, reasoning
@@ -163,13 +149,12 @@ prompt history and criteria; see [tools/data-viewer](tools/data-viewer/README.md
 | `runs/pilot-meta-blog-attested/` | the pilot run |
 | `runs/meta-blog-seed0/` | the research run: `manifest.json`, every request and response under `requests/`, sections in `generations/`, `rubrics/`, `scores/`, optimizer `feedback/`, `prompts/`, `freeze.json`, `costs.json` |
 | `runs/budget_ledger.json` | reservations and charges for the runs before 2026-10-01, when the code enforced budgets |
-| `reports/` | `results.md`, `checkpoints.csv`, `gap_curves.png` and `.svg`, `blog_comparison.json`, and `audit.json` |
+| `reports/` | `results.md`, `checkpoints.csv`, `gap_curves.png` and `.svg`, `blog_comparison.json` |
 
 `runs/`, `reports/`, the paper text and the tokenizers are not in git.
 
 ## Versions
 
 The git tag `meta-blog-seed0` is the commit that produced the research run. The code has been
-cleaned up since, and `run.py audit-run` checks that the saved run still re-audits with the
-current code. The tag `alternative-model-study` holds an earlier study with other
+cleaned up since. The tag `alternative-model-study` holds an earlier study with other
 models, which did not go beyond pilots.

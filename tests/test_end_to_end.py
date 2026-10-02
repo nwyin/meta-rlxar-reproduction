@@ -1,4 +1,4 @@
-"""Full pilot and research runs against a fake provider, including tamper detection."""
+"""Full pilot and research runs against a fake provider, including report generation."""
 
 import re
 from collections import Counter
@@ -10,11 +10,11 @@ import pytest
 from conftest import call_kind, install_fake, write_dataset
 
 import run
-from xar.audit import audit_xar_run
+from xar import openrouter
 from xar.data import SECTIONS
 from xar.pipeline import run_xar
-from xar.report import render_report
-from xar.util import ROLES, RunError, read_json, write_json
+from xar.report import load_run, render_report
+from xar.util import ROLES, RunError, read_json
 
 
 def run_phase(tmp_path, design, phase, papers_by_split, *flags):
@@ -41,7 +41,6 @@ def test_pilot_run_completes_and_resume_makes_no_calls(pilot, design):
     assert len(freeze["prompt_hashes"]) == design["pilot_iterations"] + 1
     assert len(list((out / "prompts").glob("*.md"))) == design["pilot_iterations"] + 1
     assert read_json(out / "status.json")["state"] == "complete"
-    audit_xar_run(out)  # raises if the saved run does not check out
     sent = len(fake.payloads)
     run_xar(replace(settings, resume=True))
     assert len(fake.payloads) == sent
@@ -66,68 +65,16 @@ def test_resume_rejects_changed_iterations_and_names_the_values(pilot):
         run_xar(changed)
 
 
-def test_audit_rejects_changed_request_temperature(pilot):
-    out = pilot.out
-    grade = read_json(next((out / "scores/main/0/train").glob("*/human.json")))
-    request_path = Path(grade["attempts"][-1]["response"]["raw_response"]).parent / "request.json"
-    request = read_json(request_path)
-    request["payload"]["temperature"] = 0.9
-    write_json(request_path, request)
-    with pytest.raises(RunError, match="temperature is 0.9"):
-        audit_xar_run(out)
-
-
-def test_audit_rejects_wrong_grade_total(pilot):
-    out = pilot.out
-    grade_path = out / "scores/main/0/train/pilot0_abstract/human.json"
-    grade = read_json(grade_path)
-    grade["total"] = 10
-    write_json(grade_path, grade)
-    with pytest.raises(RunError, match="arithmetic"):
-        audit_xar_run(out)
-
-
-def test_audit_rejects_a_writer_text_that_differs_from_its_response(pilot):
-    out = pilot.out
-    candidates = read_json(out / "generations/candidates.json")["candidates"]
-    raw_path = next(iter(candidates.values()))["attempts"][0]["response"]["raw_response"]
-    sent = read_json(raw_path)
-    sent["response"]["choices"][0]["message"]["content"] += " An added sentence."
-    write_json(raw_path, sent)
-    with pytest.raises(RunError, match="saved text differs from the response"):
-        audit_xar_run(out)
-
-
-def test_audit_rejects_a_cost_file_that_differs_from_the_responses(pilot):
-    out = pilot.out
+def test_a_lost_response_is_sent_again_and_counted_as_unresolved(tmp_path, monkeypatch, design):
+    monkeypatch.setattr(openrouter.time, "sleep", lambda seconds: None)
+    fake = install_fake(monkeypatch)
+    fake.drop_responses = 2
+    settings = run_phase(tmp_path, design, "pilot", {"pilot": ["pilot0", "pilot1"]})
+    out = Path(settings.output_dir)
     costs = read_json(out / "costs.json")
-    costs["actual_complete_usd"] += 1
-    write_json(out / "costs.json", costs)
-    with pytest.raises(RunError, match="costs.json total differs"):
-        audit_xar_run(out)
-
-
-def test_audit_rejects_optimizer_feedback_that_does_not_follow_from_the_scores(pilot):
-    out = pilot.out
-    path = out / "feedback/iter_01/training.json"
-    feedback = read_json(path)
-    feedback["unexpected_field"] = "added after the fact"
-    write_json(path, feedback)
-    with pytest.raises(RunError, match="iteration 1: feedback differs"):
-        audit_xar_run(out)
-
-
-def test_check_pilot_accepts_an_audited_pilot_that_matches_the_design(pilot, design):
-    run.check_pilot(pilot.out.parent, design)
-
-
-def test_check_pilot_rejects_a_pilot_that_differs_from_the_design(pilot, design):
-    out = pilot.out
-    manifest = read_json(out / "manifest.json")
-    manifest["arguments"]["failure_examples"] += 1
-    write_json(out / "manifest.json", manifest)
-    with pytest.raises(RunError, match="failure_examples"):
-        run.check_pilot(out.parent, design)
+    assert costs["unresolved"] == 2 and costs["unresolved_upper_usd"] > 0
+    assert costs["requests"] == len(fake.payloads) - 2
+    assert read_json(out / "operational_summary.json")["unresolved_transport"] == 2
 
 
 @pytest.mark.parametrize(
@@ -147,7 +94,7 @@ def test_settings_follow_the_design(design, phase, split, iterations_key):
     assert default.concurrency == design["concurrency"]
 
 
-def test_report_from_research_run_and_after_tampering(tmp_path, monkeypatch, design):
+def test_report_from_saved_research_run(tmp_path, monkeypatch, design):
     fake = install_fake(monkeypatch)
     groups = {
         split: [f"{split}{i}" for i in range(count)] for split, count in {"train": 8, "validation": 5}.items()
@@ -172,7 +119,7 @@ def test_report_from_research_run_and_after_tampering(tmp_path, monkeypatch, des
     assert cross[0]["judge"]["gap"] == cross[0]["cross_judge"]["gap"] == 1
     output = tmp_path / "report"
     render_report(runs, output)
-    assert read_json(output / "audit.json")["state"] == "passed"
+    assert not (output / "audit.json").exists()
     comparison = read_json(output / "blog_comparison.json")["reproduction"]
     assert comparison["selected_iteration"] == 0
     assert comparison["initial_gap"] == 1 and comparison["selected_gap"] == 1
@@ -180,21 +127,9 @@ def test_report_from_research_run_and_after_tampering(tmp_path, monkeypatch, des
     assert comparison["paired_improvement"]["interval"]["paper_clusters"] == len(groups["validation"])
     assert (output / "gap_curves.svg").exists()
     assert "Cross-judge check" in (output / "results.md").read_text()
-    cross_grade_path = next((source / "scores/cross/0/validation").glob("*/human.json"))
-    cross_grade = read_json(cross_grade_path)
-    cross_grade["total"] = 10
-    write_json(cross_grade_path, cross_grade)
-    with pytest.raises(RunError, match="scores/cross/0/validation.*arithmetic"):
-        audit_xar_run(source)
-    cross_grade["total"] = 7
-    write_json(cross_grade_path, cross_grade)
-    audit_xar_run(source)
+    # Reporting uses saved rows even when individual grade records are unavailable.
     grade_path = next((source / "scores/main/0/validation").glob("*/human.json"))
-    grade = read_json(grade_path)
-    grade["total"] = 10
-    write_json(grade_path, grade)
+    grade_path.unlink()
     render_report(runs, output)
-    audit = read_json(output / "audit.json")
-    assert audit["state"] == "failed" and "arithmetic" in audit["error"]
-    assert read_json(output / "blog_comparison.json")["reproduction"] is None
-    assert not (output / "gap_curves.svg").exists()
+    assert read_json(output / "blog_comparison.json")["reproduction"] == comparison
+    assert load_run(source)["cross"] == cross
