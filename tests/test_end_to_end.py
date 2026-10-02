@@ -13,7 +13,7 @@ import run
 from xar import openrouter
 from xar.data import SECTIONS
 from xar.pipeline import run_xar
-from xar.report import load_run, render_report
+from xar.report import render_report
 from xar.util import ROLES, RunError, read_json
 
 
@@ -102,19 +102,14 @@ def test_report_from_saved_research_run(tmp_path, monkeypatch, design):
     settings = run_phase(tmp_path, design, "reproduce", groups, "--concurrency", "4")
     source, runs = Path(settings.output_dir), tmp_path / "runs"
     sections = len(SECTIONS) * sum(len(papers) for papers in groups.values())
-    validation_sections = len(SECTIONS) * len(groups["validation"])
     checkpoints = design["iterations"] + 1
-    # Every checkpoint ties, so P0 is selected and the cross judge grades one checkpoint.
     assert Counter(call_kind(p) for p in fake.payloads) == {
         "writer": sections,
         "rubric": sections * checkpoints,
-        "grade": 2 * sections * checkpoints + 2 * validation_sections,
+        "grade": 2 * sections * checkpoints,
         "optimizer": design["iterations"],
     }
     assert {p["model"] for p in fake.payloads} == {design[role] for role in ROLES}
-    cross = read_json(source / "cross_check.json")["checkpoints"]
-    assert [entry["iteration"] for entry in cross] == [0]
-    assert cross[0]["judge"]["gap"] == cross[0]["cross_judge"]["gap"] == 1
     output = tmp_path / "report"
     render_report(runs, output)
     assert not (output / "audit.json").exists()
@@ -124,10 +119,10 @@ def test_report_from_saved_research_run(tmp_path, monkeypatch, design):
     assert comparison["reversed"] is False
     assert comparison["paired_improvement"]["interval"]["paper_clusters"] == len(groups["validation"])
     assert (output / "gap_curves.svg").exists()
-    assert "Cross-judge check" in (output / "results.md").read_text()
+    assert not (source / "cross_check.json").exists()
+    assert "Cross-judge" not in (output / "results.md").read_text()
     # Reporting uses saved rows even when individual grade records are unavailable.
     grade_path = next((source / "scores/main/0/validation").glob("*/human.json"))
     grade_path.unlink()
     render_report(runs, output)
     assert read_json(output / "blog_comparison.json")["reproduction"] == comparison
-    assert load_run(source)["cross"] == cross

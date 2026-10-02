@@ -108,7 +108,6 @@ URLs and HTML hash, so anyone can pull the pages again and check them.
 | Writer | Muse Spark 1.3, contributor tier | meta/muse-spark-1.3-contributor-20260902 | meta | 0.7 | effort medium | 16,384 |
 | Rubric generator | Muse Spark 1.3, contributor tier | meta/muse-spark-1.3-contributor-20260902 | meta | 0.2 | effort medium | 16,384 |
 | Judge | Muse Spark 1.3, contributor tier | meta/muse-spark-1.3-contributor-20260902 | meta | 0 | effort medium | 16,384 |
-| Cross judge | MiMo-V2.6-Pro | xiaomi/mimo-v2.6-pro-20260921 | xiaomi/fp8 | 0 | enabled | 16,384 |
 | Optimizer | Kimi K2.6 | moonshotai/kimi-k2.6-20260420 | siliconflow/fp8 | 0.7 | enabled | 16,384 |
 
 The blog used Muse Spark 1.1 as writer, rubric generator and judge, and Kimi K2.6 as optimizer,
@@ -120,9 +119,10 @@ on the Artificial Analysis Intelligence Index v4.3, the highest of any model thi
 run; we run it at medium effort, as the completed run ran 1.1. The optimizer is Kimi K2.6, as
 in the blog. We tried MiMo-V2.6-Flash (index 38) there for cost; it corrupted 1 of its 2
 rewrites, and the blog warns that "Kimi and Opus can find a positive gap, but Muse Spark 1.1
-struggles. Likely, weaker models struggle even more." The cross judge is MiMo-V2.6-Pro (index
-46), the top open-weights model on the index and a different family from Muse, as the blog's
-cross-judge table set GPT-5.6 against Muse; it is the check on the judge (step 8).
+struggles. Likely, weaker models struggle even more." Until 2026-10-02 a cross judge,
+MiMo-V2.6-Pro, graded the validation sections again at 2 checkpoints; the run
+`meta-blog-v2-seed0` has that check in its `cross_check.json`. We removed the role to save
+cost, since the result is Muse's judgment either way.
 
 All requests go through OpenRouter. The models and their settings are in `configs/models.yaml`,
 the rest of the experiment (seed, number of updates, word limits, run names) in
@@ -192,13 +192,6 @@ in `prompts/`: `writer.md`, `rubric_initial.md` (the initial meta prompt), `rubr
    training gap is selected, the earliest one on a tie. The choice and the hash of every
    checkpoint's prompt are written to `freeze.json`. Only then does the run generate rubrics
    and grades for the validation sections, at every checkpoint.
-
-8. Cross-judge. MiMo-V2.6-Pro grades the validation sections again at P0 and the selected
-   checkpoint, against the same rubrics the judge used, blind and in a seeded random order as in
-   step 3. Only the judge differs. `cross_check.json` holds both judges' author and model means
-   and gaps at those checkpoints. If the two judges agree on the sign and roughly the size of the
-   gap, the result does not rest on the cheaper judge. This follows the blog's cross-judge table,
-   which found rubrics optimized under one strong judge hold under another.
 
 Independent sections and checkpoint evaluations run four at a time. The drafts for one
 section and the optimizer updates run in order.
@@ -273,8 +266,8 @@ these choices:
   methods, results and terms, and says nothing about human or AI writing. The completed run
   used an earlier hand-written initial prompt (`runs/meta-blog-seed0/prompts/iter_00.md`).
 - Models: Muse Spark 1.3 on the contributor tier instead of Muse Spark 1.1 as writer, rubric
-  generator and judge; Kimi K2.6 as optimizer, as in the blog; MiMo-V2.6-Pro as cross judge
-  (see Roles).
+  generator and judge; Kimi K2.6 as optimizer, as in the blog; no cross judge since
+  2026-10-02 (see Roles).
 - Decoding: the temperatures and reasoning settings in the roles table.
 - Rubric and score: 4 to 8 criteria scored 0-10, combined as an unweighted mean.
 - Feedback: the failing training sections, up to 24, with the paper for the 4 worst. The blog

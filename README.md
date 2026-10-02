@@ -3,8 +3,7 @@
 This repository reproduces the Initial Empirical Investigation in
 [Meta's Unslopping AI blog](https://facebookresearch.github.io/RAM/blogs/unslop/).
 Muse Spark 1.3, on OpenRouter's contributor tier, writes the missing paper sections, generates
-the rubrics and grades the sections; MiMo-V2.6-Pro grades the validation sections again at 2
-checkpoints as a cross-check; Kimi K2.6 rewrites the rubric meta prompt. The completed run used
+the rubrics and grades the sections; Kimi K2.6 rewrites the rubric meta prompt. The completed run used
 Muse Spark 1.1 in the same 3 roles and Kimi K2.6 as optimizer, as the blog did; the changes are
 a cost decision, recorded in `METHOD.md`. The completed run covers 52 sections from 8 training
 and 5 validation recent arXiv cs.CL papers, with 7 prompt updates. `data/` now holds a new

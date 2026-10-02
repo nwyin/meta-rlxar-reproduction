@@ -34,8 +34,8 @@ models:
     reasoning:
       max_tokens: 4096  # thinking budget; unbounded, the judge spent ~8,800 reasoning tokens a grade
     max_tokens: 16384
-# The judge is Qwen3.8 Flash, chosen for cost; the blog judged with Muse. cross_judge grades the
-# validation sections again with Muse at P0 and the selected checkpoint, after the freeze.
+# The blog used Muse as writer, rubric generator and judge, and Kimi as optimizer. The cross judge
+# role was removed on 2026-10-02 to save cost; runs before that record it in their manifests.
 roles:
   writer:
     model: meta/muse-spark-1.3-contributor
@@ -48,7 +48,4 @@ roles:
     temperature: 0.7
   judge:
     model: meta/muse-spark-1.3-contributor
-    temperature: 0
-  cross_judge:
-    model: xiaomi/mimo-v2.6-pro
     temperature: 0

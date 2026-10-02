@@ -672,3 +672,74 @@ Prompt word counts: writer 51, rubric initial 232, judge 253, optimizer 780. The
 constraints in the optimizer prompt and the proposal red flags are unchanged; nothing added
 hints at authorship or surface tells. Tests 63 pass, ruff clean. `run.py pilot --dry-run`
 estimates $0.50 with the retry reserve. No paid run was started.
+
+## 2026-10-02 — Research run meta-blog-v3-seed0 started; the cross judge removed mid-run
+
+Started `run.py reproduce --concurrency 32` at 17:12 UTC under the new prompts and feedback
+policy, after `--dry-run` estimated $11.66 with the retry reserve. The owner then asked to drop
+the cross judge, since the result is Muse's judgment either way and the check cost $2.34 of the
+estimate. The running process had the old code loaded and its manifest hash included the role,
+so it could not be resumed under the change. We stopped it at 17:45 UTC, after the writer phase
+and 60 P0 rubrics, with 427 billed responses for $1.13, 2 HTTP 504s, 1 HTTP 429 and 37 sends
+in flight at the kill; its directory is `runs/meta-blog-v3-seed0-cross-judge-stopped`.
+
+Removed the role: `cross_judge` is gone from `ROLES`, `configs/models.yaml`, the settings,
+the dry-run estimate, the pipeline and the report. `cross_check.json` is no longer written or
+read; `meta-blog-v2-seed0` keeps its own. The end-to-end test now asserts the file is absent.
+We said so in METHOD (roles paragraph, differences list) and the models config comment.
+
+Restarted at 17:48 UTC into `runs/meta-blog-v3-seed0`, seeded with a copy of the stopped run's
+`requests/` directory. The client reuses a saved response whose request hash matches, so the
+140 writer drafts and the finished P0 rubrics were reused, not bought again; their records
+keep their original timestamps, earlier than the new manifest's `created_at`. Dry-run estimate
+$8.73 with the retry reserve. Process 72394.
+
+## 2026-10-02 — Research run meta-blog-v3-seed0 complete: the gap narrowed by 0.69 and stayed negative
+
+The run finished at 19:28 UTC, 101 minutes after the restart, and `run.py report` wrote
+`reports/`. Numbers below are from `reports/results.md` and the run files.
+
+| Checkpoint | Training gap | Validation gap | Validation author | Validation Muse |
+| --- | ---: | ---: | ---: | ---: |
+| P0 | −2.24 | −2.23 | 4.56 | 6.80 |
+| P1 | −2.52 | −2.36 | 5.32 | 7.68 |
+| P2 | −2.31 | −2.01 | 5.44 | 7.45 |
+| P3 | −2.26 | −1.93 | 5.54 | 7.47 |
+| P4 (selected) | −1.77 | −1.55 | 4.87 | 6.42 |
+
+P4 was selected on training before any validation request. The paired validation improvement
+from P0 to P4 is +0.69 over 44 sections, 95% bootstrap interval +0.26 to +1.06 over the 16
+validation papers. The expert leads on 3 of 44 validation sections at P4, with 2 ties, against
+0 at P0. By section type the P4 validation gap is −1.41 abstract, −1.70 conclusion, −1.66
+introduction, −0.90 related work. The previous run, `meta-blog-v2-seed0`, went −1.89 to −0.08
+with its P3 by-type gaps at −0.12, +0.06, −0.27 and +1.00, so this run starts lower and ends
+much lower.
+
+Cost and performance: 2,429 billed requests, $7.43, of which $1.13 and 427 responses were
+bought under the stopped run and reused. 75 sends got no response and were resent, at most
+$1.29 more; 2 HTTP 504s and 2 HTTP 429s were retried. The judge's reply failed validation 114
+times in 1,514, all "evidence quote does not occur in supplied text", against 60 in 1,636 in
+the v2 run; the rubric generator and optimizer were valid every time. The 4 optimizer requests
+took 693 s on average, 926 s at most, 46 of the 101 minutes, with the paper attached to the 4
+worst failures each time. 21 of 140 drafts were outside the length band after 2 rewrites,
+against 31 in v2. Meta prompt lengths P0 to P4: 232, 454, 600, 709, 629 words.
+
+Observations, post hoc, on the validation grades. At P0 the judge gave the author's text 3 or
+less on 25% of criterion scores and the model's on 3%; at P4, 24% and 8%. The model scored 8
+or more on 39% of criteria at P0 and 40% at P4; the author on 8% and 12%. The judge's low
+author scores at P4 are for omissions ("never states", "omits entirely") and, 7 times in 52,
+for inventing, where the author cites results or sources outside the visible paper. The P4
+gain on training, −2.26 to −1.77, came from the model's mean falling 0.84 while the author's
+fell 0.35. All 4 optimizer rationales diagnose rubrics as hidden checklists that reward the
+model's inventories and dock the expert's selectivity, the same diagnosis as in v2; none names
+a quality the expert has that the model lacks, which the new optimizer step 3 asked for. P4
+forbids embedding the paper's values, names or symbols in criteria. P4 also contains the
+phrase "an interpretive arc about aligning representations or resolving debates", which reads
+like one training paper's topic leaking into a general instruction; the 12-word copy check
+did not flag it.
+
+Explanation, ours, untested: the judge rule that a failed purpose scores 0 to 3 lowered both
+candidates, but the judge applies it mostly to the expert, because the rubrics still define
+each section's purpose from the body's framing and the expert's section does not restate it.
+The freer writer changed little: Muse's drafts met the length band more often and still scored
+6.8 at P0. Giving the optimizer the paper did not change what it diagnosed.

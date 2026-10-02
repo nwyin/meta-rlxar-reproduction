@@ -17,7 +17,6 @@ JOBS = {
     "rubric": "generated the rubrics",
     "optimizer": "rewrote the rubric prompt at each update",
     "judge": "graded the sections",
-    "cross_judge": "graded the validation sections again at 2 checkpoints",
 }
 
 
@@ -66,14 +65,12 @@ def load_run(run_dir):
         table.append(
             checkpoint_row(iteration, summaries["train"], summaries["validation"], freeze["selected"])
         )
-    cross_path = run_dir / "cross_check.json"
     return {
         "manifest": manifest,
         "freeze": freeze,
         "table": table,
         "rows": rows,
         "candidates": read_json(run_dir / "generations/candidates.json")["candidates"],
-        "cross": read_json(cross_path)["checkpoints"] if cross_path.exists() else None,
     }
 
 
@@ -195,7 +192,6 @@ def results_text(run, summary, design, run_dir, runs_root):
     )
     details = (
         f"{format_sentence(read_json(run_dir / 'operational_summary.json'), run)} {costs}\n\n"
-        f"{cross_sentence(run.get('cross'), names)}"
         "The blog's values and this run's summary are in "
         "[blog_comparison.json](blog_comparison.json)."
     )
@@ -345,24 +341,6 @@ def format_sentence(operations, run):
     grades = 2 * sections_graded  # one for the author's section, one for Muse's
     sentences.append(f"All {grades:,} final grades passed validation.")
     return " ".join(sentences)
-
-
-def cross_sentence(cross, names):
-    """Both judges' validation gaps at the cross-checked checkpoints, or nothing for a run without them."""
-    if not cross:
-        return ""
-    parts = []
-    for entry in cross:
-        judge, other = entry["judge"], entry["cross_judge"]
-        parts.append(
-            f"at P{entry['iteration']} the gap was {judge['gap']:+.2f} under {names['judge']} "
-            f"(author {judge['human']:.2f}, model {judge['model']:.2f}) and {other['gap']:+.2f} under "
-            f"{names['cross_judge']} (author {other['human']:.2f}, model {other['model']:.2f})"
-        )
-    return (
-        f"Cross-judge check: {names['cross_judge']} graded the validation sections again against the "
-        f"same rubrics; {'; '.join(parts)}.\n\n"
-    )
 
 
 def cost_sentence(costs, run_dir, manifest, pilot):

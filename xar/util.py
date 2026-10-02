@@ -19,8 +19,7 @@ import yaml
 
 ROOT = Path(__file__).resolve().parents[1]
 SCHEMA_VERSION = 1
-# cross_judge grades the validation sections a 2nd time, with another model, after the freeze.
-ROLES = ("writer", "rubric", "optimizer", "judge", "cross_judge")
+ROLES = ("writer", "rubric", "optimizer", "judge")
 # Names of the optimizer feedback policies; pipeline.build_feedback explains them.
 LEGACY_FEEDBACK = "smallest_gap_then_example_id"
 FAILING_FEEDBACK = "failing_gap_without_paper"
