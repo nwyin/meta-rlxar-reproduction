@@ -9,6 +9,9 @@ import functools
 import http.server
 import json
 from pathlib import Path
+from urllib.parse import urlsplit
+
+import review
 
 ROOT = Path(__file__).resolve().parents[2]
 VIEWER = "/tools/data-viewer/"
@@ -43,16 +46,45 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             self.send_header("Location", VIEWER)
             self.end_headers()
         elif path == "/api/runs":
-            body = json.dumps(list_runs()).encode()
-            self.send_response(200)
-            self.send_header("Content-Type", "application/json")
-            self.send_header("Content-Length", str(len(body)))
-            self.end_headers()
-            self.wfile.write(body)
+            self.send_json(list_runs())
+        elif path == "/api/review":
+            try:
+                self.send_json(review.get_session(ROOT))
+            except (ValueError, OSError, KeyError) as error:
+                self.send_json({"error": str(error)}, 400)
         elif self.allowed(Path(self.translate_path(self.path)).resolve()):
             super().do_GET()
         else:
             self.send_error(404)
+
+    def send_json(self, value, status=200):
+        body = json.dumps(value).encode()
+        self.send_response(status)
+        self.send_header("Content-Type", "application/json")
+        self.send_header("Cache-Control", "no-store")
+        self.send_header("Content-Length", str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
+
+    def do_POST(self):
+        if self.path not in ("/api/review/answer", "/api/review/extraction"):
+            self.send_error(404)
+            return
+        origin = self.headers.get("Origin")
+        if origin and urlsplit(origin).netloc != self.headers.get("Host"):
+            self.send_error(403)
+            return
+        if self.headers.get("Content-Type", "").split(";")[0] != "application/json":
+            self.send_error(415)
+            return
+        try:
+            length = int(self.headers.get("Content-Length", "0"))
+            if not 0 < length <= 65536:
+                raise ValueError("Invalid answer size.")
+            payload = json.loads(self.rfile.read(length))
+            self.send_json(review.record(ROOT, payload, extraction=self.path.endswith("/extraction")))
+        except (TypeError, ValueError, OSError, KeyError) as error:
+            self.send_json({"error": str(error)}, 400)
 
     @staticmethod
     def allowed(target):

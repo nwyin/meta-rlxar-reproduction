@@ -1,5 +1,17 @@
 # Log
 
+## 2026-10-03 — Add a blind spot-check tool
+
+The owner asked to judge a few training pairs directly. We added a local review page to the
+data viewer. It samples 4 pairs from the saved v2 drafts, with 1 section per type from different
+training papers, without reading scores. It shuffles and balances A/B placement and hides
+authorship until all judgments are saved. Each judgment records preference, confidence, optional
+reasons, and prior familiarity. Source links and a separate extraction check follow the reveal.
+
+The tool saves the fixed sample and answers in `reports/blind-review-v2.json`, outside Git.
+It makes no model calls. We kept prompts, configs, data, and run evidence unchanged. Tests cover
+training-only sampling, persistence, delayed disclosure, locked judgments, and HTTP handling.
+
 ## 2026-09-29
 
 - Froze the initial XAR design, prompts, model snapshots, and acquisition policy.
