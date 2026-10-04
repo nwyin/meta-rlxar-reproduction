@@ -718,23 +718,21 @@ def bootstrap(rows, seed=0):
     Sections from one paper are not independent, so each replicate draws papers with
     replacement and takes all of a drawn paper's gaps. Rows without a gap are ignored;
     returns None if no row has one."""
-    gaps_by_paper = collections.defaultdict(list)
+    by_paper = collections.defaultdict(list)
     for row in rows:
         if row.get("gap") is not None:
-            gaps_by_paper[row["paper_id"]].append(row["gap"])
-    if not gaps_by_paper:
+            by_paper[row["paper_id"]].append(row["gap"])
+    if not by_paper:
         return None
     rng = random.Random(seed)
-    papers = sorted(gaps_by_paper)
-    means = sorted(
-        statistics.mean(gap for paper in rng.choices(papers, k=len(papers)) for gap in gaps_by_paper[paper]) for _ in range(BOOTSTRAP_REPLICATES)
-    )
+    papers = sorted(by_paper)
+    means = sorted(statistics.mean(g for p in rng.choices(papers, k=len(papers)) for g in by_paper[p]) for _ in range(BOOTSTRAP_REPLICATES))
     return {
         "method": "paired_whole_paper_percentile_bootstrap",
         "paper_clusters": len(papers),
         "replicates": BOOTSTRAP_REPLICATES,
         "seed": seed,
-        "estimate": statistics.mean(gap for gaps in gaps_by_paper.values() for gap in gaps),
+        "estimate": statistics.mean(g for gaps in by_paper.values() for g in gaps),
         "bootstrap_median": means[BOOTSTRAP_REPLICATES // 2],
         "low": means[int(INTERVAL[0] * BOOTSTRAP_REPLICATES)],
         "high": means[int(INTERVAL[1] * BOOTSTRAP_REPLICATES)],
