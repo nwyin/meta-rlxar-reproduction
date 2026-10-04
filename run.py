@@ -272,8 +272,6 @@ class OpenRouter:
                     http_status=response.status_code,
                     status="success" if success else "http_error",
                 )
-                record["duration_seconds"] = time.monotonic() - started
-                write_json(path, record)
                 if success:
                     choice = raw["choices"][0]
                     return {
@@ -289,8 +287,9 @@ class OpenRouter:
                 if response.status_code not in RETRYABLE_STATUS:
                     raise RunError(f"Unusable HTTP {response.status_code}: {path}")
                 retry_after = response.headers.get("Retry-After")
-            record["duration_seconds"] = time.monotonic() - started
-            write_json(path, record)
+            finally:
+                record["duration_seconds"] = time.monotonic() - started
+                write_json(path, record)
             if attempt < MAX_SENDS - 1:
                 wait = BACKOFF_SECONDS[attempt]
                 if retry_after is not None and retry_after.strip().isdigit():
