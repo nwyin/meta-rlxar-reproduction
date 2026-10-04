@@ -25,7 +25,7 @@ limits. [LOG.md](LOG.md) records what happened and why.
 ## Commands
 
 - Install: `uv sync --locked`
-- Lint: `uv run ruff check .` (line length 110)
+- Lint: `uv run ruff check .` (line length 144)
 
 Run lint before every commit.
 

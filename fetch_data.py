@@ -131,9 +131,7 @@ def number_citations(document):
     for cite in document.select(".ltx_cite"):
         if cite.find_parent(class_="ltx_cite"):
             continue
-        cited = sorted(
-            {numbers[a["href"][1:]] for a in cite.select("a[href^='#']") if a["href"][1:] in numbers}
-        )
+        cited = sorted({numbers[a["href"][1:]] for a in cite.select("a[href^='#']") if a["href"][1:] in numbers})
         if cited:
             cite.replace_with("[" + ", ".join(map(str, cited)) + "]")
 
@@ -169,15 +167,11 @@ def extract_paper(html, metadata):
         raise RunError(f"Top-level sections not found: {', '.join(missing)}")
     bibliography_items = len(document.select(".ltx_bibitem"))
     if bibliography_items < MIN_BIBLIOGRAPHY_ITEMS:
-        raise RunError(
-            f"Bibliography has {bibliography_items} entries; at least {MIN_BIBLIOGRAPHY_ITEMS} required"
-        )
+        raise RunError(f"Bibliography has {bibliography_items} entries; at least {MIN_BIBLIOGRAPHY_ITEMS} required")
     latexml_errors = len(document.select(".ltx_ERROR"))
     replacement_chars = document.get_text().count("\ufffd")
     if latexml_errors or replacement_chars:
-        raise RunError(
-            f"Page has {latexml_errors} LaTeXML error node(s) and {replacement_chars} U+FFFD character(s)"
-        )
+        raise RunError(f"Page has {latexml_errors} LaTeXML error node(s) and {replacement_chars} U+FFFD character(s)")
     examples = []
     for kind, target in targets.items():
         reference = html_text(target, strip_heading=True, strip_non_prose=True)
@@ -195,9 +189,7 @@ def extract_paper(html, metadata):
         removed.replace_with(f"[Missing {kind.replace('_', ' ')} section]")
         context = html_text(page)
         if reference in context:
-            raise RunError(
-                f"{kind} text also appears elsewhere in the paper, so removing it does not hide it"
-            )
+            raise RunError(f"{kind} text also appears elsewhere in the paper, so removing it does not hide it")
         examples.append(
             {
                 "example_id": metadata["paper_id"] + "_" + kind,

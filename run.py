@@ -181,17 +181,13 @@ def load_examples(dataset, splits):
         listed_in = [split for split, papers in papers_by_split.items() if e["paper_id"] in papers]
         if listed_in != [e["split"]]:
             raise RunError(
-                f"{eid} is labelled {e['split']}, but {splits} lists paper {e['paper_id']} "
-                f"under {', '.join(listed_in) or 'no split'}"
+                f"{eid} is labelled {e['split']}, but {splits} lists paper {e['paper_id']} under {', '.join(listed_in) or 'no split'}"
             )
         for field in ("context", "reference"):
             if e[field + "_hash"] != digest(e[field]):
                 raise RunError(f"{eid}: {field} text does not match its stored {field}_hash")
         if e["target_words"] != words(e["reference"]):
-            raise RunError(
-                f"{eid}: target_words is {e['target_words']}, but the reference has "
-                f"{words(e['reference'])} words"
-            )
+            raise RunError(f"{eid}: target_words is {e['target_words']}, but the reference has {words(e['reference'])} words")
         if not e["target_words"]:
             raise RunError(f"{eid}: the reference is empty")
         if normalize(e["reference"]) in normalize(e["context"]):
@@ -199,9 +195,7 @@ def load_examples(dataset, splits):
         sections_by_paper.setdefault(e["paper_id"], []).append(e["section_type"])
     for paper, sections in sections_by_paper.items():
         if not set(REQUIRED_SECTIONS) <= set(sections):
-            raise RunError(
-                f"Paper {paper} has sections {sorted(sections)}; expected {list(REQUIRED_SECTIONS)}"
-            )
+            raise RunError(f"Paper {paper} has sections {sorted(sections)}; expected {list(REQUIRED_SECTIONS)}")
     return examples
 
 
@@ -234,12 +228,8 @@ def contamination(candidate, reference):
     for word in candidate_words:
         run_ending_at = {j: run_ending_at.get(j - 1, 0) + 1 for j in reference_positions.get(word, [])}
         longest = max(longest, max(run_ending_at.values(), default=0))
-    reference_ngrams = {
-        tuple(reference_words[i : i + NGRAM]) for i in range(len(reference_words) - NGRAM + 1)
-    }
-    candidate_ngrams = [
-        tuple(candidate_words[i : i + NGRAM]) for i in range(len(candidate_words) - NGRAM + 1)
-    ]
+    reference_ngrams = {tuple(reference_words[i : i + NGRAM]) for i in range(len(reference_words) - NGRAM + 1)}
+    candidate_ngrams = [tuple(candidate_words[i : i + NGRAM]) for i in range(len(candidate_words) - NGRAM + 1)]
     shared = sum(ngram in reference_ngrams for ngram in candidate_ngrams)
     return {
         "longest_verbatim_run_words": longest,
@@ -265,10 +255,7 @@ def run_examples(examples, split):
         papers = sorted(papers[:PILOT_PAPERS])
         pilot = [e for e in examples if e["paper_id"] in papers]
         if len(papers) < PILOT_PAPERS:
-            raise RunError(
-                f"The pilot needs {PILOT_PAPERS} papers (one to train on, one to validate), "
-                f"but the dataset has {len(papers)}"
-            )
+            raise RunError(f"The pilot needs {PILOT_PAPERS} papers (one to train on, one to validate), but the dataset has {len(papers)}")
         return [{**e, "split": "train" if e["paper_id"] == papers[0] else "validation"} for e in pilot]
     chosen = [e for e in examples if e["split"] in ("train", "validation")]
     if not chosen:
@@ -327,8 +314,7 @@ def check_endpoint_supports(cfg, endpoint, model_info):
     missing = REQUIRED_PARAMETERS - set(endpoint["supported_parameters"])
     if missing:
         raise RunError(
-            f"{cfg['model']} endpoint {endpoint['tag']} does not support {sorted(missing)}; "
-            "choose another provider in configs/models.yaml"
+            f"{cfg['model']} endpoint {endpoint['tag']} does not support {sorted(missing)}; choose another provider in configs/models.yaml"
         )
     output_limit = endpoint.get("max_completion_tokens") or endpoint["context_length"]
     if cfg["max_tokens"] > output_limit:
@@ -339,10 +325,7 @@ def check_endpoint_supports(cfg, endpoint, model_info):
     efforts = model_info.get("reasoning", {}).get("supported_efforts", [])
     effort = cfg["reasoning"].get("effort")
     if effort is not None and efforts and effort not in efforts:
-        raise RunError(
-            f"{cfg['model']} does not support reasoning effort {effort!r}; "
-            f"set one of {efforts} in configs/models.yaml"
-        )
+        raise RunError(f"{cfg['model']} does not support reasoning effort {effort!r}; set one of {efforts} in configs/models.yaml")
 
 
 def endpoint_for(cfg):
@@ -499,9 +482,7 @@ class OpenRouter:
             if model not in live_endpoints:
                 live_endpoints[model] = self._get(f"/models/{model}/endpoints")
                 write_json(directory / endpoints_filename(model), live_endpoints[model])
-            current = find_endpoint(
-                live_endpoints[model]["data"]["endpoints"], cfg["provider"], f"the live {model} listing"
-            )
+            current = find_endpoint(live_endpoints[model]["data"]["endpoints"], cfg["provider"], f"the live {model} listing")
             check_endpoint_supports(cfg, current, live_models[model])
             if current["context_length"] < pinned["context_length"]:
                 raise RunError(
@@ -596,9 +577,7 @@ class OpenRouter:
                 if success:
                     return self._accept(raw, role, path)
                 if response.status_code not in RETRYABLE_STATUS:
-                    raise RunError(
-                        f"OpenRouter returned an unusable HTTP {response.status_code} reply; see {path}"
-                    )
+                    raise RunError(f"OpenRouter returned an unusable HTTP {response.status_code} reply; see {path}")
                 retry_after = response.headers.get("Retry-After")
             record["duration_seconds"] = time.monotonic() - started
             write_json(path, record)
@@ -643,13 +622,8 @@ class OpenRouter:
             instructions = system
             if format_attempt:
                 instructions += FORMAT_REPAIR
-                instructions += (
-                    "Keep the substantive task inputs unchanged. Previous validation error: "
-                    + attempts[-1]["error"]
-                )
-            response = self.call(
-                role, instructions, data, schema, {"task": identity, "format_attempt": format_attempt}
-            )
+                instructions += "Keep the substantive task inputs unchanged. Previous validation error: " + attempts[-1]["error"]
+            response = self.call(role, instructions, data, schema, {"task": identity, "format_attempt": format_attempt})
             try:
                 if response["finish_reason"] != "stop":
                     raise InvalidOutput(f"Incomplete output: {response['finish_reason']}")
@@ -660,9 +634,7 @@ class OpenRouter:
                 attempts.append({"response": response, "status": "valid"})
                 return {"status": "valid", "value": value, "attempts": attempts}
             except (json.JSONDecodeError, jsonschema.ValidationError, InvalidOutput) as e:
-                attempts.append(
-                    {"response": response, "status": "invalid", "error": str(e)[:MAX_REPAIR_ERROR_CHARS]}
-                )
+                attempts.append({"response": response, "status": "invalid", "error": str(e)[:MAX_REPAIR_ERROR_CHARS]})
         return {"status": "missing", "value": None, "attempts": attempts}
 
 
@@ -751,9 +723,7 @@ def writer_candidates(api, examples, output, concurrency=1):
     Each section gets up to WRITER_ATTEMPTS drafts: a draft that is cut off or outside the length
     window goes back to the writer with a revision note, and the last draft is kept either way.
     Each section is saved as it finishes. Returns the records keyed by example ID."""
-    config_hash = digest(
-        {"writer": api.roles["writer"], "prompt": prompt("writer"), "schema_version": SCHEMA_VERSION}
-    )
+    config_hash = digest({"writer": api.roles["writer"], "prompt": prompt("writer"), "schema_version": SCHEMA_VERSION})
     stopped = api.dispatch_stopped
 
     def write_section(example):
@@ -990,9 +960,7 @@ def propose_prompt(api, current, feedback, examples, initial, iteration, *, outp
         instruction = prompt("optimizer")
         if attempt:
             rejected = attempts[-1]
-            instruction += "\nBOUNDED REPAIR: Fix these proposal violations: " + ", ".join(
-                rejected["audit"]["reasons"]
-            )
+            instruction += "\nBOUNDED REPAIR: Fix these proposal violations: " + ", ".join(rejected["audit"]["reasons"])
             # Show the rejected proposal, or the raw reply if it was not valid JSON.
             previous = rejected["value"] or rejected["attempts"][-1]["response"]["content"]
             data = {**data, "previous_proposal": previous}
@@ -1061,10 +1029,7 @@ def build_feedback(examples, candidates, rows, current_prompt, failure_count):
         "failures": failures,
         "example_ids_used_for_aggregate": sorted(lookup),
         "selection": FAILING_FEEDBACK,
-        "all_training_gaps": [
-            {"example_id": row["example_id"], "section_type": row["section_type"], "gap": row["gap"]}
-            for row in by_gap
-        ],
+        "all_training_gaps": [{"example_id": row["example_id"], "section_type": row["section_type"], "gap": row["gap"]} for row in by_gap],
     }
 
 
@@ -1185,11 +1150,7 @@ def estimate(settings, roles, examples):
         per_role[role] = {
             "requests": count,
             "typical_usd": count
-            * (
-                typical_tokens * prices["prompt"]
-                + min(roles[role]["max_tokens"], 5000) * prices["completion"]
-                + prices["request"]
-            ),
+            * (typical_tokens * prices["prompt"] + min(roles[role]["max_tokens"], 5000) * prices["completion"] + prices["request"]),
         }
     result = {
         "examples": len(examples),
@@ -1331,9 +1292,7 @@ def run_xar(settings):
         prompts, training_summaries, training_rows = [initial], [], None
         for iteration in range(settings.iterations + 1):
             if iteration:
-                feedback = build_feedback(
-                    train, candidates, training_rows, prompts[-1], settings.failure_examples
-                )
+                feedback = build_feedback(train, candidates, training_rows, prompts[-1], settings.failure_examples)
                 prompts.append(
                     propose_prompt(
                         api,
@@ -1348,9 +1307,7 @@ def run_xar(settings):
                 )
             (output / "prompts").mkdir(exist_ok=True)
             (output / "prompts" / f"iter_{iteration:02d}.md").write_text(prompts[-1])
-            training_rows = evaluate_checkpoint(
-                api, train, candidates, prompts[-1], iteration, output, settings.concurrency
-            )
+            training_rows = evaluate_checkpoint(api, train, candidates, prompts[-1], iteration, output, settings.concurrency)
             summary = summarize(training_rows, settings.seed)
             training_summaries.append(summary)
             print(
@@ -1372,8 +1329,7 @@ def run_xar(settings):
         )
         print(f"Training selected P{selected}; scoring validation", flush=True)
         validation_rows = [
-            evaluate_checkpoint(api, validation, candidates, value, index, output, settings.concurrency)
-            for index, value in enumerate(prompts)
+            evaluate_checkpoint(api, validation, candidates, value, index, output, settings.concurrency) for index, value in enumerate(prompts)
         ]
         validation_summaries = [summarize(rows, settings.seed) for rows in validation_rows]
         result = write_report(
@@ -1384,11 +1340,7 @@ def run_xar(settings):
             api.costs(),
             settings.seed,
         )
-        status = {
-            "state": "complete"
-            if all(summary["complete"] for summary in validation_summaries)
-            else "incomplete"
-        }
+        status = {"state": "complete" if all(summary["complete"] for summary in validation_summaries) else "incomplete"}
         return result
     except BaseException as error:
         status["error"] = f"{type(error).__name__}: {error}"
@@ -1402,13 +1354,9 @@ def run_xar(settings):
 def parse_args(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--pilot", action="store_true", help="smoke test on 2 training papers")
-    parser.add_argument(
-        "--dry-run", action="store_true", help="estimate cost without network calls or writes"
-    )
+    parser.add_argument("--dry-run", action="store_true", help="estimate cost without network calls or writes")
     parser.add_argument("--output", help="new run directory (default: runs/<configured run name>)")
-    parser.add_argument(
-        "--seed", type=int, help="grading-order and bootstrap seed, not a model decoding seed"
-    )
+    parser.add_argument("--seed", type=int, help="grading-order and bootstrap seed, not a model decoding seed")
     parser.add_argument("--concurrency", type=parse_concurrency, help="parallel examples, 1–32")
     parser.add_argument("--dataset", default="data/examples.jsonl")
     parser.add_argument("--splits", default="data/splits.json")
@@ -1420,8 +1368,7 @@ def settings_for(options):
     if design["feedback_policy"] != FAILING_FEEDBACK:
         raise RunError(f"Only feedback_policy {FAILING_FEEDBACK!r} is supported")
     return RunSettings(
-        output_dir=options.output
-        or str(Path("runs") / design["pilot_run" if options.pilot else "research_run"]),
+        output_dir=options.output or str(Path("runs") / design["pilot_run" if options.pilot else "research_run"]),
         split="pilot" if options.pilot else "research",
         seed=design["seed"] if options.seed is None else options.seed,
         iterations=design["pilot_iterations" if options.pilot else "iterations"],
