@@ -839,8 +839,6 @@ def run_xar(config_path):
     examples = run_examples(examples, config)
     train = [example for example in examples if example["split"] == "train"]
     validation = [example for example in examples if example["split"] == "validation"]
-    if not train or not validation:
-        raise RunError("Need train and validation papers")
     roles = role_configs()
     output = Path(config["output"])
     # Atomic directory creation also prevents two processes from starting in the same directory.
