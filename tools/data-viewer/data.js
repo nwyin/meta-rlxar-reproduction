@@ -104,7 +104,6 @@ export async function loadRun(name) {
           section_type: row.section_type,
           split: row.split,
           length_compliant: row.length_compliant,
-          contamination_flagged: row.contamination_flagged,
           gaps: [],
         });
       }

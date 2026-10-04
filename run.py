@@ -93,8 +93,6 @@ def write_table(path, rows):
 
 
 # Read only the prepared JSON files; fetching and parsing papers live in fetch_data.py.
-NGRAM = 8
-VERBATIM_FLAG_WORDS = 30
 PILOT_PAPERS = 2
 
 
@@ -107,35 +105,6 @@ def task_data(example):
         "visible_paper": example["context"],
         "section_type": example["section_type"],
         "target_words": example["target_words"],
-    }
-
-
-def contamination(candidate, reference):
-    """Measure how much of the author's withheld section a candidate reproduces word for word.
-
-    Reports the longest run of consecutive shared words and the fraction of the candidate's
-    8-grams that also occur in the reference, and flags runs of VERBATIM_FLAG_WORDS or more.
-    """
-    candidate_words = candidate.split()
-    reference_words = reference.split()
-    reference_positions = {}
-    for position, word in enumerate(reference_words):
-        reference_positions.setdefault(word, []).append(position)
-    # Longest common run by dynamic programming: run_ending_at[j] is the length of the shared run
-    # that ends at the current candidate word and at reference word j.
-    longest, run_ending_at = 0, {}
-    for word in candidate_words:
-        run_ending_at = {j: run_ending_at.get(j - 1, 0) + 1 for j in reference_positions.get(word, [])}
-        longest = max(longest, max(run_ending_at.values(), default=0))
-    reference_ngrams = {tuple(reference_words[i : i + NGRAM]) for i in range(len(reference_words) - NGRAM + 1)}
-    candidate_ngrams = [tuple(candidate_words[i : i + NGRAM]) for i in range(len(candidate_words) - NGRAM + 1)]
-    shared = sum(ngram in reference_ngrams for ngram in candidate_ngrams)
-    return {
-        "longest_verbatim_run_words": longest,
-        "eightgram_overlap_fraction": shared / max(1, len(candidate_ngrams)),
-        "flagged": longest >= VERBATIM_FLAG_WORDS,
-        # Flagged candidates are reported, not dropped.
-        "exclusion": False,
     }
 
 
@@ -502,7 +471,6 @@ def writer_candidates(api, examples, output, concurrency=1):
             "length_compliant": accepted["length_compliant"],
             "complete": accepted["response"]["finish_reason"] == "stop",
             "length_ratio": accepted["words"] / example["target_words"],
-            "contamination": contamination(accepted["text"], example["reference"]),
         }
         write_json(path, record)
         return record
@@ -606,7 +574,6 @@ def evaluate_checkpoint(api, examples, candidates, meta_prompt, checkpoint, outp
             "gap": human - model if human is not None and model is not None else None,
             "length_ratio": candidate["length_ratio"],
             "length_compliant": candidate["length_compliant"],
-            "contamination_flagged": candidate["contamination"]["flagged"],
             "rubric_path": str(rubric_path),
             "grade_paths": {origin: str(path) for origin, path in grade_paths.items()},
         }
@@ -809,7 +776,7 @@ def section_summary(graded, section):
 def summarize(rows, seed=0):
     """Summarize one checkpoint's rows: mean human, model and gap scores over the sections with
     both grades, per-section gaps, and paper-bootstrap intervals for all sections, the
-    length-compliant ones and the ones not flagged for copying the reference."""
+    length-compliant ones."""
     graded = [row for row in rows if row["gap"] is not None]
 
     def mean(key):
@@ -826,10 +793,8 @@ def summarize(rows, seed=0):
         "ties": sum(row["gap"] == 0 for row in graded),
         "paper_interval": bootstrap(graded, seed),
         "length_compliant": sum(row["length_compliant"] for row in rows),
-        "contamination_flagged": sum(row["contamination_flagged"] for row in rows),
         "sections": {section: section_summary(graded, section) for section in SECTIONS},
         "compliant_sensitivity": bootstrap([row for row in graded if row["length_compliant"]], seed),
-        "unflagged_sensitivity": bootstrap([row for row in graded if not row["contamination_flagged"]], seed),
     }
 
 

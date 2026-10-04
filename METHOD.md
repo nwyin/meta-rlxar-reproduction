@@ -295,8 +295,8 @@ these choices:
   as a group, not one by one, as for the old corpus.
 - The writer may have seen these papers in pretraining. A highly cited paper is more likely to
   be memorized, which would pull the model's section toward the author's and shrink the gap.
-  The 100 to 1,500 citation band limits this, and the 30-word copy flag measures verbatim
-  recall. The bias is not removed.
+  The corpus uses a 100 to 1,500 citation band. Whether the writer recalls these papers
+  remains untested.
 - The corpus leaves out papers whose introduction has no heading (Nature letters, for
   example), papers ar5iv could not convert, and papers over the context limit. 41 of the 117
   rejected candidates had no ar5iv page. The corpus skews toward papers whose LaTeX converts

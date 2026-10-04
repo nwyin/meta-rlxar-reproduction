@@ -1076,3 +1076,17 @@ prompt limit rejected an oversized prompt before reading data or creating a clie
 accepted the exact limit. HTTP 400 and 402 responses still stopped execution and stayed
 on record. Removed CLI flags exited before execution. Lint passed. We discarded the temporary
 artifacts. Live provider behavior remains untested; we made no paid calls.
+
+## 2026-10-03: Remove the reference-overlap heuristic
+
+The owner asked us to remove the contamination check. We removed the word-overlap
+measurement, its candidate and score fields, the flagged count and the sensitivity analysis
+that excluded flagged sections. We also removed the data viewer's copy-check label. Exact
+word overlap does not establish whether the writer recalled a paper. Whether the writer
+recalls these papers remains untested. The optimizer's training-leakage check stays in place.
+Historical run files, reports and log entries retain their recorded results.
+
+Inline offline checks confirmed that summaries handle empty inputs, missing grades and rows
+without the removed field. Historical rows with the field produced the same summaries as
+rows without it. Python lint and JavaScript syntax checks passed. We made no paid calls;
+full runs and the viewer's browser rendering remain untested.
