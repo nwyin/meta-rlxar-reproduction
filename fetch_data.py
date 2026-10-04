@@ -5,20 +5,7 @@ Run with --check to validate the local corpus without downloading or writing any
 Paper selection and provenance live in data/source_manifest.json and data/splits.json.
 """
 
-from __future__ import annotations
-
-import argparse
-import hashlib
-import json
-import os
-import re
-import tempfile
-import time
-from collections import Counter
-from pathlib import Path
-
-import httpx
-from bs4 import BeautifulSoup
+from __future__ import annotations; import argparse, hashlib, json, os, re, tempfile, time; from collections import Counter; from pathlib import Path; import httpx; from bs4 import BeautifulSoup  # noqa: I001  # fmt: skip
 
 ROOT = Path(__file__).resolve().parent
 REQUIRED_SECTIONS = ("abstract", "introduction")
@@ -26,10 +13,6 @@ REQUIRED_SECTIONS = ("abstract", "introduction")
 
 class RunError(RuntimeError):
     """The local or downloaded corpus does not match its frozen manifests."""
-
-
-def canonical(value):
-    return json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(",", ":"), allow_nan=False)
 
 
 def digest(value):
@@ -114,15 +97,17 @@ def html_text(node, strip_heading=False, strip_non_prose=False):
     return normalize(fragment.get_text())
 
 
-def number_citations(document):
-    """Give every citation in a parsed page one numeric style, in place.
+def extract_paper(html, metadata):
+    """Split one LaTeXML page into examples, one per supported section it has.
 
-    Each in-text citation becomes its bibliography numbers, such as "[3, 7]", and each reference
-    label becomes "[n]". Journal styles differ ("Smith et al. 2010", "(1)", "e.g.,)"), and LaTeXML
-    renders some of them badly; a model that writes clean prose would otherwise stand out from the
-    authors on formatting alone. Only formatting changes, never the wording. A citation that links
-    to no reference is left as it is.
+    Each example's reference is the text of one section, and its context is the rest of the paper
+    with that section replaced by a placeholder. Raises RunError saying why a paper is unusable.
     """
+    document = BeautifulSoup(html, "html.parser").select_one(".ltx_document")
+    if document is None:
+        raise RunError("Page has no LaTeXML document (.ltx_document)")
+    # Normalize citation formatting so it cannot signal who wrote a section. Preserve wording
+    # and leave citations with no bibliography link unchanged.
     numbers = {item["id"]: n for n, item in enumerate(document.select(".ltx_bibitem[id]"), start=1)}
     for item_id, n in numbers.items():
         tag = document.find(id=item_id).select_one(".ltx_tag_bibitem")
@@ -134,18 +119,6 @@ def number_citations(document):
         cited = sorted({numbers[a["href"][1:]] for a in cite.select("a[href^='#']") if a["href"][1:] in numbers})
         if cited:
             cite.replace_with("[" + ", ".join(map(str, cited)) + "]")
-
-
-def extract_paper(html, metadata):
-    """Split one LaTeXML page into examples, one per supported section it has.
-
-    Each example's reference is the text of one section, and its context is the rest of the paper
-    with that section replaced by a placeholder. Raises RunError saying why a paper is unusable.
-    """
-    document = BeautifulSoup(html, "html.parser").select_one(".ltx_document")
-    if document is None:
-        raise RunError("Page has no LaTeXML document (.ltx_document)")
-    number_citations(document)
     abstracts = document.select(".ltx_abstract")
     if len(abstracts) != 1:
         raise RunError(f"Page has {len(abstracts)} abstracts; expected 1")
@@ -310,7 +283,7 @@ def restore_corpus(data_dir=ROOT / "data", *, check=False):
         records.append(example)
     if extracted:
         raise RunError("Extraction produced sections absent from the frozen source manifest")
-    text = "".join(canonical(example) + "\n" for example in records)
+    text = "".join(json.dumps(example, ensure_ascii=False, sort_keys=True, separators=(",", ":"), allow_nan=False) + "\n" for example in records)
     validate_dataset(text, manifest, splits)
     if not dataset_path.exists():
         write_bytes(dataset_path, text.encode("utf-8"))
@@ -321,15 +294,11 @@ def restore_corpus(data_dir=ROOT / "data", *, check=False):
     )
 
 
-def main(argv=None):
+if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--check", action="store_true", help="verify local files without downloads or writes")
-    options = parser.parse_args(argv)
+    options = parser.parse_args()
     try:
         restore_corpus(check=options.check)
     except (RunError, httpx.HTTPError, OSError, ValueError) as error:
         parser.exit(2, f"STOP: {error}\n")
-
-
-if __name__ == "__main__":
-    main()
