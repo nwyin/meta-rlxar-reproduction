@@ -4,7 +4,7 @@ Prepare data with fetch_data.py, then choose a new --output directory.
 Settings and model roles come from configs/; prompts stay in prompts/. No inputs are truncated.
 """
 
-from __future__ import annotations; import argparse, concurrent.futures, csv, datetime as dt, hashlib, json, math, os, random, re, statistics, threading, time; from dataclasses import asdict, dataclass; from pathlib import Path; import httpx, jsonschema, yaml; from dotenv import load_dotenv  # noqa: I001  # fmt: skip
+from __future__ import annotations; import argparse, collections, concurrent.futures, csv, datetime as dt, hashlib, json, math, os, random, re, statistics, threading, time; from dataclasses import asdict, dataclass; from pathlib import Path; import httpx, jsonschema, yaml; from dotenv import load_dotenv  # noqa: I001  # fmt: skip
 
 ROOT = Path(__file__).resolve().parent
 ROLES = ("writer", "rubric", "optimizer", "judge")
@@ -68,11 +68,11 @@ def bounded_map(function, items, concurrency, stopped):
     with concurrent.futures.ThreadPoolExecutor(max_workers=concurrency) as pool:
         futures = [pool.submit(invoke, item) for item in items]
         try:
-            finished = list(concurrent.futures.as_completed(futures))
+            concurrent.futures.wait(futures)
         except BaseException:
             stopped.set()  # interrupted while waiting: items that have not started will skip themselves
             raise
-    failures = [future.exception() for future in finished if future.exception() is not None]
+    failures = [future.exception() for future in futures if future.exception()]
     if failures:
         # Raise the error that caused the stop, not one of the Skipped errors that followed it.
         original = [error for error in failures if not isinstance(error, Skipped)]
@@ -81,9 +81,7 @@ def bounded_map(function, items, concurrency, stopped):
 
 
 def write_table(path, rows):
-    """Write rows (dicts with the same keys) as CSV; writes nothing when rows is empty."""
-    if not rows:
-        return
+    """Write a non-empty list of dicts with the same keys as CSV."""
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("w", newline="") as f:
@@ -115,8 +113,6 @@ def run_examples(examples, split):
     labelled pilot in an older dataset, or else the first PILOT_PAPERS training papers; the first
     (sorted by ID) becomes training and the rest become validation.
     """
-    if split not in ("pilot", "research"):
-        raise RunError(f"Invalid split {split!r}; use pilot or research")
     if split == "pilot":
         papers = list(dict.fromkeys(e["paper_id"] for e in examples if e["split"] == "pilot"))
         papers = papers or list(dict.fromkeys(e["paper_id"] for e in examples if e["split"] == "train"))
@@ -125,10 +121,7 @@ def run_examples(examples, split):
         if len(papers) < PILOT_PAPERS:
             raise RunError(f"Pilot needs {PILOT_PAPERS} papers; found {len(papers)}")
         return [{**e, "split": "train" if e["paper_id"] == papers[0] else "validation"} for e in pilot]
-    chosen = [e for e in examples if e["split"] in ("train", "validation")]
-    if not chosen:
-        raise RunError("No train or validation examples")
-    return chosen
+    return [e for e in examples if e["split"] in ("train", "validation")]
 
 
 # OpenRouter: configured routing, bounded retries, and raw requests and responses.
@@ -169,14 +162,6 @@ def routing_fields(cfg):
     }
 
 
-def backoff_seconds(attempt, retry_after=None):
-    """Seconds to wait after failed send `attempt`: the schedule, or a longer Retry-After, capped."""
-    wait = BACKOFF_SECONDS[attempt]
-    if retry_after is not None and retry_after.strip().isdigit():
-        wait = max(wait, min(int(retry_after), MAX_RETRY_AFTER_SECONDS))
-    return wait
-
-
 class OpenRouter:
     """Send each fresh-run request and keep every attempt and raw response."""
 
@@ -185,6 +170,7 @@ class OpenRouter:
         self.key = os.getenv("OPENROUTER_API_KEY")
         if not self.key and client is None:
             raise RunError("Set OPENROUTER_API_KEY in .env")
+        self.headers = {"X-OpenRouter-Title": "Independent XAR reproduction", **({"Authorization": "Bearer " + self.key} if self.key else {})}
         self.output, self.roles, self.seed = Path(output), roles, seed
         self.client = client or httpx.Client(timeout=httpx.Timeout(600, connect=30))
         self.dispatch_stopped = threading.Event()
@@ -202,12 +188,7 @@ class OpenRouter:
         charges, errors = {}, {}
         for generation_id in sorted(generation_ids):
             try:
-                response = self.client.get(
-                    API_BASE + "/generation",
-                    params={"id": generation_id},
-                    headers={"Authorization": "Bearer " + self.key} if self.key else {},
-                    timeout=30,
-                )
+                response = self.client.get(API_BASE + "/generation", params={"id": generation_id}, headers=self.headers, timeout=30)
                 response.raise_for_status()
                 data = response.json()["data"]
                 cost = data["total_cost"]
@@ -260,9 +241,6 @@ class OpenRouter:
                 "schema_version": SCHEMA_VERSION,
             },
         )
-        headers = {"X-OpenRouter-Title": "Independent XAR reproduction"}
-        if self.key:
-            headers["Authorization"] = "Bearer " + self.key
         for attempt in range(MAX_SENDS):
             if self.dispatch_stopped.is_set():
                 raise Skipped("Another request failed")
@@ -271,7 +249,7 @@ class OpenRouter:
             write_json(path, record)
             started, retry_after = time.monotonic(), None
             try:
-                response = self.client.post(API_BASE + "/chat/completions", json=payload, headers=headers)
+                response = self.client.post(API_BASE + "/chat/completions", json=payload, headers=self.headers)
             except (httpx.ConnectError, httpx.ConnectTimeout, httpx.PoolTimeout) as error:
                 record.update(status="connect_error", error=str(error))
             except (httpx.TimeoutException, httpx.NetworkError, httpx.RemoteProtocolError) as error:
@@ -318,7 +296,9 @@ class OpenRouter:
             record["duration_seconds"] = time.monotonic() - started
             write_json(path, record)
             if attempt < MAX_SENDS - 1:
-                wait = backoff_seconds(attempt, retry_after)
+                wait = BACKOFF_SECONDS[attempt]
+                if retry_after is not None and retry_after.strip().isdigit():
+                    wait = max(wait, min(int(retry_after), MAX_RETRY_AFTER_SECONDS))
                 print(f"Retryable failure for {role}; waiting {wait} s (see {path})", flush=True)
                 time.sleep(wait)
         raise RunError(f"{role}: failed after {MAX_SENDS} sends; see {directory}")
@@ -423,12 +403,13 @@ def writer_candidates(api, examples, output, concurrency=1):
     Each section gets up to WRITER_ATTEMPTS drafts: a draft that is cut off or outside the length
     window goes back to the writer with a revision note, and the last draft is kept either way.
     Each section is saved as it finishes. Returns the records keyed by example ID."""
-    config_hash = digest({"writer": api.roles["writer"], "prompt": (ROOT / "prompts/writer.md").read_text(), "schema_version": SCHEMA_VERSION})
+    prompt = (ROOT / "prompts/writer.md").read_text()
+    config_hash = digest({"writer": api.roles["writer"], "prompt": prompt, "schema_version": SCHEMA_VERSION})
     stopped = api.dispatch_stopped
 
     def write_section(example):
         eid = example["example_id"]
-        path = Path(output) / "generations" / (eid + ".json")
+        path = output / "generations" / (eid + ".json")
         low, high = 0.85 * example["target_words"], 1.15 * example["target_words"]
         attempts = []
         for attempt in range(WRITER_ATTEMPTS):
@@ -441,7 +422,7 @@ def writer_candidates(api, examples, output, concurrency=1):
             if stopped.is_set():
                 raise Skipped(f"{eid}: another section failed")
             identity = {"writer": config_hash, "example": eid, "attempt": attempt}
-            response = api.call("writer", (ROOT / "prompts/writer.md").read_text(), data, None, identity)
+            response = api.call("writer", prompt, data, None, identity)
             text = response["content"].strip()
             count = len(text.split())
             compliant = low <= count <= high
@@ -483,7 +464,7 @@ def writer_candidates(api, examples, output, concurrency=1):
         "writer_configuration": api.roles["writer"],
         "candidates": candidates,
     }
-    write_json(Path(output) / "generations/candidates.json", artifact)
+    write_json(output / "generations/candidates.json", artifact)
     return candidates
 
 
@@ -542,7 +523,7 @@ def evaluate_checkpoint(api, examples, candidates, meta_prompt, checkpoint, outp
     The judge grades the human and the model section separately, in a seeded random order, and
     never learns which is which. Returns one row per example with the human-minus-model gap
     (None if the rubric or a grade is missing), and saves the rows next to the grades."""
-    root = Path(output)
+    root = output
 
     def evaluate(example):
         eid = example["example_id"]
@@ -555,13 +536,13 @@ def evaluate_checkpoint(api, examples, candidates, meta_prompt, checkpoint, outp
         order_seed = int(digest({"seed": api.seed, "label": label})[:16], 16)
         random.Random(order_seed).shuffle(origins)
         grade_paths = {origin: root / "scores" / label / (origin + ".json") for origin in origins}
-        totals = {}
-        for slot, origin in enumerate(origins):
-            text = example["reference"] if origin == "human" else candidate["text"]
-            # The origin appears only in the file path, never in the request or its identity.
-            identity = {"grade": label, "slot": slot}
-            grade = grade_candidate(api, example, rubric, text, identity, grade_paths[origin])
-            totals[origin] = grade["total"]
+        # The origin appears only in the file path, never in the request or its identity.
+        totals = {
+            origin: grade_candidate(
+                api, example, rubric, example["reference"] if origin == "human" else candidate["text"], {"grade": label, "slot": slot}, grade_paths[origin]
+            )["total"]
+            for slot, origin in enumerate(origins)
+        }
         human, model = totals["human"], totals["model"]
         return {
             "example_id": eid,
@@ -742,20 +723,17 @@ def bootstrap(rows, seed=0):
     Sections from one paper are not independent, so each replicate draws papers with
     replacement and takes all of a drawn paper's gaps. Rows without a gap are ignored;
     returns None if no row has one."""
-    gaps_by_paper = {}
+    gaps_by_paper = collections.defaultdict(list)
     for row in rows:
         if row.get("gap") is not None:
-            gaps_by_paper.setdefault(row["paper_id"], []).append(row["gap"])
+            gaps_by_paper[row["paper_id"]].append(row["gap"])
     if not gaps_by_paper:
         return None
     rng = random.Random(seed)
     papers = sorted(gaps_by_paper)
-    means = []
-    for _ in range(BOOTSTRAP_REPLICATES):
-        sample = rng.choices(papers, k=len(papers))
-        means.append(statistics.mean(gap for paper in sample for gap in gaps_by_paper[paper]))
-    means.sort()
-    low, high = INTERVAL
+    means = sorted(
+        statistics.mean(gap for paper in rng.choices(papers, k=len(papers)) for gap in gaps_by_paper[paper]) for _ in range(BOOTSTRAP_REPLICATES)
+    )
     return {
         "method": "paired_whole_paper_percentile_bootstrap",
         "paper_clusters": len(papers),
@@ -763,8 +741,8 @@ def bootstrap(rows, seed=0):
         "seed": seed,
         "estimate": statistics.mean(gap for gaps in gaps_by_paper.values() for gap in gaps),
         "bootstrap_median": means[BOOTSTRAP_REPLICATES // 2],
-        "low": means[int(low * BOOTSTRAP_REPLICATES)],
-        "high": means[int(high * BOOTSTRAP_REPLICATES)],
+        "low": means[int(INTERVAL[0] * BOOTSTRAP_REPLICATES)],
+        "high": means[int(INTERVAL[1] * BOOTSTRAP_REPLICATES)],
     }
 
 
@@ -802,13 +780,11 @@ def paired_improvement(initial, selected, seed=0):
     """Per-section change in gap from the initial to the selected checkpoint, with a
     paper-bootstrap interval. Sections missing a gap at either checkpoint are left out."""
     initial_by_id = {row["example_id"]: row for row in initial}
-    changes = []
-    for row in selected:
-        if row["gap"] is None:
-            continue
-        before = initial_by_id[row["example_id"]]["gap"]
-        if before is not None:
-            changes.append({"paper_id": row["paper_id"], "gap": row["gap"] - before})
+    changes = [
+        {"paper_id": row["paper_id"], "gap": row["gap"] - before}
+        for row in selected
+        if row["gap"] is not None and (before := initial_by_id[row["example_id"]]["gap"]) is not None
+    ]
     return {
         "paired_coverage": len(changes),
         "mean": statistics.mean(change["gap"] for change in changes) if changes else None,
@@ -901,8 +877,6 @@ def run_xar(settings):
     roles = role_configs()
     output = Path(settings.output_dir)
     # Atomic directory creation also prevents two processes from starting in the same directory.
-    if output.exists():
-        raise RunError(f"Output exists: {output}")
     api = OpenRouter(output, roles, settings.seed)
     try:
         output.mkdir(parents=True, exist_ok=False)

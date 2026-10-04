@@ -5,7 +5,7 @@ Run with --check to validate the local corpus without downloading or writing any
 Paper selection and provenance live in data/source_manifest.json and data/splits.json.
 """
 
-from __future__ import annotations; import argparse, hashlib, json, os, re, tempfile, time; from collections import Counter; from pathlib import Path; import httpx; from bs4 import BeautifulSoup  # noqa: I001  # fmt: skip
+from __future__ import annotations; import argparse, hashlib, json, os, re, time; from collections import Counter; from pathlib import Path; import httpx; from bs4 import BeautifulSoup  # noqa: I001  # fmt: skip
 
 ROOT = Path(__file__).resolve().parent
 REQUIRED_SECTIONS = ("abstract", "introduction")
@@ -34,13 +34,9 @@ def read_json(path):
 def write_bytes(path, content):
     """Publish a complete file only after its contents have passed their checks."""
     path.parent.mkdir(parents=True, exist_ok=True)
-    with tempfile.NamedTemporaryFile(dir=path.parent, prefix=f".{path.name}.", delete=False) as temporary:
-        temporary.write(content)
-    temporary_path = Path(temporary.name)
-    try:
-        os.replace(temporary_path, path)
-    finally:
-        temporary_path.unlink(missing_ok=True)
+    temporary = path.with_name(f".{path.name}.tmp")
+    temporary.write_bytes(content)
+    os.replace(temporary, path)
 
 
 HEADING_TAG = re.compile(r"^h[1-6]$")
@@ -84,10 +80,7 @@ def html_text(node, strip_heading=False, strip_non_prose=False):
             heading.decompose()
     for math_node in fragment.find_all("math"):
         tex = math_node.find("annotation", attrs={"encoding": "application/x-tex"})
-        if tex:
-            math_node.replace_with(tex.get_text())
-        else:
-            math_node.replace_with(math_node.get("alttext", math_node.get_text(" ")))
+        math_node.replace_with(tex.get_text() if tex else math_node.get("alttext", math_node.get_text(" ")))
     unwanted = "script, style, nav, footer, .ltx_ERROR" + (", " + NON_PROSE if strip_non_prose else "")
     for element in fragment.select(unwanted):
         element.decompose()
@@ -108,11 +101,11 @@ def extract_paper(html, metadata):
         raise RunError("Page has no LaTeXML document (.ltx_document)")
     # Normalize citation formatting so it cannot signal who wrote a section. Preserve wording
     # and leave citations with no bibliography link unchanged.
-    numbers = {item["id"]: n for n, item in enumerate(document.select(".ltx_bibitem[id]"), start=1)}
-    for item_id, n in numbers.items():
-        tag = document.find(id=item_id).select_one(".ltx_tag_bibitem")
-        if tag:
-            tag.string = f"[{n}]"
+    items = document.select(".ltx_bibitem[id]")
+    numbers = {item["id"]: n for n, item in enumerate(items, start=1)}
+    for item in items:
+        if tag := item.select_one(".ltx_tag_bibitem"):
+            tag.string = f"[{numbers[item['id']]}]"
     for cite in document.select(".ltx_cite"):
         if cite.find_parent(class_="ltx_cite"):
             continue
@@ -232,10 +225,10 @@ def validate_dataset(text, manifest, splits):
 def check_html(path, metadata):
     if not path.exists():
         raise RunError(f"Missing {path}; run `uv run python fetch_data.py` to download it")
-    content = path.read_bytes()
-    if hashlib.sha256(content).hexdigest() != metadata["html_hash"]:
+    html = path.read_bytes().decode("utf-8")
+    if digest(html) != metadata["html_hash"]:
         raise RunError(f"{path} differs from its frozen HTML hash; the file was left unchanged")
-    return content.decode("utf-8")
+    return html
 
 
 def restore_corpus(data_dir=ROOT / "data", *, check=False):
@@ -262,13 +255,12 @@ def restore_corpus(data_dir=ROOT / "data", *, check=False):
                 response = client.get(paper["source_url"])
                 response.raise_for_status()
                 # The original fetch saved decoded HTML as UTF-8, rather than response bytes.
-                content = response.text.encode("utf-8")
-                if hashlib.sha256(content).hexdigest() != paper["html_hash"]:
+                if digest(response.text) != paper["html_hash"]:
                     raise RunError(
                         f"Downloaded HTML for {paper['paper_id']} differs from its frozen hash; "
                         "the source may have changed, so the page was not saved"
                     )
-                write_bytes(path, content)
+                write_bytes(path, response.text.encode("utf-8"))
                 print(f"Downloaded {paper['paper_id']}", flush=True)
                 time.sleep(0.5)
             for example in extract_paper(check_html(path, paper), paper):
