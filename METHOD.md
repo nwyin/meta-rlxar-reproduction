@@ -218,30 +218,34 @@ target and sections without a copying flag. Historical reports remain in `report
 
 ## Cost and request handling
 
-Spending is capped by the OpenRouter key's limit, set on openrouter.ai. The code enforces no
-budget of its own; it records the cost OpenRouter reports for every response and writes the
-run's total to `costs.json`. Until 2026-10-01 it also reserved each request's worst-case cost in
-`runs/budget_ledger.json` and refused sends past `--budget-usd` and `--total-budget-usd`. That
-file stays as the record of the earlier runs.
+OpenRouter calculates billing and caps spending at the key's limit, set on openrouter.ai.
+The runner saves raw responses, including reported usage and generation IDs. After scoring,
+it queries OpenRouter's generation API once per unique ID, including IDs from retried
+requests, and sums the returned charges for the report. It saves the charges, lookup errors
+and sends missing IDs in `costs.json`. Any unresolved lookup or send marks the total as
+partial; connection failures before sending are excluded. Billing lookup failures leave
+the experiment results available. [README.md](README.md#run) describes the API endpoints.
+Earlier runs retain their original cost records. Runs before 2026-10-01 also used local
+cost reservations and budget limits; `runs/budget_ledger.json` preserves that record.
 
-The dry run uses saved prices and approximate token counts. The simplified runner needs
-no local tokenizers. It uses payload size and output limits to estimate costs and records
-the billed cost returned by OpenRouter. Cost estimates are approximate; the endpoint
-enforces its token limit. The runner sends the full input and never truncates a paper or
-reduces feedback to make a request fit.
+The dry run uses saved prices and approximate token counts to estimate a future run's cost.
+OpenRouter handles billing during execution. The endpoint enforces its token limit, and
+the runner sends the full input. Papers and feedback retain their full length.
 
 Before a run's first request, a preflight fetches OpenRouter's live model catalog and endpoint
 listings and compares them with the snapshots in `configs/snapshots/`. It stops the run if a
 model now points to a different release, the provider no longer supports a setting the run
-sends, the context shrank, the quantization changed or a price rose by more than 25%.
+sends, the context shrank or the quantization changed. The saved live listings include
+prices for reference; OpenRouter applies its current rates.
 
 Each request names a single provider with fallbacks turned off, and a response from any other
 model or provider stops the run. A connection error, a retryable status (408, 429, 5xx) or a
 send that gets no response (a timeout or a broken connection) is sent again up to 5 times,
 waiting 2, 5, 15, 30 and 60 seconds, or longer if a Retry-After header asks, up to 120
-seconds. A send with no response may still have been billed, so it stays on record as
-unresolved with its cost upper bound; `costs.json` counts them. Every request, response and cost is saved in the run
-directory. A response with missing billing information stops the run and remains unresolved.
+seconds. A send with no response stays on record with status `uncertain` and its transport
+error. OpenRouter may have billed it. Every received response retains the generation ID
+from its body or `X-Generation-Id` header when available, so its recorded charge can be
+looked up later. Missing billing information leaves an otherwise valid response usable.
 Every invocation requires a fresh output directory. Interrupted runs retain their files;
 the simplified runner has no resume path. Each new manifest records the code, prompts,
 data, models and settings used for that run.

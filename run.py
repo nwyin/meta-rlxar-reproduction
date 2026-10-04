@@ -4,29 +4,7 @@ Prepare data with fetch_data.py, inspect --dry-run, then choose a new --output d
 Settings and model roles come from configs/; prompts stay in prompts/. No inputs are truncated.
 """
 
-from __future__ import annotations
-
-import argparse
-import concurrent.futures
-import csv
-import datetime as dt
-import hashlib
-import json
-import math
-import os
-import random
-import re
-import statistics
-import threading
-import time
-from collections import Counter
-from dataclasses import asdict, dataclass
-from pathlib import Path
-
-import httpx
-import jsonschema
-import yaml
-from dotenv import load_dotenv
+from __future__ import annotations; import argparse, concurrent.futures, csv, datetime as dt, hashlib, json, math, os, random, re, statistics, threading, time; from collections import Counter; from dataclasses import asdict, dataclass; from pathlib import Path; import httpx, jsonschema, yaml; from dotenv import load_dotenv  # noqa: I001  # fmt: skip
 
 ROOT = Path(__file__).resolve().parent
 ROLES = ("writer", "rubric", "optimizer", "judge")
@@ -43,10 +21,6 @@ class RunError(RuntimeError):
 
 class InvalidOutput(RunError):
     """A model reply failed validation."""
-
-
-class UncertainSend(RunError):
-    """A response arrived without a usable billed cost."""
 
 
 class Skipped(RunError):
@@ -85,7 +59,7 @@ def bounded_map(function, items, concurrency, stopped):
 
     def invoke(item):
         if stopped.is_set():
-            raise Skipped("Skipped because another task failed")
+            raise Skipped("Another task failed")
         try:
             return function(item)
         except BaseException:
@@ -136,34 +110,32 @@ def load_examples(dataset, splits):
     split_counts = Counter(paper for papers in papers_by_split.values() for paper in papers)
     repeated = sorted(paper for paper, count in split_counts.items() if count > 1)
     if repeated:
-        raise RunError(f"Paper splits overlap in {splits}: {', '.join(repeated)} listed more than once")
+        raise RunError(f"{splits}: overlapping papers {', '.join(repeated)}")
     examples = [json.loads(line) for line in Path(dataset).read_text().splitlines() if line.strip()]
     id_counts = Counter(e["example_id"] for e in examples)
     duplicates = sorted(eid for eid, count in id_counts.items() if count > 1)
     if duplicates:
-        raise RunError(f"{dataset} repeats example IDs: {', '.join(duplicates)}")
+        raise RunError(f"{dataset}: duplicate IDs {', '.join(duplicates)}")
     sections_by_paper = {}
     for e in examples:
         eid = e["example_id"]
         listed_in = [split for split, papers in papers_by_split.items() if e["paper_id"] in papers]
         if listed_in != [e["split"]]:
-            raise RunError(
-                f"{eid} is labelled {e['split']}, but {splits} lists paper {e['paper_id']} under {', '.join(listed_in) or 'no split'}"
-            )
+            raise RunError(f"{eid}: split {e['split']!r} != {listed_in} in {splits}")
         for field in ("context", "reference"):
             if e[field + "_hash"] != digest(e[field]):
-                raise RunError(f"{eid}: {field} text does not match its stored {field}_hash")
+                raise RunError(f"{eid}: {field}_hash mismatch")
         reference_words = len(e["reference"].split())
         if e["target_words"] != reference_words:
-            raise RunError(f"{eid}: target_words is {e['target_words']}, but the reference has {reference_words} words")
+            raise RunError(f"{eid}: target_words={e['target_words']}, reference_words={reference_words}")
         if not e["target_words"]:
-            raise RunError(f"{eid}: the reference is empty")
+            raise RunError(f"{eid}: empty reference")
         if " ".join(e["reference"].split()) in " ".join(e["context"].split()):
-            raise RunError(f"{eid}: the withheld reference still appears in the visible paper")
+            raise RunError(f"{eid}: reference appears in context")
         sections_by_paper.setdefault(e["paper_id"], []).append(e["section_type"])
     for paper, sections in sections_by_paper.items():
         if not set(REQUIRED_SECTIONS) <= set(sections):
-            raise RunError(f"Paper {paper} has sections {sorted(sections)}; expected {list(REQUIRED_SECTIONS)}")
+            raise RunError(f"{paper}: sections {sorted(sections)}; need {REQUIRED_SECTIONS}")
     return examples
 
 
@@ -216,28 +188,26 @@ def run_examples(examples, split):
     (sorted by ID) becomes training and the rest become validation.
     """
     if split not in ("pilot", "research"):
-        raise RunError(f"Unknown split {split!r}; expected 'pilot' or 'research'")
+        raise RunError(f"Invalid split {split!r}; use pilot or research")
     if split == "pilot":
         papers = list(dict.fromkeys(e["paper_id"] for e in examples if e["split"] == "pilot"))
         papers = papers or list(dict.fromkeys(e["paper_id"] for e in examples if e["split"] == "train"))
         papers = sorted(papers[:PILOT_PAPERS])
         pilot = [e for e in examples if e["paper_id"] in papers]
         if len(papers) < PILOT_PAPERS:
-            raise RunError(f"The pilot needs {PILOT_PAPERS} papers (one to train on, one to validate), but the dataset has {len(papers)}")
+            raise RunError(f"Pilot needs {PILOT_PAPERS} papers; found {len(papers)}")
         return [{**e, "split": "train" if e["paper_id"] == papers[0] else "validation"} for e in pilot]
     chosen = [e for e in examples if e["split"] in ("train", "validation")]
     if not chosen:
-        raise RunError("The dataset has no train or validation examples")
+        raise RunError("No train or validation examples")
     return chosen
 
 
-# OpenRouter: fixed endpoints, bounded retries, raw sends and billing records.
+# OpenRouter: fixed endpoints, bounded retries, and raw requests and responses.
 API_BASE = "https://openrouter.ai/api/v1"
 SNAPSHOTS = ROOT / "configs/snapshots"
 MODEL_CATALOG = SNAPSHOTS / "openrouter-models-2026-09-29.json"
 REQUIRED_PARAMETERS = {"temperature", "reasoning", "max_tokens", "response_format", "structured_outputs"}
-PRICE_KEYS = ("prompt", "completion", "request")
-PRICING_HEADROOM = 1.25
 MAX_SENDS = 6
 RETRYABLE_STATUS = {408, 429, 500, 502, 503, 504}
 BACKOFF_SECONDS = (2, 5, 15, 30, 60)
@@ -257,19 +227,19 @@ def role_config(role):
 def check_model_allowed(model):
     """Reject anything but a specific OpenRouter model release from an allowed family."""
     if not isinstance(model, str) or "/" not in model:
-        raise RunError(f"Model {model!r} is not an OpenRouter slug of the form vendor/model")
+        raise RunError(f"Invalid model {model!r}; use vendor/model")
     family = model.split("/", 1)[0].lower()
     if family in {"anthropic", "google"} or any(name in model.lower() for name in ("claude", "gemini")):
-        raise RunError(f"{model} is from an excluded model family (Anthropic or Google)")
+        raise RunError(f"Excluded model family: {model}")
     if ":" in model or model.endswith("/auto"):
-        raise RunError(f"{model} is a routing alias or variant; name a specific model release instead")
+        raise RunError(f"Model alias: {model}; use a fixed release")
 
 
 def find_endpoint(endpoints, provider, source):
     """The one endpoint in an OpenRouter endpoint listing whose tag is provider."""
     matches = [endpoint for endpoint in endpoints if endpoint["tag"] == provider]
     if len(matches) != 1:
-        raise RunError(f"Expected one endpoint tagged {provider!r} in {source}, found {len(matches)}")
+        raise RunError(f"{source}: expected 1 endpoint {provider!r}, found {len(matches)}")
     return matches[0]
 
 
@@ -277,19 +247,14 @@ def check_endpoint_supports(cfg, endpoint, model_info):
     """Fail unless the endpoint accepts every request field and setting that cfg sends to it."""
     missing = REQUIRED_PARAMETERS - set(endpoint["supported_parameters"])
     if missing:
-        raise RunError(
-            f"{cfg['model']} endpoint {endpoint['tag']} does not support {sorted(missing)}; choose another provider in configs/models.yaml"
-        )
+        raise RunError(f"{cfg['model']} @ {endpoint['tag']}: unsupported {sorted(missing)}")
     output_limit = endpoint.get("max_completion_tokens") or endpoint["context_length"]
     if cfg["max_tokens"] > output_limit:
-        raise RunError(
-            f"{cfg['model']} max_tokens is {cfg['max_tokens']}, but endpoint {endpoint['tag']} "
-            f"allows at most {output_limit}; lower it in configs/models.yaml"
-        )
+        raise RunError(f"{cfg['model']} @ {endpoint['tag']}: max_tokens={cfg['max_tokens']} > {output_limit}")
     efforts = model_info.get("reasoning", {}).get("supported_efforts", [])
     effort = cfg["reasoning"].get("effort")
     if effort is not None and efforts and effort not in efforts:
-        raise RunError(f"{cfg['model']} does not support reasoning effort {effort!r}; set one of {efforts} in configs/models.yaml")
+        raise RunError(f"{cfg['model']}: invalid effort {effort!r}; use {efforts}")
 
 
 def endpoint_for(cfg):
@@ -298,25 +263,9 @@ def endpoint_for(cfg):
     endpoint = find_endpoint(json.loads(path.read_text())["data"]["endpoints"], cfg["provider"], path.name)
     model_info = next((m for m in json.loads(MODEL_CATALOG.read_text())["data"] if m["id"] == cfg["model"]), None)
     if model_info is None:
-        raise RunError(f"{cfg['model']} is missing from {MODEL_CATALOG.name}; refresh configs/snapshots")
+        raise RunError(f"{cfg['model']} missing from {MODEL_CATALOG.name}")
     check_endpoint_supports(cfg, endpoint, model_info)
     return endpoint, model_info
-
-
-def highest_prices(endpoint):
-    """Highest USD price per unit across the endpoint's base pricing and its conditional overrides."""
-    base = endpoint["pricing"]
-    tiers = [base, *base.get("overrides", [])]
-    prices = {}
-    for key in PRICE_KEYS:
-        # An override that leaves out a price keeps the base price.
-        prices[key] = max(float(tier.get(key, base.get(key, 0))) for tier in tiers)
-    return prices
-
-
-def allowed_prices(endpoint):
-    """The highest prices the run accepts: the highest listed price plus PRICING_HEADROOM."""
-    return {key: price * PRICING_HEADROOM for key, price in highest_prices(endpoint).items()}
 
 
 def routing_fields(cfg):
@@ -353,33 +302,14 @@ def backoff_seconds(attempt, retry_after=None):
     return wait
 
 
-def max_request_cost(payload, endpoint):
-    """Conservative cost allowance using UTF-8 bytes as a token upper estimate.
-
-    Tokenization differs by model. This is accounting, not a context rejection: the provider
-    enforces its context window, with transforms disabled and the full input preserved.
-    """
-    input_tokens = math.ceil(1.25 * len(canonical(payload).encode())) + 1024
-    price = allowed_prices(endpoint)
-    return input_tokens * price["prompt"] + payload["max_tokens"] * price["completion"] + price["request"]
-
-
-def billed_cost(response):
-    usage = response.get("usage")
-    cost = usage.get("cost") if isinstance(usage, dict) else None
-    if type(cost) in (int, float) and math.isfinite(cost) and cost >= 0:
-        return cost
-    return None
-
-
 class OpenRouter:
-    """Send each fresh-run request, keeping every attempt and any uncertain billed amount."""
+    """Send each fresh-run request and keep every attempt and raw response."""
 
     def __init__(self, output, roles, seed, client=None):
         load_dotenv(ROOT / ".env")
         self.key = os.getenv("OPENROUTER_API_KEY")
         if not self.key and client is None:
-            raise RunError("OPENROUTER_API_KEY is not set; add it to .env")
+            raise RunError("Set OPENROUTER_API_KEY in .env")
         self.output, self.roles, self.seed = Path(output), roles, seed
         self.client = client or httpx.Client(timeout=httpx.Timeout(600, connect=30))
         resolved = {role: endpoint_for(cfg) for role, cfg in roles.items()}
@@ -388,22 +318,44 @@ class OpenRouter:
         self.dispatch_stopped = threading.Event()
 
     def costs(self):
-        total, requests, unresolved, upper = 0.0, 0, 0, 0.0
-        for path in self.output.glob("requests/*/attempt_*.json"):
-            sent = json.loads(path.read_text())
-            cost = billed_cost(sent.get("response", {}))
-            if cost is not None:
-                total += cost
-                requests += 1
-            elif sent["status"] in {"uncertain", "uncertain_cost"}:
-                unresolved += 1
-                upper += sent["upper_usd"]
-        return {
-            "actual_complete_usd": total,
-            "requests": requests,
-            "unresolved": unresolved,
-            "unresolved_upper_usd": upper,
+        """Look up OpenRouter's recorded charges for this run's unique generation IDs."""
+        generation_ids, missing_ids = set(), []
+        for path in sorted(self.output.glob("requests/*/attempt_*.json")):
+            record = json.loads(path.read_text())
+            generation_id = record.get("response_id") or record.get("response", {}).get("id")
+            if isinstance(generation_id, str) and generation_id:
+                generation_ids.add(generation_id)
+            elif record["status"] != "connect_error":
+                missing_ids.append(str(path.relative_to(self.output)))
+        charges, errors = {}, {}
+        for generation_id in sorted(generation_ids):
+            try:
+                response = self.client.get(
+                    API_BASE + "/generation",
+                    params={"id": generation_id},
+                    headers={"Authorization": "Bearer " + self.key} if self.key else {},
+                    timeout=30,
+                )
+                response.raise_for_status()
+                data = response.json()["data"]
+                cost = data["total_cost"]
+                if data["id"] != generation_id or type(cost) not in (int, float) or not math.isfinite(cost) or cost < 0:
+                    raise ValueError("Invalid generation ID or total_cost")
+                charges[generation_id] = cost
+            except (httpx.HTTPError, ValueError, KeyError, TypeError) as error:
+                errors[generation_id] = f"{type(error).__name__}: {error}"
+        result = {
+            "source": API_BASE + "/generation",
+            "retrieved_at": dt.datetime.now(dt.UTC).isoformat(),
+            "actual_complete_usd": math.fsum(charges.values()),
+            "requests": len(charges),
+            "unresolved": len(errors) + len(missing_ids),
+            "generation_costs": charges,
+            "lookup_errors": errors,
+            "missing_generation_ids": missing_ids,
         }
+        write_json(self.output / "costs.json", result)
+        return result
 
     def payload(self, role, system, data, schema):
         result = {
@@ -422,55 +374,35 @@ class OpenRouter:
     def preflight(self):
         """Check the live OpenRouter catalog against the saved snapshots before any paid call.
 
-        Fails if a pinned model, provider, limit, price or quantization changed. Saves what it
-        fetched, plus the observed prices, under output/preflight/<time> and returns that directory.
+        Fails if a pinned model changes, a provider drops required support or context, or
+        quantization changes. Saves the listings under output/preflight/<time> and returns that directory.
         """
         directory = self.output / "preflight" / dt.datetime.now(dt.UTC).isoformat().replace(":", "-")
         catalog = self._get("/models")
         write_json(directory / "models.json", catalog)
         live_models = {m["id"]: m for m in catalog["data"]}
         live_endpoints = {}
-        observed_prices = {}
         for role, cfg in self.roles.items():
             model = cfg["model"]
             pinned = self.endpoint[role]
             if model not in live_models:
-                raise RunError(f"{role} model {model} is no longer in the OpenRouter catalog")
+                raise RunError(f"{role}: model {model} missing from catalog")
             live_slug = live_models[model]["canonical_slug"]
             pinned_slug = self.model_info[role]["canonical_slug"]
             if live_slug != pinned_slug:
-                raise RunError(
-                    f"{role} model {model} now resolves to {live_slug}, not the pinned {pinned_slug}; "
-                    "refresh configs/snapshots and start a new run"
-                )
+                raise RunError(f"{role}: model release changed {pinned_slug} -> {live_slug}")
             if model not in live_endpoints:
                 live_endpoints[model] = self._get(f"/models/{model}/endpoints")
                 write_json(directory / (model.replace("/", "_") + "-endpoints.json"), live_endpoints[model])
             current = find_endpoint(live_endpoints[model]["data"]["endpoints"], cfg["provider"], f"the live {model} listing")
             check_endpoint_supports(cfg, current, live_models[model])
             if current["context_length"] < pinned["context_length"]:
-                raise RunError(
-                    f"{role} endpoint {current['tag']} context shrank from {pinned['context_length']} "
-                    f"to {current['context_length']} tokens; refresh configs/snapshots and start a new run"
-                )
-            prices = highest_prices(current)
-            limits = allowed_prices(pinned)
-            for key in PRICE_KEYS:
-                if prices[key] > limits[key]:
-                    raise RunError(
-                        f"{role} endpoint {current['tag']} {key} price {prices[key]} is above the "
-                        f"allowed {limits[key]} (snapshot price plus {PRICING_HEADROOM - 1:.0%}); "
-                        "refresh configs/snapshots and start a new run"
-                    )
+                raise RunError(f"{role}: context shrank {pinned['context_length']} -> {current['context_length']}")
             if current.get("quantization") != pinned.get("quantization"):
-                raise RunError(
-                    f"{role} endpoint {current['tag']} quantization changed from "
-                    f"{pinned.get('quantization')} to {current.get('quantization')}; start a new run"
-                )
-            observed_prices[role] = prices
+                raise RunError(f"{role}: quantization changed {pinned.get('quantization')} -> {current.get('quantization')}")
         write_json(
             directory / "checks.json",
-            {"at": dt.datetime.now(dt.UTC).isoformat(), "roles": self.roles, "observed_prices": observed_prices},
+            {"at": dt.datetime.now(dt.UTC).isoformat(), "roles": self.roles},
         )
         return directory
 
@@ -496,15 +428,14 @@ class OpenRouter:
                 "schema_version": SCHEMA_VERSION,
             },
         )
-        upper = max_request_cost(payload, self.endpoint[role])
         headers = {"X-OpenRouter-Title": "Independent XAR reproduction"}
         if self.key:
             headers["Authorization"] = "Bearer " + self.key
         for attempt in range(MAX_SENDS):
             if self.dispatch_stopped.is_set():
-                raise Skipped("Another request failed; no further requests will start")
+                raise Skipped("Another request failed")
             path = directory / f"attempt_{attempt}.json"
-            record = {"status": "uncertain", "sent_at": dt.datetime.now(dt.UTC).isoformat(), "upper_usd": upper}
+            record = {"status": "uncertain", "sent_at": dt.datetime.now(dt.UTC).isoformat()}
             write_json(path, record)
             started, retry_after = time.monotonic(), None
             try:
@@ -531,17 +462,16 @@ class OpenRouter:
                 success = response.status_code == 200 and valid_choice and not raw.get("error")
                 record.update(
                     response=raw,
+                    response_id=raw.get("id") or response.headers.get("X-Generation-Id"),
                     http_status=response.status_code,
                     status="success" if success else "http_error",
                 )
-                if response.status_code == 200 and not success:
-                    record["status"] = "uncertain_cost"
                 record["duration_seconds"] = time.monotonic() - started
                 write_json(path, record)
                 if success:
                     return self._accept(raw, role, path)
                 if response.status_code not in RETRYABLE_STATUS:
-                    raise RunError(f"OpenRouter returned an unusable HTTP {response.status_code} reply; see {path}")
+                    raise RunError(f"Unusable HTTP {response.status_code}: {path}")
                 retry_after = response.headers.get("Retry-After")
             record["duration_seconds"] = time.monotonic() - started
             write_json(path, record)
@@ -549,19 +479,16 @@ class OpenRouter:
                 wait = backoff_seconds(attempt, retry_after)
                 print(f"Retryable failure for {role}; waiting {wait} s (see {path})", flush=True)
                 time.sleep(wait)
-        raise RunError(f"{role} request failed {MAX_SENDS} times; see {directory}")
+        raise RunError(f"{role}: failed after {MAX_SENDS} sends; see {directory}")
 
     def _accept(self, raw, role, attempt_file):
         usage = raw.get("usage") or {}
-        if billed_cost(raw) is None:
-            write_json(attempt_file, {**json.loads(attempt_file.read_text()), "status": "uncertain_cost"})
-            raise UncertainSend(f"No valid usage.cost for {role}; see {attempt_file}")
         model = raw.get("model")
         if model not in {self.model_info[role]["id"], self.model_info[role]["canonical_slug"]}:
-            raise RunError(f"Unexpected {role} model {model}; see {attempt_file}")
+            raise RunError(f"{role}: wrong model {model}; see {attempt_file}")
         provider, endpoint = raw.get("provider"), self.endpoint[role]
         if provider and provider not in {endpoint["provider_name"], endpoint["tag"]}:
-            raise RunError(f"Unexpected {role} provider {provider}; see {attempt_file}")
+            raise RunError(f"{role}: wrong provider {provider}; see {attempt_file}")
         choice = raw["choices"][0]
         return {
             "content": choice["message"].get("content") or "",
@@ -640,7 +567,7 @@ def validate_rubric(rubric):
     jsonschema.validate(rubric, RUBRIC_SCHEMA)
     ids = [c["id"] for c in rubric["criteria"]]
     if len(ids) != len(set(ids)):
-        raise InvalidOutput("Duplicate rubric criterion IDs")
+        raise InvalidOutput("Duplicate criterion IDs")
     total = sum(len(text.split()) for criterion in rubric["criteria"] for text in criterion.values())
     if total > MAX_RUBRIC_WORDS:
         raise InvalidOutput("Rubric exceeds 1000 words")
@@ -654,14 +581,14 @@ def validate_grade(grade, rubric, supplied_text):
     jsonschema.validate(grade, GRADE_SCHEMA)
     ids = [s["id"] for s in grade["scores"]]
     if len(ids) != len(set(ids)) or set(ids) != {c["id"] for c in rubric["criteria"]}:
-        raise InvalidOutput("Grade criterion coverage mismatch")
+        raise InvalidOutput("Criterion IDs mismatch")
     # json.loads accepts NaN, and NaN passes the schema's minimum and maximum.
     if not all(math.isfinite(s["score"]) for s in grade["scores"]):
-        raise InvalidOutput("Grade score must be a finite number")
+        raise InvalidOutput("Score must be finite")
     for score in grade["scores"]:
         for quoted in QUOTED_TEXT.findall(score["evidence"]):
             if " ".join(quoted.split()).casefold() not in " ".join(supplied_text.split()).casefold():
-                raise InvalidOutput("Evidence quote does not occur in supplied text")
+                raise InvalidOutput("Quote absent from supplied text")
     return grade_total(grade)
 
 
@@ -692,7 +619,7 @@ def writer_candidates(api, examples, output, concurrency=1):
                     length_revision=f"Revise only to fit {math.ceil(low)}–{math.floor(high)} words. Preserve claims.",
                 )
             if stopped.is_set():
-                raise Skipped(f"Stopped writing {eid} because another section failed")
+                raise Skipped(f"{eid}: another section failed")
             identity = {"writer": config_hash, "example": eid, "attempt": attempt}
             response = api.call("writer", (ROOT / "prompts/writer.md").read_text(), data, None, identity)
             text = response["content"].strip()
@@ -956,9 +883,9 @@ def build_feedback(examples, candidates, rows, current_prompt, failure_count):
     limiting detailed failure examples. Validation and confirmation never enter this payload.
     """
     if any(item["split"] != "train" for item in [*examples, *rows]):
-        raise RunError("Optimizer feedback may only use training sections")
+        raise RunError("Feedback requires training sections")
     if any(row["gap"] is None for row in rows):
-        raise RunError("The optimizer needs every training section graded")
+        raise RunError("Training grades missing")
     lookup = {example["example_id"]: example for example in examples}
     by_gap = sorted((row for row in rows if row["gap"] <= 0), key=lambda row: (row["gap"], row["example_id"]))
     failures = []
@@ -1099,7 +1026,9 @@ def estimate(settings, roles, examples):
     per_role = {}
     for role, count in counts.items():
         endpoint, _ = endpoint_for(roles[role])
-        prices = highest_prices(endpoint)
+        base = endpoint["pricing"]
+        tiers = [base, *base.get("overrides", [])]
+        prices = {key: max(float(tier.get(key, base.get(key, 0))) for tier in tiers) for key in ("prompt", "completion", "request")}
         per_role[role] = {
             "requests": count,
             "typical_usd": count
@@ -1171,9 +1100,9 @@ def write_report(output, summaries, rows, selected, costs, seed):
         [
             "",
             (
-                f"Recorded billed cost: ${costs['actual_complete_usd']:.4f}. "
-                f"Sends with unresolved costs: {costs['unresolved']} "
-                f"(estimated upper allowance: ${costs['unresolved_upper_usd']:.4f})."
+                f"OpenRouter-reported cost{' (partial)' if costs['unresolved'] else ''}: "
+                f"${costs['actual_complete_usd']:.4f} across {costs['requests']} generations. "
+                f"Unresolved lookups or sends: {costs['unresolved']}. Details are in costs.json."
             ),
             "",
             (
@@ -1191,24 +1120,24 @@ def write_report(output, summaries, rows, selected, costs, seed):
 def run_xar(settings):
     initial = (ROOT / "prompts/rubric_initial.md").read_text()
     if len(initial.split()) > settings.max_meta_prompt_words:
-        raise RunError("Initial meta prompt exceeds max_meta_prompt_words")
+        raise RunError("Initial prompt exceeds max_meta_prompt_words")
     examples = run_examples(load_examples(settings.dataset, settings.splits), settings.split)
     train = [example for example in examples if example["split"] == "train"]
     validation = [example for example in examples if example["split"] == "validation"]
     if not train or not validation:
-        raise RunError("The run needs both training and validation papers")
+        raise RunError("Need train and validation papers")
     roles = {role: role_config(role) for role in ROLES}
     if settings.dry_run:
         return estimate(settings, roles, examples)
     output = Path(settings.output_dir)
     # Atomic directory creation also prevents two processes from starting in the same directory.
     if output.exists():
-        raise RunError(f"Output already exists: {output}; choose a new --output directory")
+        raise RunError(f"Output exists: {output}")
     api = OpenRouter(output, roles, settings.seed)
     try:
         output.mkdir(parents=True, exist_ok=False)
     except FileExistsError:
-        raise RunError(f"Output already exists: {output}; choose a new --output directory") from None
+        raise RunError(f"Output exists: {output}") from None
     status = {"state": "failed"}
     try:
         files = [
@@ -1237,7 +1166,7 @@ def run_xar(settings):
                 },
                 "initial_meta_prompt_hash": digest(initial),
                 "feedback_policy": FAILING_FEEDBACK,
-                "context_estimation": "UTF-8 byte approximation for costs; providers enforce context, without truncation",
+                "context_handling": "Providers enforce context limits; full inputs are sent without truncation",
             },
         )
         api.preflight()
@@ -1268,7 +1197,7 @@ def run_xar(settings):
                 flush=True,
             )
             if not summary["complete"]:
-                raise RunError("Training has missing grades; no checkpoint can be selected")
+                raise RunError("Training grades missing")
         gaps = [summary["gap"] for summary in training_summaries]
         selected = gaps.index(max(gaps))  # Earliest checkpoint wins a tie.
         write_json(
@@ -1299,7 +1228,6 @@ def run_xar(settings):
         status["error"] = f"{type(error).__name__}: {error}"
         raise
     finally:
-        write_json(output / "costs.json", api.costs())
         write_json(output / "status.json", status)
         api.client.close()
 
@@ -1319,7 +1247,7 @@ def parse_args(argv=None):
 def settings_for(options):
     design = yaml.safe_load((ROOT / "configs/experiments.yaml").read_text())
     if design["feedback_policy"] != FAILING_FEEDBACK:
-        raise RunError(f"Only feedback_policy {FAILING_FEEDBACK!r} is supported")
+        raise RunError(f"Use feedback_policy={FAILING_FEEDBACK!r}")
     return RunSettings(
         output_dir=options.output or str(Path("runs") / design["pilot_run" if options.pilot else "research_run"]),
         split="pilot" if options.pilot else "research",
@@ -1334,12 +1262,8 @@ def settings_for(options):
     )
 
 
-def main(argv=None):
-    run_xar(settings_for(parse_args(argv)))
-
-
 if __name__ == "__main__":
     try:
-        main()
+        run_xar(settings_for(parse_args()))
     except (RunError, httpx.HTTPError) as error:
         raise SystemExit(f"STOP: {error}") from None

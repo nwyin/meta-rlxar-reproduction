@@ -75,9 +75,29 @@ full run. `--seed` controls grading order and bootstrap sampling, not model deco
 `configs/experiments.yaml` and `configs/models.yaml`; prompts stay in `prompts/`.
 `uv run python run.py --help` lists the options.
 
-`--dry-run` estimates cost from saved prices and sends no requests. Spending is capped by
-the OpenRouter key's limit, set on openrouter.ai. Each run records raw requests, responses,
-billed costs and unresolved sends. The code enforces no account budget of its own.
+`--dry-run` estimates cost from saved prices and sends no requests. OpenRouter calculates
+billing and caps spending at the key's limit, set on openrouter.ai. Each run saves raw
+requests and responses, including OpenRouter's usage fields and generation IDs. Missing
+billing fields leave an otherwise valid response usable.
+
+After scoring, the runner looks up each unique generation ID through OpenRouter's API,
+including IDs from retried requests. It sums the returned `total_cost` values and writes
+them to `costs.json`, `summary.json` and `results.md`. The report marks the total as partial
+when a lookup fails or a send has no generation ID. `costs.json` records each retrieved
+charge, lookup error and attempt missing an ID. Connection failures before sending are
+excluded. Billing lookup failures leave the experiment results available.
+
+You can also check [OpenRouter Activity](https://openrouter.ai/activity), or query its
+API with the same bearer key:
+
+- `GET https://openrouter.ai/api/v1/key` returns `data.usage` and `data.limit_remaining`
+  for the key. These totals cover all activity on that key.
+  [Key API](https://openrouter.ai/docs/api/api-reference/api-keys/get-current-api-key).
+- `GET https://openrouter.ai/api/v1/generation?id=gen-…` returns `data.total_cost` for a
+  generation. Use `response_id` from a saved `requests/*/attempt_*.json` record; older
+  records keep the ID in `response.id`. A request whose connection failed before an ID
+  arrived needs investigation in OpenRouter Activity.
+  [Generation API](https://openrouter.ai/docs/api/api-reference/generations/get-request-&-usage-metadata-for-a-generation).
 
 Each run requires a new output directory. Interrupted runs keep their evidence; start a new
 run with a different directory. The runner has no resume or historical-report command.
@@ -93,7 +113,8 @@ The run directory contains the whole result:
 | `requests/` | Raw requests, responses and transport attempts. |
 | `generations/`, `rubrics/`, `scores/` | Fixed writer drafts, rubrics and blind grades. |
 | `feedback/`, `prompts/`, `freeze.json` | Training feedback, prompt history and selection before validation. |
-| `costs.json`, `status.json` | Billed costs, unresolved sends and run status. |
+| `costs.json` | Charges retrieved from OpenRouter, lookup errors and sends missing generation IDs. |
+| `status.json` | Run status and any stopping error. |
 
 `runs/`, `reports/`, paper text and raw HTML stay local. `runs/budget_ledger.json` remains
 as the record of runs before 2026-10-01.

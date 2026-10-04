@@ -993,3 +993,51 @@ once reasonably confident, and report what they checked and what remains unteste
 Lint passed. Inline checks verified the dependency setup, script imports, syntax and an
 offline dry run with client construction blocked. These checks created no test files.
 Live model behavior remains untested in this session. We made no paid calls or commit.
+
+
+## 2026-10-03: Leave billing to OpenRouter
+
+The owner asked us to remove local billing calculations and tracking. We removed runtime
+cost estimates, price-rise checks, cost totals and the stop on missing billing fields from
+`run.py`. Fresh runs write their status and experiment results without `costs.json` or a
+billing total. The offline dry-run estimate remains available before spending money.
+
+We keep raw responses and OpenRouter's usage fields. Each received attempt also saves
+`response_id` from the response body or `X-Generation-Id` header when available. README.md
+documents how to query OpenRouter for key usage or a generation's recorded cost. A send
+that gets no response retains its transport error and `uncertain` status. Earlier run
+files and the budget ledger retain their original contents.
+
+Lint passed. Temporary offline checks compared the original runner with the changed
+runner, both with and without usage fields. All 33 request payloads and the experiment
+results matched in each mocked run. The pilot and research dry-run outputs also matched.
+Further checks covered changed prices, endpoint identity and capability checks, retries,
+generation IDs from headers, missing billing fields, credit-limit errors and failed-run
+cleanup. We discarded the temporary artifacts. Live API behavior remains untested; we
+made no paid calls.
+
+
+## 2026-10-03: Retrieve OpenRouter charges for the report
+
+The owner asked us to include OpenRouter's recorded charges in each run's report.
+After scoring, the runner queries `/generation` for each unique saved generation ID,
+including IDs from retried requests, and sums the returned `total_cost` values. It writes
+the charges and any lookup errors or missing IDs to `costs.json`, includes them in
+`summary.json`, and adds the total and coverage to `results.md`. The report and viewer
+mark partial totals. Billing lookup errors leave the experiment results available.
+
+Lint and temporary offline checks passed. Mocked lookups verified authentication,
+deduplication, retried generation IDs, zero charges, missing IDs, malformed replies,
+HTTP errors and timeouts. Complete, partial and unavailable billing all produced reports
+and retained complete experiment status in mocked runs. Lookups began after scoring,
+and the dry run stayed offline. We discarded the temporary artifacts. Live billing
+lookups remain untested; we made no paid calls.
+
+
+## 2026-10-03: Shorten runner errors
+
+We shortened 44 error messages in `run.py`. Each raise fits on 1 line within 144 characters.
+An AST comparison confirmed that only exception messages changed. Lint and temporary
+checks of validation failures and model-output repair passed. Repair requests now include
+the shorter validation messages; their effect on live model responses remains untested.
+We deleted the temporary snapshot and made no paid calls.
