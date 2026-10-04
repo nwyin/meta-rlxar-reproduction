@@ -342,8 +342,8 @@ def object_schema(properties):
 
 
 def criteria_list(item):
-    """A rubric has 4 to 8 criteria, and a grade has one score per criterion."""
-    return {"type": "array", "minItems": 4, "maxItems": 8, "items": item}
+    """A rubric has at least 1 criterion, and a grade has one score per criterion."""
+    return {"type": "array", "minItems": 1, "items": item}
 
 
 CRITERION_SCHEMA = object_schema({"id": TEXT, "description": TEXT, "low": TEXT, "middle": TEXT, "high": TEXT})
@@ -351,22 +351,18 @@ CRITERION_SCORE_SCHEMA = object_schema({"id": TEXT, "score": SCORE, "evidence": 
 RUBRIC_SCHEMA = object_schema({"criteria": criteria_list(CRITERION_SCHEMA)})
 GRADE_SCHEMA = object_schema({"scores": criteria_list(CRITERION_SCORE_SCHEMA)})
 PROPOSAL_SCHEMA = object_schema({"prompt": TEXT, "rationale": TEXT})
-MAX_RUBRIC_WORDS = 1000
 QUOTED_TEXT = re.compile(r'["“]([^"”]+)["”]')
 WRITER_ATTEMPTS = 3
 PROPOSAL_ATTEMPTS = 2
 
 
 def validate_rubric(rubric):
-    """Check a schema-valid rubric for unique criterion IDs and total length.
+    """Check a schema-valid rubric for unique criterion IDs.
 
     Raises with a short message; structured() sends that message back in its format repair."""
     ids = [c["id"] for c in rubric["criteria"]]
     if len(ids) != len(set(ids)):
         raise InvalidOutput("Duplicate criterion IDs")
-    total = sum(len(text.split()) for criterion in rubric["criteria"] for text in criterion.values())
-    if total > MAX_RUBRIC_WORDS:
-        raise InvalidOutput("Rubric exceeds 1000 words")
 
 
 def validate_grade(grade, rubric, supplied_text):

@@ -154,8 +154,8 @@ in `prompts/`: `writer.md`, `rubric_initial.md` (the initial meta prompt), `rubr
 
 2. Generate a rubric. At each checkpoint, the rubric generator gets the wrapper, the current meta prompt,
    and the same context, section type and word count. It sees neither candidate section. A
-   rubric has 4 to 8 criteria with unique IDs, each with a description and low, middle and high
-   anchors, and at most 1,000 words in total.
+   rubric has any number of criteria with unique IDs, each with a description and low, middle and high
+   anchors.
 
 3. Judge. Muse grades the author's section and its own section in separate requests,
    against the same rubric, in a seeded random order. The request does not say which section
@@ -183,7 +183,7 @@ in `prompts/`: `writer.md`, `rubric_initial.md` (the initial meta prompt), `rubr
    `feedback_policy` in `configs/experiments.yaml` names the policy and the run manifest
    records it. The simplified runner supports `failing_gap_without_paper`.
 
-5. Optimize. The optimizer returns a new meta prompt of at most 800 words and a rationale. A
+5. Optimize. The optimizer returns a new meta prompt of at most 2,000 words and a rationale. A
    pattern check rejects a proposal that is too long; tells the rubric to prefer the author's
    section, penalize the model's or work out who wrote it; overrides the wrapper or changes
    the weighting or the 0-10 scale; names a training paper, its title or an author; or copies

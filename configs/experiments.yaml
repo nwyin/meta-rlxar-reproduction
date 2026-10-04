@@ -3,7 +3,7 @@ blog_url: https://facebookresearch.github.io/RAM/blogs/unslop/
 seed: 0
 iterations: 4
 pilot_iterations: 1
-max_meta_prompt_words: 800
+max_meta_prompt_words: 2000
 failure_examples: 24
 # How the optimizer's feedback is picked; see FEEDBACK_POLICIES in xar/pipeline.py.
 feedback_policy: failing_gap_without_paper
