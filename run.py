@@ -120,13 +120,6 @@ def run_examples(examples, config):
 
 
 # OpenRouter: configured routing, bounded retries, and raw requests and responses.
-API_BASE = "https://openrouter.ai/api/v1"
-MAX_SENDS = 6
-RETRYABLE_STATUS = {408, 429, 500, 502, 503, 504}
-BACKOFF_SECONDS = (2, 5, 15, 30, 60)
-MAX_RETRY_AFTER_SECONDS = 120
-FORMAT_REPAIR = "\nFORMAT REPAIR: Return complete valid JSON matching the schema. "
-MAX_REPAIR_ERROR_CHARS = 500
 
 
 def role_configs():
@@ -167,7 +160,9 @@ class OpenRouter:
             raise RunError("Set OPENROUTER_API_KEY in .env")
         self.headers = {"X-OpenRouter-Title": "Independent XAR reproduction", **({"Authorization": "Bearer " + self.key} if self.key else {})}
         self.output, self.roles, self.config = Path(output), roles, config
-        self.client = client or httpx.Client(timeout=httpx.Timeout(600, connect=30))
+        self.client = client or httpx.Client(
+            timeout=httpx.Timeout(config["request_timeout_seconds"], connect=config["connect_timeout_seconds"])
+        )
         self.dispatch_stopped = threading.Event()
 
     def costs(self):
@@ -183,7 +178,12 @@ class OpenRouter:
         charges, errors = {}, {}
         for generation_id in sorted(generation_ids):
             try:
-                response = self.client.get(API_BASE + "/generation", params={"id": generation_id}, headers=self.headers, timeout=30)
+                response = self.client.get(
+                    self.config["api_base"] + "/generation",
+                    params={"id": generation_id},
+                    headers=self.headers,
+                    timeout=self.config["lookup_timeout_seconds"],
+                )
                 response.raise_for_status()
                 data = response.json()["data"]
                 cost = data["total_cost"]
@@ -193,7 +193,7 @@ class OpenRouter:
             except (httpx.HTTPError, ValueError, KeyError, TypeError) as error:
                 errors[generation_id] = f"{type(error).__name__}: {error}"
         result = {
-            "source": API_BASE + "/generation",
+            "source": self.config["api_base"] + "/generation",
             "retrieved_at": dt.datetime.now(dt.UTC).isoformat(),
             "actual_complete_usd": math.fsum(charges.values()),
             "requests": len(charges),
@@ -236,7 +236,7 @@ class OpenRouter:
                 "schema_version": SCHEMA_VERSION,
             },
         )
-        for attempt in range(MAX_SENDS):
+        for attempt in range(self.config["max_sends"]):
             if self.dispatch_stopped.is_set():
                 raise Skipped("Another request failed")
             path = directory / f"attempt_{attempt}.json"
@@ -244,7 +244,7 @@ class OpenRouter:
             write_json(path, record)
             started, retry_after = time.monotonic(), None
             try:
-                response = self.client.post(API_BASE + "/chat/completions", json=payload, headers=self.headers)
+                response = self.client.post(self.config["api_base"] + "/chat/completions", json=payload, headers=self.headers)
             except (httpx.ConnectError, httpx.ConnectTimeout, httpx.PoolTimeout) as error:
                 record.update(status="connect_error", error=str(error))
             except (httpx.TimeoutException, httpx.NetworkError, httpx.RemoteProtocolError) as error:
@@ -283,19 +283,19 @@ class OpenRouter:
                         "provider": raw.get("provider"),
                         "raw_response": str(path),
                     }
-                if response.status_code not in RETRYABLE_STATUS:
+                if response.status_code not in self.config["retryable_status"]:
                     raise RunError(f"Unusable HTTP {response.status_code}: {path}")
                 retry_after = response.headers.get("Retry-After")
             finally:
                 record["duration_seconds"] = time.monotonic() - started
                 write_json(path, record)
-            if attempt < MAX_SENDS - 1:
-                wait = BACKOFF_SECONDS[attempt]
+            if attempt < self.config["max_sends"] - 1:
+                wait = self.config["backoff_seconds"][attempt]
                 if retry_after is not None and retry_after.strip().isdigit():
-                    wait = max(wait, min(int(retry_after), MAX_RETRY_AFTER_SECONDS))
+                    wait = max(wait, min(int(retry_after), self.config["max_retry_after_seconds"]))
                 print(f"Retryable failure for {role}; waiting {wait} s (see {path})", flush=True)
                 time.sleep(wait)
-        raise RunError(f"{role}: failed after {MAX_SENDS} sends; see {directory}")
+        raise RunError(f"{role}: failed after {self.config['max_sends']} sends; see {directory}")
 
     def structured(self, role, system, data, schema, identity, validator=None, repair=True):
         """Ask role for JSON matching schema and check it with validator.
@@ -305,11 +305,13 @@ class OpenRouter:
         "missing"), the parsed value and every attempt.
         """
         attempts = []
-        for format_attempt in range(2 if repair else 1):
+        for format_attempt in range(self.config["format_repairs"] + 1 if repair else 1):
             instructions = system
             if format_attempt:
-                instructions += FORMAT_REPAIR
-                instructions += "Keep the substantive task inputs unchanged. Previous validation error: " + attempts[-1]["error"]
+                instructions += (
+                    "\nFORMAT REPAIR: Return complete valid JSON matching the schema. "
+                    "Keep the substantive task inputs unchanged. Previous validation error: " + attempts[-1]["error"]
+                )
             response = self.call(role, instructions, data, schema, {"task": identity, "format_attempt": format_attempt})
             try:
                 if response["finish_reason"] != "stop":
@@ -321,7 +323,7 @@ class OpenRouter:
                 attempts.append({"response": response, "status": "valid"})
                 return {"status": "valid", "value": value, "attempts": attempts}
             except (json.JSONDecodeError, jsonschema.ValidationError, InvalidOutput) as e:
-                attempts.append({"response": response, "status": "invalid", "error": str(e)[:MAX_REPAIR_ERROR_CHARS]})
+                attempts.append({"response": response, "status": "invalid", "error": str(e)[: self.config["max_repair_error_chars"]]})
         return {"status": "missing", "value": None, "attempts": attempts}
 
 

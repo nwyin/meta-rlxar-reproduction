@@ -243,10 +243,10 @@ fallbacks turned off. OpenRouter handles unsupported settings and unavailable en
 The runner records the returned model and provider. The listings in `configs/snapshots/`
 remain historical records; the runner does not compare them with live endpoints.
 
-A connection error, a retryable status (408, 429, 5xx) or a
-send that gets no response (a timeout or a broken connection) is sent again up to 5 times,
-waiting 2, 5, 15, 30 and 60 seconds, or longer if a Retry-After header asks, up to 120
-seconds. A send with no response stays on record with status `uncertain` and its transport
+A connection error, a retryable status (`retryable_status`, by default 408, 429 and 5xx) or a
+send that gets no response (a timeout or a broken connection) is sent again, up to `max_sends`
+sends in all. The wait is `backoff_seconds` (by default 2, 5, 15, 30 and 60 seconds), or longer if a
+Retry-After header asks, up to `max_retry_after_seconds`. A send with no response stays on record with status `uncertain` and its transport
 error. OpenRouter may have billed it. Every received response retains the generation ID
 from its body or `X-Generation-Id` header when available, so its recorded charge can be
 looked up later. Missing billing information leaves an otherwise valid response usable.

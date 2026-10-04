@@ -19,6 +19,18 @@ copy_span_words: 12  # a run of this many words copied from a training paper cou
 min_identifier_length: 5  # shorter paper IDs, titles or author names match by chance
 bootstrap_replicates: 2000
 bootstrap_interval: [0.025, 0.975]
+# How requests are sent and retried.
+api_base: https://openrouter.ai/api/v1
+max_sends: 6  # sends per request, the first included
+retryable_status: [408, 429, 500, 502, 503, 504]
+backoff_seconds: [2, 5, 15, 30, 60]  # wait after each failed send; needs max_sends - 1 entries
+max_retry_after_seconds: 120  # cap on a Retry-After header
+request_timeout_seconds: 600
+connect_timeout_seconds: 30
+lookup_timeout_seconds: 30  # OpenRouter generation cost lookups
+# When a reply is incomplete, not valid JSON or fails a check.
+format_repairs: 1  # extra tries, each with the error appended to the system prompt
+max_repair_error_chars: 500  # how much of the error the retry sees
 reported_validation:
   initial_gap: -4.2
   peak_gap: 2.76
