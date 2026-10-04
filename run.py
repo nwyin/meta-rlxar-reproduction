@@ -940,24 +940,23 @@ def parse_args(argv=None):
     return parser.parse_args(argv)
 
 
-def settings_for(options):
-    design = yaml.safe_load((ROOT / "configs/experiments.yaml").read_text())
-    if design["feedback_policy"] != FAILING_FEEDBACK:
-        raise RunError(f"Use feedback_policy={FAILING_FEEDBACK!r}")
-    return RunSettings(
-        output_dir=options.output or str(Path("runs") / design["pilot_run" if options.pilot else "research_run"]),
-        split="pilot" if options.pilot else "research",
-        seed=design["seed"] if options.seed is None else options.seed,
-        iterations=design["pilot_iterations" if options.pilot else "iterations"],
-        max_meta_prompt_words=design["max_meta_prompt_words"],
-        failure_examples=design["failure_examples"],
-        concurrency=options.concurrency or design["concurrency"],
-        dataset=options.dataset,
-    )
-
-
 if __name__ == "__main__":
+    options = parse_args()
     try:
-        run_xar(settings_for(parse_args()))
+        design = yaml.safe_load((ROOT / "configs/experiments.yaml").read_text())
+        if design["feedback_policy"] != FAILING_FEEDBACK:
+            raise RunError(f"Use feedback_policy={FAILING_FEEDBACK!r}")
+        run_xar(
+            RunSettings(
+                output_dir=options.output or str(Path("runs") / design["pilot_run" if options.pilot else "research_run"]),
+                split="pilot" if options.pilot else "research",
+                seed=design["seed"] if options.seed is None else options.seed,
+                iterations=design["pilot_iterations" if options.pilot else "iterations"],
+                max_meta_prompt_words=design["max_meta_prompt_words"],
+                failure_examples=design["failure_examples"],
+                concurrency=options.concurrency or design["concurrency"],
+                dataset=options.dataset,
+            )
+        )
     except (RunError, httpx.HTTPError) as error:
         raise SystemExit(f"STOP: {error}") from None
