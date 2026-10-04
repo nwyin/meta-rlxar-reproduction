@@ -36,10 +36,6 @@ def digest(value):
     return hashlib.sha256((value if isinstance(value, str) else canonical(value)).encode()).hexdigest()
 
 
-def file_hash(path):
-    return hashlib.sha256(Path(path).read_bytes()).hexdigest()
-
-
 def write_json(path, value):
     """Write a complete JSON record atomically, including from parallel tasks."""
     path = Path(path)
@@ -883,7 +879,7 @@ def run_xar(settings):
                 "created_at": dt.datetime.now(dt.UTC).isoformat(),
                 "arguments": asdict(settings),
                 "roles": roles,
-                "dataset_hash": file_hash(settings.dataset),
+                "dataset_hash": hashlib.sha256(Path(settings.dataset).read_bytes()).hexdigest(),
                 "initial_meta_prompt_hash": digest(initial),
                 "feedback_policy": FAILING_FEEDBACK,
                 "context_handling": "Providers enforce context limits; full inputs are sent without truncation",
