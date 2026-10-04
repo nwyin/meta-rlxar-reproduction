@@ -40,7 +40,6 @@ Run lint before every commit.
 
 ## Protect the experiment
 
-- Treat the completed run `runs/meta-blog-seed0` as read-only evidence. It is tagged `meta-blog-seed0`.
 - Never edit `prompts/`, `configs/`, or `data/` without saying so. They are hashed into each run's manifest.
 - Keep validation and confirmation data out of prompt selection and optimizer feedback.
 - Keep judge requests blind to which section is the author's.
@@ -56,8 +55,6 @@ Run lint before every commit.
 ## Git
 
 - Keep `runs/` and `reports/` out of Git. They stay local.
-- Do not rewrite history or move the `meta-blog-seed0` and `alternative-model-study` tags.
-- Commit only when asked. Write short, imperative commit subjects.
 
 ## Code
 
