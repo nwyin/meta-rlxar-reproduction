@@ -980,3 +980,16 @@ and Ruff passed. We added checks for fresh-directory refusal, incomplete validat
 reports, missing or malformed billing fields and full-size optimizer inputs. The 2
 production scripts contain 1,788 lines, down from 3,100 across the old runner and package,
 a 42.3% reduction. Runtime dependencies fell from 8 to 5.
+
+
+## 2026-10-03: Use temporary checks instead of a test suite
+
+The owner asked us to remove all repository tests and use temporary hypothesis checks
+for proposed changes. We deleted the 1,194-line suite, its fixtures and cache, and removed
+pytest, its configuration and its unused dependencies. `AGENTS.md` now directs agents
+to run checks inline or outside the repository, discard temporary scripts and artifacts
+once reasonably confident, and report what they checked and what remains untested.
+
+Lint passed. Inline checks verified the dependency setup, script imports, syntax and an
+offline dry run with client construction blocked. These checks created no test files.
+Live model behavior remains untested in this session. We made no paid calls or commit.

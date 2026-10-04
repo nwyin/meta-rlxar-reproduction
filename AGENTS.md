@@ -25,10 +25,9 @@ limits. [LOG.md](LOG.md) records what happened and why.
 ## Commands
 
 - Install: `uv sync --locked`
-- Test: `uv run pytest -q`
 - Lint: `uv run ruff check .` (line length 110)
 
-Run tests and lint before every commit.
+Run lint before every commit.
 
 ## Spending money
 
@@ -62,8 +61,17 @@ Run tests and lint before every commit.
 ## Code
 
 - Match the surrounding code: naming, comment density, idiom.
-- Add or update a test with each behavior change. Tests live in `tests/`, one file per module.
 - Prefer deleting code to adding options. Keep the pipeline small and auditable.
+
+## Validation
+
+- Do not write or commit tests, test fixtures, or test infrastructure into this repository.
+- Use temporary checks to interrogate a proposed diff. Run inline commands or disposable
+  scripts outside the repository to check the changed behavior and plausible failure cases.
+- Treat these checks as hypothesis testing, not a suite to maintain. Delete temporary
+  scripts and artifacts once reasonably confident that the behavior is correct.
+- Report what you checked and what remains untested. Keep paid calls subject to the spending
+  rules above.
 
 ## Keeping this file current
 

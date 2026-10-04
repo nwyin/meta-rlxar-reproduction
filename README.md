@@ -106,7 +106,6 @@ run.py                 OpenRouter calls, optimization, validation and result sum
 configs/               Experiment settings, models and saved endpoint listings.
 prompts/               Writer, rubric, judge and optimizer prompts.
 data/                  Frozen manifests, splits and local paper text.
-tests/                 Data restoration and runner tests, using a fake API.
 tools/data-viewer/     Optional local viewer for saved runs.
 METHOD.md              Method and limitations.
 LOG.md                 Experiment history.
@@ -116,9 +115,12 @@ The optional viewer runs with `uv run python tools/data-viewer/serve.py`;
 see [its README](tools/data-viewer/README.md).
 
 ```sh
-uv run pytest -q
 uv run ruff check .
 ```
+
+Validate code changes with temporary checks during the session, then discard them. The
+repository keeps no test suite. `AGENTS.md` describes this workflow. Use
+`fetch_data.py --check` to verify local corpus files against their frozen hashes.
 
 The tags `meta-blog-seed0` and `alternative-model-study` preserve earlier implementations
 and experiments.
