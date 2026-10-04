@@ -54,23 +54,25 @@ Copy `.env.example` to `.env` and set `OPENROUTER_API_KEY`.
 
 ## Run
 
-Start a full run with a fresh output directory:
+A config file defines each run: its output directory, split, seed, iterations, dataset,
+concurrency and limits. `run.py` takes the path to one and has no other options. Set a new
+`output` directory in the file first, because a run refuses to start in a directory that exists.
+
+Start a full run with `configs/experiments.yaml`, the default:
 
 ```sh
-uv run python run.py --output runs/reproduction-01
+uv run python run.py
 ```
 
-For a small pilot on 2 training papers with 1 prompt update:
+For a small pilot, run `configs/pilot.yaml`. It trains on 1 paper and validates on 1, with 1 prompt update:
 
 ```sh
-uv run python run.py --pilot --output runs/pilot-01
+uv run python run.py configs/pilot.yaml
 ```
 
-The pilot uses 1 paper for training and 1 for validation. Its scores stay separate from a
-full run. `--seed` controls grading order and bootstrap sampling, not model decoding.
-`--concurrency` controls parallel requests. Other settings come from
-`configs/experiments.yaml` and `configs/models.yaml`; prompts stay in `prompts/`.
-`uv run python run.py --help` lists the options.
+The pilot's scores stay separate from a full run. `seed` controls grading order and bootstrap
+sampling, not model decoding. Model roles come from `configs/models.yaml`; prompts stay in
+`prompts/`. The run copies its config into its directory as `config.yaml`.
 
 The runner trusts the prepared examples and their split labels. It enforces the initial
 meta-prompt word limit. It sends the configured model, provider and settings directly to
@@ -111,7 +113,8 @@ The run directory contains the whole result:
 | Path | Contents |
 | --- | --- |
 | `results.md`, `checkpoints.csv`, `summary.json` | The result summary, checkpoint scores and uncertainty estimates. |
-| `manifest.json` | The settings, configured models and providers, seed and dataset hash. |
+| `config.yaml` | A copy of the config file that defined the run. |
+| `manifest.json` | The config, configured models and providers, and the dataset hash. |
 | `requests/` | Raw requests, responses and transport attempts. |
 | `generations/`, `rubrics/`, `scores/` | Fixed writer drafts, rubrics and blind grades. |
 | `feedback/`, `prompts/`, `freeze.json` | Training feedback, prompt history and selection before validation. |

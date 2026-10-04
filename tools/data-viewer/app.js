@@ -220,7 +220,7 @@ function overview(run) {
 
   return h("div", { class: "stack" },
     h("div", null, h("h1", null, run.name),
-      h("p", { class: "muted" }, `${splitName(manifest.arguments?.split) || "Run"} run, started ${manifest.created_at?.slice(0, 16).replace("T", " ") ?? "–"} UTC. `,
+      h("p", { class: "muted" }, `${splitName((manifest.config ?? manifest.arguments)?.split) || "Run"} run, started ${manifest.created_at?.slice(0, 16).replace("T", " ") ?? "–"} UTC. `,
         "The gap is the author score minus the Muse score from the same judge and rubric; negative means the judge preferred Muse's section.")),
     h("div", { class: "grid stats" },
       stat("Writer, rubric, judge", role("writer"), roles.judge && roles.judge.model !== roles.writer?.model ? `judge: ${role("judge")}` : null),

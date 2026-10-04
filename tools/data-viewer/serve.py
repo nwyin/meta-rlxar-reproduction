@@ -29,7 +29,7 @@ def list_runs():
                 "name": run.name,
                 "complete": (run / "freeze.json").exists(),
                 "created_at": manifest.get("created_at", ""),
-                "split": manifest.get("arguments", {}).get("split", ""),
+                "split": (manifest.get("config") or manifest.get("arguments") or {}).get("split", ""),
             }
         )
     return sorted(runs, key=lambda run: run["created_at"], reverse=True)

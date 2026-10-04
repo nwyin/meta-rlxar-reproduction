@@ -1,16 +1,16 @@
 """Run a fresh Meta XAR reproduction with OpenRouter.
 
-Prepare data with fetch_data.py, then choose a new --output directory.
-Settings and model roles come from configs/; prompts stay in prompts/. No inputs are truncated.
+Prepare data with fetch_data.py, then set a new `output` directory in the config file (default
+configs/experiments.yaml). The config defines the run and is copied into the run directory.
+Model roles come from configs/models.yaml; prompts stay in prompts/. No inputs are truncated.
 """
 
-from __future__ import annotations; import argparse, collections, concurrent.futures, csv, datetime as dt, hashlib, json, math, os, random, re, statistics, threading, time; from dataclasses import asdict, dataclass; from pathlib import Path; import httpx, jsonschema, yaml; from dotenv import load_dotenv  # noqa: I001  # fmt: skip
+from __future__ import annotations; import argparse, collections, concurrent.futures, csv, datetime as dt, hashlib, json, math, os, random, re, statistics, threading, time; from pathlib import Path; import httpx, jsonschema, yaml; from dotenv import load_dotenv  # noqa: I001  # fmt: skip
 
 ROOT = Path(__file__).resolve().parent
 ROLES = ("writer", "rubric", "optimizer", "judge")
 SECTIONS = ("abstract", "introduction", "related_work", "conclusion")
 FAILING_FEEDBACK = "failing_gap_without_paper"
-MAX_CONCURRENCY = 32
 SCHEMA_VERSION = 1
 
 
@@ -87,9 +87,6 @@ def write_table(path, rows):
 
 
 # Read only the prepared JSON files; fetching and parsing papers live in fetch_data.py.
-PILOT_PAPERS = 2
-
-
 def task_data(example):
     """The only example fields that go into writer, rubric and judge prompts.
 
@@ -102,20 +99,22 @@ def task_data(example):
     }
 
 
-def run_examples(examples, split):
+def run_examples(examples, config):
     """The examples a run uses, labelled train or validation.
 
     A research run uses the train and validation papers as saved. A pilot run uses the papers
-    labelled pilot in an older dataset, or else the first PILOT_PAPERS training papers; the first
+    labelled pilot in an older dataset, or else the first `pilot_papers` training papers; the first
     (sorted by ID) becomes training and the rest become validation.
     """
-    if split == "pilot":
+    if config["split"] not in ("pilot", "research"):
+        raise RunError(f"Invalid split {config['split']!r}; use pilot or research")
+    if config["split"] == "pilot":
         papers = list(dict.fromkeys(e["paper_id"] for e in examples if e["split"] == "pilot"))
         papers = papers or list(dict.fromkeys(e["paper_id"] for e in examples if e["split"] == "train"))
-        papers = sorted(papers[:PILOT_PAPERS])
+        papers = sorted(papers[: config["pilot_papers"]])
         pilot = [e for e in examples if e["paper_id"] in papers]
-        if len(papers) < PILOT_PAPERS:
-            raise RunError(f"Pilot needs {PILOT_PAPERS} papers; found {len(papers)}")
+        if len(papers) < config["pilot_papers"]:
+            raise RunError(f"Pilot needs {config['pilot_papers']} papers; found {len(papers)}")
         return [{**e, "split": "train" if e["paper_id"] == papers[0] else "validation"} for e in pilot]
     return [e for e in examples if e["split"] in ("train", "validation")]
 
@@ -161,13 +160,13 @@ def routing_fields(cfg):
 class OpenRouter:
     """Send each fresh-run request and keep every attempt and raw response."""
 
-    def __init__(self, output, roles, seed, client=None):
+    def __init__(self, output, roles, config, client=None):
         load_dotenv(ROOT / ".env")
         self.key = os.getenv("OPENROUTER_API_KEY")
         if not self.key and client is None:
             raise RunError("Set OPENROUTER_API_KEY in .env")
         self.headers = {"X-OpenRouter-Title": "Independent XAR reproduction", **({"Authorization": "Bearer " + self.key} if self.key else {})}
-        self.output, self.roles, self.seed = Path(output), roles, seed
+        self.output, self.roles, self.config = Path(output), roles, config
         self.client = client or httpx.Client(timeout=httpx.Timeout(600, connect=30))
         self.dispatch_stopped = threading.Event()
 
@@ -352,8 +351,6 @@ RUBRIC_SCHEMA = object_schema({"criteria": criteria_list(CRITERION_SCHEMA)})
 GRADE_SCHEMA = object_schema({"scores": criteria_list(CRITERION_SCORE_SCHEMA)})
 PROPOSAL_SCHEMA = object_schema({"prompt": TEXT, "rationale": TEXT})
 QUOTED_TEXT = re.compile(r'["“]([^"”]+)["”]')
-WRITER_ATTEMPTS = 3
-PROPOSAL_ATTEMPTS = 2
 
 
 def validate_rubric(rubric):
@@ -383,10 +380,10 @@ def validate_grade(grade, rubric, supplied_text):
                 raise InvalidOutput("Quote absent from supplied text")
 
 
-def writer_candidates(api, examples, output, concurrency=1):
+def writer_candidates(api, examples, output):
     """Write one model section per example, `concurrency` examples at a time.
 
-    Each section gets up to WRITER_ATTEMPTS drafts: a draft that is cut off or outside the length
+    Each section gets up to `writer_attempts` drafts: a draft that is cut off or outside the length
     window goes back to the writer with a revision note, and the last draft is kept either way.
     Each section is saved as it finishes. Returns the records keyed by example ID."""
     prompt = (ROOT / "prompts/writer.md").read_text()
@@ -398,7 +395,7 @@ def writer_candidates(api, examples, output, concurrency=1):
         path = output / "generations" / (eid + ".json")
         low, high = 0.85 * example["target_words"], 1.15 * example["target_words"]
         attempts = []
-        for attempt in range(WRITER_ATTEMPTS):
+        for attempt in range(api.config["writer_attempts"]):
             data = task_data(example)
             if attempt:
                 data.update(
@@ -442,7 +439,7 @@ def writer_candidates(api, examples, output, concurrency=1):
         write_json(path, record)
         return record
 
-    records = bounded_map(write_section, examples, concurrency, stopped)
+    records = bounded_map(write_section, examples, api.config["concurrency"], stopped)
     # bounded_map returns results in input order, so candidates.json keeps the dataset order.
     candidates = {record["example_id"]: record for record in records}
     artifact = {
@@ -503,7 +500,7 @@ def grade_candidate(api, example, rubric_record, text, identity, output):
     return record
 
 
-def evaluate_checkpoint(api, examples, candidates, meta_prompt, checkpoint, output, concurrency):
+def evaluate_checkpoint(api, examples, candidates, meta_prompt, checkpoint, output):
     """Score one meta prompt on examples: generate a rubric per example, then grade both sections.
 
     The judge grades the human and the model section separately, in a seeded random order, and
@@ -519,7 +516,7 @@ def evaluate_checkpoint(api, examples, candidates, meta_prompt, checkpoint, outp
         rubric_path = root / "rubrics" / label / "rubric.json"
         rubric = generate_rubric(api, example, meta_prompt, {"rubric": label}, rubric_path)
         origins = ["human", "model"]
-        order_seed = int(digest({"seed": api.seed, "label": label})[:16], 16)
+        order_seed = int(digest({"seed": api.config["seed"], "label": label})[:16], 16)
         random.Random(order_seed).shuffle(origins)
         grade_paths = {origin: root / "scores" / label / (origin + ".json") for origin in origins}
         # The origin appears only in the file path, never in the request or its identity.
@@ -545,7 +542,7 @@ def evaluate_checkpoint(api, examples, candidates, meta_prompt, checkpoint, outp
             "grade_paths": {origin: str(path) for origin, path in grade_paths.items()},
         }
 
-    rows = bounded_map(evaluate, examples, concurrency, api.dispatch_stopped)
+    rows = bounded_map(evaluate, examples, api.config["concurrency"], api.dispatch_stopped)
     write_json(root / "scores" / "main" / str(checkpoint) / f"{examples[0]['split']}_rows.json", rows)
     return rows
 
@@ -564,37 +561,35 @@ PROPOSAL_RED_FLAGS = {
     # MiMo-V2.6-Flash: a prompt ending "...<tool_call><function=json>{" inside valid JSON.
     "leaked_markup": r"<tool_call|<function=|</function|<\|im_|\{\s*$",
 }
-SPAN = 12  # a run of this many words copied from a training paper counts as leakage
-MIN_IDENTIFIER_LENGTH = 5  # shorter paper IDs, titles or author names match by chance
 
 
-def audit_proposal(text, examples, initial_prompt, max_words):
+def audit_proposal(text, examples, initial_prompt, config):
     """Statically check an optimizer proposal before it can become the next meta prompt.
 
-    Rejects a prompt that is longer than max_words, matches PROPOSAL_RED_FLAGS (including leaked
-    tool-call markup), names a training paper or its authors, or copies SPAN consecutive words
+    Rejects a prompt that is longer than `max_meta_prompt_words`, matches PROPOSAL_RED_FLAGS (including leaked
+    tool-call markup), names a training paper or its authors, or copies `copy_span_words` consecutive words
     from a training paper (unless the initial prompt already contains them)."""
     word_count = len(text.split())
     reasons, flags = [], []
-    if word_count > max_words:
+    if word_count > config["max_meta_prompt_words"]:
         reasons.append("meta_prompt_word_bound")
     lower = text.casefold()
     for name, pattern in PROPOSAL_RED_FLAGS.items():
         if re.search(pattern, lower):
             reasons.append(name)
-    proposal_words = lower.split()
+    proposal_words, span_words = lower.split(), config["copy_span_words"]
     initial_lower = initial_prompt.casefold()
     for example in examples:
         paper = example["paper_id"]
         metadata = example["provenance"]
         for identifier in [paper, metadata["title"], *metadata.get("authors", [])]:
-            if len(identifier) >= MIN_IDENTIFIER_LENGTH and identifier.casefold() in lower:
+            if len(identifier) >= config["min_identifier_length"] and identifier.casefold() in lower:
                 flags.append({"type": "training_identifier", "paper_id": paper, "match": identifier})
         for field in ("reference", "context"):
             source_words = example[field].casefold().split()
-            source_spans = {tuple(source_words[i : i + SPAN]) for i in range(len(source_words) - SPAN + 1)}
-            for i in range(len(proposal_words) - SPAN + 1):
-                span = proposal_words[i : i + SPAN]
+            source_spans = {tuple(source_words[i : i + span_words]) for i in range(len(source_words) - span_words + 1)}
+            for i in range(len(proposal_words) - span_words + 1):
+                span = proposal_words[i : i + span_words]
                 span_text = " ".join(span)
                 if tuple(span) in source_spans and span_text not in initial_lower:
                     flags.append({"type": "copied_training_span", "paper_id": paper, "match": span_text})
@@ -611,7 +606,7 @@ def audit_proposal(text, examples, initial_prompt, max_words):
     }
 
 
-def propose_prompt(api, current, feedback, examples, initial, iteration, *, output, max_words):
+def propose_prompt(api, current, feedback, examples, initial, iteration, *, output):
     """Ask the optimizer for the next meta prompt, given the training feedback on the current one.
 
     A proposal that is malformed or fails audit_proposal is sent back once with the reasons. If
@@ -619,9 +614,9 @@ def propose_prompt(api, current, feedback, examples, initial, iteration, *, outp
     Saves the feedback and proposal under feedback/iter_XX/ and returns the next prompt."""
     directory = Path(output) / "feedback" / f"iter_{iteration:02d}"
     write_json(directory / "training.json", feedback)
-    data = {"feedback": feedback, "max_meta_prompt_words": max_words}
+    data = {"feedback": feedback, "max_meta_prompt_words": api.config["max_meta_prompt_words"]}
     attempts = []
-    for attempt in range(PROPOSAL_ATTEMPTS):
+    for attempt in range(api.config["proposal_attempts"]):
         instruction = (ROOT / "prompts/optimizer.md").read_text()
         if attempt:
             rejected = attempts[-1]
@@ -638,7 +633,7 @@ def propose_prompt(api, current, feedback, examples, initial, iteration, *, outp
             repair=False,
         )
         if result["value"]:
-            audit = audit_proposal(result["value"]["prompt"], examples, initial, max_words)
+            audit = audit_proposal(result["value"]["prompt"], examples, initial, api.config)
         else:
             audit = {"accepted": False, "reasons": ["invalid_format"], "flags": []}
         attempts.append({"attempt": attempt, "audit": audit, **result})
@@ -661,7 +656,7 @@ def propose_prompt(api, current, feedback, examples, initial, iteration, *, outp
     return proposal
 
 
-def build_feedback(examples, candidates, rows, current_prompt, failure_count):
+def build_feedback(examples, candidates, rows, current_prompt, config):
     """The active feedback policy: nonpositive training gaps, without full papers.
 
     Keep the recorded all_training_gaps field's existing meaning: all nonpositive gaps, before
@@ -674,7 +669,7 @@ def build_feedback(examples, candidates, rows, current_prompt, failure_count):
     lookup = {example["example_id"]: example for example in examples}
     by_gap = sorted((row for row in rows if row["gap"] <= 0), key=lambda row: (row["gap"], row["example_id"]))
     failures = []
-    for row in by_gap[:failure_count]:
+    for row in by_gap[: config["failure_examples"]]:
         example = lookup[row["example_id"]]
         failures.append(
             {
@@ -690,7 +685,7 @@ def build_feedback(examples, candidates, rows, current_prompt, failure_count):
         )
     return {
         "current_prompt": current_prompt,
-        "summary": summarize(rows),
+        "summary": summarize(rows, config),
         "failures": failures,
         "example_ids_used_for_aggregate": sorted(lookup),
         "selection": FAILING_FEEDBACK,
@@ -699,11 +694,9 @@ def build_feedback(examples, candidates, rows, current_prompt, failure_count):
 
 
 # Preserve whole-paper bootstrap statistics, including the fields sent to the optimizer.
-BOOTSTRAP_REPLICATES = 2000
-INTERVAL = (0.025, 0.975)
 
 
-def bootstrap(rows, seed=0):
+def bootstrap(rows, config):
     """Percentile bootstrap of the mean gap that resamples whole papers.
 
     Sections from one paper are not independent, so each replicate draws papers with
@@ -715,18 +708,18 @@ def bootstrap(rows, seed=0):
             by_paper[row["paper_id"]].append(row["gap"])
     if not by_paper:
         return None
-    rng = random.Random(seed)
+    rng, replicates, (low, high) = random.Random(config["seed"]), config["bootstrap_replicates"], config["bootstrap_interval"]
     papers = sorted(by_paper)
-    means = sorted(statistics.mean(g for p in rng.choices(papers, k=len(papers)) for g in by_paper[p]) for _ in range(BOOTSTRAP_REPLICATES))
+    means = sorted(statistics.mean(g for p in rng.choices(papers, k=len(papers)) for g in by_paper[p]) for _ in range(replicates))
     return {
         "method": "paired_whole_paper_percentile_bootstrap",
         "paper_clusters": len(papers),
-        "replicates": BOOTSTRAP_REPLICATES,
-        "seed": seed,
+        "replicates": replicates,
+        "seed": config["seed"],
         "estimate": statistics.mean(g for gaps in by_paper.values() for g in gaps),
-        "bootstrap_median": means[BOOTSTRAP_REPLICATES // 2],
-        "low": means[int(INTERVAL[0] * BOOTSTRAP_REPLICATES)],
-        "high": means[int(INTERVAL[1] * BOOTSTRAP_REPLICATES)],
+        "bootstrap_median": means[replicates // 2],
+        "low": means[int(low * replicates)],
+        "high": means[int(high * replicates)],
     }
 
 
@@ -735,7 +728,7 @@ def section_summary(graded, section):
     return {"coverage": len(gaps), "gap": statistics.mean(gaps) if gaps else None}
 
 
-def summarize(rows, seed=0):
+def summarize(rows, config):
     """Summarize one checkpoint's rows: mean human, model and gap scores over the sections with
     both grades, per-section gaps, and paper-bootstrap intervals for all sections, the
     length-compliant ones."""
@@ -753,14 +746,14 @@ def summarize(rows, seed=0):
         "gap": mean("gap"),
         "positive_gap_fraction": sum(row["gap"] > 0 for row in graded) / len(graded) if graded else None,
         "ties": sum(row["gap"] == 0 for row in graded),
-        "paper_interval": bootstrap(graded, seed),
+        "paper_interval": bootstrap(graded, config),
         "length_compliant": sum(row["length_compliant"] for row in rows),
         "sections": {section: section_summary(graded, section) for section in SECTIONS},
-        "compliant_sensitivity": bootstrap([row for row in graded if row["length_compliant"]], seed),
+        "compliant_sensitivity": bootstrap([row for row in graded if row["length_compliant"]], config),
     }
 
 
-def paired_improvement(initial, selected, seed=0):
+def paired_improvement(initial, selected, config):
     """Per-section change in gap from the initial to the selected checkpoint, with a
     paper-bootstrap interval. Sections missing a gap at either checkpoint are left out."""
     initial_by_id = {row["example_id"]: row for row in initial}
@@ -772,23 +765,11 @@ def paired_improvement(initial, selected, seed=0):
     return {
         "paired_coverage": len(changes),
         "mean": statistics.mean(change["gap"] for change in changes) if changes else None,
-        "interval": bootstrap(changes, seed),
+        "interval": bootstrap(changes, config),
     }
 
 
-@dataclass
-class RunSettings:
-    output_dir: str
-    split: str
-    seed: int
-    iterations: int
-    max_meta_prompt_words: int
-    failure_examples: int
-    concurrency: int
-    dataset: str = "data/examples.jsonl"
-
-
-def write_report(output, summaries, rows, selected, costs, seed):
+def write_report(output, summaries, rows, selected, costs, config):
     table = [
         {
             "iteration": index,
@@ -803,7 +784,7 @@ def write_report(output, summaries, rows, selected, costs, seed):
         }
         for index, (train, validation) in enumerate(summaries)
     ]
-    improvement = paired_improvement(rows[0], rows[selected], seed)
+    improvement = paired_improvement(rows[0], rows[selected], config)
     result = {
         "selected_iteration": selected,
         "checkpoints": table,
@@ -848,52 +829,51 @@ def write_report(output, summaries, rows, selected, costs, seed):
     return result
 
 
-def run_xar(settings):
+def run_xar(config_path):
+    config_text = Path(config_path).read_text()
+    config = yaml.safe_load(config_text)
     initial = (ROOT / "prompts/rubric_initial.md").read_text()
-    if len(initial.split()) > settings.max_meta_prompt_words:
+    if len(initial.split()) > config["max_meta_prompt_words"]:
         raise RunError("Initial prompt exceeds max_meta_prompt_words")
-    examples = [json.loads(line) for line in Path(settings.dataset).read_text().splitlines() if line.strip()]
-    examples = run_examples(examples, settings.split)
+    examples = [json.loads(line) for line in Path(config["dataset"]).read_text().splitlines() if line.strip()]
+    examples = run_examples(examples, config)
     train = [example for example in examples if example["split"] == "train"]
     validation = [example for example in examples if example["split"] == "validation"]
     if not train or not validation:
         raise RunError("Need train and validation papers")
     roles = role_configs()
-    output = Path(settings.output_dir)
+    output = Path(config["output"])
     # Atomic directory creation also prevents two processes from starting in the same directory.
-    api = OpenRouter(output, roles, settings.seed)
+    api = OpenRouter(output, roles, config)
     try:
         output.mkdir(parents=True, exist_ok=False)
     except FileExistsError:
         raise RunError(f"Output exists: {output}") from None
     status = {"state": "failed"}
     try:
+        (output / "config.yaml").write_text(config_text)
         write_json(
             output / "manifest.json",
             {
                 "created_at": dt.datetime.now(dt.UTC).isoformat(),
-                "arguments": asdict(settings),
+                "config": config,
                 "roles": roles,
-                "dataset_hash": hashlib.sha256(Path(settings.dataset).read_bytes()).hexdigest(),
+                "dataset_hash": hashlib.sha256(Path(config["dataset"]).read_bytes()).hexdigest(),
                 "initial_meta_prompt_hash": digest(initial),
                 "feedback_policy": FAILING_FEEDBACK,
                 "context_handling": "Providers enforce context limits; full inputs are sent without truncation",
             },
         )
-        candidates = writer_candidates(api, examples, output, settings.concurrency)
+        candidates = writer_candidates(api, examples, output)
         prompts, training_summaries, training_rows = [initial], [], None
-        for iteration in range(settings.iterations + 1):
+        for iteration in range(config["iterations"] + 1):
             if iteration:
-                feedback = build_feedback(train, candidates, training_rows, prompts[-1], settings.failure_examples)
-                prompts.append(
-                    propose_prompt(
-                        api, prompts[-1], feedback, train, initial, iteration, output=output, max_words=settings.max_meta_prompt_words,
-                    )
-                )
+                feedback = build_feedback(train, candidates, training_rows, prompts[-1], config)
+                prompts.append(propose_prompt(api, prompts[-1], feedback, train, initial, iteration, output=output))
             (output / "prompts").mkdir(exist_ok=True)
             (output / "prompts" / f"iter_{iteration:02d}.md").write_text(prompts[-1])
-            training_rows = evaluate_checkpoint(api, train, candidates, prompts[-1], iteration, output, settings.concurrency)
-            summary = summarize(training_rows, settings.seed)
+            training_rows = evaluate_checkpoint(api, train, candidates, prompts[-1], iteration, output)
+            summary = summarize(training_rows, config)
             training_summaries.append(summary)
             print(
                 f"P{iteration}: training gap {summary['gap']}, coverage {summary['paired_coverage']}/{len(train)}",
@@ -913,12 +893,10 @@ def run_xar(settings):
             },
         )
         print(f"Training selected P{selected}; scoring validation", flush=True)
-        validation_rows = [
-            evaluate_checkpoint(api, validation, candidates, value, index, output, settings.concurrency) for index, value in enumerate(prompts)
-        ]
-        validation_summaries = [summarize(rows, settings.seed) for rows in validation_rows]
+        validation_rows = [evaluate_checkpoint(api, validation, candidates, value, index, output) for index, value in enumerate(prompts)]
+        validation_summaries = [summarize(rows, config) for rows in validation_rows]
         result = write_report(
-            output, list(zip(training_summaries, validation_summaries, strict=True)), validation_rows, selected, api.costs(), settings.seed,
+            output, list(zip(training_summaries, validation_summaries, strict=True)), validation_rows, selected, api.costs(), config,
         )
         status = {"state": "complete" if all(summary["complete"] for summary in validation_summaries) else "incomplete"}
         return result
@@ -930,31 +908,10 @@ def run_xar(settings):
         api.client.close()
 
 
-def parse_args(argv=None):
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--pilot", action="store_true", help="smoke test on 2 training papers")
-    parser.add_argument("--output", help="new run directory (default: runs/<configured run name>)")
-    parser.add_argument("--seed", type=int, help="grading-order and bootstrap seed, not a model decoding seed")
-    parser.add_argument("--concurrency", type=int, choices=range(1, MAX_CONCURRENCY + 1), metavar="N", help="parallel examples, 1–32")
-    parser.add_argument("--dataset", default="data/examples.jsonl")
-    return parser.parse_args(argv)
-
-
 if __name__ == "__main__":
-    options = parse_args()
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("config", nargs="?", default=str(ROOT / "configs/experiments.yaml"), help="run configuration (default: configs/experiments.yaml)")
     try:
-        design = yaml.safe_load((ROOT / "configs/experiments.yaml").read_text())
-        run_xar(
-            RunSettings(
-                output_dir=options.output or str(Path("runs") / design["pilot_run" if options.pilot else "research_run"]),
-                split="pilot" if options.pilot else "research",
-                seed=design["seed"] if options.seed is None else options.seed,
-                iterations=design["pilot_iterations" if options.pilot else "iterations"],
-                max_meta_prompt_words=design["max_meta_prompt_words"],
-                failure_examples=design["failure_examples"],
-                concurrency=options.concurrency or design["concurrency"],
-                dataset=options.dataset,
-            )
-        )
+        run_xar(parser.parse_args().config)
     except (RunError, httpx.HTTPError) as error:
         raise SystemExit(f"STOP: {error}") from None

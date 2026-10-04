@@ -94,8 +94,8 @@ holds papers from most fields (`data/splits.json`):
 | 5 | 13 | confirmation; not used |
 
 The research run therefore has 140 sections, 96 for training and 44 for validation. There is
-no pilot split. `run.py --pilot` uses the first 2 training papers in dataset order, the
-only 2 papers it needs.
+no pilot split. a pilot run (`split: pilot`) uses the first `pilot_papers` training papers in dataset order,
+the only papers it needs.
 
 `data/source_manifest.json` records each paper's URL, metadata and hashes, and the hash of
 `data/examples.jsonl`. The paper text is not in the repository. The owner reviewed all 56
@@ -135,7 +135,7 @@ MiMo-V2.6-Pro, graded the validation sections again at 2 checkpoints; the run
 cost, since the result is Muse's judgment either way.
 
 All requests go through OpenRouter. The models and their settings are in `configs/models.yaml`,
-the rest of the experiment (seed, number of updates, word limits, run names) in
+the rest of the experiment (seed, number of updates, word limits, attempt counts, bootstrap settings, run names) in
 `configs/experiments.yaml`, and the prompts
 in `prompts/`: `writer.md`, `rubric_initial.md` (the initial meta prompt), `rubric_wrapper.md`
 (the fixed instructions around the meta prompt), `judge.md` and `optimizer.md`.
@@ -202,10 +202,10 @@ in `prompts/`: `writer.md`, `rubric_initial.md` (the initial meta prompt), `rubr
    checkpoint's prompt are written to `freeze.json`. Only then does the run generate rubrics
    and grades for the validation sections, at every checkpoint.
 
-Independent sections run concurrently, up to the configured limit or `--concurrency`.
+Independent sections run concurrently, up to the `concurrency` limit in the config.
 The drafts for one section and the optimizer updates run in order.
 
-Before the research run, `run.py --pilot` runs the same pipeline on the first 2 training papers (one
+Before the research run, `run.py configs/pilot.yaml` runs the same pipeline on the first 2 training papers (one
 acts as training, one as validation) with 1 update. `run.py` runs the full experiment independently.
 The pilot's scores stay separate from the research run.
 

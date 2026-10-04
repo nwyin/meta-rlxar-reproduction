@@ -68,7 +68,7 @@ export function loadDataset() {
 export async function loadRun(name) {
   const base = `/runs/${name}`;
   const manifest = await fetchJSON(`${base}/manifest.json`);
-  const iterations = manifest.arguments?.iterations ?? 0;
+  const iterations = (manifest.config ?? manifest.arguments)?.iterations ?? 0;
   const [freeze, costs] = await Promise.all([maybeJSON(`${base}/freeze.json`), maybeJSON(`${base}/costs.json`)]);
 
   const checkpoints = [];
