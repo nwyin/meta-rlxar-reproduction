@@ -944,8 +944,6 @@ if __name__ == "__main__":
     options = parse_args()
     try:
         design = yaml.safe_load((ROOT / "configs/experiments.yaml").read_text())
-        if design["feedback_policy"] != FAILING_FEEDBACK:
-            raise RunError(f"Use feedback_policy={FAILING_FEEDBACK!r}")
         run_xar(
             RunSettings(
                 output_dir=options.output or str(Path("runs") / design["pilot_run" if options.pilot else "research_run"]),

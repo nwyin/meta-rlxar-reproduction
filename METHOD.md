@@ -180,8 +180,8 @@ in `prompts/`: `writer.md`, `rubric_initial.md` (the initial meta prompt), `rubr
    never sees validation sections or scores. An earlier policy included the paper for the
    4 worst failures. The completed run
    `meta-blog-seed0` used the earliest policy: the 4 lowest-gap sections, each with the paper.
-   `feedback_policy` in `configs/experiments.yaml` names the policy and the run manifest
-   records it. The simplified runner supports `failing_gap_without_paper`.
+   The run manifest records the policy as `feedback_policy`. The simplified runner supports only
+   `failing_gap_without_paper`.
 
 5. Optimize. The optimizer returns a new meta prompt of at most 2,000 words and a rationale. A
    pattern check rejects a proposal that is too long; tells the rubric to prefer the author's
