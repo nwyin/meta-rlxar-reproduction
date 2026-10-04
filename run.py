@@ -67,23 +67,6 @@ def file_hash(path):
     return hashlib.sha256(Path(path).read_bytes()).hexdigest()
 
 
-def now():
-    return dt.datetime.now(dt.UTC).isoformat()
-
-
-def words(text):
-    """Count whitespace-separated words; headings and citation markers count as words too."""
-    return len(text.split())
-
-
-def normalize(text):
-    return " ".join(text.split())
-
-
-def read_json(path):
-    return json.loads(Path(path).read_text())
-
-
 def write_json(path, value):
     """Write a complete JSON record atomically, including from parallel tasks."""
     path = Path(path)
@@ -91,14 +74,6 @@ def write_json(path, value):
     temporary = path.with_suffix(f".{os.getpid()}.{threading.get_ident()}.tmp")
     temporary.write_text(json.dumps(value, indent=2, ensure_ascii=False, allow_nan=False) + "\n")
     os.replace(temporary, path)
-
-
-def load_design():
-    return yaml.safe_load((ROOT / "configs/experiments.yaml").read_text())
-
-
-def prompt(name):
-    return (ROOT / "prompts" / f"{name}.md").read_text()
 
 
 def bounded_map(function, items, concurrency, stopped):
@@ -132,14 +107,6 @@ def bounded_map(function, items, concurrency, stopped):
     return [future.result() for future in futures]
 
 
-def parse_concurrency(value):
-    """argparse type for --concurrency: an integer from 1 to MAX_CONCURRENCY."""
-    number = int(value)
-    if not 1 <= number <= MAX_CONCURRENCY:
-        raise argparse.ArgumentTypeError(f"must be between 1 and {MAX_CONCURRENCY}")
-    return number
-
-
 def write_table(path, rows):
     """Write rows (dicts with the same keys) as CSV; writes nothing when rows is empty."""
     if not rows:
@@ -165,7 +132,7 @@ def load_examples(dataset, splits):
     withheld section is absent from the visible paper, and every paper has each of its sections
     once (by example ID), and always the abstract and the introduction.
     """
-    papers_by_split = read_json(splits)["papers"]
+    papers_by_split = json.loads(Path(splits).read_text())["papers"]
     split_counts = Counter(paper for papers in papers_by_split.values() for paper in papers)
     repeated = sorted(paper for paper, count in split_counts.items() if count > 1)
     if repeated:
@@ -186,11 +153,12 @@ def load_examples(dataset, splits):
         for field in ("context", "reference"):
             if e[field + "_hash"] != digest(e[field]):
                 raise RunError(f"{eid}: {field} text does not match its stored {field}_hash")
-        if e["target_words"] != words(e["reference"]):
-            raise RunError(f"{eid}: target_words is {e['target_words']}, but the reference has {words(e['reference'])} words")
+        reference_words = len(e["reference"].split())
+        if e["target_words"] != reference_words:
+            raise RunError(f"{eid}: target_words is {e['target_words']}, but the reference has {reference_words} words")
         if not e["target_words"]:
             raise RunError(f"{eid}: the reference is empty")
-        if normalize(e["reference"]) in normalize(e["context"]):
+        if " ".join(e["reference"].split()) in " ".join(e["context"].split()):
             raise RunError(f"{eid}: the withheld reference still appears in the visible paper")
         sections_by_paper.setdefault(e["paper_id"], []).append(e["section_type"])
     for paper, sections in sections_by_paper.items():
@@ -217,8 +185,8 @@ def contamination(candidate, reference):
     Reports the longest run of consecutive shared words and the fraction of the candidate's
     8-grams that also occur in the reference, and flags runs of VERBATIM_FLAG_WORDS or more.
     """
-    candidate_words = normalize(candidate).split()
-    reference_words = normalize(reference).split()
+    candidate_words = candidate.split()
+    reference_words = reference.split()
     reference_positions = {}
     for position, word in enumerate(reference_words):
         reference_positions.setdefault(word, []).append(position)
@@ -297,10 +265,6 @@ def check_model_allowed(model):
         raise RunError(f"{model} is a routing alias or variant; name a specific model release instead")
 
 
-def endpoints_filename(model):
-    return model.replace("/", "_") + "-endpoints.json"
-
-
 def find_endpoint(endpoints, provider, source):
     """The one endpoint in an OpenRouter endpoint listing whose tag is provider."""
     matches = [endpoint for endpoint in endpoints if endpoint["tag"] == provider]
@@ -330,9 +294,9 @@ def check_endpoint_supports(cfg, endpoint, model_info):
 
 def endpoint_for(cfg):
     """The saved endpoint and catalog entry for a role's model and provider, checked against cfg."""
-    path = SNAPSHOTS / endpoints_filename(cfg["model"])
-    endpoint = find_endpoint(read_json(path)["data"]["endpoints"], cfg["provider"], path.name)
-    model_info = next((m for m in read_json(MODEL_CATALOG)["data"] if m["id"] == cfg["model"]), None)
+    path = SNAPSHOTS / (cfg["model"].replace("/", "_") + "-endpoints.json")
+    endpoint = find_endpoint(json.loads(path.read_text())["data"]["endpoints"], cfg["provider"], path.name)
+    model_info = next((m for m in json.loads(MODEL_CATALOG.read_text())["data"] if m["id"] == cfg["model"]), None)
     if model_info is None:
         raise RunError(f"{cfg['model']} is missing from {MODEL_CATALOG.name}; refresh configs/snapshots")
     check_endpoint_supports(cfg, endpoint, model_info)
@@ -426,7 +390,7 @@ class OpenRouter:
     def costs(self):
         total, requests, unresolved, upper = 0.0, 0, 0, 0.0
         for path in self.output.glob("requests/*/attempt_*.json"):
-            sent = read_json(path)
+            sent = json.loads(path.read_text())
             cost = billed_cost(sent.get("response", {}))
             if cost is not None:
                 total += cost
@@ -461,7 +425,7 @@ class OpenRouter:
         Fails if a pinned model, provider, limit, price or quantization changed. Saves what it
         fetched, plus the observed prices, under output/preflight/<time> and returns that directory.
         """
-        directory = self.output / "preflight" / now().replace(":", "-")
+        directory = self.output / "preflight" / dt.datetime.now(dt.UTC).isoformat().replace(":", "-")
         catalog = self._get("/models")
         write_json(directory / "models.json", catalog)
         live_models = {m["id"]: m for m in catalog["data"]}
@@ -481,7 +445,7 @@ class OpenRouter:
                 )
             if model not in live_endpoints:
                 live_endpoints[model] = self._get(f"/models/{model}/endpoints")
-                write_json(directory / endpoints_filename(model), live_endpoints[model])
+                write_json(directory / (model.replace("/", "_") + "-endpoints.json"), live_endpoints[model])
             current = find_endpoint(live_endpoints[model]["data"]["endpoints"], cfg["provider"], f"the live {model} listing")
             check_endpoint_supports(cfg, current, live_models[model])
             if current["context_length"] < pinned["context_length"]:
@@ -506,7 +470,7 @@ class OpenRouter:
             observed_prices[role] = prices
         write_json(
             directory / "checks.json",
-            {"at": now(), "roles": self.roles, "observed_prices": observed_prices},
+            {"at": dt.datetime.now(dt.UTC).isoformat(), "roles": self.roles, "observed_prices": observed_prices},
         )
         return directory
 
@@ -540,7 +504,7 @@ class OpenRouter:
             if self.dispatch_stopped.is_set():
                 raise Skipped("Another request failed; no further requests will start")
             path = directory / f"attempt_{attempt}.json"
-            record = {"status": "uncertain", "sent_at": now(), "upper_usd": upper}
+            record = {"status": "uncertain", "sent_at": dt.datetime.now(dt.UTC).isoformat(), "upper_usd": upper}
             write_json(path, record)
             started, retry_after = time.monotonic(), None
             try:
@@ -590,7 +554,7 @@ class OpenRouter:
     def _accept(self, raw, role, attempt_file):
         usage = raw.get("usage") or {}
         if billed_cost(raw) is None:
-            write_json(attempt_file, {**read_json(attempt_file), "status": "uncertain_cost"})
+            write_json(attempt_file, {**json.loads(attempt_file.read_text()), "status": "uncertain_cost"})
             raise UncertainSend(f"No valid usage.cost for {role}; see {attempt_file}")
         model = raw.get("model")
         if model not in {self.model_info[role]["id"], self.model_info[role]["canonical_slug"]}:
@@ -677,7 +641,7 @@ def validate_rubric(rubric):
     ids = [c["id"] for c in rubric["criteria"]]
     if len(ids) != len(set(ids)):
         raise InvalidOutput("Duplicate rubric criterion IDs")
-    total = sum(words(text) for criterion in rubric["criteria"] for text in criterion.values())
+    total = sum(len(text.split()) for criterion in rubric["criteria"] for text in criterion.values())
     if total > MAX_RUBRIC_WORDS:
         raise InvalidOutput("Rubric exceeds 1000 words")
 
@@ -696,7 +660,7 @@ def validate_grade(grade, rubric, supplied_text):
         raise InvalidOutput("Grade score must be a finite number")
     for score in grade["scores"]:
         for quoted in QUOTED_TEXT.findall(score["evidence"]):
-            if normalize(quoted).casefold() not in normalize(supplied_text).casefold():
+            if " ".join(quoted.split()).casefold() not in " ".join(supplied_text.split()).casefold():
                 raise InvalidOutput("Evidence quote does not occur in supplied text")
     return grade_total(grade)
 
@@ -706,44 +670,33 @@ def grade_total(grade):
     return statistics.mean(s["score"] for s in grade["scores"])
 
 
-def length_window(target_words):
-    """The word counts, low to high, that count as meeting a section's length target."""
-    return 0.85 * target_words, 1.15 * target_words
-
-
-def length_revision_note(target_words):
-    """The instruction sent with a writer retry after a section missed its length target."""
-    low, high = length_window(target_words)
-    return f"Revise only to fit {math.ceil(low)}–{math.floor(high)} words. Preserve claims."
-
-
 def writer_candidates(api, examples, output, concurrency=1):
     """Write one model section per example, `concurrency` examples at a time.
 
     Each section gets up to WRITER_ATTEMPTS drafts: a draft that is cut off or outside the length
     window goes back to the writer with a revision note, and the last draft is kept either way.
     Each section is saved as it finishes. Returns the records keyed by example ID."""
-    config_hash = digest({"writer": api.roles["writer"], "prompt": prompt("writer"), "schema_version": SCHEMA_VERSION})
+    config_hash = digest({"writer": api.roles["writer"], "prompt": (ROOT / "prompts/writer.md").read_text(), "schema_version": SCHEMA_VERSION})
     stopped = api.dispatch_stopped
 
     def write_section(example):
         eid = example["example_id"]
         path = Path(output) / "generations" / (eid + ".json")
-        low, high = length_window(example["target_words"])
+        low, high = 0.85 * example["target_words"], 1.15 * example["target_words"]
         attempts = []
         for attempt in range(WRITER_ATTEMPTS):
             data = task_data(example)
             if attempt:
                 data.update(
                     previous_section=attempts[-1]["text"],
-                    length_revision=length_revision_note(example["target_words"]),
+                    length_revision=f"Revise only to fit {math.ceil(low)}–{math.floor(high)} words. Preserve claims.",
                 )
             if stopped.is_set():
                 raise Skipped(f"Stopped writing {eid} because another section failed")
             identity = {"writer": config_hash, "example": eid, "attempt": attempt}
-            response = api.call("writer", prompt("writer"), data, None, identity)
+            response = api.call("writer", (ROOT / "prompts/writer.md").read_text(), data, None, identity)
             text = response["content"].strip()
-            count = words(text)
+            count = len(text.split())
             compliant = low <= count <= high
             attempts.append(
                 {
@@ -791,7 +744,7 @@ def writer_candidates(api, examples, output, concurrency=1):
 def generate_rubric(api, example, meta_prompt, identity, output):
     result = api.structured(
         "rubric",
-        prompt("rubric_wrapper"),
+        (ROOT / "prompts/rubric_wrapper.md").read_text(),
         {**task_data(example), "meta_prompt": meta_prompt},
         RUBRIC_SCHEMA,
         identity,
@@ -818,7 +771,7 @@ def grade_candidate(api, example, rubric_record, text, identity, output):
         rubric = rubric_record["value"]
         result = api.structured(
             "judge",
-            prompt("judge"),
+            (ROOT / "prompts/judge.md").read_text(),
             {**task_data(example), "rubric": rubric, "candidate": text},
             GRADE_SCHEMA,
             identity,
@@ -909,7 +862,7 @@ def audit_proposal(text, examples, initial_prompt, max_words):
     Rejects a prompt that is longer than max_words, matches PROPOSAL_RED_FLAGS (including leaked
     tool-call markup), names a training paper or its authors, or copies SPAN consecutive words
     from a training paper (unless the initial prompt already contains them)."""
-    word_count = words(text)
+    word_count = len(text.split())
     reasons, flags = [], []
     if word_count > max_words:
         reasons.append("meta_prompt_word_bound")
@@ -957,7 +910,7 @@ def propose_prompt(api, current, feedback, examples, initial, iteration, *, outp
     data = {"feedback": feedback, "max_meta_prompt_words": max_words}
     attempts = []
     for attempt in range(PROPOSAL_ATTEMPTS):
-        instruction = prompt("optimizer")
+        instruction = (ROOT / "prompts/optimizer.md").read_text()
         if attempt:
             rejected = attempts[-1]
             instruction += "\nBOUNDED REPAIR: Fix these proposal violations: " + ", ".join(rejected["audit"]["reasons"])
@@ -1018,8 +971,8 @@ def build_feedback(examples, candidates, rows, current_prompt, failure_count):
                 "target_words": example["target_words"],
                 "human_candidate": example["reference"],
                 "model_candidate": candidates[example["example_id"]]["text"],
-                "rubric": read_json(row["rubric_path"])["value"],
-                "grades": {origin: read_json(path)["value"] for origin, path in row["grade_paths"].items()},
+                "rubric": json.loads(Path(row["rubric_path"]).read_text())["value"],
+                "grades": {origin: json.loads(Path(path).read_text())["value"] for origin, path in row["grade_paths"].items()},
                 "gap": row["gap"],
             }
         )
@@ -1236,8 +1189,8 @@ def write_report(output, summaries, rows, selected, costs, seed):
 
 
 def run_xar(settings):
-    initial = prompt("rubric_initial")
-    if words(initial) > settings.max_meta_prompt_words:
+    initial = (ROOT / "prompts/rubric_initial.md").read_text()
+    if len(initial.split()) > settings.max_meta_prompt_words:
         raise RunError("Initial meta prompt exceeds max_meta_prompt_words")
     examples = run_examples(load_examples(settings.dataset, settings.splits), settings.split)
     train = [example for example in examples if example["split"] == "train"]
@@ -1269,7 +1222,7 @@ def run_xar(settings):
         write_json(
             output / "manifest.json",
             {
-                "created_at": now(),
+                "created_at": dt.datetime.now(dt.UTC).isoformat(),
                 "arguments": asdict(settings),
                 "roles": roles,
                 "dataset_hash": file_hash(settings.dataset),
@@ -1324,7 +1277,7 @@ def run_xar(settings):
                 "selected": selected,
                 "training_gaps": gaps,
                 "prompt_hashes": [digest(value) for value in prompts],
-                "frozen_at": now(),
+                "frozen_at": dt.datetime.now(dt.UTC).isoformat(),
             },
         )
         print(f"Training selected P{selected}; scoring validation", flush=True)
@@ -1357,14 +1310,14 @@ def parse_args(argv=None):
     parser.add_argument("--dry-run", action="store_true", help="estimate cost without network calls or writes")
     parser.add_argument("--output", help="new run directory (default: runs/<configured run name>)")
     parser.add_argument("--seed", type=int, help="grading-order and bootstrap seed, not a model decoding seed")
-    parser.add_argument("--concurrency", type=parse_concurrency, help="parallel examples, 1–32")
+    parser.add_argument("--concurrency", type=int, choices=range(1, MAX_CONCURRENCY + 1), metavar="N", help="parallel examples, 1–32")
     parser.add_argument("--dataset", default="data/examples.jsonl")
     parser.add_argument("--splits", default="data/splits.json")
     return parser.parse_args(argv)
 
 
 def settings_for(options):
-    design = load_design()
+    design = yaml.safe_load((ROOT / "configs/experiments.yaml").read_text())
     if design["feedback_policy"] != FAILING_FEEDBACK:
         raise RunError(f"Only feedback_policy {FAILING_FEEDBACK!r} is supported")
     return RunSettings(
