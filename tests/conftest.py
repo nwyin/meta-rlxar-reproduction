@@ -5,10 +5,19 @@ import json
 import httpx
 import pytest
 
-from xar import runs
-from xar.data import SECTIONS
-from xar.openrouter import MODEL_CATALOG, SNAPSHOTS, endpoints_filename
-from xar.util import canonical, digest, load_design, read_json, words, write_json
+import run
+from run import (
+    MODEL_CATALOG,
+    SECTIONS,
+    SNAPSHOTS,
+    canonical,
+    digest,
+    endpoints_filename,
+    load_design,
+    read_json,
+    words,
+    write_json,
+)
 
 
 @pytest.fixture
@@ -152,10 +161,9 @@ class FakeProvider:
 
 
 def install_fake(monkeypatch):
-    """Send the requests of every OpenRouter client that initialize_run creates to a FakeProvider."""
+    """Send each run's OpenRouter requests to a FakeProvider."""
     fake = FakeProvider()
     client = httpx.Client(transport=httpx.MockTransport(fake.handle))
-    real = runs.OpenRouter
-    # initialize_run looks OpenRouter up in xar.runs, so patch it there.
-    monkeypatch.setattr(runs, "OpenRouter", lambda *args, **kwargs: real(*args, **kwargs, client=client))
+    real = run.OpenRouter
+    monkeypatch.setattr(run, "OpenRouter", lambda *args, **kwargs: real(*args, **kwargs, client=client))
     return fake

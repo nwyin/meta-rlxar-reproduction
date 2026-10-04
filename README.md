@@ -2,16 +2,15 @@
 
 This repository reproduces the Initial Empirical Investigation in
 [Meta's Unslopping AI blog](https://facebookresearch.github.io/RAM/blogs/unslop/).
-Muse Spark 1.3, on OpenRouter's contributor tier, writes the missing paper sections, generates
-the rubrics and grades the sections; Kimi K2.6 rewrites the rubric meta prompt. The completed run used
-Muse Spark 1.1 in the same 3 roles and Kimi K2.6 as optimizer, as the blog did; the changes are
-a cost decision, recorded in `METHOD.md`. The completed run covers 52 sections from 8 training
-and 5 validation recent arXiv cs.CL papers, with 7 prompt updates. `data/` now holds a new
-corpus of 56 peer-reviewed papers from 2016 to 2021 across 9 fields (153 sections), built to
-give human references of known quality. No run has used it yet. The owner reviewed all 56 papers together and approved them (see `LOG.md`). [METHOD.md](METHOD.md) describes the data, the procedure, how
-this differs from the blog, and the limitations.
+The reproduction uses 2 scripts: `fetch_data.py` restores the frozen paper corpus, and
+`run.py` writes missing sections, optimizes the rubric meta prompt, and evaluates the result.
 
-## Result
+The current settings use Muse Spark 1.3, on OpenRouter's contributor tier, as writer,
+rubric generator and judge, and Kimi K2.6 as optimizer. The corpus holds 56 peer-reviewed
+papers from 2016 to 2021 across 9 fields, giving 153 sections. [METHOD.md](METHOD.md)
+describes the experiment and its limits. [LOG.md](LOG.md) records the runs and changes.
+
+## Historical result
 
 The research run finished on September 29, 2026. It used the earlier cs.CL corpus, archived in
 `data/archive/arxiv-2609-cs-cl/`.
@@ -27,134 +26,99 @@ The research run finished on September 29, 2026. It used the earlier cs.CL corpu
   -1.12 to -0.26.
 - The research run cost $55.60 for 1,389 requests and took 75 minutes. The pilot cost $2.42.
 
-`run.py report` writes the full numbers to `reports/results.md`.
+The saved results remain in `reports/` and `runs/`. The `meta-blog-seed0` Git tag holds
+the code for this historical run. The current scripts support fresh runs.
 
-## Setup
+## Setup and data
 
-You need Python 3.11 or later, [uv](https://docs.astral.sh/uv/), and the Hugging Face `hf`
-CLI (used to download the tokenizers).
+You need Python 3.11 or later and [uv](https://docs.astral.sh/uv/).
 
 ```sh
 uv sync --locked
-uv run python run.py prepare-tokenizers
-uv run python run.py discover-data
-uv run python run.py prepare-data
-uv run python run.py validate-data
-uv run pytest -q
+uv run python fetch_data.py
 ```
 
-`prepare-tokenizers` downloads the Kimi and Qwen tokenizers pinned in
-`configs/tokenizers.json` into `data/tokenizers/`. Runs no longer use either model;
-`prepare-data` sizes papers with both tokenizers, as the first corpus did, and keeps the larger
-count.
-`discover-data` samples candidate papers from OpenAlex and checks them against the arXiv API
-(about 20 minutes, because arXiv rate-limits). It writes `data/discovery.json` once and
-refuses to replace a different file, so skip it when that file exists. `prepare-data` goes
-through the shortlists in `data/discovery.json`, downloads any missing ar5iv HTML into
-`data/raw/`, and rebuilds `data/examples.jsonl`, `splits.json` and `source_manifest.json`. It
-prints each rejected candidate and the reason. It fails if the result does not match the saved
-files, for example because ar5iv changed a page. The owner reviewed the 56 papers together and
-approved them; `LOG.md` records that.
+`fetch_data.py` reads `data/source_manifest.json` and `data/splits.json`, downloads missing
+raw ar5iv HTML, and rebuilds `data/examples.jsonl`. It checks the saved paper and dataset
+hashes and keeps the original provenance. Cached HTML is reused. A changed source or
+conflicting local file stops the script. The selected papers and splits stay fixed.
+
+Discovery and tokenizer downloads were part of building the corpus. They are no longer
+setup steps. The corpus-construction code remains in Git history. To check local data
+without downloads or writes:
+
+```sh
+uv run python fetch_data.py --check
+```
 
 Copy `.env.example` to `.env` and set `OPENROUTER_API_KEY`.
 
 ## Run
 
-```sh
-uv run python run.py all --dry-run
-uv run python run.py all
-```
-
-`--dry-run` prints a cost estimate and sends nothing. `all` runs `pilot` and then
-`reproduce`, which you can also run on their own:
-
-- `run.py pilot` runs one update on the first two training papers to check the pipeline end to end.
-- `run.py reproduce` runs the full experiment on the
-  training and validation papers and writes the report to `reports/`.
-
-Spending is capped by the OpenRouter key's limit, set on openrouter.ai; the code records every
-billed cost but enforces no budget of its own. `--concurrency` sets the number of parallel requests
-(default 16, from `configs/experiments.yaml`). `--resume` continues an interrupted run; only
-`--concurrency` may differ from the saved run, and any other change stops it. `--runs-root`
-(default `runs/`) sets where the runs are kept, and `--output-dir` (default
-`reports/`) where `reproduce`, `all` and `report` write the report. `uv run python run.py
---help` lists every command and option.
-
-## Report
+Estimate a full run before spending money, then use a fresh output directory:
 
 ```sh
-uv run python run.py report
+uv run python run.py --dry-run
+uv run python run.py --output runs/reproduction-01
 ```
 
-`report` loads the research run's saved score rows and checkpoint selection and writes the
-report. It makes no API calls and does not replay or audit the saved requests. Historical runs
-can be reported without restoring their dataset or matching the current model settings.
+For a small pilot on 2 training papers with 1 prompt update:
 
-## Browsing runs
-
-`uv run python tools/data-viewer/serve.py` starts a local viewer for runs, sections, rubrics,
-prompt history and criteria; see [tools/data-viewer](tools/data-viewer/README.md).
-
-## Repository layout
-
+```sh
+uv run python run.py --pilot --dry-run
+uv run python run.py --pilot --output runs/pilot-01
 ```
-.
-├── run.py                        CLI: pilot, reproduce, all, report, validate-data,
-│                                 discover-data, prepare-data, prepare-tokenizers
-├── xar/                          the pipeline, as a package
-│   ├── pipeline.py               the method: write sections, generate rubrics, grade,
-│   │                             build optimizer feedback, rewrite the prompt, select P*
-│   ├── openrouter.py             model settings, endpoint checks, pricing, token counts,
-│   │                             and the OpenRouter client
-│   ├── discovery.py              samples candidate papers from OpenAlex and arXiv
-│   ├── data.py                   builds the dataset from ar5iv HTML; loads and splits it
-│   ├── runs.py                   run directories: manifest, resume checks, cost estimate
-│   ├── stats.py                  checkpoint means and paired whole-paper bootstrap
-│   ├── report.py                 writes reports/ (results.md, checkpoints.csv, figure)
-│   └── util.py                   paths, errors, hashing, JSON I/O, parallel map
-├── tools/data-viewer/            local browser viewer for runs (serve.py + HTML/JS)
-├── tests/                        pytest suite; one file per module, fakes in conftest.py,
-│                                 full pilot and research runs in test_end_to_end.py
-├── prompts/                      model prompts (hashed into each run's manifest)
-│   ├── writer.md                 the writer drafts the missing section
-│   ├── rubric_initial.md         P0, the starting rubric meta prompt
-│   ├── rubric_wrapper.md         wraps the meta prompt when a rubric is generated
-│   ├── judge.md                  the judge grades one anonymous section against a rubric
-│   └── optimizer.md              Kimi rewrites the meta prompt from training feedback
-├── configs/
-│   ├── experiments.yaml          run names, iterations, seed, concurrency, blog numbers
-│   ├── models.yaml               each role's model, provider, temperature, reasoning
-│   ├── tokenizers.json           pinned tokenizer revisions and checksums
-│   └── snapshots/                saved OpenRouter catalog and endpoint listings that
-│                                 preflight compares against
-├── data/
-│   ├── discovery.json            the seeded OpenAlex and arXiv shortlists papers come from
-│   ├── source_manifest.json      URL, metadata and hashes for each selected paper
-│   ├── splits.json               paper IDs for train, validation, confirmation
-│   ├── examples.jsonl            the 153 sections with paper context (not in git)
-│   ├── raw/                      downloaded ar5iv HTML and arXiv metadata (not in git)
-│   ├── archive/                  the earlier cs.CL corpus the completed run used (not in git)
-│   └── tokenizers/               downloaded tokenizers (not in git)
-├── runs/                         run outputs (not in git)
-├── reports/                      generated report (not in git)
-├── METHOD.md                     method, reconstruction choices and limitations
-├── pyproject.toml, uv.lock       dependencies
-└── .env.example                  OPENROUTER_API_KEY goes in .env
-```
+
+The pilot uses 1 paper for training and 1 for validation. Its scores stay separate from a
+full run. `--seed` controls grading order and bootstrap sampling, not model decoding.
+`--concurrency` controls parallel requests. Other settings come from
+`configs/experiments.yaml` and `configs/models.yaml`; prompts stay in `prompts/`.
+`uv run python run.py --help` lists the options.
+
+`--dry-run` estimates cost from saved prices and sends no requests. Spending is capped by
+the OpenRouter key's limit, set on openrouter.ai. Each run records raw requests, responses,
+billed costs and unresolved sends. The code enforces no account budget of its own.
+
+Each run requires a new output directory. Interrupted runs keep their evidence; start a new
+run with a different directory. The runner has no resume or historical-report command.
 
 ## Outputs
 
+The run directory contains the whole result:
+
 | Path | Contents |
 | --- | --- |
-| `runs/pilot-meta-blog-attested/` | the pilot run |
-| `runs/meta-blog-seed0/` | the research run: `manifest.json`, every request and response under `requests/`, sections in `generations/`, `rubrics/`, `scores/`, optimizer `feedback/`, `prompts/`, `freeze.json`, `costs.json` |
-| `runs/budget_ledger.json` | reservations and charges for the runs before 2026-10-01, when the code enforced budgets |
-| `reports/` | `results.md`, `checkpoints.csv`, `gap_curves.png` and `.svg`, `blog_comparison.json` |
+| `results.md`, `checkpoints.csv`, `summary.json` | The result summary, checkpoint scores and uncertainty estimates. |
+| `manifest.json` | The settings, model endpoints, seed and source hashes. |
+| `requests/` | Raw requests, responses and transport attempts. |
+| `generations/`, `rubrics/`, `scores/` | Fixed writer drafts, rubrics and blind grades. |
+| `feedback/`, `prompts/`, `freeze.json` | Training feedback, prompt history and selection before validation. |
+| `costs.json`, `status.json` | Billed costs, unresolved sends and run status. |
 
-`runs/`, `reports/`, the paper text and the tokenizers are not in git.
+`runs/`, `reports/`, paper text and raw HTML stay local. `runs/budget_ledger.json` remains
+as the record of runs before 2026-10-01.
 
-## Versions
+## Repository layout
 
-The git tag `meta-blog-seed0` is the commit that produced the research run. The code has been
-cleaned up since. The tag `alternative-model-study` holds an earlier study with other
-models, which did not go beyond pilots.
+```text
+fetch_data.py          Restore and check the frozen corpus from raw paper HTML.
+run.py                 OpenRouter calls, optimization, validation and result summary.
+configs/               Experiment settings, models and saved endpoint listings.
+prompts/               Writer, rubric, judge and optimizer prompts.
+data/                  Frozen manifests, splits and local paper text.
+tests/                 Data restoration and runner tests, using a fake API.
+tools/data-viewer/     Optional local viewer for saved runs.
+METHOD.md              Method and limitations.
+LOG.md                 Experiment history.
+```
+
+The optional viewer runs with `uv run python tools/data-viewer/serve.py`;
+see [its README](tools/data-viewer/README.md).
+
+```sh
+uv run pytest -q
+uv run ruff check .
+```
+
+The tags `meta-blog-seed0` and `alternative-model-study` preserve earlier implementations
+and experiments.

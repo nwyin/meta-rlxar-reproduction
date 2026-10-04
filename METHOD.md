@@ -19,8 +19,11 @@ No chat model existed to write them. The writer may have seen them in pretrainin
 corpus tests whether a rubric can tell human writing from model writing, not whether the model
 can recall a paper. The old corpus is archived in `data/archive/arxiv-2609-cs-cl/`.
 
-`run.py discover-data` draws the candidates, and `run.py prepare-data` extracts them. Both
-steps use no model, and their choices are the constants in `xar/discovery.py` and `xar/data.py`.
+`fetch_data.py` restores the selected papers from `data/source_manifest.json`, downloads
+missing raw HTML and rebuilds the dataset with its saved provenance. It checks the HTML,
+section and dataset hashes against the frozen manifests. The following steps describe how
+we originally selected the corpus; that code remains in Git history. Setup now restores
+the selected corpus directly.
 
 1. Sample. OpenAlex lists works with an arXiv copy, 100 to 1,500 citations, type article, not
    retracted and published by 2022-11-29. The command takes a random sample of 10,000 of the
@@ -87,7 +90,7 @@ holds papers from most fields (`data/splits.json`):
 | 5 | 13 | confirmation; not used |
 
 The research run therefore has 140 sections, 96 for training and 44 for validation. There is
-no pilot split. `run.py pilot` uses the first 2 training papers in `data/splits.json`, the
+no pilot split. `run.py --pilot` uses the first 2 training papers in dataset order, the
 only 2 papers it needs.
 
 `data/source_manifest.json` records each paper's URL, metadata and hashes, and the hash of
@@ -163,16 +166,15 @@ in `prompts/`: `writer.md`, `rubric_initial.md` (the initial meta prompt), `rubr
 
 4. Feedback. After a checkpoint is scored on the training sections, the optimizer gets the current
    meta prompt, the training summary (author and model means, the gap, its interval and the
-   gap per section type), the gap of every training section, and the failing sections: those
-   with a gap of zero or less, lowest first, ties broken by example ID, up to 24. Each of
-   those comes with both sections, the rubric and both grades. The 4 worst also come with
-   the paper, so the optimizer can see what the author knew and chose to leave out; the rest
-   leave it out so that many failures fit in one request. The optimizer never sees validation
-   sections or scores. The run `meta-blog-v2-seed0` left the paper out of every failure, and
-   its optimizer's 4 rationales all diagnosed form, not content. The completed run
+   gap per section type), the gaps of every failing training section, and up to 24 failure
+   examples. Failures have a gap of zero or less, sorted lowest first, with ties broken by example ID. Each of
+   those comes with both sections, the rubric and both grades. The current policy leaves
+   the paper out of every failure so that more sections fit in one request. The optimizer
+   never sees validation sections or scores. An earlier policy included the paper for the
+   4 worst failures. The completed run
    `meta-blog-seed0` used the earliest policy: the 4 lowest-gap sections, each with the paper.
    `feedback_policy` in `configs/experiments.yaml` names the policy and the run manifest
-   records it.
+   records it. The simplified runner supports `failing_gap_without_paper`.
 
 5. Optimize. The optimizer returns a new meta prompt of at most 800 words and a rationale. A
    pattern check rejects a proposal that is too long; tells the rubric to prefer the author's
@@ -193,11 +195,11 @@ in `prompts/`: `writer.md`, `rubric_initial.md` (the initial meta prompt), `rubr
    checkpoint's prompt are written to `freeze.json`. Only then does the run generate rubrics
    and grades for the validation sections, at every checkpoint.
 
-Independent sections and checkpoint evaluations run four at a time. The drafts for one
-section and the optimizer updates run in order.
+Independent sections run concurrently, up to the configured limit or `--concurrency`.
+The drafts for one section and the optimizer updates run in order.
 
-Before the research run, `run.py pilot` runs the same pipeline on the first two training papers (one
-acts as training, one as validation) with one update. `run.py reproduce` runs independently.
+Before the research run, `run.py --pilot` runs the same pipeline on the first 2 training papers (one
+acts as training, one as validation) with 1 update. `run.py` runs the full experiment independently.
 The pilot's scores stay separate from the research run.
 
 ## Metric
@@ -207,13 +209,12 @@ checkpoint's gap is the mean over its sections. A negative gap means the judge s
 own writing higher; the blog's finding is that optimizing the rubric turns the validation gap
 from negative to positive.
 
-The report gives, for training and validation at every checkpoint, the author mean, the model
-mean and the gap. The paired improvement is the mean, over validation sections, of the gap at
-the selected checkpoint minus the gap at P0. Its 95% interval is a percentile bootstrap that
-resamples whole papers (2,000 replicates, seed 0), so on validation it rests on five papers.
-`results.md` also gives the validation gap on the sections that met the length target. A subset
-without the sections flagged for copying was computed once, by a script since removed
-(`scripts/audit_completed_run.py` at commit `9aef12b`).
+Each run writes `results.md`, `checkpoints.csv` and `summary.json` in its output directory.
+They give the author mean, model mean and gap at each checkpoint. The paired improvement
+is the mean, over validation sections, of the gap at the selected checkpoint minus the gap
+at P0. Its 95% interval uses a percentile bootstrap that resamples whole papers, with 2,000
+replicates and the run's seed. The summaries also include sections that meet the length
+target and sections without a copying flag. Historical reports remain in `reports/`.
 
 ## Cost and request handling
 
@@ -223,15 +224,11 @@ run's total to `costs.json`. Until 2026-10-01 it also reserved each request's wo
 `runs/budget_ledger.json` and refused sends past `--budget-usd` and `--total-budget-usd`. That
 file stays as the record of the earlier runs.
 
-Every request has a worst-case cost: its counted input tokens times 1.25, plus 1,024 tokens
-for the chat template, plus the maximum output, at the endpoint's highest listed price plus
-25%. Kimi's tokens are counted with its official tokenizer. Muse's and MiMo's tokenizers are
-not pinned locally, so their input is counted as UTF-8 bytes, which is more than the token
-count. A request that might not fit the endpoint's context stops the run;
-papers are never truncated.
-
-If a request was sent but no response came back, or the response has no cost, the run stops,
-because whether it was billed is unknown. Such a request is never resent automatically.
+The dry run uses saved prices and approximate token counts. The simplified runner needs
+no local tokenizers. It uses payload size and output limits to estimate costs and records
+the billed cost returned by OpenRouter. Cost estimates are approximate; the endpoint
+enforces its token limit. The runner sends the full input and never truncates a paper or
+reduces feedback to make a request fit.
 
 Before a run's first request, a preflight fetches OpenRouter's live model catalog and endpoint
 listings and compares them with the snapshots in `configs/snapshots/`. It stops the run if a
@@ -244,8 +241,10 @@ send that gets no response (a timeout or a broken connection) is sent again up t
 waiting 2, 5, 15, 30 and 60 seconds, or longer if a Retry-After header asks, up to 120
 seconds. A send with no response may still have been billed, so it stays on record as
 unresolved with its cost upper bound; `costs.json` counts them. Every request, response and cost is saved in the run
-directory. `--resume` reuses saved responses, and refuses to continue if the code, prompts,
-data or any setting other than the concurrency has changed.
+directory. A response with missing billing information stops the run and remains unresolved.
+Every invocation requires a fresh output directory. Interrupted runs retain their files;
+the simplified runner has no resume path. Each new manifest records the code, prompts,
+data, models and settings used for that run.
 
 ## Differences from the blog
 
@@ -270,7 +269,7 @@ these choices:
   2026-10-02 (see Roles).
 - Decoding: the temperatures and reasoning settings in the roles table.
 - Rubric and score: 4 to 8 criteria scored 0-10, combined as an unweighted mean.
-- Feedback: the failing training sections, up to 24, with the paper for the 4 worst. The blog
+- Feedback: the failing training sections, up to 24, with the paper omitted. The blog
   says the optimizer saw "the specific examples where it fails", and does not say how many or
   what each held.
 - Selection: the best training gap, chosen before any validation request.

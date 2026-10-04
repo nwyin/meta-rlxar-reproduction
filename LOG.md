@@ -768,3 +768,215 @@ data stays unused. We will select the checkpoint on training before evaluating v
 Before launch, all 63 tests passed and ruff reported no errors. The dry run estimated $0.24
 for the pilot and $8.73 for research, $8.97 in total including the retry reserve. Reports for
 this run go to `reports/meta-blog-v4-seed0/`, preserving the v3 report in `reports/`.
+
+The sweep started at 22:00 UTC. The pilot completed for $0.27, with training gap −2.88 →
+−0.80 and validation gap −1.60 → −0.65. It recorded 41 retryable HTTP errors (19 HTTP 504,
+14 HTTP 503 and 8 HTTP 502) before completing all 68 billed responses.
+
+The research phase started at about 22:26 UTC and stopped at 22:35 after one writer request
+exhausted 6 retries (1 HTTP 502 and 5 HTTP 504). It saved 117 sections and 199 billed responses
+for $0.55912. We preserved that failed request directory under the run's
+`transport_failures/recovery_01/` and resumed the same trajectory with concurrency reduced
+from 32 to 16. All prompts, models, data and completed drafts stayed fixed. The manifest
+records the original concurrency; `recovery_01.json` records the operational change. The
+archived 6 HTTP failures sit outside the pipeline's request counts and must be included
+separately when reporting transport errors.
+
+The research run stopped twice more during draft generation, at 22:37 and 22:41 UTC. We
+archived 3 more exhausted request directories under `transport_failures/recovery_02/` and
+`recovery_03/`, then resumed at concurrency 16 after each pause. The 3 recovery records
+preserve 4 failed request directories with 24 HTTP errors in total. We kept every completed
+response. All 140 drafts finished at 22:46 UTC; 33 fell outside the requested length band,
+and none were truncated or flagged for copying.
+
+The sweep completed at 00:54 UTC on 2026-10-03, with exit code 0. Research saved all 700
+rubrics and 1,400 grades across 5 checkpoints. The first P3 proposal exceeded the 800-word
+bound at 850 words; its replacement passed. The pipeline repaired 4 invalid rubric responses
+and 137 invalid judge responses. Research recorded 208 HTTP errors, including the 24 archived
+errors, and finished with 0 unresolved sends. Research cost $7.827166092 and the pilot cost
+$0.270645822, for $8.097811914 in recorded spending.
+
+P4 had the best training gap, −1.64479, and we froze that selection before validation. Its
+validation gap was −1.47879, compared with −2.25682 at P0. The gain was +0.77803, with a
+95% whole-paper bootstrap interval of +0.51587 to +1.04963. Every checkpoint's validation
+gap stayed negative. The model's mean score fell from 7.80303 to 6.84394, while the author's
+fell from 5.54621 to 5.36515. The gap narrowed mainly through lower model scores.
+
+Our post hoc comparison with v3 found a small difference. The selected validation gap was
+−1.54545 for v3 and −1.47879 for v4, a change of +0.06667. The paired whole-paper 95%
+bootstrap interval was −0.34965 to +0.49394 across the same 44 sections from 16 papers.
+This result does not establish an improvement over v3 and does not reproduce the preference
+reversal. Each prompt set has 1 trajectory; these intervals measure variation across papers,
+not across seeds. We changed 4 prompts and regenerated the model sections, so individual
+prompt effects remain untested. The data splits and model/provider settings match v3.
+
+The full results and comparison stay local in `reports/meta-blog-v4-seed0/results.md`,
+`comparison-v3.json` and `comparison-v3-paired.csv`. The prompt changes are committed as
+`4fbd239`; this completion record follows that commit.
+
+## 2026-10-03 — Repeat optimization from v2 P3
+
+The owner asked to return to the strongest earlier prompt and selected 3 trajectories
+starting from v2 P3, with 4 further optimizer updates each. P3 was v2's training-selected
+checkpoint, with training gap −0.19931 and validation gap −0.07955. We restored that saved
+prompt into `prompts/rubric_initial.md` and restored v2's writer, judge, optimizer and rubric
+wrapper from commit `315f3cd`. We verified their hashes against the v2 manifest. We restored
+the `failing_gap_without_paper` feedback policy in `configs/experiments.yaml` and changed
+the run names. Models, providers and data stay fixed. The cross judge remains removed.
+
+We added `--seed` to the CLI and chose seeds 0, 1 and 2. The existing pipeline uses these
+seeds for grading order and bootstrap sampling; it does not send a seed to the model API.
+These are independent repeats with fresh requests, not reproducible model-decoding seeds.
+Each repeat generates fresh model sections and selects a checkpoint on training before
+validation. The same validation papers remain a reused development set; confirmation stays
+unused. Starting from a previously learned prompt makes this a continuation experiment,
+rather than a repeat of the original v2 optimization from P0.
+
+All 67 tests passed and ruff reported no errors. The dry run estimated $8.728099172 per
+trajectory, or $26.184297516 for 3, including the retry reserve. We will run the trajectories
+concurrently with 5 requests each, for 15 total. Each has a separate directory under
+`runs/v2-p3-repeats/seed-N/meta-blog-v2-p3` and a report under `reports/v2-p3-repeats/seed-N`.
+The supervisor and plan in `runs/monitor-v2-p3-repeats/` record the commands and source hashes.
+No new commit was requested.
+
+All 3 trajectories started at 02:26 UTC. Each passed the live endpoint checks and began
+returning successful writer responses. We verified that each manifest records its assigned
+seed, 4 updates, the v2 feedback policy and the exact saved v2 P3 initial prompt hash.
+
+All 3 trajectories stopped at about 03:56 UTC after OpenRouter returned HTTP 403 with
+"Key limit exceeded (weekly limit)." The supervisor stopped on this nonretryable error.
+No trajectory reached validation or selected a checkpoint. We preserved all run files and
+left the key's limit unchanged.
+
+Each trajectory completed 140 drafts and the starting prompt's 96 training pairs. The
+starting training gaps were −0.30556, −0.24618 and −0.20451 for seeds 0, 1 and 2, respectively,
+compared with −0.19931 for the original v2 P3. These fresh evaluations stayed near a tie on
+training. They provide no new held-out result. All 3 stopped partway through the next
+checkpoint's training evaluation. Seed 0's first optimizer proposal and repair exceeded the
+800-word bound, at 882 and 923 words, so the pipeline carried P3 forward for that update.
+Seeds 1 and 2 accepted their first revisions, at 615 and 780 words.
+
+The saved responses record costs of $1.966699096, $2.048686272 and $1.975673322 for seeds
+0, 1 and 2, respectively, or $5.991058690 in total. They contain 619, 681 and 654 successful
+responses and 0 unresolved sends. The check-in summary is saved in
+`runs/monitor-v2-p3-repeats/check-in-summary.json`. Completion requires available weekly
+allowance, then preserving the failed 403 request records and resuming the saved trajectories.
+
+The owner raised the weekly limit and asked us to resume. We restarted all 3 trajectories
+at 14:08 UTC on 2026-10-03, after checking that the source and configuration hashes still
+match the original plan. We preserved each unsuccessful HTTP 403 request directory under
+`transport_failures/spending_limit_01/` and recorded the move in
+`spending_limit_recovery_01.json`. All completed responses stayed in place. Each run resumed
+with the same seed and concurrency 5. All 3 passed preflight and returned new successful
+responses. The saved original supervisor records and `supervise-resume-01.py` document the
+restart. We left the account limit unchanged.
+
+The owner requested a background poll and a report after all 3 runs finish. We added the
+local watcher `runs/monitor-v2-p3-repeats/poll_and_report.py`, which reads saved files every
+60 seconds and makes no API requests. It writes progress to
+`reports/v2-p3-repeats/monitor-status.json` and will write the combined `results.md`,
+`summary.json` and `checkpoints.csv` in that directory. It verifies complete coverage,
+training-based selection before validation, the source prompt, data hashes and model roles
+before reporting success. If runs stop, it records an incomplete report and keeps polling
+so a later resume can finish the report. We checked the running-state guard and both report
+paths with temporary fixtures. The watcher runs under `caffeinate` in a detached process;
+`poll-launch.json`, `poll-history.jsonl` and `poll.log` record its activity.
+
+The owner requested higher concurrency because the local machine was waiting on remote
+responses. We began increasing each run from 5 to 32 concurrent requests at 17:08 UTC,
+for up to 96 across the 3 runs. We stopped the old supervisor and let scoring requests
+drain before resuming each worker. We let the active optimizer call finish before stopping
+its worker. This changes only the CLI concurrency setting; prompts, seeds, models, data
+and completed responses stay fixed. The original manifests retain concurrency 5, while
+`concurrency-change-01.json` and each seed's `concurrency-resume.json` record the change.
+We updated and restarted the background poll so the combined report includes this history.
+
+Seeds 0 and 1 resumed at concurrency 32 at 17:09 UTC, and seed 2 followed at 17:21 after its
+optimizer response finished. Each drained with 0 unresolved sends. Seed 1 later stopped
+during validation because a judge request returned HTTP 200 with a whitespace-only body.
+At the next ETA check, we preserved that failed request under
+`transport_failures/empty_response_01/` and resumed seed 1 at concurrency 32. The response
+has no billing record; the saved request's possible extra cost is at most $0.014871875.
+`empty_response_recovery_01.json` records that uncertainty. We updated the poll to track the
+separately resumed worker and include this failure in the final report.
+
+All 3 continuations completed on 2026-10-03. Seed 0 finished at 17:44 UTC, seed 2 at
+17:59 UTC and seed 1 at 18:05 UTC. Each exited with code 0 and saved all 700 rubrics and
+1,400 final grades. The background poll verified completion and wrote the combined report
+at 18:06 UTC. We checked complete coverage, source hashes, data and model settings, and
+training selection before validation. Confirmation data stayed unused.
+
+| Seed | Starting validation gap | Selected update | Selected validation gap | Change |
+| --- | ---: | ---: | ---: | ---: |
+| 0 | -0.06439 | 3 | -0.21364 | -0.14924 |
+| 1 | -0.14697 | 3 | +0.10985 | +0.25682 |
+| 2 | -0.23182 | 1 | +0.08182 | +0.31364 |
+
+The mean selected validation gap was -0.00732, compared with a mean starting gap
+of -0.14773. Seeds 1 and 2 crossed zero, but each run's selected-gap 95% paper-bootstrap
+interval included zero. These are small, inconsistent validation reversals. Our post hoc
+interpretation is that restoring v2 recovered near-parity, while further optimization failed
+to establish a large, stable author preference. The seeds control local ordering and
+bootstrap sampling, not model decoding. Three repeats leave run-to-run uncertainty high.
+
+Seed 0 used 3 accepted updates, seed 1 used 4, and seed 2 used 2. Rejected updates consumed
+their slots and retained the previous prompt. The generated drafts fell outside the target
+length band in 31, 30 and 38 cases, respectively. Seed 2 had 1 validation conclusion with a
+46-word verbatim match to the reference. It stayed in the primary analysis. Excluding that
+flagged section gave a selected gap of +0.06977, with a 95% paper-bootstrap interval of
+−0.14750 to +0.27364, leaving the interpretation unchanged.
+
+The runs recorded $22.553129862 across 7,161 billed responses. All completed runs
+reported 0 unresolved sends. The archived whitespace-only HTTP 200 response may add up to
+$0.014871875 in unreported billing. The archived 403 errors and all recoveries remain saved.
+
+The combined report, complete checkpoint table, uncertainty estimates and figure are in
+`reports/v2-p3-repeats/results.md`, `checkpoints.csv`, `summary.json`, `interpretation.json`
+and `comparison.png/svg`. The report and runs remain local. No further experiments were
+started, and no changes were committed.
+
+
+## 2026-10-03: Simplify the reproduction to 2 scripts
+
+The owner asked us to simplify the package and chose support for fresh runs only.
+We replaced `xar/` and its command dispatcher with `fetch_data.py` and `run.py`.
+The first restores the frozen corpus. The second contains the OpenRouter calls, writer,
+rubric and judge steps, training feedback, prompt updates, validation and result summary.
+
+`fetch_data.py` downloads only the selected papers from `data/source_manifest.json`.
+It keeps their saved provenance and splits and verifies the HTML, section and dataset
+hashes. We rebuilt all 153 examples from the local HTML into a temporary directory and
+matched the saved dataset byte for byte. A changed download or local file stops the
+script. `--check` verifies existing data without downloads or writes. The original paper
+discovery and corpus-construction code remain in Git history.
+
+`run.py` requires a fresh output directory and writes `results.md`, `checkpoints.csv`
+and `summary.json` there. We removed resume compatibility, historical report generation,
+old feedback policies and the separate package modules. We kept fixed writer drafts,
+blind grades, bounded repairs, training-only feedback and selection, the freeze before
+validation, raw requests and responses, endpoint checks and cost records. The existing
+seed override remains. The confirmation split stays unused.
+
+We removed the local tokenizer and plotting dependencies. The runner now estimates
+costs from text size and saved prices; the provider enforces the actual token limit.
+It sends full inputs. A byte-based context cutoff would reject existing Kimi optimizer
+requests that previously succeeded, so bytes provide a cost allowance rather than a
+context cutoff. The dry run remains an estimate, not a spending cap.
+
+We compared the original and simplified runners against the same fake provider on 2
+synthetic experiments, one with positive training gaps and one with negative training
+gaps. Each made 196 model requests, and all 392 outgoing payloads matched exactly,
+including optimizer feedback. Both used 4 updates, seed 2 and concurrency 1, with
+confirmation papers excluded. This verifies those cases; live model behavior after the
+refactor remains untested.
+
+The pilot and full dry runs passed without network calls. Their rough cost estimates
+were $0.24 and $8.73, respectively. We made no paid requests,
+changed no prompts, model settings or corpus files, and kept historical runs and reports
+in place. We preserved the owner's earlier edits and made no commit.
+
+The final suite passed all 68 tests in 59.91 seconds, including the full corpus rebuild,
+and Ruff passed. We added checks for fresh-directory refusal, incomplete validation
+reports, missing or malformed billing fields and full-size optimizer inputs. The 2
+production scripts contain 1,788 lines, down from 3,100 across the old runner and package,
+a 42.3% reduction. Runtime dependencies fell from 8 to 5.

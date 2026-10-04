@@ -9,9 +9,6 @@ dependencies = [
   "PyYAML>=6,<7",
   "python-dotenv>=1,<2",
   "beautifulsoup4>=4.13,<5",
-  "matplotlib>=3.10,<4",
-  "tokenizers>=0.23.2,<0.24",
-  "tiktoken>=0.14,<0.15",
 ]
 
 [dependency-groups]
