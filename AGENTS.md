@@ -40,7 +40,7 @@ Run lint before every commit.
 
 ## Protect the experiment
 
-- Never edit `prompts/`, `configs/`, or `data/` without saying so. They are hashed into each run's manifest.
+- Never edit `prompts/`, `configs/`, or `data/` without saying so. Every run depends on them, and the manifest records only the dataset hash.
 - Keep validation and confirmation data out of prompt selection and optimizer feedback.
 - Keep judge requests blind to which section is the author's.
 - Do not substitute models or providers silently. Record any endpoint change.

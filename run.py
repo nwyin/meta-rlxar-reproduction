@@ -877,14 +877,6 @@ def run_xar(settings):
         raise RunError(f"Output exists: {output}") from None
     status = {"state": "failed"}
     try:
-        files = [
-            ROOT / "run.py",
-            ROOT / "fetch_data.py",
-            ROOT / "uv.lock",
-            ROOT / "configs/experiments.yaml",
-            ROOT / "configs/models.yaml",
-            *sorted((ROOT / "prompts").glob("*.md")),
-        ]
         write_json(
             output / "manifest.json",
             {
@@ -892,7 +884,6 @@ def run_xar(settings):
                 "arguments": asdict(settings),
                 "roles": roles,
                 "dataset_hash": file_hash(settings.dataset),
-                "software_hashes": {str(path.relative_to(ROOT)): file_hash(path) for path in files},
                 "initial_meta_prompt_hash": digest(initial),
                 "feedback_policy": FAILING_FEEDBACK,
                 "context_handling": "Providers enforce context limits; full inputs are sent without truncation",

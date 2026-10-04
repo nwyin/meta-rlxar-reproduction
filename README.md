@@ -112,7 +112,7 @@ The run directory contains the whole result:
 | Path | Contents |
 | --- | --- |
 | `results.md`, `checkpoints.csv`, `summary.json` | The result summary, checkpoint scores and uncertainty estimates. |
-| `manifest.json` | The settings, configured models and providers, seed and source hashes. |
+| `manifest.json` | The settings, configured models and providers, seed and dataset hash. |
 | `requests/` | Raw requests, responses and transport attempts. |
 | `generations/`, `rubrics/`, `scores/` | Fixed writer drafts, rubrics and blind grades. |
 | `feedback/`, `prompts/`, `freeze.json` | Training feedback, prompt history and selection before validation. |
