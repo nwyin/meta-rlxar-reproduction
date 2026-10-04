@@ -24,7 +24,6 @@ The research run finished on September 29, 2026. It used the earlier cs.CL corpu
   fell from 8.95 to 8.53.
 - 12 of the 20 validation sections met the ±15% length target. On those 12 the gap went from
   -1.12 to -0.26.
-- The research run cost $55.60 for 1,389 requests and took 75 minutes. The pilot cost $2.42.
 
 The saved results remain in `reports/` and `runs/`. The `meta-blog-seed0` Git tag holds
 the code for this historical run. The current scripts support fresh runs.
