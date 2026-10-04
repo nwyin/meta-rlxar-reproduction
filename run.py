@@ -843,10 +843,7 @@ def run_xar(config_path):
     output = Path(config["output"])
     # Atomic directory creation also prevents two processes from starting in the same directory.
     api = OpenRouter(output, roles, config)
-    try:
-        output.mkdir(parents=True, exist_ok=False)
-    except FileExistsError:
-        raise RunError(f"Output exists: {output}") from None
+    output.mkdir(parents=True, exist_ok=False)
     status = {"state": "failed"}
     try:
         (output / "config.yaml").write_text(config_text)
@@ -911,5 +908,5 @@ if __name__ == "__main__":
     parser.add_argument("config", nargs="?", default=str(ROOT / "configs/experiments.yaml"), help="run configuration (default: configs/experiments.yaml)")
     try:
         run_xar(parser.parse_args().config)
-    except (RunError, httpx.HTTPError) as error:
+    except (RunError, httpx.HTTPError, FileExistsError) as error:
         raise SystemExit(f"STOP: {error}") from None
