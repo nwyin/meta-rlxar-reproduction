@@ -172,11 +172,13 @@ FORMAT_REPAIR = "\nFORMAT REPAIR: Return complete valid JSON matching the schema
 MAX_REPAIR_ERROR_CHARS = 500
 
 
-def role_config(role):
+def role_configs():
     config = yaml.safe_load((ROOT / "configs/models.yaml").read_text())
-    selected = config["roles"][role]
-    model = selected["model"]
-    return {"model": model, **config["models"][model], "temperature": selected["temperature"]}
+    return {
+        role: {"model": selected["model"], **config["models"][selected["model"]], "temperature": selected["temperature"]}
+        for role in ROLES
+        for selected in [config["roles"][role]]
+    }
 
 
 def routing_fields(cfg):
@@ -196,13 +198,6 @@ def routing_fields(cfg):
             "require_parameters": True,
         },
     }
-
-
-def json_schema_format(schema):
-    """The response_format asking for JSON that matches schema, or None when there is no schema."""
-    if schema is None:
-        return None
-    return {"type": "json_schema", "json_schema": {"name": "xar_output", "strict": True, "schema": schema}}
 
 
 def backoff_seconds(attempt, retry_after=None):
@@ -271,7 +266,7 @@ class OpenRouter:
             "messages": [{"role": "system", "content": system}, {"role": "user", "content": canonical(data)}],
         }
         if schema is not None:
-            result["response_format"] = json_schema_format(schema)
+            result["response_format"] = {"type": "json_schema", "json_schema": {"name": "xar_output", "strict": True, "schema": schema}}
         return result
 
     def call(self, role, system, data, schema, identity):
@@ -419,10 +414,9 @@ PROPOSAL_ATTEMPTS = 2
 
 
 def validate_rubric(rubric):
-    """Check a generated rubric: schema, unique criterion IDs and total length.
+    """Check a schema-valid rubric for unique criterion IDs and total length.
 
     Raises with a short message; structured() sends that message back in its format repair."""
-    jsonschema.validate(rubric, RUBRIC_SCHEMA)
     ids = [c["id"] for c in rubric["criteria"]]
     if len(ids) != len(set(ids)):
         raise InvalidOutput("Duplicate criterion IDs")
@@ -432,22 +426,21 @@ def validate_rubric(rubric):
 
 
 def validate_grade(grade, rubric, supplied_text):
-    """Check a judge's grade against its rubric and return the mean criterion score.
+    """Check a schema-valid grade against its rubric and supplied text.
 
     Every criterion must be scored exactly once, and anything the judge quotes as evidence
     must occur in supplied_text (the graded section plus the visible paper)."""
-    jsonschema.validate(grade, GRADE_SCHEMA)
     ids = [s["id"] for s in grade["scores"]]
     if len(ids) != len(set(ids)) or set(ids) != {c["id"] for c in rubric["criteria"]}:
         raise InvalidOutput("Criterion IDs mismatch")
     # json.loads accepts NaN, and NaN passes the schema's minimum and maximum.
     if not all(math.isfinite(s["score"]) for s in grade["scores"]):
         raise InvalidOutput("Score must be finite")
+    normalized_text = " ".join(supplied_text.split()).casefold()
     for score in grade["scores"]:
         for quoted in QUOTED_TEXT.findall(score["evidence"]):
-            if " ".join(quoted.split()).casefold() not in " ".join(supplied_text.split()).casefold():
+            if " ".join(quoted.split()).casefold() not in normalized_text:
                 raise InvalidOutput("Quote absent from supplied text")
-    return grade_total(grade)
 
 
 def grade_total(grade):
@@ -871,21 +864,20 @@ class RunSettings:
 
 
 def write_report(output, summaries, rows, selected, costs, seed):
-    table = []
-    for index, (train, validation) in enumerate(summaries):
-        table.append(
-            {
-                "iteration": index,
-                "train_human": train["human"],
-                "train_model": train["model"],
-                "train_gap": train["gap"],
-                "val_human": validation["human"],
-                "val_model": validation["model"],
-                "val_gap": validation["gap"],
-                "val_coverage": validation["paired_coverage"],
-                "selected_by_train": index == selected,
-            }
-        )
+    table = [
+        {
+            "iteration": index,
+            "train_human": train["human"],
+            "train_model": train["model"],
+            "train_gap": train["gap"],
+            "val_human": validation["human"],
+            "val_model": validation["model"],
+            "val_gap": validation["gap"],
+            "val_coverage": validation["paired_coverage"],
+            "selected_by_train": index == selected,
+        }
+        for index, (train, validation) in enumerate(summaries)
+    ]
     improvement = paired_improvement(rows[0], rows[selected], seed)
     result = {
         "selected_iteration": selected,
@@ -911,32 +903,22 @@ def write_report(output, summaries, rows, selected, costs, seed):
         lines.append(f"| P{row['iteration']} | {row['train_gap']:+.3f} | {gap} | {row['val_coverage']} |")
     interval = improvement["interval"]
     if interval:
-        lines.extend(
-            [
-                "",
-                (
-                    f"The selected prompt changed the paired validation gap by {improvement['mean']:+.3f} "
-                    f"(95% whole-paper bootstrap interval: {interval['low']:+.3f} to {interval['high']:+.3f})."
-                ),
-            ]
-        )
-    lines.extend(
-        [
+        lines += [
             "",
-            (
-                f"OpenRouter-reported cost{' (partial)' if costs['unresolved'] else ''}: "
-                f"${costs['actual_complete_usd']:.4f} across {costs['requests']} generations. "
-                f"Unresolved lookups or sends: {costs['unresolved']}. Details are in costs.json."
-            ),
-            "",
-            (
-                "This is an independent reproduction with repository-specific papers and prompts. "
-                "The confirmation split remains unused. Bootstrap intervals resample whole papers."
-            ),
-            "",
-            "Full statistics and coverage are in summary.json; every request and response is saved.",
+            (f"The selected prompt changed the paired validation gap by {improvement['mean']:+.3f} "
+            f"(95% whole-paper bootstrap interval: {interval['low']:+.3f} to {interval['high']:+.3f})."),
         ]
-    )
+    lines += [
+        "",
+        (f"OpenRouter-reported cost{' (partial)' if costs['unresolved'] else ''}: "
+        f"${costs['actual_complete_usd']:.4f} across {costs['requests']} generations. "
+        f"Unresolved lookups or sends: {costs['unresolved']}. Details are in costs.json."),
+        "",
+        ("This is an independent reproduction with repository-specific papers and prompts. "
+        "The confirmation split remains unused. Bootstrap intervals resample whole papers."),
+        "",
+        "Full statistics and coverage are in summary.json; every request and response is saved.",
+    ]
     (output / "results.md").write_text("\n".join(lines) + "\n")
     return result
 
@@ -951,7 +933,7 @@ def run_xar(settings):
     validation = [example for example in examples if example["split"] == "validation"]
     if not train or not validation:
         raise RunError("Need train and validation papers")
-    roles = {role: role_config(role) for role in ROLES}
+    roles = role_configs()
     output = Path(settings.output_dir)
     # Atomic directory creation also prevents two processes from starting in the same directory.
     if output.exists():
@@ -991,14 +973,7 @@ def run_xar(settings):
                 feedback = build_feedback(train, candidates, training_rows, prompts[-1], settings.failure_examples)
                 prompts.append(
                     propose_prompt(
-                        api,
-                        prompts[-1],
-                        feedback,
-                        train,
-                        initial,
-                        iteration,
-                        output=output,
-                        max_words=settings.max_meta_prompt_words,
+                        api, prompts[-1], feedback, train, initial, iteration, output=output, max_words=settings.max_meta_prompt_words,
                     )
                 )
             (output / "prompts").mkdir(exist_ok=True)
@@ -1029,12 +1004,7 @@ def run_xar(settings):
         ]
         validation_summaries = [summarize(rows, settings.seed) for rows in validation_rows]
         result = write_report(
-            output,
-            list(zip(training_summaries, validation_summaries, strict=True)),
-            validation_rows,
-            selected,
-            api.costs(),
-            settings.seed,
+            output, list(zip(training_summaries, validation_summaries, strict=True)), validation_rows, selected, api.costs(), settings.seed,
         )
         status = {"state": "complete" if all(summary["complete"] for summary in validation_summaries) else "incomplete"}
         return result
