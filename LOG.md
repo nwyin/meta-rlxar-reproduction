@@ -1041,3 +1041,38 @@ An AST comparison confirmed that only exception messages changed. Lint and tempo
 checks of validation failures and model-output repair passed. Repair requests now include
 the shorter validation messages; their effect on live model responses remains untested.
 We deleted the temporary snapshot and made no paid calls.
+
+
+## 2026-10-03: Remove local cost estimation
+
+The owner asked us to remove the remaining estimator. We deleted `estimate()`, the
+`--dry-run` option and its settings field from `run.py`. We updated the setup and agent
+instructions. OpenRouter handles billing and spending limits, and the report continues
+to retrieve recorded generation charges after scoring. Paid runs still require the
+owner's request.
+
+Lint and temporary offline checks passed. CLI help and pilot/research settings work
+without the estimator. The retired flag exits before execution. A complete mocked run
+saved its results and the charges returned by the generation API. We discarded the
+temporary artifacts. Live model and billing behavior remain untested; we made no paid
+calls.
+
+
+## 2026-10-03: Trust prepared inputs and configured endpoints
+
+The owner asked us to keep the initial meta-prompt length limit and remove the runner's
+input and endpoint checks. The runner now reads prepared examples and their split labels
+directly. We removed hash comparisons, the separate splits check and `--splits`, model
+restrictions, endpoint snapshot comparisons and live catalog preflight calls. Requests
+still specify the configured model and provider with fallbacks off, and responses retain
+the returned model and provider. Manifests record input hashes for provenance. Saved
+snapshots remain historical records; provider changes limit reproducibility.
+
+Temporary offline checks compared 3 full mocked runs: the previous runner, the simplified
+runner, and the simplified runner with stale input hashes and changed response model and
+provider names. All 33 request payloads and experiment results matched in each run.
+The simplified runner read no endpoint snapshots and made no catalog calls. The initial
+prompt limit rejected an oversized prompt before reading data or creating a client, and
+accepted the exact limit. HTTP 400 and 402 responses still stopped execution and stayed
+on record. Removed CLI flags exited before execution. Lint passed. We discarded the temporary
+artifacts. Live provider behavior remains untested; we made no paid calls.

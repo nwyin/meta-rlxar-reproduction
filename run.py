@@ -1,15 +1,14 @@
 """Run a fresh Meta XAR reproduction with OpenRouter.
 
-Prepare data with fetch_data.py, inspect --dry-run, then choose a new --output directory.
+Prepare data with fetch_data.py, then choose a new --output directory.
 Settings and model roles come from configs/; prompts stay in prompts/. No inputs are truncated.
 """
 
-from __future__ import annotations; import argparse, concurrent.futures, csv, datetime as dt, hashlib, json, math, os, random, re, statistics, threading, time; from collections import Counter; from dataclasses import asdict, dataclass; from pathlib import Path; import httpx, jsonschema, yaml; from dotenv import load_dotenv  # noqa: I001  # fmt: skip
+from __future__ import annotations; import argparse, concurrent.futures, csv, datetime as dt, hashlib, json, math, os, random, re, statistics, threading, time; from dataclasses import asdict, dataclass; from pathlib import Path; import httpx, jsonschema, yaml; from dotenv import load_dotenv  # noqa: I001  # fmt: skip
 
 ROOT = Path(__file__).resolve().parent
 ROLES = ("writer", "rubric", "optimizer", "judge")
 SECTIONS = ("abstract", "introduction", "related_work", "conclusion")
-REQUIRED_SECTIONS = ("abstract", "introduction")
 FAILING_FEEDBACK = "failing_gap_without_paper"
 MAX_CONCURRENCY = 32
 SCHEMA_VERSION = 1
@@ -99,46 +98,6 @@ VERBATIM_FLAG_WORDS = 30
 PILOT_PAPERS = 2
 
 
-def load_examples(dataset, splits):
-    """Read the examples from `dataset` (JSON lines) and check them against `splits`.
-
-    Checks that no paper is in two splits, each example's split and content hashes match, the
-    withheld section is absent from the visible paper, and every paper has each of its sections
-    once (by example ID), and always the abstract and the introduction.
-    """
-    papers_by_split = json.loads(Path(splits).read_text())["papers"]
-    split_counts = Counter(paper for papers in papers_by_split.values() for paper in papers)
-    repeated = sorted(paper for paper, count in split_counts.items() if count > 1)
-    if repeated:
-        raise RunError(f"{splits}: overlapping papers {', '.join(repeated)}")
-    examples = [json.loads(line) for line in Path(dataset).read_text().splitlines() if line.strip()]
-    id_counts = Counter(e["example_id"] for e in examples)
-    duplicates = sorted(eid for eid, count in id_counts.items() if count > 1)
-    if duplicates:
-        raise RunError(f"{dataset}: duplicate IDs {', '.join(duplicates)}")
-    sections_by_paper = {}
-    for e in examples:
-        eid = e["example_id"]
-        listed_in = [split for split, papers in papers_by_split.items() if e["paper_id"] in papers]
-        if listed_in != [e["split"]]:
-            raise RunError(f"{eid}: split {e['split']!r} != {listed_in} in {splits}")
-        for field in ("context", "reference"):
-            if e[field + "_hash"] != digest(e[field]):
-                raise RunError(f"{eid}: {field}_hash mismatch")
-        reference_words = len(e["reference"].split())
-        if e["target_words"] != reference_words:
-            raise RunError(f"{eid}: target_words={e['target_words']}, reference_words={reference_words}")
-        if not e["target_words"]:
-            raise RunError(f"{eid}: empty reference")
-        if " ".join(e["reference"].split()) in " ".join(e["context"].split()):
-            raise RunError(f"{eid}: reference appears in context")
-        sections_by_paper.setdefault(e["paper_id"], []).append(e["section_type"])
-    for paper, sections in sections_by_paper.items():
-        if not set(REQUIRED_SECTIONS) <= set(sections):
-            raise RunError(f"{paper}: sections {sorted(sections)}; need {REQUIRED_SECTIONS}")
-    return examples
-
-
 def task_data(example):
     """The only example fields that go into writer, rubric and judge prompts.
 
@@ -203,11 +162,8 @@ def run_examples(examples, split):
     return chosen
 
 
-# OpenRouter: fixed endpoints, bounded retries, and raw requests and responses.
+# OpenRouter: configured routing, bounded retries, and raw requests and responses.
 API_BASE = "https://openrouter.ai/api/v1"
-SNAPSHOTS = ROOT / "configs/snapshots"
-MODEL_CATALOG = SNAPSHOTS / "openrouter-models-2026-09-29.json"
-REQUIRED_PARAMETERS = {"temperature", "reasoning", "max_tokens", "response_format", "structured_outputs"}
 MAX_SENDS = 6
 RETRYABLE_STATUS = {408, 429, 500, 502, 503, 504}
 BACKOFF_SECONDS = (2, 5, 15, 30, 60)
@@ -220,52 +176,7 @@ def role_config(role):
     config = yaml.safe_load((ROOT / "configs/models.yaml").read_text())
     selected = config["roles"][role]
     model = selected["model"]
-    check_model_allowed(model)
     return {"model": model, **config["models"][model], "temperature": selected["temperature"]}
-
-
-def check_model_allowed(model):
-    """Reject anything but a specific OpenRouter model release from an allowed family."""
-    if not isinstance(model, str) or "/" not in model:
-        raise RunError(f"Invalid model {model!r}; use vendor/model")
-    family = model.split("/", 1)[0].lower()
-    if family in {"anthropic", "google"} or any(name in model.lower() for name in ("claude", "gemini")):
-        raise RunError(f"Excluded model family: {model}")
-    if ":" in model or model.endswith("/auto"):
-        raise RunError(f"Model alias: {model}; use a fixed release")
-
-
-def find_endpoint(endpoints, provider, source):
-    """The one endpoint in an OpenRouter endpoint listing whose tag is provider."""
-    matches = [endpoint for endpoint in endpoints if endpoint["tag"] == provider]
-    if len(matches) != 1:
-        raise RunError(f"{source}: expected 1 endpoint {provider!r}, found {len(matches)}")
-    return matches[0]
-
-
-def check_endpoint_supports(cfg, endpoint, model_info):
-    """Fail unless the endpoint accepts every request field and setting that cfg sends to it."""
-    missing = REQUIRED_PARAMETERS - set(endpoint["supported_parameters"])
-    if missing:
-        raise RunError(f"{cfg['model']} @ {endpoint['tag']}: unsupported {sorted(missing)}")
-    output_limit = endpoint.get("max_completion_tokens") or endpoint["context_length"]
-    if cfg["max_tokens"] > output_limit:
-        raise RunError(f"{cfg['model']} @ {endpoint['tag']}: max_tokens={cfg['max_tokens']} > {output_limit}")
-    efforts = model_info.get("reasoning", {}).get("supported_efforts", [])
-    effort = cfg["reasoning"].get("effort")
-    if effort is not None and efforts and effort not in efforts:
-        raise RunError(f"{cfg['model']}: invalid effort {effort!r}; use {efforts}")
-
-
-def endpoint_for(cfg):
-    """The saved endpoint and catalog entry for a role's model and provider, checked against cfg."""
-    path = SNAPSHOTS / (cfg["model"].replace("/", "_") + "-endpoints.json")
-    endpoint = find_endpoint(json.loads(path.read_text())["data"]["endpoints"], cfg["provider"], path.name)
-    model_info = next((m for m in json.loads(MODEL_CATALOG.read_text())["data"] if m["id"] == cfg["model"]), None)
-    if model_info is None:
-        raise RunError(f"{cfg['model']} missing from {MODEL_CATALOG.name}")
-    check_endpoint_supports(cfg, endpoint, model_info)
-    return endpoint, model_info
 
 
 def routing_fields(cfg):
@@ -312,9 +223,6 @@ class OpenRouter:
             raise RunError("Set OPENROUTER_API_KEY in .env")
         self.output, self.roles, self.seed = Path(output), roles, seed
         self.client = client or httpx.Client(timeout=httpx.Timeout(600, connect=30))
-        resolved = {role: endpoint_for(cfg) for role, cfg in roles.items()}
-        self.endpoint = {role: value[0] for role, value in resolved.items()}
-        self.model_info = {role: value[1] for role, value in resolved.items()}
         self.dispatch_stopped = threading.Event()
 
     def costs(self):
@@ -365,46 +273,6 @@ class OpenRouter:
         if schema is not None:
             result["response_format"] = json_schema_format(schema)
         return result
-
-    def _get(self, path):
-        response = self.client.get(API_BASE + path)
-        response.raise_for_status()
-        return response.json()
-
-    def preflight(self):
-        """Check the live OpenRouter catalog against the saved snapshots before any paid call.
-
-        Fails if a pinned model changes, a provider drops required support or context, or
-        quantization changes. Saves the listings under output/preflight/<time> and returns that directory.
-        """
-        directory = self.output / "preflight" / dt.datetime.now(dt.UTC).isoformat().replace(":", "-")
-        catalog = self._get("/models")
-        write_json(directory / "models.json", catalog)
-        live_models = {m["id"]: m for m in catalog["data"]}
-        live_endpoints = {}
-        for role, cfg in self.roles.items():
-            model = cfg["model"]
-            pinned = self.endpoint[role]
-            if model not in live_models:
-                raise RunError(f"{role}: model {model} missing from catalog")
-            live_slug = live_models[model]["canonical_slug"]
-            pinned_slug = self.model_info[role]["canonical_slug"]
-            if live_slug != pinned_slug:
-                raise RunError(f"{role}: model release changed {pinned_slug} -> {live_slug}")
-            if model not in live_endpoints:
-                live_endpoints[model] = self._get(f"/models/{model}/endpoints")
-                write_json(directory / (model.replace("/", "_") + "-endpoints.json"), live_endpoints[model])
-            current = find_endpoint(live_endpoints[model]["data"]["endpoints"], cfg["provider"], f"the live {model} listing")
-            check_endpoint_supports(cfg, current, live_models[model])
-            if current["context_length"] < pinned["context_length"]:
-                raise RunError(f"{role}: context shrank {pinned['context_length']} -> {current['context_length']}")
-            if current.get("quantization") != pinned.get("quantization"):
-                raise RunError(f"{role}: quantization changed {pinned.get('quantization')} -> {current.get('quantization')}")
-        write_json(
-            directory / "checks.json",
-            {"at": dt.datetime.now(dt.UTC).isoformat(), "roles": self.roles},
-        )
-        return directory
 
     def call(self, role, system, data, schema, identity):
         try:
@@ -469,7 +337,17 @@ class OpenRouter:
                 record["duration_seconds"] = time.monotonic() - started
                 write_json(path, record)
                 if success:
-                    return self._accept(raw, role, path)
+                    choice = raw["choices"][0]
+                    return {
+                        "content": choice["message"].get("content") or "",
+                        "finish_reason": choice.get("finish_reason"),
+                        "request_key": key,
+                        "response_id": record["response_id"],
+                        "usage": raw.get("usage") or {},
+                        "model": raw.get("model"),
+                        "provider": raw.get("provider"),
+                        "raw_response": str(path),
+                    }
                 if response.status_code not in RETRYABLE_STATUS:
                     raise RunError(f"Unusable HTTP {response.status_code}: {path}")
                 retry_after = response.headers.get("Retry-After")
@@ -480,26 +358,6 @@ class OpenRouter:
                 print(f"Retryable failure for {role}; waiting {wait} s (see {path})", flush=True)
                 time.sleep(wait)
         raise RunError(f"{role}: failed after {MAX_SENDS} sends; see {directory}")
-
-    def _accept(self, raw, role, attempt_file):
-        usage = raw.get("usage") or {}
-        model = raw.get("model")
-        if model not in {self.model_info[role]["id"], self.model_info[role]["canonical_slug"]}:
-            raise RunError(f"{role}: wrong model {model}; see {attempt_file}")
-        provider, endpoint = raw.get("provider"), self.endpoint[role]
-        if provider and provider not in {endpoint["provider_name"], endpoint["tag"]}:
-            raise RunError(f"{role}: wrong provider {provider}; see {attempt_file}")
-        choice = raw["choices"][0]
-        return {
-            "content": choice["message"].get("content") or "",
-            "finish_reason": choice.get("finish_reason"),
-            "request_key": attempt_file.parent.name,
-            "response_id": raw.get("id"),
-            "usage": usage,
-            "model": model,
-            "provider": provider,
-            "raw_response": str(attempt_file),
-        }
 
     def structured(self, role, system, data, schema, identity, validator=None, repair=True):
         """Ask role for JSON matching schema and check it with validator.
@@ -1010,40 +868,6 @@ class RunSettings:
     failure_examples: int
     concurrency: int
     dataset: str = "data/examples.jsonl"
-    splits: str = "data/splits.json"
-    dry_run: bool = False
-
-
-def estimate(settings, roles, examples):
-    """Offline rough cost estimate; retries and model tokenization make actual costs differ."""
-    counts = {
-        "writer": len(examples),
-        "rubric": len(examples) * (settings.iterations + 1),
-        "judge": 2 * len(examples) * (settings.iterations + 1),
-        "optimizer": settings.iterations,
-    }
-    typical_tokens = statistics.mean(len(example["context"].encode()) for example in examples) / 3.5 + 1500
-    per_role = {}
-    for role, count in counts.items():
-        endpoint, _ = endpoint_for(roles[role])
-        base = endpoint["pricing"]
-        tiers = [base, *base.get("overrides", [])]
-        prices = {key: max(float(tier.get(key, base.get(key, 0))) for tier in tiers) for key in ("prompt", "completion", "request")}
-        per_role[role] = {
-            "requests": count,
-            "typical_usd": count
-            * (typical_tokens * prices["prompt"] + min(roles[role]["max_tokens"], 5000) * prices["completion"] + prices["request"]),
-        }
-    result = {
-        "examples": len(examples),
-        "roles": roles,
-        "per_role": per_role,
-        "estimated_usd_with_retry_reserve": 1.25 * sum(value["typical_usd"] for value in per_role.values()),
-        "note": "Rough estimate: 3.5 UTF-8 bytes per prompt token, 5,000 output tokens, 25% retry reserve. "
-        "Optimizer feedback and actual tokenization vary. This is not a spending cap.",
-    }
-    print(json.dumps(result, indent=2))
-    return result
 
 
 def write_report(output, summaries, rows, selected, costs, seed):
@@ -1121,14 +945,13 @@ def run_xar(settings):
     initial = (ROOT / "prompts/rubric_initial.md").read_text()
     if len(initial.split()) > settings.max_meta_prompt_words:
         raise RunError("Initial prompt exceeds max_meta_prompt_words")
-    examples = run_examples(load_examples(settings.dataset, settings.splits), settings.split)
+    examples = [json.loads(line) for line in Path(settings.dataset).read_text().splitlines() if line.strip()]
+    examples = run_examples(examples, settings.split)
     train = [example for example in examples if example["split"] == "train"]
     validation = [example for example in examples if example["split"] == "validation"]
     if not train or not validation:
         raise RunError("Need train and validation papers")
     roles = {role: role_config(role) for role in ROLES}
-    if settings.dry_run:
-        return estimate(settings, roles, examples)
     output = Path(settings.output_dir)
     # Atomic directory creation also prevents two processes from starting in the same directory.
     if output.exists():
@@ -1155,21 +978,12 @@ def run_xar(settings):
                 "arguments": asdict(settings),
                 "roles": roles,
                 "dataset_hash": file_hash(settings.dataset),
-                "splits_hash": file_hash(settings.splits),
                 "software_hashes": {str(path.relative_to(ROOT)): file_hash(path) for path in files},
-                "endpoints": {
-                    role: {
-                        "endpoint": api.endpoint[role],
-                        "canonical_slug": api.model_info[role]["canonical_slug"],
-                    }
-                    for role in roles
-                },
                 "initial_meta_prompt_hash": digest(initial),
                 "feedback_policy": FAILING_FEEDBACK,
                 "context_handling": "Providers enforce context limits; full inputs are sent without truncation",
             },
         )
-        api.preflight()
         candidates = writer_candidates(api, examples, output, settings.concurrency)
         prompts, training_summaries, training_rows = [initial], [], None
         for iteration in range(settings.iterations + 1):
@@ -1235,12 +1049,10 @@ def run_xar(settings):
 def parse_args(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--pilot", action="store_true", help="smoke test on 2 training papers")
-    parser.add_argument("--dry-run", action="store_true", help="estimate cost without network calls or writes")
     parser.add_argument("--output", help="new run directory (default: runs/<configured run name>)")
     parser.add_argument("--seed", type=int, help="grading-order and bootstrap seed, not a model decoding seed")
     parser.add_argument("--concurrency", type=int, choices=range(1, MAX_CONCURRENCY + 1), metavar="N", help="parallel examples, 1–32")
     parser.add_argument("--dataset", default="data/examples.jsonl")
-    parser.add_argument("--splits", default="data/splits.json")
     return parser.parse_args(argv)
 
 
@@ -1257,8 +1069,6 @@ def settings_for(options):
         failure_examples=design["failure_examples"],
         concurrency=options.concurrency or design["concurrency"],
         dataset=options.dataset,
-        splits=options.splits,
-        dry_run=options.dry_run,
     )
 
 

@@ -25,6 +25,10 @@ section and dataset hashes against the frozen manifests. The following steps des
 we originally selected the corpus; that code remains in Git history. Setup now restores
 the selected corpus directly.
 
+The runner reads the prepared examples and their split labels directly. It records input
+hashes for provenance without checking them against saved values. It checks the initial
+meta-prompt word count against `max_meta_prompt_words` before starting a run.
+
 1. Sample. OpenAlex lists works with an arXiv copy, 100 to 1,500 citations, type article, not
    retracted and published by 2022-11-29. The command takes a random sample of 10,000 of the
    31,205 matches (seed 20261001). The 1,500 cap leaves out the most memorized papers.
@@ -112,6 +116,9 @@ URLs and HTML hash, so anyone can pull the pages again and check them.
 | Rubric generator | Muse Spark 1.3, contributor tier | meta/muse-spark-1.3-contributor-20260902 | meta | 0.2 | effort medium | 16,384 |
 | Judge | Muse Spark 1.3, contributor tier | meta/muse-spark-1.3-contributor-20260902 | meta | 0 | effort medium | 16,384 |
 | Optimizer | Kimi K2.6 | moonshotai/kimi-k2.6-20260420 | siliconflow/fp8 | 0.7 | enabled | 16,384 |
+
+The release IDs above come from saved endpoint listings. The runner uses the model and
+provider IDs in `configs/models.yaml`; it does not enforce those saved release IDs.
 
 The blog used Muse Spark 1.1 as writer, rubric generator and judge, and Kimi K2.6 as optimizer,
 and the completed run `meta-blog-seed0` matched that. The next run uses Muse Spark 1.3 in those
@@ -228,18 +235,15 @@ the experiment results available. [README.md](README.md#run) describes the API e
 Earlier runs retain their original cost records. Runs before 2026-10-01 also used local
 cost reservations and budget limits; `runs/budget_ledger.json` preserves that record.
 
-The dry run uses saved prices and approximate token counts to estimate a future run's cost.
 OpenRouter handles billing during execution. The endpoint enforces its token limit, and
 the runner sends the full input. Papers and feedback retain their full length.
 
-Before a run's first request, a preflight fetches OpenRouter's live model catalog and endpoint
-listings and compares them with the snapshots in `configs/snapshots/`. It stops the run if a
-model now points to a different release, the provider no longer supports a setting the run
-sends, the context shrank or the quantization changed. The saved live listings include
-prices for reference; OpenRouter applies its current rates.
+Each request sends the configured model, provider and settings to OpenRouter, with provider
+fallbacks turned off. OpenRouter handles unsupported settings and unavailable endpoints.
+The runner records the returned model and provider. The listings in `configs/snapshots/`
+remain historical records; the runner does not compare them with live endpoints.
 
-Each request names a single provider with fallbacks turned off, and a response from any other
-model or provider stops the run. A connection error, a retryable status (408, 429, 5xx) or a
+A connection error, a retryable status (408, 429, 5xx) or a
 send that gets no response (a timeout or a broken connection) is sent again up to 5 times,
 waiting 2, 5, 15, 30 and 60 seconds, or longer if a Retry-After header asks, up to 120
 seconds. A send with no response stays on record with status `uncertain` and its transport
@@ -301,6 +305,8 @@ these choices:
 - Only 5 related-work sections exist, and math papers give 2 sections each.
 - There is one trajectory. Neither endpoint supports a sampling seed, so a rerun will not
   produce the same text; seed 0 fixes only the grading order and the bootstrap.
+- Providers can change the model release or serving setup behind a configured ID. The
+  repository cannot preserve those endpoints, which limits reproducibility.
 - Validation has 16 papers in the new corpus (the pilot's validation paper is a training paper, so its scores say nothing about generalization) and had five in the completed run, so the completed run's intervals are wide.
 - Some generated sections miss the length target even after two revisions. The report shows
   results with and without them.

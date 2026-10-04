@@ -31,11 +31,10 @@ Run lint before every commit.
 
 ## Spending money
 
-- Never start a paid run without being asked. Run `--dry-run` first and report the estimate.
+- Never start a paid run without being asked.
 - Spending is capped by the OpenRouter key's limit, set on openrouter.ai, not by this code. Never
   change that limit yourself.
-- Use OpenRouter's recorded generation costs for billing reports. Keep local price estimates
-  in `--dry-run` only.
+- Use OpenRouter's recorded generation costs for billing reports. Do not add a local cost estimator.
 - Never delete or edit `runs/budget_ledger.json`. It is the record of the runs before 2026-10-01.
 - Do not print or commit `.env` or API keys.
 

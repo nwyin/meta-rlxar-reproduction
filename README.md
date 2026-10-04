@@ -55,17 +55,15 @@ Copy `.env.example` to `.env` and set `OPENROUTER_API_KEY`.
 
 ## Run
 
-Estimate a full run before spending money, then use a fresh output directory:
+Start a full run with a fresh output directory:
 
 ```sh
-uv run python run.py --dry-run
 uv run python run.py --output runs/reproduction-01
 ```
 
 For a small pilot on 2 training papers with 1 prompt update:
 
 ```sh
-uv run python run.py --pilot --dry-run
 uv run python run.py --pilot --output runs/pilot-01
 ```
 
@@ -75,10 +73,15 @@ full run. `--seed` controls grading order and bootstrap sampling, not model deco
 `configs/experiments.yaml` and `configs/models.yaml`; prompts stay in `prompts/`.
 `uv run python run.py --help` lists the options.
 
-`--dry-run` estimates cost from saved prices and sends no requests. OpenRouter calculates
-billing and caps spending at the key's limit, set on openrouter.ai. Each run saves raw
-requests and responses, including OpenRouter's usage fields and generation IDs. Missing
-billing fields leave an otherwise valid response usable.
+The runner trusts the prepared examples and their split labels. It enforces the initial
+meta-prompt word limit. It sends the configured model, provider and settings directly to
+OpenRouter and records the returned model and provider. Saved endpoint listings are
+historical records; provider changes can affect reproducibility.
+
+OpenRouter calculates billing and caps spending at the key's limit, set on openrouter.ai.
+The report uses recorded charges after the run. Each run saves raw requests and responses,
+including OpenRouter's usage fields and generation IDs. Missing billing fields leave an
+otherwise valid response usable.
 
 After scoring, the runner looks up each unique generation ID through OpenRouter's API,
 including IDs from retried requests. It sums the returned `total_cost` values and writes
@@ -109,7 +112,7 @@ The run directory contains the whole result:
 | Path | Contents |
 | --- | --- |
 | `results.md`, `checkpoints.csv`, `summary.json` | The result summary, checkpoint scores and uncertainty estimates. |
-| `manifest.json` | The settings, model endpoints, seed and source hashes. |
+| `manifest.json` | The settings, configured models and providers, seed and source hashes. |
 | `requests/` | Raw requests, responses and transport attempts. |
 | `generations/`, `rubrics/`, `scores/` | Fixed writer drafts, rubrics and blind grades. |
 | `feedback/`, `prompts/`, `freeze.json` | Training feedback, prompt history and selection before validation. |
