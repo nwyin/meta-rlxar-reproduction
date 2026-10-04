@@ -392,11 +392,6 @@ def validate_grade(grade, rubric, supplied_text):
                 raise InvalidOutput("Quote absent from supplied text")
 
 
-def grade_total(grade):
-    """The mean criterion score of a grade."""
-    return statistics.mean(s["score"] for s in grade["scores"])
-
-
 def writer_candidates(api, examples, output, concurrency=1):
     """Write one model section per example, `concurrency` examples at a time.
 
@@ -512,7 +507,7 @@ def grade_candidate(api, example, rubric_record, text, identity, output):
         "identity": identity,
         **result,
     }
-    record["total"] = grade_total(result["value"]) if result["value"] else None
+    record["total"] = statistics.mean(s["score"] for s in result["value"]["scores"]) if result["value"] else None  # mean criterion score
     write_json(output, record)
     return record
 
