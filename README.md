@@ -12,23 +12,28 @@ rubric generator and judge, and Kimi K2.6 as optimizer. The corpus holds 56 peer
 papers from 2016 to 2021 across 9 fields, giving 153 sections. [METHOD.md](METHOD.md)
 describes the experiment and its limits. [LOG.md](LOG.md) records the runs and changes.
 
-## Historical result
+## Result
 
-The research run finished on September 29, 2026. It used the earlier cs.CL corpus, archived in
-`data/archive/arxiv-2609-cs-cl/`.
+We closed the project on October 5, 2026 with a null result. No run reproduced the blog's
+reversal, in which the validation gap (author score minus model score) went from -4.2 to
++2.76. On papers the optimized rubrics narrowed a negative gap but never made it reliably
+positive. On fiction the author led before optimization, and optimization did not widen the lead.
 
-- The checkpoint selected on training was P1. At P1 the validation gap (author score minus
-  model score) was -0.16, up from -1.04 at the initial prompt. The last checkpoint, P7, had a
-  validation gap of -0.37. The gap stayed negative at every checkpoint.
-- The blog's reversal, from -4.2 to +2.76, was not reproduced.
-- The paired improvement from P0 to P1 on validation was 0.88, with a 95% whole-paper
-  bootstrap interval of 0.37 to 1.35. Author scores rose from 7.91 to 8.38 and model scores
-  fell from 8.95 to 8.53.
-- 12 of the 20 validation sections met the ±15% length target. On those 12 the gap went from
-  -1.12 to -0.26.
+| Run | Corpus | Validation gap at P0 | Selected | Selected validation gap |
+| --- | --- | ---: | --- | ---: |
+| `meta-blog-seed0` | cs.CL papers | -1.04 | P1 | -0.16 |
+| `meta-blog-v2-seed0` | 2016-2021 papers | -1.89 | P3 | -0.08 |
+| `meta-blog-v3-seed0` | 2016-2021 papers | -2.23 | P4 | -1.55 |
+| `meta-blog-v4-seed0` | 2016-2021 papers | -2.26 | P4 | -1.48 |
+| `v2-p3-repeats`, seeds 0, 1, 2 | 2016-2021 papers | -0.06, -0.15, -0.23 | update 3, 3, 1 | -0.21, +0.11, +0.08 |
+| `fiction-seed0-r5` | Gutenberg fiction | +0.39 | P1 | +0.37 |
 
-The saved results remain in `reports/` and `runs/`. The `meta-blog-seed0` Git tag holds
-the code for this historical run. The current scripts support fresh runs.
+The `v2-p3-repeats` runs started from v2's selected prompt, so their starting gaps are v2's P3
+prompt evaluated again on fresh drafts. Seeds 1 and 2 crossed zero, but their intervals
+included zero. [LOG.md](LOG.md) gives every run in full, including the stopped ones, and
+[METHOD.md](METHOD.md#conclusion) says what the null result does and does not rule out. The
+saved results stay local in `reports/` and `runs/`. The `meta-blog-seed0` Git tag holds the
+code for the 1st run. The current scripts still support fresh runs.
 
 ## Setup and data
 

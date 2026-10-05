@@ -370,3 +370,32 @@ these choices:
 - A positive gap means the judge prefers the author's section under the optimized rubric. It
   is not a direct measure of writing quality. The blog's later RL training and its other
   writing domains are not part of this reproduction.
+
+## Conclusion
+
+We stopped on October 5, 2026 and call the result null. README.md gives the gaps of every
+research run. The runs spanned 2 paper corpora, a fiction corpus, several prompt revisions and
+model configurations. Across all of them the optimized rubric never produced a stable
+preference for the author's text.
+
+The null result rules out a robust reversal under these models, prompts and corpora. If the
+method worked as reported with any reasonable open setup, at least one of these runs should
+have shown it.
+
+It does not rule out the method itself. We see 4 reasons, each untested as a cause:
+
+- In the later runs Muse wrote the sections, generated the rubrics and graded them, so the
+  judge may prefer its own prose. We never varied the rubric generator and judge separately.
+- The optimizer matters. The blog reports that Kimi and Opus find a positive gap and that Muse
+  Spark 1.1 struggles. Our later runs used Kimi K2.6; we never tried a stronger optimizer.
+- We never measured run-to-run variation. On papers, the 3 repeats from the same prompt ended
+  at -0.21, +0.11 and +0.08. On fiction, regenerating the drafts alone moved the P0 training
+  gap from +0.589 to +0.469. Many single-run differences in LOG.md are within that range.
+- Model releases and serving change behind a fixed ID, and the blog does not publish its
+  prompts. A reproduction in the open cannot hold those dynamics fixed.
+
+A post hoc probe on 7 paper sections suggests where the limit lies. When the rubric generator
+saw the hidden expert section, the judge's mean gap rose from +0.10 to +1.10. The judge can see
+expert qualities once a rubric names them; the loop failed to infer them from the context
+alone. On fiction the rubrics favoured the author at P0, and optimization moved them toward
+Muse's strengths. Both observations come from small samples.

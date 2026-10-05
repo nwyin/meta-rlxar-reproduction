@@ -1246,3 +1246,24 @@ P0's +0.392. Later prompts raised Muse's scores more than the author's and turne
 negative. OpenRouter recorded $4.7631 for the run's 896 generations; the 47 unresolved
 lookups are the failed sends, which have no generation record. The key's usage rose by $9.40
 across the probe, the 5 runs and a few endpoint checks. The confirmation split remains unused.
+
+## 2026-10-05: Close the project with a null result
+
+The owner decided to stop and record the result as null. No run reproduced the blog's
+reversal from -4.2 to +2.76. On papers the selected validation gaps were -0.16, -0.08, -1.55
+and -1.48 for `meta-blog-seed0`, `-v2`, `-v3` and `-v4`, and -0.21, +0.11 and +0.08 for the 3
+repeats from v2's P3 prompt, whose intervals included zero. On fiction the author led at P0 by
++0.39 and the selected P1 reached +0.37.
+
+The owner's reason: the method's behaviour depends on model generations, serving changes and
+prompting that a reproduction in the open cannot hold fixed or explore at reasonable cost. We
+expect Meta can produce the result consistently with its own models and prompts; that remains
+untested here.
+
+We considered 1 more experiment and did not run it: a factorial over rubric generator (Muse or a
+stronger model) and judge (Muse or a stronger model) on the fiction run's fixed drafts, with a
+2nd seed to measure run-to-run variation. It would test whether a stronger rubric generator
+makes the rubrics favour the author.
+
+README.md now leads with the result table, and METHOD.md has a conclusion on what the null
+result rules out. Issue #6 is closed with a link to this entry. The runs and reports stay local.
