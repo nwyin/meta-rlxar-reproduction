@@ -447,10 +447,9 @@ def probe(output, config_path):
     """Continue every proposed passage at temperature 0 with the writer's model, prompt and provider."""
     discovery = read_json(DATA / "discovery.json")
     config = yaml.safe_load(Path(config_path).read_text())
-    roles = run.role_configs()
-    roles["writer"] = {**roles["writer"], "temperature": 0}
+    config["roles"]["writer"]["temperature"] = 0
     prompt = run.read_prompt(config, "writer")
-    api = run.OpenRouter(output, roles, config)
+    api = run.OpenRouter(output, config)
     Path(output).mkdir(parents=True, exist_ok=False)
     examples = []
     for book in discovery["books"]:
@@ -478,7 +477,7 @@ def probe(output, config_path):
         {
             "probed_at": dt.datetime.now(dt.UTC).isoformat(),
             "discovery_hash": run.digest(read_json(DATA / "discovery.json")),
-            "writer": roles["writer"],
+            "writer": config["roles"]["writer"],
             "writer_prompt_hash": run.digest(prompt),
             "requests": str(output),
             "rule": f"memorized if more than {PROBE_MAX_NGRAM_FRACTION:.0%} of the reference's {PROBE_NGRAM}-grams "

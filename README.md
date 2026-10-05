@@ -79,27 +79,19 @@ A config file defines each run: its output directory, split, seed, iterations, d
 concurrency and limits. `run.py` takes the path to one and has no other options. Set a new
 `output` directory in the file first, because a run refuses to start in a directory that exists.
 
-Start a full run with `configs/experiments.yaml`, the default:
+`configs/arxiv.yaml` defines the paper run and is the default. `configs/fiction.yaml` defines
+the fiction run:
 
 ```sh
 uv run python run.py
-```
-
-For a small pilot, run `configs/pilot.yaml`. It trains on 1 paper and validates on 1, with 1 prompt update:
-
-```sh
-uv run python run.py configs/pilot.yaml
-```
-
-The fiction run and its pilot use `configs/fiction.yaml` and `configs/fiction_pilot.yaml`:
-
-```sh
 uv run python run.py configs/fiction.yaml
 ```
 
-The pilot's scores stay separate from a full run. `seed` controls grading order, not model
-decoding. Model roles come from `configs/models.yaml`; the config's
-`prompts` key names the prompt directory, `prompts/papers` or `prompts/fiction`. The run copies its config into its directory as `config.yaml`.
+For a dry run, edit the config temporarily: set `split: pilot`, `iterations: 1` and a new
+`output`. The run then trains on the first training source (a paper or a book), validates on
+the second, and makes 1 prompt update. Restore the config afterward. `seed` controls grading
+order, not model decoding. The config's `roles` section sets each role's model, provider and decoding
+settings, and its `prompts` key names the prompt directory, `prompts/papers` or `prompts/fiction`. The run copies its config into its directory as `config.yaml`.
 
 The runner trusts the prepared examples and their split labels. It enforces the initial
 meta-prompt word limit. It sends the configured model, provider and settings directly to

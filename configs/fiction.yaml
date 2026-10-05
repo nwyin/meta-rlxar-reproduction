@@ -1,18 +1,44 @@
 # The fiction run: story continuations from Project Gutenberg novels (fetch_fiction.py).
 # Everything that defines a run. run.py copies this file into the run directory as config.yaml.
-# The model for each role is set in configs/models.yaml.
 blog_url: https://facebookresearch.github.io/RAM/blogs/unslop/
 # The output directory must not exist yet, so set a new one before each run.
 output: runs/fiction-seed0
-split: research  # research uses the saved train and validation sources; pilot uses pilot_sources of them
+split: research  # research uses the saved train and validation sources; pilot (a dry run) uses pilot_sources of them
 dataset: data/fiction/examples.jsonl
 prompts: prompts/fiction  # writer, rubric, judge and optimizer prompts for this dataset
 seed: 0  # grading order, not model decoding
+# Model, provider and decoding settings for each role. The blog used Muse as writer, rubric
+# generator and judge, and Kimi as optimizer.
+roles:
+  writer:
+    model: meta/muse-spark-1.3-contributor
+    provider: meta
+    temperature: 0.7
+    reasoning: {effort: medium}
+    max_tokens: 16384
+  rubric:
+    model: meta/muse-spark-1.3-contributor
+    provider: meta
+    temperature: 0.2
+    reasoning: {effort: medium}
+    max_tokens: 16384
+  judge:
+    model: meta/muse-spark-1.3-contributor
+    provider: meta
+    temperature: 0
+    reasoning: {effort: medium}
+    max_tokens: 16384
+  optimizer:
+    model: moonshotai/kimi-k2.6
+    provider: siliconflow/fp8
+    temperature: 0.7
+    reasoning: {enabled: true}
+    max_tokens: 16384
 iterations: 4
 max_meta_prompt_words: 2000
 failure_examples: 24
 concurrency: 32
-pilot_sources: 2  # a pilot trains on the first and validates on the rest
+pilot_sources: 2  # a dry run trains on the first and validates on the rest
 writer_attempts: 3  # drafts per section; a draft that is cut off or outside the length window is redrafted
 proposal_attempts: 2  # tries per optimizer update before the current meta prompt carries over
 copy_span_words: 12  # a run of this many words copied from a training source counts as leakage

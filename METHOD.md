@@ -98,7 +98,7 @@ holds papers from most fields (`data/splits.json`):
 | 5 | 13 | confirmation; not used |
 
 The research run therefore has 140 sections, 96 for training and 44 for validation. There is
-no pilot split. A pilot run (`split: pilot`) uses the first `pilot_sources` training papers in dataset order,
+no pilot split. A dry run (`split: pilot`) uses the first `pilot_sources` training papers in dataset order,
 the only papers it needs.
 
 `data/source_manifest.json` records each paper's URL, metadata and hashes, and the hash of
@@ -169,7 +169,7 @@ Gutenberg regenerates some files monthly, so a changed source stops the restore.
 | Optimizer | Kimi K2.6 | moonshotai/kimi-k2.6-20260420 | siliconflow/fp8 | 0.7 | enabled | 16,384 |
 
 The release IDs above come from saved endpoint listings. The runner uses the model and
-provider IDs in `configs/models.yaml`; it does not enforce those saved release IDs.
+provider IDs in each config's `roles` section; it does not enforce those saved release IDs.
 
 The blog used Muse Spark 1.1 as writer, rubric generator and judge, and Kimi K2.6 as optimizer,
 and the completed run `meta-blog-seed0` matched that. The next run uses Muse Spark 1.3 in those
@@ -185,9 +185,9 @@ MiMo-V2.6-Pro, graded the validation sections again at 2 checkpoints; the run
 `meta-blog-v2-seed0` has that check in its `cross_check.json`. We removed the role to save
 cost, since the result is Muse's judgment either way.
 
-All requests go through OpenRouter. The models and their settings are in `configs/models.yaml`,
-the rest of the experiment (seed, number of updates, word limits, attempt counts, run names) in
-`configs/experiments.yaml`, and the prompts
+All requests go through OpenRouter. `configs/arxiv.yaml` defines the whole paper experiment:
+the models and their settings under `roles`, and the seed, number of updates, word limits,
+attempt counts and run name. The prompts are
 in `prompts/papers/`: `writer.md`, `rubric_initial.md` (the initial meta prompt), `rubric_wrapper.md`
 (the fixed instructions around the meta prompt), `judge.md` and `optimizer.md`. The fiction run
 uses `configs/fiction.yaml` and the prompts in `prompts/fiction/`. The manifest records the hash
@@ -261,9 +261,9 @@ of every prompt.
 Independent sections run concurrently, up to the `concurrency` limit in the config.
 The drafts for one section and the optimizer updates run in order.
 
-Before the research run, `run.py configs/pilot.yaml` runs the same pipeline on the first 2 training papers (one
-acts as training, one as validation) with 1 update. `run.py` runs the full experiment independently.
-The pilot's scores stay separate from the research run.
+A dry run is the same pipeline on the first 2 training sources (one acts as training, one as
+validation) with 1 update. To make one, set `split: pilot`, `iterations: 1` and a new `output`
+in the config temporarily. Its scores stay separate from the research run.
 
 ## Metric
 

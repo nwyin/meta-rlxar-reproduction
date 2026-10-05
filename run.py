@@ -1,15 +1,14 @@
 """Run a fresh Meta XAR reproduction with OpenRouter.
 
 Prepare data with fetch_data.py (papers) or fetch_fiction.py (fiction), then set a new `output`
-directory in the config file (default configs/experiments.yaml). The config defines the run, names
-its dataset and prompt directory, and is copied into the run directory. Model roles come from
-configs/models.yaml. No inputs are truncated.
+directory in the config file (configs/arxiv.yaml, the default, or configs/fiction.yaml). The config defines the whole run,
+including its dataset, prompt directory and the model for each role, and is copied into the run
+directory. No inputs are truncated.
 """
 
 from __future__ import annotations; import argparse, concurrent.futures, csv, datetime as dt, hashlib, json, math, os, random, re, statistics, threading, time, unicodedata; from pathlib import Path; import httpx, jsonschema, yaml; from dotenv import load_dotenv  # noqa: I001  # fmt: skip
 
 ROOT = Path(__file__).resolve().parent
-ROLES = ("writer", "rubric", "optimizer", "judge")
 PROMPTS = ("writer", "rubric_initial", "rubric_wrapper", "judge", "optimizer")
 FAILING_FEEDBACK = "failing_gap_without_context"
 SCHEMA_VERSION = 1
@@ -122,8 +121,8 @@ def read_prompt(config, name):
 def run_examples(examples, config):
     """The examples a run uses, labelled train or validation.
 
-    A research run uses the train and validation sources (papers or books) as saved. A pilot run
-    uses the first `pilot_sources` training sources; the first (sorted by ID) becomes training and
+    A research run uses the train and validation sources (papers or books) as saved. A pilot run,
+    for a dry run, uses the first `pilot_sources` training sources; the first (sorted by ID) becomes training and
     the rest become validation.
     """
     if config["split"] not in ("pilot", "research"):
@@ -137,15 +136,6 @@ def run_examples(examples, config):
 
 
 # OpenRouter: configured routing, bounded retries, and raw requests and responses.
-
-
-def role_configs():
-    config = yaml.safe_load((ROOT / "configs/models.yaml").read_text())
-    return {
-        role: {"model": selected["model"], **config["models"][selected["model"]], "temperature": selected["temperature"]}
-        for role in ROLES
-        for selected in [config["roles"][role]]
-    }
 
 
 def routing_fields(cfg):
@@ -170,13 +160,13 @@ def routing_fields(cfg):
 class OpenRouter:
     """Send each fresh-run request and keep every attempt and raw response."""
 
-    def __init__(self, output, roles, config, client=None):
+    def __init__(self, output, config, client=None):
         load_dotenv(ROOT / ".env")
         self.key = os.getenv("OPENROUTER_API_KEY")
         if not self.key and client is None:
             raise RunError("Set OPENROUTER_API_KEY in .env")
         self.headers = {"X-OpenRouter-Title": "Independent XAR reproduction", **({"Authorization": "Bearer " + self.key} if self.key else {})}
-        self.output, self.roles, self.config = Path(output), roles, config
+        self.output, self.roles, self.config = Path(output), config["roles"], config
         self.client = client or httpx.Client(
             timeout=httpx.Timeout(config["request_timeout_seconds"], connect=config["connect_timeout_seconds"])
         )
@@ -809,10 +799,9 @@ def run_xar(config_path):
     examples = run_examples(examples, config)
     train = [example for example in examples if example["split"] == "train"]
     validation = [example for example in examples if example["split"] == "validation"]
-    roles = role_configs()
     output = Path(config["output"])
     # Atomic directory creation also prevents two processes from starting in the same directory.
-    api = OpenRouter(output, roles, config)
+    api = OpenRouter(output, config)
     output.mkdir(parents=True, exist_ok=False)
     status = {"state": "failed"}
     try:
@@ -822,7 +811,7 @@ def run_xar(config_path):
             {
                 "created_at": dt.datetime.now(dt.UTC).isoformat(),
                 "config": config,
-                "roles": roles,
+                "roles": config["roles"],
                 "dataset_hash": hashlib.sha256(Path(config["dataset"]).read_bytes()).hexdigest(),
                 "initial_meta_prompt_hash": digest(initial),
                 "prompt_hashes": {name: digest(read_prompt(config, name)) for name in PROMPTS},
@@ -876,7 +865,7 @@ def run_xar(config_path):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("config", nargs="?", default=str(ROOT / "configs/experiments.yaml"), help="run configuration (default: configs/experiments.yaml)")
+    parser.add_argument("config", nargs="?", default=str(ROOT / "configs/arxiv.yaml"), help="run configuration (default: configs/arxiv.yaml)")
     try:
         run_xar(parser.parse_args().config)
     except (RunError, httpx.HTTPError, FileExistsError) as error:

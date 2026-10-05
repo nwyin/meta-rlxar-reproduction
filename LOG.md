@@ -1184,3 +1184,26 @@ only the grading order. Earlier runs keep their recorded intervals.
 
 A mocked paper pilot gave the same checkpoint gaps as before the change, and its summaries had
 no interval fields. Lint passed. We made no paid calls.
+
+## 2026-10-05: Define the models in each run config
+
+The owner asked for one config file per run with a single read. Each config in `configs/` now
+has a `roles` section with every role's model, provider, temperature, reasoning setting and
+token limit. We deleted `configs/models.yaml` and `run.role_configs()`; `OpenRouter` takes its
+roles from the config. The catalog of unused alternative models in `models.yaml` remains in
+Git history. The fiction probe sets the writer's temperature to 0 in its copy of the config.
+
+For all 4 configs, the request routing fields and the hash of each role's settings match those
+built from the old `models.yaml`, so the writer configuration hash is unchanged. A mocked paper
+pilot sent each role with its configured model, temperature and provider. A mocked probe sent
+only temperature-0 requests and recorded temperature 0 in `probe.json`. Lint passed. We made no
+paid calls.
+
+## 2026-10-05: Name configs by corpus and drop the pilot configs
+
+The owner asked for configs named after the material they run and no separate pilot configs.
+We renamed `configs/experiments.yaml` to `configs/arxiv.yaml`, which stays the runner's
+default, and deleted `configs/pilot.yaml` and `configs/fiction_pilot.yaml`. A dry run now means
+temporarily setting `split: pilot`, `iterations: 1` and a new `output` in `arxiv.yaml` or
+`fiction.yaml`; README.md and METHOD.md say so. The runner's pilot split is unchanged. Earlier
+runs keep the configs they copied into their directories.
