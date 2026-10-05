@@ -97,8 +97,8 @@ The fiction run and its pilot use `configs/fiction.yaml` and `configs/fiction_pi
 uv run python run.py configs/fiction.yaml
 ```
 
-The pilot's scores stay separate from a full run. `seed` controls grading order and bootstrap
-sampling, not model decoding. Model roles come from `configs/models.yaml`; the config's
+The pilot's scores stay separate from a full run. `seed` controls grading order, not model
+decoding. Model roles come from `configs/models.yaml`; the config's
 `prompts` key names the prompt directory, `prompts/papers` or `prompts/fiction`. The run copies its config into its directory as `config.yaml`.
 
 The runner trusts the prepared examples and their split labels. It enforces the initial
@@ -139,7 +139,7 @@ The run directory contains the whole result:
 
 | Path | Contents |
 | --- | --- |
-| `results.md`, `checkpoints.csv`, `summary.json` | The result summary, checkpoint scores and uncertainty estimates. |
+| `results.md`, `checkpoints.csv`, `summary.json` | The result summary and the author mean, model mean and gap at each checkpoint. |
 | `config.yaml` | A copy of the config file that defined the run. |
 | `manifest.json` | The config, configured models and providers, and the dataset hash. |
 | `requests/` | Raw requests, responses and transport attempts. |

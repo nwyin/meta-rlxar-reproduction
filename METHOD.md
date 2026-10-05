@@ -186,7 +186,7 @@ MiMo-V2.6-Pro, graded the validation sections again at 2 checkpoints; the run
 cost, since the result is Muse's judgment either way.
 
 All requests go through OpenRouter. The models and their settings are in `configs/models.yaml`,
-the rest of the experiment (seed, number of updates, word limits, attempt counts, bootstrap settings, run names) in
+the rest of the experiment (seed, number of updates, word limits, attempt counts, run names) in
 `configs/experiments.yaml`, and the prompts
 in `prompts/papers/`: `writer.md`, `rubric_initial.md` (the initial meta prompt), `rubric_wrapper.md`
 (the fixed instructions around the meta prompt), `judge.md` and `optimizer.md`. The fiction run
@@ -227,8 +227,8 @@ of every prompt.
    missing.
 
 4. Feedback. After a checkpoint is scored on the training sections, the optimizer gets the current
-   meta prompt, the training summary (author and model means, the gap, its interval and the
-   gap per section type), the gaps of every failing training section, and up to 24 failure
+   meta prompt, the training summary (author and model means, the gap and the gap per
+   section type), the gaps of every failing training section, and up to 24 failure
    examples. Failures have a gap of zero or less, sorted lowest first, with ties broken by example ID. Each of
    those comes with both sections, the rubric and both grades. The current policy leaves
    the paper out of every failure so that more sections fit in one request. The optimizer
@@ -273,11 +273,10 @@ own writing higher; the blog's finding is that optimizing the rubric turns the v
 from negative to positive.
 
 Each run writes `results.md`, `checkpoints.csv` and `summary.json` in its output directory.
-They give the author mean, model mean and gap at each checkpoint. The paired improvement
-is the mean, over validation sections, of the gap at the selected checkpoint minus the gap
-at P0. Its 95% interval uses a percentile bootstrap that resamples whole sources (papers or
-books), with 2,000 replicates and the run's seed. The summaries also include sections that meet the length
-target and sections without a copying flag. Historical reports remain in `reports/`.
+They give the author mean, model mean and gap at each checkpoint, as measured, with no
+confidence intervals. This is a minimal reproduction: we compare the direction of the gaps
+with the blog's. Runs before 2026-10-05 also report a paired improvement with a
+whole-paper bootstrap interval. Historical reports remain in `reports/`.
 
 ## Cost and request handling
 
@@ -360,12 +359,12 @@ these choices:
 - Some authors may have used language editing before 2022. That is human work, not model work.
 - Only 5 related-work sections exist, and math papers give 2 sections each.
 - There is one trajectory. Neither endpoint supports a sampling seed, so a rerun will not
-  produce the same text; seed 0 fixes only the grading order and the bootstrap.
+  produce the same text; seed 0 fixes only the grading order.
 - Providers can change the model release or serving setup behind a configured ID. The
   repository cannot preserve those endpoints, which limits reproducibility.
-- Validation has 16 papers in the new corpus (the pilot's validation paper is a training paper, so its scores say nothing about generalization) and had five in the completed run, so the completed run's intervals are wide.
-- Some generated sections miss the length target even after two revisions. The report shows
-  results with and without them.
+- Validation has 16 papers in the new corpus (the pilot's validation paper is a training paper, so its scores say nothing about generalization) and had five in the completed run. The fiction validation split has 5 books. The reports give no intervals, so a small gap change may be noise.
+- Some generated sections miss the length target even after two revisions. Each summary
+  counts the compliant ones, and the saved rows mark each section.
 - The proposal check matches patterns. It cannot rule out a prompt that rewards signs of
   authorship in other words.
 - A positive gap means the judge prefers the author's section under the optimized rubric. It

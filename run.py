@@ -6,7 +6,7 @@ its dataset and prompt directory, and is copied into the run directory. Model ro
 configs/models.yaml. No inputs are truncated.
 """
 
-from __future__ import annotations; import argparse, collections, concurrent.futures, csv, datetime as dt, hashlib, json, math, os, random, re, statistics, threading, time, unicodedata; from pathlib import Path; import httpx, jsonschema, yaml; from dotenv import load_dotenv  # noqa: I001  # fmt: skip
+from __future__ import annotations; import argparse, concurrent.futures, csv, datetime as dt, hashlib, json, math, os, random, re, statistics, threading, time, unicodedata; from pathlib import Path; import httpx, jsonschema, yaml; from dotenv import load_dotenv  # noqa: I001  # fmt: skip
 
 ROOT = Path(__file__).resolve().parent
 ROLES = ("writer", "rubric", "optimizer", "judge")
@@ -713,41 +713,11 @@ def build_feedback(examples, candidates, rows, current_prompt, config):
         )
     return {
         "current_prompt": current_prompt,
-        "summary": summarize(rows, config),
+        "summary": summarize(rows),
         "failures": failures,
         "example_ids_used_for_aggregate": sorted(lookup),
         "selection": FAILING_FEEDBACK,
         "all_training_gaps": [{"example_id": row["example_id"], "kind": row["kind"], "gap": row["gap"]} for row in by_gap],
-    }
-
-
-# Preserve whole-source bootstrap statistics, including the fields sent to the optimizer.
-
-
-def bootstrap(rows, config):
-    """Percentile bootstrap of the mean gap that resamples whole sources (papers or books).
-
-    Examples from one source are not independent, so each replicate draws sources with
-    replacement and takes all of a drawn source's gaps. Rows without a gap are ignored;
-    returns None if no row has one."""
-    by_source = collections.defaultdict(list)
-    for row in rows:
-        if row.get("gap") is not None:
-            by_source[row["source_id"]].append(row["gap"])
-    if not by_source:
-        return None
-    rng, replicates, (low, high) = random.Random(config["seed"]), config["bootstrap_replicates"], config["bootstrap_interval"]
-    sources = sorted(by_source)
-    means = sorted(statistics.mean(g for p in rng.choices(sources, k=len(sources)) for g in by_source[p]) for _ in range(replicates))
-    return {
-        "method": "paired_whole_source_percentile_bootstrap",
-        "source_clusters": len(sources),
-        "replicates": replicates,
-        "seed": config["seed"],
-        "estimate": statistics.mean(g for gaps in by_source.values() for g in gaps),
-        "bootstrap_median": means[replicates // 2],
-        "low": means[int(low * replicates)],
-        "high": means[int(high * replicates)],
     }
 
 
@@ -756,10 +726,9 @@ def kind_summary(graded, kind):
     return {"coverage": len(gaps), "gap": statistics.mean(gaps) if gaps else None}
 
 
-def summarize(rows, config):
+def summarize(rows):
     """Summarize one checkpoint's rows: mean human, model and gap scores over the examples with
-    both grades, per-kind gaps, and source-bootstrap intervals for all examples, the
-    length-compliant ones."""
+    both grades, and the gap for each kind."""
     graded = [row for row in rows if row["gap"] is not None]
 
     def mean(key):
@@ -774,30 +743,12 @@ def summarize(rows, config):
         "gap": mean("gap"),
         "positive_gap_fraction": sum(row["gap"] > 0 for row in graded) / len(graded) if graded else None,
         "ties": sum(row["gap"] == 0 for row in graded),
-        "source_interval": bootstrap(graded, config),
         "length_compliant": sum(row["length_compliant"] for row in rows),
         "kinds": {kind: kind_summary(graded, kind) for kind in sorted({row["kind"] for row in rows})},
-        "compliant_sensitivity": bootstrap([row for row in graded if row["length_compliant"]], config),
     }
 
 
-def paired_improvement(initial, selected, config):
-    """Per-example change in gap from the initial to the selected checkpoint, with a
-    source-bootstrap interval. Examples missing a gap at either checkpoint are left out."""
-    initial_by_id = {row["example_id"]: row for row in initial}
-    changes = [
-        {"source_id": row["source_id"], "gap": row["gap"] - before}
-        for row in selected
-        if row["gap"] is not None and (before := initial_by_id[row["example_id"]]["gap"]) is not None
-    ]
-    return {
-        "paired_coverage": len(changes),
-        "mean": statistics.mean(change["gap"] for change in changes) if changes else None,
-        "interval": bootstrap(changes, config),
-    }
-
-
-def write_report(output, summaries, rows, selected, costs, config):
+def write_report(output, summaries, selected, costs):
     table = [
         {
             "iteration": index,
@@ -812,12 +763,10 @@ def write_report(output, summaries, rows, selected, costs, config):
         }
         for index, (train, validation) in enumerate(summaries)
     ]
-    improvement = paired_improvement(rows[0], rows[selected], config)
     result = {
         "selected_iteration": selected,
         "checkpoints": table,
         "summaries": [{"train": train, "validation": validation} for train, validation in summaries],
-        "paired_improvement": improvement,
         "costs": costs,
     }
     write_table(output / "checkpoints.csv", table)
@@ -835,13 +784,6 @@ def write_report(output, summaries, rows, selected, costs, config):
     for row in table:
         gap = "missing" if row["val_gap"] is None else f"{row['val_gap']:+.3f}"
         lines.append(f"| P{row['iteration']} | {row['train_gap']:+.3f} | {gap} | {row['val_coverage']} |")
-    interval = improvement["interval"]
-    if interval:
-        lines += [
-            "",
-            (f"The selected prompt changed the paired validation gap by {improvement['mean']:+.3f} "
-            f"(95% whole-source bootstrap interval: {interval['low']:+.3f} to {interval['high']:+.3f})."),
-        ]
     lines += [
         "",
         (f"OpenRouter-reported cost{' (partial)' if costs['unresolved'] else ''}: "
@@ -849,7 +791,7 @@ def write_report(output, summaries, rows, selected, costs, config):
         f"Unresolved lookups or sends: {costs['unresolved']}. Details are in costs.json."),
         "",
         ("This is an independent reproduction with repository-specific sources and prompts. "
-        "The confirmation split remains unused. Bootstrap intervals resample whole sources."),
+        "The confirmation split remains unused."),
         "",
         "Full statistics and coverage are in summary.json; every request and response is saved.",
     ]
@@ -897,7 +839,7 @@ def run_xar(config_path):
             (output / "prompts").mkdir(exist_ok=True)
             (output / "prompts" / f"iter_{iteration:02d}.md").write_text(prompts[-1])
             training_rows = evaluate_checkpoint(api, train, candidates, prompts[-1], iteration, output)
-            summary = summarize(training_rows, config)
+            summary = summarize(training_rows)
             training_summaries.append(summary)
             print(
                 f"P{iteration}: training gap {summary['gap']}, coverage {summary['paired_coverage']}/{len(train)}",
@@ -918,9 +860,9 @@ def run_xar(config_path):
         )
         print(f"Training selected P{selected}; scoring validation", flush=True)
         validation_rows = [evaluate_checkpoint(api, validation, candidates, value, index, output) for index, value in enumerate(prompts)]
-        validation_summaries = [summarize(rows, config) for rows in validation_rows]
+        validation_summaries = [summarize(rows) for rows in validation_rows]
         result = write_report(
-            output, list(zip(training_summaries, validation_summaries, strict=True)), validation_rows, selected, api.costs(), config,
+            output, list(zip(training_summaries, validation_summaries, strict=True)), selected, api.costs(),
         )
         status = {"state": "complete" if all(summary["complete"] for summary in validation_summaries) else "incomplete"}
         return result

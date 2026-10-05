@@ -1171,3 +1171,16 @@ The pilot exposed 2 problems:
 The full probe and freeze have not run. The owner chose not to run the paid probe for now; we
 estimate it from the pilot probe at $1 to $2. Until then `data/fiction/` holds no frozen
 corpus, and `fetch_fiction.py --check` says so.
+
+## 2026-10-05: Remove the bootstrap intervals
+
+The owner asked for a minimal reproduction that shows whether the gaps move in the blog's
+direction, not publication-grade statistics. We removed the whole-source bootstrap, the
+paired improvement and its interval, and the length-compliant sensitivity interval. Summaries,
+`summary.json` and `results.md` now report the author mean, model mean and gap at each
+checkpoint as measured. The optimizer's training summary no longer carries an interval. We
+also removed `bootstrap_replicates` and `bootstrap_interval` from the 4 configs; `seed` now sets
+only the grading order. Earlier runs keep their recorded intervals.
+
+A mocked paper pilot gave the same checkpoint gaps as before the change, and its summaries had
+no interval fields. Lint passed. We made no paid calls.

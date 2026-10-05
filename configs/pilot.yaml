@@ -8,7 +8,7 @@ output: runs/pilot-meta-blog-v2-p3
 split: pilot  # research uses the saved train and validation sources; pilot uses pilot_sources of them
 dataset: data/examples.jsonl
 prompts: prompts/papers  # writer, rubric, judge and optimizer prompts for this dataset
-seed: 0  # grading order and bootstrap sampling, not model decoding
+seed: 0  # grading order, not model decoding
 iterations: 1
 max_meta_prompt_words: 2000
 failure_examples: 24
@@ -18,8 +18,6 @@ writer_attempts: 3  # drafts per section; a draft that is cut off or outside the
 proposal_attempts: 2  # tries per optimizer update before the current meta prompt carries over
 copy_span_words: 12  # a run of this many words copied from a training source counts as leakage
 min_identifier_length: 5  # shorter source IDs, titles or author names match by chance
-bootstrap_replicates: 2000
-bootstrap_interval: [0.025, 0.975]
 # How requests are sent and retried.
 api_base: https://openrouter.ai/api/v1
 max_sends: 6  # sends per request, the first included
