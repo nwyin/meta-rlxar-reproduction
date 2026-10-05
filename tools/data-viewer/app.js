@@ -198,7 +198,7 @@ function sparkline(gaps, checkpoint, { width = 70, height = 22 } = {}) {
 
 // ---------- overview ----------
 
-function overview(run) {
+function overview(run, dataset) {
   const { manifest, costs, freeze, checkpoints } = run;
   const roles = manifest.roles ?? {};
   const sectionsList = [...run.sections.values()];
