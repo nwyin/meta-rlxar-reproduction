@@ -1,12 +1,12 @@
+# The fiction run: story continuations from Project Gutenberg novels (fetch_fiction.py).
 # Everything that defines a run. run.py copies this file into the run directory as config.yaml.
 # The model for each role is set in configs/models.yaml.
 blog_url: https://facebookresearch.github.io/RAM/blogs/unslop/
-# The completed run meta-blog-seed0 and its pilot pilot-meta-blog-attested are read-only evidence.
 # The output directory must not exist yet, so set a new one before each run.
-output: runs/meta-blog-v2-p3
+output: runs/fiction-seed0
 split: research  # research uses the saved train and validation sources; pilot uses pilot_sources of them
-dataset: data/examples.jsonl
-prompts: prompts/papers  # writer, rubric, judge and optimizer prompts for this dataset
+dataset: data/fiction/examples.jsonl
+prompts: prompts/fiction  # writer, rubric, judge and optimizer prompts for this dataset
 seed: 0  # grading order and bootstrap sampling, not model decoding
 iterations: 4
 max_meta_prompt_words: 2000
@@ -31,12 +31,3 @@ lookup_timeout_seconds: 30  # OpenRouter generation cost lookups
 # When a reply is incomplete, not valid JSON or fails a check.
 format_repairs: 1  # extra tries, each with the error appended to the system prompt
 max_repair_error_chars: 500  # how much of the error the retry sees
-reported_validation:
-  initial_gap: -4.2
-  peak_gap: 2.76
-  first_positive_iteration: 4
-  peak_iteration: 5
-  initial_human: 3.4
-  final_human: 5.0
-  initial_model: 7.6
-  final_model: 2.7

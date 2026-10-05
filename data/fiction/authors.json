@@ -1,0 +1,33 @@
+{
+  "selection": "English-language novelists with a Nobel Prize in Literature or a Pulitzer Prize for the Novel or Fiction whose novels Project Gutenberg holds. Authors who wrote in other languages are left out, because a translation is the translator's prose.",
+  "sources": [
+    "https://en.wikipedia.org/wiki/List_of_Nobel_laureates_in_Literature",
+    "https://en.wikipedia.org/wiki/Pulitzer_Prize_for_Fiction"
+  ],
+  "authors": [
+    {"catalog_name": "Kipling, Rudyard, 1865-1936", "credential": "Nobel Prize in Literature, 1907"},
+    {"catalog_name": "Shaw, Bernard, 1856-1950", "credential": "Nobel Prize in Literature, 1925"},
+    {"catalog_name": "Lewis, Sinclair, 1885-1951", "credential": "Nobel Prize in Literature, 1930; Pulitzer Prize for the Novel, 1926 (declined)"},
+    {"catalog_name": "Galsworthy, John, 1867-1933", "credential": "Nobel Prize in Literature, 1932"},
+    {"catalog_name": "Buck, Pearl S. (Pearl Sydenstricker), 1892-1973", "credential": "Nobel Prize in Literature, 1938; Pulitzer Prize for the Novel, 1932"},
+    {"catalog_name": "Faulkner, William, 1897-1962", "credential": "Nobel Prize in Literature, 1949; Pulitzer Prize for Fiction, 1955 and 1963"},
+    {"catalog_name": "Hemingway, Ernest, 1899-1961", "credential": "Nobel Prize in Literature, 1954; Pulitzer Prize for Fiction, 1953"},
+    {"catalog_name": "Poole, Ernest, 1880-1950", "credential": "Pulitzer Prize for the Novel, 1918"},
+    {"catalog_name": "Tarkington, Booth, 1869-1946", "credential": "Pulitzer Prize for the Novel, 1919 and 1922"},
+    {"catalog_name": "Wharton, Edith, 1862-1937", "credential": "Pulitzer Prize for the Novel, 1921"},
+    {"catalog_name": "Cather, Willa, 1873-1947", "credential": "Pulitzer Prize for the Novel, 1923"},
+    {"catalog_name": "Wilson, Margaret, 1882-1973", "credential": "Pulitzer Prize for the Novel, 1924"},
+    {"catalog_name": "Ferber, Edna, 1885-1968", "credential": "Pulitzer Prize for the Novel, 1925"},
+    {"catalog_name": "Bromfield, Louis, 1896-1956", "credential": "Pulitzer Prize for the Novel, 1927"},
+    {"catalog_name": "Wilder, Thornton, 1897-1975", "credential": "Pulitzer Prize for the Novel, 1928"},
+    {"catalog_name": "Peterkin, Julia, 1880-1961", "credential": "Pulitzer Prize for the Novel, 1929"},
+    {"catalog_name": "Stribling, T. S. (Thomas Sigismund), 1881-1965", "credential": "Pulitzer Prize for the Novel, 1933"},
+    {"catalog_name": "Marquand, John P. (John Phillips), 1893-1960", "credential": "Pulitzer Prize for the Novel, 1938"},
+    {"catalog_name": "Glasgow, Ellen Anderson Gholson, 1873-1945", "credential": "Pulitzer Prize for the Novel, 1942"},
+    {"catalog_name": "Sinclair, Upton, 1878-1968", "credential": "Pulitzer Prize for the Novel, 1943"}
+  ],
+  "excluded_books": [
+    {"book_id": "28089", "title": "Tatterdemalion", "reason": "A collection of separate stories and sketches; the catalog lists it as fiction without a short-story subject."},
+    {"book_id": "6016", "title": "Roast Beef, Medium", "reason": "A collection of separate magazine stories about one character; the catalog lists it as fiction without a short-story subject."}
+  ]
+}

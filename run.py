@@ -1,16 +1,17 @@
 """Run a fresh Meta XAR reproduction with OpenRouter.
 
-Prepare data with fetch_data.py, then set a new `output` directory in the config file (default
-configs/experiments.yaml). The config defines the run and is copied into the run directory.
-Model roles come from configs/models.yaml; prompts stay in prompts/. No inputs are truncated.
+Prepare data with fetch_data.py (papers) or fetch_fiction.py (fiction), then set a new `output`
+directory in the config file (default configs/experiments.yaml). The config defines the run, names
+its dataset and prompt directory, and is copied into the run directory. Model roles come from
+configs/models.yaml. No inputs are truncated.
 """
 
-from __future__ import annotations; import argparse, collections, concurrent.futures, csv, datetime as dt, hashlib, json, math, os, random, re, statistics, threading, time; from pathlib import Path; import httpx, jsonschema, yaml; from dotenv import load_dotenv  # noqa: I001  # fmt: skip
+from __future__ import annotations; import argparse, collections, concurrent.futures, csv, datetime as dt, hashlib, json, math, os, random, re, statistics, threading, time, unicodedata; from pathlib import Path; import httpx, jsonschema, yaml; from dotenv import load_dotenv  # noqa: I001  # fmt: skip
 
 ROOT = Path(__file__).resolve().parent
 ROLES = ("writer", "rubric", "optimizer", "judge")
-SECTIONS = ("abstract", "introduction", "related_work", "conclusion")
-FAILING_FEEDBACK = "failing_gap_without_paper"
+PROMPTS = ("writer", "rubric_initial", "rubric_wrapper", "judge", "optimizer")
+FAILING_FEEDBACK = "failing_gap_without_context"
 SCHEMA_VERSION = 1
 
 
@@ -86,36 +87,52 @@ def write_table(path, rows):
         writer.writerows(rows)
 
 
-# Read only the prepared JSON files; fetching and parsing papers live in fetch_data.py.
+TYPOGRAPHY = str.maketrans({"‘": "'", "’": "'", "‚": "'", "‛": "'", "“": '"', "”": '"', "„": '"', "‟": '"', "…": "...", " ": " "})
+
+
+def normalize_text(text, paragraphs):
+    """The one plain-text form for references, contexts and model sections, so typography cannot
+    tell them apart: NFC, straight quotes, "..." for an ellipsis and single spaces. With
+    `paragraphs`, each line is a paragraph and paragraphs are separated by one blank line;
+    without, the text is one line."""
+    text = unicodedata.normalize("NFC", text).translate(TYPOGRAPHY)
+    if not paragraphs:
+        return " ".join(text.split())
+    return "\n\n".join(" ".join(line.split()) for line in text.splitlines() if line.strip())
+
+
+# Read only the prepared JSON files; fetching and parsing sources live in fetch_data.py and fetch_fiction.py.
 def task_data(example):
     """The only example fields that go into writer, rubric and judge prompts.
 
-    Everything else (the author's section, split labels, IDs, earlier feedback) stays out.
+    Everything else (the reference, split labels, IDs, earlier feedback) stays out.
     """
     return {
-        "visible_paper": example["context"],
-        "section_type": example["section_type"],
+        "context": example["context"],
+        "kind": example["kind"],
         "target_words": example["target_words"],
     }
+
+
+def read_prompt(config, name):
+    """One prompt from the config's prompt directory (prompts/papers or prompts/fiction)."""
+    return (ROOT / config["prompts"] / f"{name}.md").read_text()
 
 
 def run_examples(examples, config):
     """The examples a run uses, labelled train or validation.
 
-    A research run uses the train and validation papers as saved. A pilot run uses the papers
-    labelled pilot in an older dataset, or else the first `pilot_papers` training papers; the first
-    (sorted by ID) becomes training and the rest become validation.
+    A research run uses the train and validation sources (papers or books) as saved. A pilot run
+    uses the first `pilot_sources` training sources; the first (sorted by ID) becomes training and
+    the rest become validation.
     """
     if config["split"] not in ("pilot", "research"):
         raise RunError(f"Invalid split {config['split']!r}; use pilot or research")
     if config["split"] == "pilot":
-        papers = list(dict.fromkeys(e["paper_id"] for e in examples if e["split"] == "pilot"))
-        papers = papers or list(dict.fromkeys(e["paper_id"] for e in examples if e["split"] == "train"))
-        papers = sorted(papers[: config["pilot_papers"]])
-        pilot = [e for e in examples if e["paper_id"] in papers]
-        if len(papers) < config["pilot_papers"]:
-            raise RunError(f"Pilot needs {config['pilot_papers']} papers; found {len(papers)}")
-        return [{**e, "split": "train" if e["paper_id"] == papers[0] else "validation"} for e in pilot]
+        sources = sorted(list(dict.fromkeys(e["source_id"] for e in examples if e["split"] == "train"))[: config["pilot_sources"]])
+        if len(sources) < config["pilot_sources"]:
+            raise RunError(f"Pilot needs {config['pilot_sources']} sources; found {len(sources)}")
+        return [{**e, "split": "train" if e["source_id"] == sources[0] else "validation"} for e in examples if e["source_id"] in sources]
     return [e for e in examples if e["split"] in ("train", "validation")]
 
 
@@ -364,21 +381,28 @@ def validate_rubric(rubric):
         raise InvalidOutput("Duplicate criterion IDs")
 
 
+def quote_words(text):
+    """The text's words, casefolded and space-separated, with a space at each end."""
+    return " " + " ".join(re.findall(r"\w+", text.casefold())) + " "
+
+
 def validate_grade(grade, rubric, supplied_text):
     """Check a schema-valid grade against its rubric and supplied text.
 
-    Every criterion must be scored exactly once, and anything the judge quotes as evidence
-    must occur in supplied_text (the graded section plus the visible paper)."""
+    Every criterion must be scored exactly once, and the words of anything the judge quotes as
+    evidence must occur in order in supplied_text (the graded section plus the visible context).
+    Punctuation and case are ignored, because judges move a comma inside a quotation or swap
+    double quotes for single ones around dialogue."""
     ids = [s["id"] for s in grade["scores"]]
     if len(ids) != len(set(ids)) or set(ids) != {c["id"] for c in rubric["criteria"]}:
         raise InvalidOutput("Criterion IDs mismatch")
     # json.loads accepts NaN, and NaN passes the schema's minimum and maximum.
     if not all(math.isfinite(s["score"]) for s in grade["scores"]):
         raise InvalidOutput("Score must be finite")
-    normalized_text = " ".join(supplied_text.split()).casefold()
+    supplied_words = quote_words(supplied_text)
     for score in grade["scores"]:
-        for quoted in QUOTED_TEXT.findall(score["evidence"]):
-            if " ".join(quoted.split()).casefold() not in normalized_text:
+        for quoted in QUOTED_TEXT.findall(score["evidence"].replace('\\"', '"')):
+            if quote_words(quoted).strip() and quote_words(quoted) not in supplied_words:
                 raise InvalidOutput("Quote absent from supplied text")
 
 
@@ -387,8 +411,10 @@ def writer_candidates(api, examples, output):
 
     Each section gets up to `writer_attempts` drafts: a draft that is cut off or outside the length
     window goes back to the writer with a revision note, and the last draft is kept either way.
-    Each section is saved as it finishes. Returns the records keyed by example ID."""
-    prompt = (ROOT / "prompts/writer.md").read_text()
+    Each section is saved as it finishes, in the dataset's text form (one line, or one paragraph per
+    line when the references keep paragraphs). Returns the records keyed by example ID."""
+    prompt = read_prompt(api.config, "writer")
+    paragraphs = any("\n" in example["reference"] for example in examples)
     config_hash = digest({"writer": api.roles["writer"], "prompt": prompt, "schema_version": SCHEMA_VERSION})
     stopped = api.dispatch_stopped
 
@@ -408,7 +434,7 @@ def writer_candidates(api, examples, output):
                 raise Skipped(f"{eid}: another section failed")
             identity = {"writer": config_hash, "example": eid, "attempt": attempt}
             response = api.call("writer", prompt, data, None, identity)
-            text = response["content"].strip()
+            text = normalize_text(response["content"], paragraphs)
             count = len(text.split())
             compliant = low <= count <= high
             attempts.append(
@@ -456,7 +482,7 @@ def writer_candidates(api, examples, output):
 def generate_rubric(api, example, meta_prompt, identity, output):
     result = api.structured(
         "rubric",
-        (ROOT / "prompts/rubric_wrapper.md").read_text(),
+        read_prompt(api.config, "rubric_wrapper"),
         {**task_data(example), "meta_prompt": meta_prompt},
         RUBRIC_SCHEMA,
         identity,
@@ -483,7 +509,7 @@ def grade_candidate(api, example, rubric_record, text, identity, output):
         rubric = rubric_record["value"]
         result = api.structured(
             "judge",
-            (ROOT / "prompts/judge.md").read_text(),
+            read_prompt(api.config, "judge"),
             {**task_data(example), "rubric": rubric, "candidate": text},
             GRADE_SCHEMA,
             identity,
@@ -531,8 +557,8 @@ def evaluate_checkpoint(api, examples, candidates, meta_prompt, checkpoint, outp
         human, model = totals["human"], totals["model"]
         return {
             "example_id": eid,
-            "paper_id": example["paper_id"],
-            "section_type": example["section_type"],
+            "source_id": example["source_id"],
+            "kind": example["kind"],
             "split": example["split"],
             "checkpoint": checkpoint,
             "human": human,
@@ -569,8 +595,8 @@ def audit_proposal(text, examples, initial_prompt, config):
     """Statically check an optimizer proposal before it can become the next meta prompt.
 
     Rejects a prompt that is longer than `max_meta_prompt_words`, matches PROPOSAL_RED_FLAGS (including leaked
-    tool-call markup), names a training paper or its authors, or copies `copy_span_words` consecutive words
-    from a training paper (unless the initial prompt already contains them)."""
+    tool-call markup), names a training source or its authors, or copies `copy_span_words` consecutive words
+    from a training source (unless the initial prompt already contains them)."""
     word_count = len(text.split())
     reasons, flags = [], []
     if word_count > config["max_meta_prompt_words"]:
@@ -582,11 +608,11 @@ def audit_proposal(text, examples, initial_prompt, config):
     proposal_words, span_words = lower.split(), config["copy_span_words"]
     initial_lower = initial_prompt.casefold()
     for example in examples:
-        paper = example["paper_id"]
+        source = example["source_id"]
         metadata = example["provenance"]
-        for identifier in [paper, metadata["title"], *metadata.get("authors", [])]:
+        for identifier in [source, metadata["title"], *metadata.get("authors", [])]:
             if len(identifier) >= config["min_identifier_length"] and identifier.casefold() in lower:
-                flags.append({"type": "training_identifier", "paper_id": paper, "match": identifier})
+                flags.append({"type": "training_identifier", "source_id": source, "match": identifier})
         for field in ("reference", "context"):
             source_words = example[field].casefold().split()
             source_spans = {tuple(source_words[i : i + span_words]) for i in range(len(source_words) - span_words + 1)}
@@ -594,7 +620,7 @@ def audit_proposal(text, examples, initial_prompt, config):
                 span = proposal_words[i : i + span_words]
                 span_text = " ".join(span)
                 if tuple(span) in source_spans and span_text not in initial_lower:
-                    flags.append({"type": "copied_training_span", "paper_id": paper, "match": span_text})
+                    flags.append({"type": "copied_training_span", "source_id": source, "match": span_text})
                     break
     if flags:
         reasons.append("training_leakage")
@@ -619,7 +645,7 @@ def propose_prompt(api, current, feedback, examples, initial, iteration, *, outp
     data = {"feedback": feedback, "max_meta_prompt_words": api.config["max_meta_prompt_words"]}
     attempts = []
     for attempt in range(api.config["proposal_attempts"]):
-        instruction = (ROOT / "prompts/optimizer.md").read_text()
+        instruction = read_prompt(api.config, "optimizer")
         if attempt:
             rejected = attempts[-1]
             instruction += "\nBOUNDED REPAIR: Fix these proposal violations: " + ", ".join(rejected["audit"]["reasons"])
@@ -659,7 +685,7 @@ def propose_prompt(api, current, feedback, examples, initial, iteration, *, outp
 
 
 def build_feedback(examples, candidates, rows, current_prompt, config):
-    """The active feedback policy: nonpositive training gaps, without full papers.
+    """The active feedback policy: nonpositive training gaps, without the visible contexts.
 
     Keep the recorded all_training_gaps field's existing meaning: all nonpositive gaps, before
     limiting detailed failure examples. Validation and confirmation never enter this payload.
@@ -676,7 +702,7 @@ def build_feedback(examples, candidates, rows, current_prompt, config):
         failures.append(
             {
                 "example_id": example["example_id"],
-                "section_type": example["section_type"],
+                "kind": example["kind"],
                 "target_words": example["target_words"],
                 "human_candidate": example["reference"],
                 "model_candidate": candidates[example["example_id"]]["text"],
@@ -691,48 +717,48 @@ def build_feedback(examples, candidates, rows, current_prompt, config):
         "failures": failures,
         "example_ids_used_for_aggregate": sorted(lookup),
         "selection": FAILING_FEEDBACK,
-        "all_training_gaps": [{"example_id": row["example_id"], "section_type": row["section_type"], "gap": row["gap"]} for row in by_gap],
+        "all_training_gaps": [{"example_id": row["example_id"], "kind": row["kind"], "gap": row["gap"]} for row in by_gap],
     }
 
 
-# Preserve whole-paper bootstrap statistics, including the fields sent to the optimizer.
+# Preserve whole-source bootstrap statistics, including the fields sent to the optimizer.
 
 
 def bootstrap(rows, config):
-    """Percentile bootstrap of the mean gap that resamples whole papers.
+    """Percentile bootstrap of the mean gap that resamples whole sources (papers or books).
 
-    Sections from one paper are not independent, so each replicate draws papers with
-    replacement and takes all of a drawn paper's gaps. Rows without a gap are ignored;
+    Examples from one source are not independent, so each replicate draws sources with
+    replacement and takes all of a drawn source's gaps. Rows without a gap are ignored;
     returns None if no row has one."""
-    by_paper = collections.defaultdict(list)
+    by_source = collections.defaultdict(list)
     for row in rows:
         if row.get("gap") is not None:
-            by_paper[row["paper_id"]].append(row["gap"])
-    if not by_paper:
+            by_source[row["source_id"]].append(row["gap"])
+    if not by_source:
         return None
     rng, replicates, (low, high) = random.Random(config["seed"]), config["bootstrap_replicates"], config["bootstrap_interval"]
-    papers = sorted(by_paper)
-    means = sorted(statistics.mean(g for p in rng.choices(papers, k=len(papers)) for g in by_paper[p]) for _ in range(replicates))
+    sources = sorted(by_source)
+    means = sorted(statistics.mean(g for p in rng.choices(sources, k=len(sources)) for g in by_source[p]) for _ in range(replicates))
     return {
-        "method": "paired_whole_paper_percentile_bootstrap",
-        "paper_clusters": len(papers),
+        "method": "paired_whole_source_percentile_bootstrap",
+        "source_clusters": len(sources),
         "replicates": replicates,
         "seed": config["seed"],
-        "estimate": statistics.mean(g for gaps in by_paper.values() for g in gaps),
+        "estimate": statistics.mean(g for gaps in by_source.values() for g in gaps),
         "bootstrap_median": means[replicates // 2],
         "low": means[int(low * replicates)],
         "high": means[int(high * replicates)],
     }
 
 
-def section_summary(graded, section):
-    gaps = [row["gap"] for row in graded if row["section_type"] == section]
+def kind_summary(graded, kind):
+    gaps = [row["gap"] for row in graded if row["kind"] == kind]
     return {"coverage": len(gaps), "gap": statistics.mean(gaps) if gaps else None}
 
 
 def summarize(rows, config):
-    """Summarize one checkpoint's rows: mean human, model and gap scores over the sections with
-    both grades, per-section gaps, and paper-bootstrap intervals for all sections, the
+    """Summarize one checkpoint's rows: mean human, model and gap scores over the examples with
+    both grades, per-kind gaps, and source-bootstrap intervals for all examples, the
     length-compliant ones."""
     graded = [row for row in rows if row["gap"] is not None]
 
@@ -748,19 +774,19 @@ def summarize(rows, config):
         "gap": mean("gap"),
         "positive_gap_fraction": sum(row["gap"] > 0 for row in graded) / len(graded) if graded else None,
         "ties": sum(row["gap"] == 0 for row in graded),
-        "paper_interval": bootstrap(graded, config),
+        "source_interval": bootstrap(graded, config),
         "length_compliant": sum(row["length_compliant"] for row in rows),
-        "sections": {section: section_summary(graded, section) for section in SECTIONS},
+        "kinds": {kind: kind_summary(graded, kind) for kind in sorted({row["kind"] for row in rows})},
         "compliant_sensitivity": bootstrap([row for row in graded if row["length_compliant"]], config),
     }
 
 
 def paired_improvement(initial, selected, config):
-    """Per-section change in gap from the initial to the selected checkpoint, with a
-    paper-bootstrap interval. Sections missing a gap at either checkpoint are left out."""
+    """Per-example change in gap from the initial to the selected checkpoint, with a
+    source-bootstrap interval. Examples missing a gap at either checkpoint are left out."""
     initial_by_id = {row["example_id"]: row for row in initial}
     changes = [
-        {"paper_id": row["paper_id"], "gap": row["gap"] - before}
+        {"source_id": row["source_id"], "gap": row["gap"] - before}
         for row in selected
         if row["gap"] is not None and (before := initial_by_id[row["example_id"]]["gap"]) is not None
     ]
@@ -814,7 +840,7 @@ def write_report(output, summaries, rows, selected, costs, config):
         lines += [
             "",
             (f"The selected prompt changed the paired validation gap by {improvement['mean']:+.3f} "
-            f"(95% whole-paper bootstrap interval: {interval['low']:+.3f} to {interval['high']:+.3f})."),
+            f"(95% whole-source bootstrap interval: {interval['low']:+.3f} to {interval['high']:+.3f})."),
         ]
     lines += [
         "",
@@ -822,8 +848,8 @@ def write_report(output, summaries, rows, selected, costs, config):
         f"${costs['actual_complete_usd']:.4f} across {costs['requests']} generations. "
         f"Unresolved lookups or sends: {costs['unresolved']}. Details are in costs.json."),
         "",
-        ("This is an independent reproduction with repository-specific papers and prompts. "
-        "The confirmation split remains unused. Bootstrap intervals resample whole papers."),
+        ("This is an independent reproduction with repository-specific sources and prompts. "
+        "The confirmation split remains unused. Bootstrap intervals resample whole sources."),
         "",
         "Full statistics and coverage are in summary.json; every request and response is saved.",
     ]
@@ -834,7 +860,7 @@ def write_report(output, summaries, rows, selected, costs, config):
 def run_xar(config_path):
     config_text = Path(config_path).read_text()
     config = yaml.safe_load(config_text)
-    initial = (ROOT / "prompts/rubric_initial.md").read_text()
+    initial = read_prompt(config, "rubric_initial")
     if len(initial.split()) > config["max_meta_prompt_words"]:
         raise RunError("Initial prompt exceeds max_meta_prompt_words")
     examples = [json.loads(line) for line in Path(config["dataset"]).read_text().splitlines() if line.strip()]
@@ -857,6 +883,7 @@ def run_xar(config_path):
                 "roles": roles,
                 "dataset_hash": hashlib.sha256(Path(config["dataset"]).read_bytes()).hexdigest(),
                 "initial_meta_prompt_hash": digest(initial),
+                "prompt_hashes": {name: digest(read_prompt(config, name)) for name in PROMPTS},
                 "feedback_policy": FAILING_FEEDBACK,
                 "context_handling": "Providers enforce context limits; full inputs are sent without truncation",
             },

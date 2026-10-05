@@ -1,0 +1,3126 @@
+{
+  "retrieved_at": "2026-10-05T14:50:17.900187+00:00",
+  "seed": 20261005,
+  "catalog": {
+    "url": "https://www.gutenberg.org/cache/epub/feeds/pg_catalog.csv",
+    "sha256": "25882f0e4d06d759369f8ff0676376b5f79fcc41ba5b8373037975026cf62580"
+  },
+  "rdf_catalog": {
+    "url": "https://www.gutenberg.org/cache/epub/feeds/rdf-files.tar.bz2",
+    "sha256": "7d8687da09b50b9a4c45cae85bf77bbd2110e5d2fe957db7ccba90f9c775a69d"
+  },
+  "author_order": [
+    "Glasgow, Ellen Anderson Gholson, 1873-1945",
+    "Lewis, Sinclair, 1885-1951",
+    "Wilson, Margaret, 1882-1973",
+    "Poole, Ernest, 1880-1950",
+    "Hemingway, Ernest, 1899-1961",
+    "Galsworthy, John, 1867-1933",
+    "Faulkner, William, 1897-1962",
+    "Stribling, T. S. (Thomas Sigismund), 1881-1965",
+    "Peterkin, Julia, 1880-1961",
+    "Cather, Willa, 1873-1947",
+    "Wilder, Thornton, 1897-1975",
+    "Kipling, Rudyard, 1865-1936",
+    "Bromfield, Louis, 1896-1956",
+    "Sinclair, Upton, 1878-1968",
+    "Shaw, Bernard, 1856-1950",
+    "Buck, Pearl S. (Pearl Sydenstricker), 1892-1973",
+    "Ferber, Edna, 1885-1968",
+    "Wharton, Edith, 1862-1937",
+    "Marquand, John P. (John Phillips), 1893-1960",
+    "Tarkington, Booth, 1869-1946"
+  ],
+  "considered": {
+    "Glasgow, Ellen Anderson Gholson, 1873-1945": [
+      {
+        "book_id": "2384",
+        "title": "The Deliverance: A Romance of the Virginia Tobacco Fields",
+        "downloads": 549,
+        "rights": "Public domain in the USA."
+      },
+      {
+        "book_id": "6872",
+        "title": "The Battle Ground",
+        "downloads": 731,
+        "rights": "Public domain in the USA."
+      },
+      {
+        "book_id": "14571",
+        "title": "Life and Gabriella: The Story of a Woman's Courage",
+        "downloads": 563,
+        "rights": "Public domain in the USA."
+      },
+      {
+        "book_id": "14696",
+        "title": "The Wheel of Life",
+        "downloads": 431,
+        "rights": "Public domain in the USA."
+      },
+      {
+        "book_id": "15603",
+        "title": "One Man in His Time",
+        "downloads": 469,
+        "rights": "Public domain in the USA."
+      },
+      {
+        "book_id": "16505",
+        "title": "The Voice of the People",
+        "downloads": 488,
+        "rights": "Public domain in the USA."
+      },
+      {
+        "book_id": "18286",
+        "title": "The Miller Of Old Church",
+        "downloads": 329,
+        "rights": "Public domain in the USA."
+      },
+      {
+        "book_id": "26316",
+        "title": "Virginia",
+        "downloads": 530,
+        "rights": "Public domain in the USA."
+      },
+      {
+        "book_id": "30299",
+        "title": "The Romance of a Plain Man",
+        "downloads": 488,
+        "rights": "Public domain in the USA."
+      },
+      {
+        "book_id": "34402",
+        "title": "Phases of an Inferior Planet",
+        "downloads": 390,
+        "rights": "Public domain in the USA."
+      },
+      {
+        "book_id": "34419",
+        "title": "The Ancient Law",
+        "downloads": 441,
+        "rights": "Public domain in the USA."
+      },
+      {
+        "book_id": "37463",
+        "title": "The Builders",
+        "downloads": 490,
+        "rights": "Public domain in the USA."
+      },
+      {
+        "book_id": "66191",
+        "title": "Barren Ground",
+        "downloads": 470,
+        "rights": "Public domain in the USA."
+      }
+    ],
+    "Lewis, Sinclair, 1885-1951": [
+      {
+        "book_id": "543",
+        "title": "Main Street",
+        "downloads": 2192,
+        "rights": "Public domain in the USA."
+      },
+      {
+        "book_id": "1156",
+        "title": "Babbitt",
+        "downloads": 2296,
+        "rights": "Public domain in the USA."
+      },
+      {
+        "book_id": "4961",
+        "title": "Our Mr. Wrenn: The Romantic Adventures of a Gentle Man",
+        "downloads": 690,
+        "rights": "Public domain in the USA."
+      },
+      {
+        "book_id": "25430",
+        "title": "The Innocents: A Story for Lovers",
+        "downloads": 878,
+        "rights": "Public domain in the USA."
+      },
+      {
+        "book_id": "25474",
+        "title": "The Job: An American Novel",
+        "downloads": 587,
+        "rights": "Public domain in the USA."
+      },
+      {
+        "book_id": "26610",
+        "title": "The Trail of the Hawk: A Comedy of the Seriousness of Life",
+        "downloads": 2393,
+        "rights": "Public domain in the USA."
+      },
+      {
+        "book_id": "26732",
+        "title": "Free Air",
+        "downloads": 2026,
+        "rights": "Public domain in the USA."
+      },
+      {
+        "book_id": "70875",
+        "title": "Arrowsmith",
+        "downloads": 956,
+        "rights": "Public domain in the USA."
+      },
+      {
+        "book_id": "72609",
+        "title": "Elmer Gantry",
+        "downloads": 599,
+        "rights": "Public domain in the USA."
+      }
+    ],
+    "Wilson, Margaret, 1882-1973": [
+      {
+        "book_id": "59845",
+        "title": "The Able McLaughlins",
+        "downloads": 479,
+        "rights": "Public domain in the USA."
+      },
+      {
+        "book_id": "69549",
+        "title": "The painted room",
+        "downloads": 413,
+        "rights": "Public domain in the USA."
+      }
+    ],
+    "Poole, Ernest, 1880-1950": [
+      {
+        "book_id": "14396",
+        "title": "His Family",
+        "downloads": 545,
+        "rights": "Public domain in the USA."
+      },
+      {
+        "book_id": "17259",
+        "title": "His Second Wife",
+        "downloads": 346,
+        "rights": "Public domain in the USA."
+      },
+      {
+        "book_id": "29932",
+        "title": "The Harbor",
+        "downloads": 521,
+        "rights": "Public domain in the USA."
+      }
+    ],
+    "Hemingway, Ernest, 1899-1961": [
+      {
+        "book_id": "67138",
+        "title": "The Sun Also Rises",
+        "downloads": 4955,
+        "rights": "Public domain in the USA."
+      },
+      {
+        "book_id": "75201",
+        "title": "A farewell to arms",
+        "downloads": 21165,
+        "rights": "Public domain in the USA."
+      }
+    ],
+    "Galsworthy, John, 1867-1933": [
+      {
+        "book_id": "2192",
+        "title": "The Dark Flower",
+        "downloads": 645,
+        "rights": "Public domain in the USA."
+      },
+      {
+        "book_id": "2309",
+        "title": "The Freelands",
+        "downloads": 683,
+        "rights": "Public domain in the USA."
+      },
+      {
+        "book_id": "2453",
+        "title": "Beyond",
+        "downloads": 668,
+        "rights": "Public domain in the USA."
+      },
+      {
+        "book_id": "2683",
+        "title": "Saint's Progress",
+        "downloads": 656,
+        "rights": "Public domain in the USA."
+      },
+      {
+        "book_id": "2771",
+        "title": "The Island Pharisees",
+        "downloads": 603,
+        "rights": "Public domain in the USA."
+      },
+      {
+        "book_id": "2772",
+        "title": "The Country House",
+        "downloads": 604,
+        "rights": "Public domain in the USA."
+      },
+      {
+        "book_id": "2773",
+        "title": "Fraternity",
+        "downloads": 564,
+        "rights": "Public domain in the USA."
+      },
+      {
+        "book_id": "2774",
+        "title": "The Patrician",
+        "downloads": 664,
+        "rights": "Public domain in the USA."
+      },
+      {
+        "book_id": "3817",
+        "title": "To Let",
+        "downloads": 590,
+        "rights": "Public domain in the USA."
+      },
+      {
+        "book_id": "4397",
+        "title": "The Forsyte saga - Complete",
+        "downloads": 2589,
+        "rights": "Public domain in the USA."
+      },
+      {
+        "book_id": "73672",
+        "title": "Jocelyn",
+        "downloads": 457,
+        "rights": "Public domain in the USA."
+      }
+    ],
+    "Faulkner, William, 1897-1962": [
+      {
+        "book_id": "75170",
+        "title": "The sound and the fury",
+        "downloads": 3683,
+        "rights": "Public domain in the USA."
+      }
+    ],
+    "Stribling, T. S. (Thomas Sigismund), 1881-1965": [
+      {
+        "book_id": "9547",
+        "title": "The Cruise of the Dry Dock",
+        "downloads": 445,
+        "rights": "Public domain in the USA."
+      },
+      {
+        "book_id": "10621",
+        "title": "Birthright: A Novel",
+        "downloads": 520,
+        "rights": "Public domain in the USA."
+      },
+      {
+        "book_id": "64700",
+        "title": "Fombombo",
+        "downloads": 389,
+        "rights": "Public domain in the USA."
+      }
+    ],
+    "Peterkin, Julia, 1880-1961": [
+      {
+        "book_id": "72611",
+        "title": "Black April",
+        "downloads": 384,
+        "rights": "Public domain in the USA."
+      }
+    ],
+    "Cather, Willa, 1873-1947": [
+      {
+        "book_id": "24",
+        "title": "O Pioneers!",
+        "downloads": 3156,
+        "rights": "Public domain in the USA."
+      },
+      {
+        "book_id": "44",
+        "title": "The Song of the Lark",
+        "downloads": 2485,
+        "rights": "Public domain in the USA."
+      },
+      {
+        "book_id": "94",
+        "title": "Alexander's Bridge",
+        "downloads": 1222,
+        "rights": "Public domain in the USA."
+      },
+      {
+        "book_id": "242",
+        "title": "My Ántonia",
+        "downloads": 3815,
+        "rights": "Public domain in the USA."
+      },
+      {
+        "book_id": "2369",
+        "title": "One of Ours",
+        "downloads": 949,
+        "rights": "Public domain in the USA."
+      },
+      {
+        "book_id": "19810",
+        "title": "My Ántonia",
+        "downloads": 1277,
+        "rights": "Public domain in the USA."
+      },
+      {
+        "book_id": "65465",
+        "title": "The Professor's House",
+        "downloads": 625,
+        "rights": "Public domain in the USA."
+      },
+      {
+        "book_id": "65636",
+        "title": "A Lost Lady",
+        "downloads": 752,
+        "rights": "Public domain in the USA."
+      },
+      {
+        "book_id": "69730",
+        "title": "Death comes for the archbishop",
+        "downloads": 1172,
+        "rights": "Public domain in the USA."
+      },
+      {
+        "book_id": "78501",
+        "title": "My mortal enemy",
+        "downloads": 678,
+        "rights": "Public domain in the USA."
+      }
+    ],
+    "Wilder, Thornton, 1897-1975": [
+      {
+        "book_id": "68105",
+        "title": "The Cabala",
+        "downloads": 577,
+        "rights": "Public domain in the USA."
+      },
+      {
+        "book_id": "69768",
+        "title": "The bridge of San Luis Rey",
+        "downloads": 1083,
+        "rights": "Public domain in the USA."
+      },
+      {
+        "book_id": "78024",
+        "title": "The woman of Andros",
+        "downloads": 24470,
+        "rights": "Public domain in the USA."
+      }
+    ],
+    "Kipling, Rudyard, 1865-1936": [
+      {
+        "book_id": "557",
+        "title": "Puck of Pook's Hill",
+        "downloads": 1044,
+        "rights": "Public domain in the USA."
+      },
+      {
+        "book_id": "1937",
+        "title": "The Second Jungle Book",
+        "downloads": 2228,
+        "rights": "Public domain in the USA."
+      },
+      {
+        "book_id": "2186",
+        "title": "\"Captains Courageous\": A Story of the Grand Banks",
+        "downloads": 1267,
+        "rights": "Public domain in the USA."
+      },
+      {
+        "book_id": "2225",
+        "title": "\"Captains Courageous\": A Story of the Grand Banks",
+        "downloads": 1915,
+        "rights": "Public domain in the USA."
+      },
+      {
+        "book_id": "2226",
+        "title": "Kim",
+        "downloads": 2677,
+        "rights": "Public domain in the USA."
+      },
+      {
+        "book_id": "2821",
+        "title": "The story of the Gadsbys",
+        "downloads": 686,
+        "rights": "Public domain in the USA."
+      },
+      {
+        "book_id": "2876",
+        "title": "The Light That Failed",
+        "downloads": 904,
+        "rights": "Public domain in the USA."
+      },
+      {
+        "book_id": "3006",
+        "title": "Stalky & Co.",
+        "downloads": 869,
+        "rights": "Public domain in the USA."
+      },
+      {
+        "book_id": "8147",
+        "title": "The Man Who Would Be King",
+        "downloads": 2027,
+        "rights": "Public domain in the USA."
+      },
+      {
+        "book_id": "15976",
+        "title": "Puck of Pook's Hill",
+        "downloads": 632,
+        "rights": "Public domain in the USA."
+      },
+      {
+        "book_id": "26027",
+        "title": "Puck of Pook's Hill",
+        "downloads": 1793,
+        "rights": "Public domain in the USA."
+      },
+      {
+        "book_id": "29135",
+        "title": "With the Night Mail: A Story of 2000 A.D. (Together with extracts from the comtemporary magazine in which it appeared)",
+        "downloads": 652,
+        "rights": "Public domain in the USA."
+      },
+      {
+        "book_id": "35555",
+        "title": "Kim",
+        "downloads": 847,
+        "rights": "Public domain in the USA."
+      },
+      {
+        "book_id": "37364",
+        "title": "The Second Jungle Book",
+        "downloads": 820,
+        "rights": "Public domain in the USA."
+      }
+    ],
+    "Bromfield, Louis, 1896-1956": [
+      {
+        "book_id": "72406",
+        "title": "Early autumn",
+        "downloads": 554,
+        "rights": "Public domain in the USA."
+      },
+      {
+        "book_id": "73188",
+        "title": "Possession",
+        "downloads": 569,
+        "rights": "Public domain in the USA."
+      },
+      {
+        "book_id": "73944",
+        "title": "The green bay tree",
+        "downloads": 689,
+        "rights": "Public domain in the USA."
+      },
+      {
+        "book_id": "74011",
+        "title": "A good woman",
+        "downloads": 570,
+        "rights": "Public domain in the USA."
+      }
+    ],
+    "Sinclair, Upton, 1878-1968": [
+      {
+        "book_id": "140",
+        "title": "The Jungle",
+        "downloads": 10305,
+        "rights": "Public domain in the USA."
+      },
+      {
+        "book_id": "4923",
+        "title": "King Midas: a Romance",
+        "downloads": 4961,
+        "rights": "Public domain in the USA."
+      },
+      {
+        "book_id": "5421",
+        "title": "The Metropolis",
+        "downloads": 613,
+        "rights": "Public domain in the USA."
+      },
+      {
+        "book_id": "5677",
+        "title": "Jimmie Higgins",
+        "downloads": 538,
+        "rights": "Public domain in the USA."
+      },
+      {
+        "book_id": "5774",
+        "title": "They Call Me Carpenter: A Tale of the Second Coming",
+        "downloads": 635,
+        "rights": "Public domain in the USA."
+      },
+      {
+        "book_id": "5776",
+        "title": "100%: the Story of a Patriot",
+        "downloads": 869,
+        "rights": "Public domain in the USA."
+      },
+      {
+        "book_id": "5807",
+        "title": "Sylvia's Marriage: A Novel",
+        "downloads": 487,
+        "rights": "Public domain in the USA."
+      },
+      {
+        "book_id": "5829",
+        "title": "The Moneychangers",
+        "downloads": 691,
+        "rights": "Public domain in the USA."
+      },
+      {
+        "book_id": "5961",
+        "title": "Samuel the Seeker",
+        "downloads": 498,
+        "rights": "Public domain in the USA."
+      },
+      {
+        "book_id": "5964",
+        "title": "Love's Pilgrimage: A Novel",
+        "downloads": 663,
+        "rights": "Public domain in the USA."
+      },
+      {
+        "book_id": "7774",
+        "title": "The Journal of Arthur Stirling : (\"The Valley of the Shadow\")",
+        "downloads": 583,
+        "rights": "Public domain in the USA."
+      },
+      {
+        "book_id": "24770",
+        "title": "A Prisoner of Morro; Or, In the Hands of the Enemy",
+        "downloads": 806,
+        "rights": "Public domain in the USA."
+      },
+      {
+        "book_id": "39516",
+        "title": "A Captain of Industry: Being the Story of a Civilized Man",
+        "downloads": 296,
+        "rights": "Public domain in the USA."
+      },
+      {
+        "book_id": "61984",
+        "title": "Sylvia: A Novel",
+        "downloads": 423,
+        "rights": "Public domain in the USA."
+      },
+      {
+        "book_id": "67732",
+        "title": "The Overman",
+        "downloads": 472,
+        "rights": "Public domain in the USA."
+      },
+      {
+        "book_id": "70379",
+        "title": "Oil!",
+        "downloads": 803,
+        "rights": "Public domain in the USA."
+      },
+      {
+        "book_id": "71030",
+        "title": "The spokesman's secretary",
+        "downloads": 316,
+        "rights": "Public domain in the USA."
+      },
+      {
+        "book_id": "78039",
+        "title": "Boston",
+        "downloads": 24810,
+        "rights": "Public domain in the USA."
+      }
+    ],
+    "Shaw, Bernard, 1856-1950": [
+      {
+        "book_id": "1654",
+        "title": "An Unsocial Socialist",
+        "downloads": 1041,
+        "rights": "Public domain in the USA."
+      },
+      {
+        "book_id": "5872",
+        "title": "Cashel Byron's Profession",
+        "downloads": 737,
+        "rights": "Public domain in the USA."
+      },
+      {
+        "book_id": "11354",
+        "title": "The Irrational Knot Being the Second Novel of His Nonage",
+        "downloads": 522,
+        "rights": "Public domain in the USA."
+      }
+    ],
+    "Buck, Pearl S. (Pearl Sydenstricker), 1892-1973": [
+      {
+        "book_id": "68577",
+        "title": "The mother",
+        "downloads": 812,
+        "rights": "Public domain in the USA."
+      }
+    ],
+    "Ferber, Edna, 1885-1968": [
+      {
+        "book_id": "350",
+        "title": "Fanny Herself",
+        "downloads": 1060,
+        "rights": "Public domain in the USA."
+      },
+      {
+        "book_id": "1602",
+        "title": "Dawn O'Hara: The Girl Who Laughed",
+        "downloads": 759,
+        "rights": "Public domain in the USA."
+      },
+      {
+        "book_id": "12677",
+        "title": "Personality Plus: Some Experiences of Emma McChesney and Her Son, Jock",
+        "downloads": 504,
+        "rights": "Public domain in the USA."
+      },
+      {
+        "book_id": "14714",
+        "title": "Half Portions",
+        "downloads": 521,
+        "rights": "Public domain in the USA."
+      },
+      {
+        "book_id": "61686",
+        "title": "So Big",
+        "downloads": 1040,
+        "rights": "Public domain in the USA."
+      },
+      {
+        "book_id": "67123",
+        "title": "Show Boat",
+        "downloads": 587,
+        "rights": "Public domain in the USA."
+      },
+      {
+        "book_id": "75334",
+        "title": "The girls",
+        "downloads": 373,
+        "rights": "Public domain in the USA."
+      }
+    ],
+    "Wharton, Edith, 1862-1937": [
+      {
+        "book_id": "166",
+        "title": "Summer",
+        "downloads": 2090,
+        "rights": "Public domain in the USA."
+      },
+      {
+        "book_id": "267",
+        "title": "The Touchstone",
+        "downloads": 1038,
+        "rights": "Public domain in the USA."
+      },
+      {
+        "book_id": "283",
+        "title": "The Reef",
+        "downloads": 1290,
+        "rights": "Public domain in the USA."
+      },
+      {
+        "book_id": "284",
+        "title": "The House of Mirth",
+        "downloads": 4540,
+        "rights": "Public domain in the USA."
+      },
+      {
+        "book_id": "311",
+        "title": "Bunner Sisters",
+        "downloads": 971,
+        "rights": "Public domain in the USA."
+      },
+      {
+        "book_id": "541",
+        "title": "The Age of Innocence",
+        "downloads": 6364,
+        "rights": "Public domain in the USA."
+      },
+      {
+        "book_id": "1263",
+        "title": "The Glimpses of the Moon",
+        "downloads": 802,
+        "rights": "Public domain in the USA."
+      },
+      {
+        "book_id": "4327",
+        "title": "The Valley of Decision",
+        "downloads": 685,
+        "rights": "Public domain in the USA."
+      },
+      {
+        "book_id": "4517",
+        "title": "Ethan Frome",
+        "downloads": 7477,
+        "rights": "Public domain in the USA."
+      },
+      {
+        "book_id": "4518",
+        "title": "Madame de Treymes",
+        "downloads": 489,
+        "rights": "Public domain in the USA."
+      },
+      {
+        "book_id": "7517",
+        "title": "Sanctuary",
+        "downloads": 596,
+        "rights": "Public domain in the USA."
+      },
+      {
+        "book_id": "9190",
+        "title": "The Greater Inclination",
+        "downloads": 656,
+        "rights": "Public domain in the USA."
+      },
+      {
+        "book_id": "11052",
+        "title": "The Custom of the Country",
+        "downloads": 1059,
+        "rights": "Public domain in the USA."
+      },
+      {
+        "book_id": "19191",
+        "title": "The Fruit of the Tree",
+        "downloads": 661,
+        "rights": "Public domain in the USA."
+      },
+      {
+        "book_id": "24131",
+        "title": "Xingu",
+        "downloads": 619,
+        "rights": "Public domain in the USA."
+      },
+      {
+        "book_id": "24133",
+        "title": "The Long Run 1916",
+        "downloads": 230,
+        "rights": "Public domain in the USA."
+      },
+      {
+        "book_id": "41855",
+        "title": "The Marne: A Tale of the War",
+        "downloads": 352,
+        "rights": "Public domain in the USA."
+      },
+      {
+        "book_id": "59437",
+        "title": "A Son at the Front",
+        "downloads": 376,
+        "rights": "Public domain in the USA."
+      },
+      {
+        "book_id": "61290",
+        "title": "The Old Maid (The 'Fifties)",
+        "downloads": 552,
+        "rights": "Public domain in the USA."
+      },
+      {
+        "book_id": "61297",
+        "title": "False Dawn (The 'Forties)",
+        "downloads": 454,
+        "rights": "Public domain in the USA."
+      },
+      {
+        "book_id": "61298",
+        "title": "The Spark (The 'Sixties)",
+        "downloads": 451,
+        "rights": "Public domain in the USA."
+      },
+      {
+        "book_id": "61321",
+        "title": "New Year's Day (The 'Seventies)",
+        "downloads": 473,
+        "rights": "Public domain in the USA."
+      },
+      {
+        "book_id": "70844",
+        "title": "Twilight sleep",
+        "downloads": 491,
+        "rights": "Public domain in the USA."
+      },
+      {
+        "book_id": "72446",
+        "title": "The writing of fiction",
+        "downloads": 947,
+        "rights": "Public domain in the USA."
+      },
+      {
+        "book_id": "72573",
+        "title": "The mother's recompense",
+        "downloads": 485,
+        "rights": "Public domain in the USA."
+      },
+      {
+        "book_id": "76417",
+        "title": "The children",
+        "downloads": 477,
+        "rights": "Public domain in the USA."
+      }
+    ],
+    "Marquand, John P. (John Phillips), 1893-1960": [
+      {
+        "book_id": "10109",
+        "title": "The Unspeakable Gentleman",
+        "downloads": 408,
+        "rights": "Public domain in the USA."
+      }
+    ],
+    "Tarkington, Booth, 1869-1946": [
+      {
+        "book_id": "297",
+        "title": "The Flirt",
+        "downloads": 861,
+        "rights": "Public domain in the USA."
+      },
+      {
+        "book_id": "402",
+        "title": "Penrod",
+        "downloads": 1464,
+        "rights": "Public domain in the USA."
+      },
+      {
+        "book_id": "483",
+        "title": "The Conquest of Canaan",
+        "downloads": 670,
+        "rights": "Public domain in the USA."
+      },
+      {
+        "book_id": "980",
+        "title": "Alice Adams",
+        "downloads": 910,
+        "rights": "Public domain in the USA."
+      },
+      {
+        "book_id": "1098",
+        "title": "The Turmoil: A Novel",
+        "downloads": 718,
+        "rights": "Public domain in the USA."
+      },
+      {
+        "book_id": "1158",
+        "title": "Penrod and Sam",
+        "downloads": 789,
+        "rights": "Public domain in the USA."
+      },
+      {
+        "book_id": "1611",
+        "title": "Seventeen A Tale of Youth and Summer Time and the Baxter Family, Especially William",
+        "downloads": 1020,
+        "rights": "Public domain in the USA."
+      },
+      {
+        "book_id": "1983",
+        "title": "Monsieur Beaucaire",
+        "downloads": 644,
+        "rights": "Public domain in the USA."
+      },
+      {
+        "book_id": "2326",
+        "title": "His Own People",
+        "downloads": 526,
+        "rights": "Public domain in the USA."
+      },
+      {
+        "book_id": "2595",
+        "title": "Ramsey Milholland",
+        "downloads": 574,
+        "rights": "Public domain in the USA."
+      },
+      {
+        "book_id": "3428",
+        "title": "The Two Vanrevels",
+        "downloads": 479,
+        "rights": "Public domain in the USA."
+      },
+      {
+        "book_id": "5756",
+        "title": "The Guest of Quesnay",
+        "downloads": 455,
+        "rights": "Public domain in the USA."
+      },
+      {
+        "book_id": "5798",
+        "title": "The Beautiful Lady",
+        "downloads": 495,
+        "rights": "Public domain in the USA."
+      },
+      {
+        "book_id": "6401",
+        "title": "Harlequin and Columbine",
+        "downloads": 627,
+        "rights": "Public domain in the USA."
+      },
+      {
+        "book_id": "8867",
+        "title": "The Magnificent Ambersons",
+        "downloads": 1188,
+        "rights": "Public domain in the USA."
+      },
+      {
+        "book_id": "9659",
+        "title": "The Gentleman from Indiana",
+        "downloads": 450,
+        "rights": "Public domain in the USA."
+      },
+      {
+        "book_id": "18259",
+        "title": "Gentle Julia",
+        "downloads": 497,
+        "rights": "Public domain in the USA."
+      },
+      {
+        "book_id": "58870",
+        "title": "The Midlander",
+        "downloads": 372,
+        "rights": "Public domain in the USA."
+      },
+      {
+        "book_id": "65207",
+        "title": "Women",
+        "downloads": 575,
+        "rights": "Public domain in the USA."
+      }
+    ]
+  },
+  "rejected": [
+    {
+      "book_id": "78501",
+      "title": "My mortal enemy",
+      "reason": "Story has 17917 words; at least 30000 required"
+    },
+    {
+      "book_id": "3006",
+      "title": "Stalky & Co.",
+      "reason": "No opening chapter heading followed by prose"
+    },
+    {
+      "book_id": "29135",
+      "title": "With the Night Mail: A Story of 2000 A.D. (Together with extracts from the comtemporary magazine in which it appeared)",
+      "reason": "No opening chapter heading followed by prose"
+    },
+    {
+      "book_id": "2821",
+      "title": "The story of the Gadsbys",
+      "reason": "No opening chapter heading followed by prose"
+    },
+    {
+      "book_id": "39516",
+      "title": "A Captain of Industry: Being the Story of a Civilized Man",
+      "reason": "Story has 20179 words; at least 30000 required"
+    },
+    {
+      "book_id": "14714",
+      "title": "Half Portions",
+      "reason": "No opening chapter heading followed by prose"
+    },
+    {
+      "book_id": "12677",
+      "title": "Personality Plus: Some Experiences of Emma McChesney and Her Son, Jock",
+      "reason": "Story has 25193 words; at least 30000 required"
+    },
+    {
+      "book_id": "61298",
+      "title": "The Spark (The 'Sixties)",
+      "reason": "Story has 14401 words; at least 30000 required"
+    },
+    {
+      "book_id": "41855",
+      "title": "The Marne: A Tale of the War",
+      "reason": "Story has 18242 words; at least 30000 required"
+    },
+    {
+      "book_id": "4518",
+      "title": "Madame de Treymes",
+      "reason": "Story has 19004 words; at least 30000 required"
+    },
+    {
+      "book_id": "61290",
+      "title": "The Old Maid (The 'Fifties)",
+      "reason": "Story has 23974 words; at least 30000 required"
+    },
+    {
+      "book_id": "61321",
+      "title": "New Year's Day (The 'Seventies)",
+      "reason": "Story has 21074 words; at least 30000 required"
+    },
+    {
+      "book_id": "2326",
+      "title": "His Own People",
+      "reason": "Story has 16499 words; at least 30000 required"
+    },
+    {
+      "book_id": "5798",
+      "title": "The Beautiful Lady",
+      "reason": "Story has 16495 words; at least 30000 required"
+    }
+  ],
+  "books": [
+    {
+      "book_id": "14696",
+      "title": "The Wheel of Life",
+      "author": "Glasgow, Ellen Anderson Gholson, 1873-1945",
+      "credential": "Pulitzer Prize for the Novel, 1942",
+      "split": "train",
+      "downloads": 431,
+      "rights": "Public domain in the USA.",
+      "subjects": "New York (State) -- Social life and customs -- Fiction",
+      "source_url": "https://gutenberg.pglaf.org/1/4/6/9/14696/14696-0.txt",
+      "text_hash": "92402374e338f72ec58c90da9464de2da1e9351f3dc39669f615bf873f5b1898",
+      "story_words": 123441,
+      "cuts": [
+        {
+          "example_id": "pg14696_0",
+          "start": 314,
+          "end": 321,
+          "context_words": 16107,
+          "target_words": 756,
+          "context_hash": "79df0d9cdcfab0dc4d83e0f2653b6b0a5fe76539ffcae0d2b0e29582f2d7d6ba",
+          "reference_hash": "816894268dd309401225aac494d53888597ced71172d49e3f4b45eee0846883b"
+        },
+        {
+          "example_id": "pg14696_1",
+          "start": 640,
+          "end": 653,
+          "context_words": 29251,
+          "target_words": 609,
+          "context_hash": "3b557f190ae94f7e1c0440b7fd9b08177120f58ead720892a78be8e8a330227b",
+          "reference_hash": "eccefcfcfc3fd7cb19d1a0faa1ca00b57782d200895fc5df08c1a1fa71bb5835"
+        },
+        {
+          "example_id": "pg14696_2",
+          "start": 1020,
+          "end": 1037,
+          "context_words": 54971,
+          "target_words": 367,
+          "context_hash": "116c8bede44d2abbf0d3e2edaa4b535ff060469a73b61c518e2e46403e7c129a",
+          "reference_hash": "114f78f5ee167feb1966175e6f50e524379506661ef16717baa6c2f164c732c9"
+        },
+        {
+          "example_id": "pg14696_3",
+          "start": 1497,
+          "end": 1504,
+          "context_words": 78059,
+          "target_words": 586,
+          "context_hash": "016bd5e36fef141425bcf9dd85866194802c18c282289e9c8a8f982a0fbea27e",
+          "reference_hash": "91db8282cf1e51acc755ee78ac5a8dfe61532403440e1e42b121a9547711abdb"
+        },
+        {
+          "example_id": "pg14696_4",
+          "start": 1702,
+          "end": 1709,
+          "context_words": 88587,
+          "target_words": 711,
+          "context_hash": "706d018753aa374dd88f749d7773bbf73a9ad86e760eabb277c8f9e5846217b7",
+          "reference_hash": "4058a28a3fdf51da46b4008c3e7d62462d698e91442ff3d7ee3fa35807c1a550"
+        },
+        {
+          "example_id": "pg14696_5",
+          "start": 2168,
+          "end": 2172,
+          "context_words": 113858,
+          "target_words": 736,
+          "context_hash": "5e73c2b07c743a1b651c13100181b7be1848df8e877b35047820ead0464c04e0",
+          "reference_hash": "c79004f3b7e93e6f4cf92b7b3d63535f323c4c4cb4967eaa51f7539d80ad0f55"
+        }
+      ]
+    },
+    {
+      "book_id": "34419",
+      "title": "The Ancient Law",
+      "author": "Glasgow, Ellen Anderson Gholson, 1873-1945",
+      "credential": "Pulitzer Prize for the Novel, 1942",
+      "split": "train",
+      "downloads": 441,
+      "rights": "Public domain in the USA.",
+      "subjects": "Virginia -- Fiction; Textile industry -- Fiction; Atonement -- Fiction; Ex-convicts -- Fiction; Industrial relations -- Fiction",
+      "source_url": "https://gutenberg.pglaf.org/cache/epub/34419/pg34419.txt",
+      "text_hash": "c6e4eed78075e12b619d11edbff28e5f74252c6c3cfc3c75caeb3cfb448ebda3",
+      "story_words": 118605,
+      "cuts": [
+        {
+          "example_id": "pg34419_0",
+          "start": 309,
+          "end": 321,
+          "context_words": 18958,
+          "target_words": 642,
+          "context_hash": "12cee674dd51e86926dec8ce7b15b24eb59fb967ac6f555d46dadfdcef74eddd",
+          "reference_hash": "dd2551c370581e5aab3e1b6c17b94643042ff174e541b1d7e74d6b9beeeec870"
+        },
+        {
+          "example_id": "pg34419_1",
+          "start": 427,
+          "end": 438,
+          "context_words": 25374,
+          "target_words": 616,
+          "context_hash": "b32961f0a727fda212d3ee5283dabbc2ff314d7c51ccf37d5eb51286d8ab4a1f",
+          "reference_hash": "86d12ce639d6aa27ea8310098e7b9c554d384054698598aeabbc084f111040d2"
+        },
+        {
+          "example_id": "pg34419_2",
+          "start": 1090,
+          "end": 1123,
+          "context_words": 54593,
+          "target_words": 767,
+          "context_hash": "e163636423cdeddb2e0ae39b4288b3a46e5fffc5f62c1353d0fa4e181edf0e50",
+          "reference_hash": "36404d3869d20e1bf241457c239880b99c99d581f80c62c1a9fc6b1503826310"
+        },
+        {
+          "example_id": "pg34419_3",
+          "start": 1479,
+          "end": 1491,
+          "context_words": 73514,
+          "target_words": 538,
+          "context_hash": "922300a7c358bffc450bf86933dcf0a7c8b5e571c508416cc160683d79122802",
+          "reference_hash": "2af3ee239bac7cd0401f312479d302599ed628fe2026e13f15b66583fa67d492"
+        },
+        {
+          "example_id": "pg34419_4",
+          "start": 1966,
+          "end": 1974,
+          "context_words": 97970,
+          "target_words": 633,
+          "context_hash": "6052ebfd1252aefe924babb776512e69d4ffb38b2d921d29f5b82466e0e4df16",
+          "reference_hash": "5724a8387ed00c4e6abcb76f4e28d50425bdae01d0625a91ea8ffa3661e572a9"
+        },
+        {
+          "example_id": "pg34419_5",
+          "start": 2343,
+          "end": 2353,
+          "context_words": 113208,
+          "target_words": 513,
+          "context_hash": "779371fe25146d5103b17aa7939276b98af1038c9028f53486acb1dbe33dbb16",
+          "reference_hash": "1398352028ce1af9ba613292664d13e4637e60e8fe3cfa8d7e849d9b59531974"
+        }
+      ]
+    },
+    {
+      "book_id": "66191",
+      "title": "Barren Ground",
+      "author": "Glasgow, Ellen Anderson Gholson, 1873-1945",
+      "credential": "Pulitzer Prize for the Novel, 1942",
+      "split": "train",
+      "downloads": 470,
+      "rights": "Public domain in the USA.",
+      "subjects": "Pastoral fiction; Country life -- Fiction; Virginia -- Fiction; Piedmont (U.S. : Region) -- Fiction",
+      "source_url": "https://gutenberg.pglaf.org/6/6/1/9/66191/66191-0.txt",
+      "text_hash": "9afa97723e9292b6028176b5b12cd498a07621152a6cafb387577555b232d945",
+      "story_words": 153716,
+      "cuts": [
+        {
+          "example_id": "pg66191_0",
+          "start": 327,
+          "end": 337,
+          "context_words": 23155,
+          "target_words": 407,
+          "context_hash": "4a05bd760d1fc98b377bc437832444f872eb653ec1e6a2be38c4b48a273bd82e",
+          "reference_hash": "e2cc65280155bc1e94ead75ac075e007382facebb4d4bc0225c6b210e8b9ae58"
+        },
+        {
+          "example_id": "pg66191_1",
+          "start": 795,
+          "end": 801,
+          "context_words": 52563,
+          "target_words": 577,
+          "context_hash": "cc1d07a0fe3b8f8e64e90c1cdc96d7026f98858ee517e29a5a1d0c6df42954f1",
+          "reference_hash": "770cb98a9f1a445327111e4a03b9857ee0cd9483523b2da7681dbcbb336fe8fd"
+        },
+        {
+          "example_id": "pg66191_2",
+          "start": 811,
+          "end": 824,
+          "context_words": 53498,
+          "target_words": 743,
+          "context_hash": "0d2db56965ce37a08aea76acb4ebb586ef64152e81b5c3c8f7f15e9e7e900eee",
+          "reference_hash": "07a3a598361b9d0493aa810ea41f0ee99461ea0b63843736273dbd2176479af9"
+        },
+        {
+          "example_id": "pg66191_3",
+          "start": 1286,
+          "end": 1303,
+          "context_words": 80738,
+          "target_words": 666,
+          "context_hash": "e1e72d5a93eefca46fe1471a4bdb6d417ac8a95fde3a6f5f4ae0fabcbba584a9",
+          "reference_hash": "f50624b3d407379eec23c4af00916ca3117777f0d9cd15d50e2bbde3e7be0ca3"
+        },
+        {
+          "example_id": "pg66191_4",
+          "start": 2078,
+          "end": 2083,
+          "context_words": 123798,
+          "target_words": 412,
+          "context_hash": "b80a01e51ece4d0610d6e59abf5124a5ea36ef70fa68d4b5e099a41df71b642e",
+          "reference_hash": "afebd65bd30e22d585823aff7c034589edbfa1727eec87e92cfacbf3a234f6e0"
+        },
+        {
+          "example_id": "pg66191_5",
+          "start": 2401,
+          "end": 2419,
+          "context_words": 143060,
+          "target_words": 787,
+          "context_hash": "ed933d6b3c8d78d4d2212fa2b88110f1f4379a0ac55bedac68a11b677f62e73e",
+          "reference_hash": "c65176bd5b3f9d180f03860db1677f8df9b9c70e1243d4808064f2570a03758f"
+        }
+      ]
+    },
+    {
+      "book_id": "25430",
+      "title": "The Innocents: A Story for Lovers",
+      "author": "Lewis, Sinclair, 1885-1951",
+      "credential": "Nobel Prize in Literature, 1930; Pulitzer Prize for the Novel, 1926 (declined)",
+      "split": "train",
+      "downloads": 878,
+      "rights": "Public domain in the USA.",
+      "subjects": "Married people -- Fiction; New York (State) -- Social life and customs -- Fiction",
+      "source_url": "https://gutenberg.pglaf.org/cache/epub/25430/pg25430.txt",
+      "text_hash": "560b761bf97c93ab01d8d995ee4c8ea26f9a099b6f90cf8a6af5bc6256e85ce3",
+      "story_words": 41340,
+      "cuts": [
+        {
+          "example_id": "pg25430_0",
+          "start": 48,
+          "end": 57,
+          "context_words": 4005,
+          "target_words": 694,
+          "context_hash": "3e04711918e56650b5fb48f3b43ef7217bf478d120e41d30ba1b9840fafcd0bd",
+          "reference_hash": "b62e984ed62e4dffc553435c84f09ab5162b8b3d5f57340cfbcd40284f9d0256"
+        },
+        {
+          "example_id": "pg25430_1",
+          "start": 117,
+          "end": 125,
+          "context_words": 9137,
+          "target_words": 611,
+          "context_hash": "42f3ca5539c7b9f1dfa95a11ed3d3a6d25d4f94d26e82bc8b527b8194fc529d1",
+          "reference_hash": "0d3375d7f8965cb7a2272a89b25d2aa30397e72c4d8ce8fd3376b0240a782dbe"
+        },
+        {
+          "example_id": "pg25430_2",
+          "start": 265,
+          "end": 279,
+          "context_words": 16512,
+          "target_words": 571,
+          "context_hash": "d511518f0fc26b15a518e2868041016fa248765e90bc5a1218ca4f69715e01dd",
+          "reference_hash": "3b7827e42641de81b306ab70e208f986becb4041a6086f99862e915f249eff5b"
+        },
+        {
+          "example_id": "pg25430_3",
+          "start": 386,
+          "end": 394,
+          "context_words": 22227,
+          "target_words": 501,
+          "context_hash": "41bf5bc8597059c1a1dc5897241426596974b6026d6f96a17fd3dcdf66a79d4b",
+          "reference_hash": "140ed25ab84a7ea206eb72dd43b0f8e634b8a58557760c990d3fe140be917aac"
+        },
+        {
+          "example_id": "pg25430_4",
+          "start": 510,
+          "end": 531,
+          "context_words": 28449,
+          "target_words": 743,
+          "context_hash": "5f38e76c59cadfee557d4d41cd1483826285dbff4f0a2090920ac881455b1bb3",
+          "reference_hash": "4d668dbfa167906dcacea1cd11e56fb618b81665c398e50594b740d6776ab64d"
+        },
+        {
+          "example_id": "pg25430_5",
+          "start": 702,
+          "end": 715,
+          "context_words": 37138,
+          "target_words": 439,
+          "context_hash": "b851f18d5d0a20f98e9289492958c2fa3eb23dc256cd02355f5383b2ef4d6352",
+          "reference_hash": "b69015154369321caa7c1918aac6df2a85fb6f47cf48d05fffc49d9f5c09465c"
+        }
+      ]
+    },
+    {
+      "book_id": "4961",
+      "title": "Our Mr. Wrenn: The Romantic Adventures of a Gentle Man",
+      "author": "Lewis, Sinclair, 1885-1951",
+      "credential": "Nobel Prize in Literature, 1930; Pulitzer Prize for the Novel, 1926 (declined)",
+      "split": "train",
+      "downloads": 690,
+      "rights": "Public domain in the USA.",
+      "subjects": "Love stories; Courtship -- Fiction; Man-woman relationships -- Fiction; Middle-aged men -- United States -- Fiction",
+      "source_url": "https://gutenberg.pglaf.org/4/9/6/4961/4961-0.txt",
+      "text_hash": "4f454fc0a8662cf04f0e113bfdc9edc69167879ef291b76955043f60447528e4",
+      "story_words": 76103,
+      "cuts": [
+        {
+          "example_id": "pg4961_0",
+          "start": 255,
+          "end": 266,
+          "context_words": 11802,
+          "target_words": 630,
+          "context_hash": "b1f405ef802feda846545006168ea9cc07b0b418b874d915b8444390d638d386",
+          "reference_hash": "bb7f754f6326da57fc5f6d054816b708881a7873c96dfb7b87aff27a3ed47c4e"
+        },
+        {
+          "example_id": "pg4961_1",
+          "start": 540,
+          "end": 550,
+          "context_words": 22214,
+          "target_words": 616,
+          "context_hash": "83877ca58640a3a7c974a768e385b582da34b670ef01a388c6c5abb90ea59c25",
+          "reference_hash": "ba2313fd8944b39f5930ad8c5a163bc88b88b2aec569122ff86c114fc214d7c8"
+        },
+        {
+          "example_id": "pg4961_2",
+          "start": 1000,
+          "end": 1016,
+          "context_words": 38206,
+          "target_words": 695,
+          "context_hash": "9d69f306b8b845f2b251e3494c354c746e552bfd3da96a11ed98103c85336d42",
+          "reference_hash": "a8d78e05062c701228b352782912307856f0b34b65eadaeb5e203dc8022b76fd"
+        },
+        {
+          "example_id": "pg4961_3",
+          "start": 1407,
+          "end": 1428,
+          "context_words": 51363,
+          "target_words": 537,
+          "context_hash": "6928eef307285a028b85604c44c1389837bc0dc76a84b9a1835ddea70583bdba",
+          "reference_hash": "c51983e33b33be2dce2358e9af8e566bd2daf3c3ca6dafea8b11cc58fbf0f885"
+        },
+        {
+          "example_id": "pg4961_4",
+          "start": 1779,
+          "end": 1791,
+          "context_words": 63232,
+          "target_words": 335,
+          "context_hash": "acd328030b0d6c8e29740de5073488ab3b767b6d07ddeb4918bed21cd8d7f499",
+          "reference_hash": "0278b3dffaf9396b442a7f7894a084cf43e725578ba43438e765e1551b0873f4"
+        },
+        {
+          "example_id": "pg4961_5",
+          "start": 1979,
+          "end": 2012,
+          "context_words": 69581,
+          "target_words": 631,
+          "context_hash": "a254191e395e743813fcf02e1b3faef6ef866e48a412ff626fad7c7911afd640",
+          "reference_hash": "f58209694b6616d89805cbe40d8ec1028c367d1abddf02071fa47ce4ffcc7777"
+        }
+      ]
+    },
+    {
+      "book_id": "25474",
+      "title": "The Job: An American Novel",
+      "author": "Lewis, Sinclair, 1885-1951",
+      "credential": "Nobel Prize in Literature, 1930; Pulitzer Prize for the Novel, 1926 (declined)",
+      "split": "train",
+      "downloads": 587,
+      "rights": "Public domain in the USA.",
+      "subjects": "New York (N.Y.) -- Fiction; Women white collar workers -- Fiction",
+      "source_url": "https://gutenberg.pglaf.org/cache/epub/25474/pg25474.txt",
+      "text_hash": "ab2a10e6ae794df1ea1dcaa288568134232e4c233857eef686648dd62af7250c",
+      "story_words": 90516,
+      "cuts": [
+        {
+          "example_id": "pg25474_0",
+          "start": 38,
+          "end": 45,
+          "context_words": 2675,
+          "target_words": 513,
+          "context_hash": "abba0fb32ac2ff8beb1208d841320745ad40c0b1ee3cba6b8da6bfd898139a18",
+          "reference_hash": "7cc98da151f1d31810d609e0807e352666ffc62a38e42270a7736c9fd437b5b1"
+        },
+        {
+          "example_id": "pg25474_1",
+          "start": 315,
+          "end": 336,
+          "context_words": 20146,
+          "target_words": 791,
+          "context_hash": "06f8337608507349d7a679ee2333c8a80218907cc25a67ab20c2332310d6046b",
+          "reference_hash": "0e2c5658004b8f2ff16ef29b4bd3ac73457fed0d498d87fbf6568a727d7a6c81"
+        },
+        {
+          "example_id": "pg25474_2",
+          "start": 822,
+          "end": 831,
+          "context_words": 44255,
+          "target_words": 442,
+          "context_hash": "44387052a2eb6b55908f7f42b480f042b592b55887e0bbdb5f0b0261c26d4fd7",
+          "reference_hash": "98b136a141903f98e736820ff2cd0949ed4ab6cce54cae76605b0a93487ab290"
+        },
+        {
+          "example_id": "pg25474_3",
+          "start": 1020,
+          "end": 1025,
+          "context_words": 52821,
+          "target_words": 361,
+          "context_hash": "fc76880494761845205fb885c5eb5b853b51afc1313ac07ca9117f638dad7cf5",
+          "reference_hash": "c535014e88f80a9353fcede9f159dc4c1454d55de309fc12f02ed09ed6546f5f"
+        },
+        {
+          "example_id": "pg25474_4",
+          "start": 1288,
+          "end": 1296,
+          "context_words": 71403,
+          "target_words": 635,
+          "context_hash": "c596b37f7392a25067b15fde87c979b81e393de20afa921cb72016448f4dcf6e",
+          "reference_hash": "1c70d788389142e7931cfa4c57d984ad8782f46805049458356943b76566b54f"
+        },
+        {
+          "example_id": "pg25474_5",
+          "start": 1397,
+          "end": 1400,
+          "context_words": 77078,
+          "target_words": 322,
+          "context_hash": "cc83949927e10b30b0cd0864f0be3151f6401d1ec5c03a1db2c342296ba97569",
+          "reference_hash": "4eee1e5ba8bff0933f44d2222da2033a658ad55d83ecc474267e1b4b95f3c802"
+        }
+      ]
+    },
+    {
+      "book_id": "69549",
+      "title": "The painted room",
+      "author": "Wilson, Margaret, 1882-1973",
+      "credential": "Pulitzer Prize for the Novel, 1924",
+      "split": "train",
+      "downloads": 413,
+      "rights": "Public domain in the USA.",
+      "subjects": "First loves -- Fiction; Mate selection -- Fiction; United States -- Social life and customs -- 20th century -- Fiction; Middle West -- Fiction; Families -- Fiction",
+      "source_url": "https://gutenberg.pglaf.org/6/9/5/4/69549/69549-0.txt",
+      "text_hash": "fe5b13178ac92cbb34b764cfc18154fee6857feb6e03945b1e569cc604525205",
+      "story_words": 79171,
+      "cuts": [
+        {
+          "example_id": "pg69549_0",
+          "start": 182,
+          "end": 188,
+          "context_words": 9565,
+          "target_words": 582,
+          "context_hash": "2a006a5e0294f225a62f2619656191492c6af4f31f2a084e99e1188e89e1296f",
+          "reference_hash": "554cb42816c2d92dd8fcc0b14106b0d130ff397119d0288f7158cb3ac7217c8e"
+        },
+        {
+          "example_id": "pg69549_1",
+          "start": 345,
+          "end": 359,
+          "context_words": 19264,
+          "target_words": 319,
+          "context_hash": "9b657f46eca0ff11d9f0a3ddcdb267bf802ac606340be538ca0b35f98e5668c3",
+          "reference_hash": "19d578deac61af1205f9eb8d7782d33081f529a718f43fb563ee5c0320a980e5"
+        },
+        {
+          "example_id": "pg69549_2",
+          "start": 766,
+          "end": 779,
+          "context_words": 33077,
+          "target_words": 625,
+          "context_hash": "44d96d04a1cadd3fce6783b3378b22ace31399b5f4701b28564a27194470002b",
+          "reference_hash": "e5458ddcf5a8637f0b26d9bb1065cb15823ea8283bcb46898365616a32b72eb7"
+        },
+        {
+          "example_id": "pg69549_3",
+          "start": 1019,
+          "end": 1053,
+          "context_words": 42285,
+          "target_words": 742,
+          "context_hash": "ae9ff0c7bdccc677cfc7093160ac6f83995d593c9424e12086b73c6d767ff465",
+          "reference_hash": "787849c2829a744042beee22afaeaceff8ee468e3d70d78ec5f027fceb1792eb"
+        },
+        {
+          "example_id": "pg69549_4",
+          "start": 1433,
+          "end": 1438,
+          "context_words": 55476,
+          "target_words": 724,
+          "context_hash": "255496e4051f21e31be35cff1de84ca2ff1e3032ce22eb9288befee7d6512c6b",
+          "reference_hash": "aab1cf1065f915e73069075c66a3f6b6046364b85fc26954b506f49875b7f5ac"
+        },
+        {
+          "example_id": "pg69549_5",
+          "start": 1836,
+          "end": 1842,
+          "context_words": 75658,
+          "target_words": 533,
+          "context_hash": "9dd7a9e3b32a7330ccd4ea002ecbd02da2e92f60e3aacc87bd0330214d6acef6",
+          "reference_hash": "040874e94730881a08d812747b0b978dfc80156a007ff037c2b05baee4549fd1"
+        }
+      ]
+    },
+    {
+      "book_id": "17259",
+      "title": "His Second Wife",
+      "author": "Poole, Ernest, 1880-1950",
+      "credential": "Pulitzer Prize for the Novel, 1918",
+      "split": "train",
+      "downloads": 346,
+      "rights": "Public domain in the USA.",
+      "subjects": "New York (N.Y.) -- Social life and customs -- Fiction; Marriage -- Fiction",
+      "source_url": "https://gutenberg.pglaf.org/cache/epub/17259/pg17259.txt",
+      "text_hash": "9fe073f8ceade23ea44b0701742a5d94ae83f71336ba06ab5cf26013005573ea",
+      "story_words": 64975,
+      "cuts": [
+        {
+          "example_id": "pg17259_0",
+          "start": 140,
+          "end": 158,
+          "context_words": 8536,
+          "target_words": 505,
+          "context_hash": "b5dfd6751ffa026b97a4f142a01f8b7ddead3abc7dd4630b052aadb712770256",
+          "reference_hash": "98bd2d882d3d38f664937bb9b59b26316635501a00aadd36cc477c4b2a370954"
+        },
+        {
+          "example_id": "pg17259_1",
+          "start": 343,
+          "end": 348,
+          "context_words": 17310,
+          "target_words": 367,
+          "context_hash": "858e4fe9b480fc4ec92c3078f497d17510497d0c8c7758804bb72033290f2313",
+          "reference_hash": "5d7f900a1dc39d35241770e3986516f4918da56387d3a52909a78b01cd1356e0"
+        },
+        {
+          "example_id": "pg17259_2",
+          "start": 623,
+          "end": 643,
+          "context_words": 33426,
+          "target_words": 774,
+          "context_hash": "c1a756e8c2f759059db116c18c30eed9da6ca3696a3a3d1c35b3ed9d61a7135e",
+          "reference_hash": "103898a937095bc017897341f87ff2af404bbf0b1d35aec89c865be2e10b8e52"
+        },
+        {
+          "example_id": "pg17259_3",
+          "start": 734,
+          "end": 739,
+          "context_words": 38525,
+          "target_words": 747,
+          "context_hash": "11004f102459f83e273cdd4b7df7ba5d0a1aba921039e7ca7673a5934e93682c",
+          "reference_hash": "8a9f9b4b744407cc18db398ca2f2e25d4d38c05d6a51ce2fa245aecb6cb96843"
+        },
+        {
+          "example_id": "pg17259_4",
+          "start": 1052,
+          "end": 1062,
+          "context_words": 50739,
+          "target_words": 341,
+          "context_hash": "0c35276f6689ee178742d411ba2ec5f0c1d4784090324ba61a193dfa337d9ff8",
+          "reference_hash": "bb8cb96f0a8a33d20440d300b65138a3504683fc8cbc8b43083e217bf393c19d"
+        },
+        {
+          "example_id": "pg17259_5",
+          "start": 1225,
+          "end": 1235,
+          "context_words": 58935,
+          "target_words": 341,
+          "context_hash": "63790194d7407e4362f9d8f5731c70899d0fd861c291fe5710bfbe5ff5e78430",
+          "reference_hash": "17c7aee566b554ca5aac31fa75cbe812fbfb88625d37cecbe6aac7038c5ce27c"
+        }
+      ]
+    },
+    {
+      "book_id": "67138",
+      "title": "The Sun Also Rises",
+      "author": "Hemingway, Ernest, 1899-1961",
+      "credential": "Nobel Prize in Literature, 1954; Pulitzer Prize for Fiction, 1953",
+      "split": "train",
+      "downloads": 4955,
+      "rights": "Public domain in the USA.",
+      "subjects": "Americans -- France -- Fiction; Americans -- Spain -- Fiction; Ashley, Brett (Fictitious character) -- Fiction; Expatriation -- Fiction; Spain -- History -- Alfonso XIII, 1886-1931 -- Fiction",
+      "source_url": "https://gutenberg.pglaf.org/6/7/1/3/67138/67138-0.txt",
+      "text_hash": "85e210bdc5cbf70689a0c05e3067457f6451e3c52b4f76942206403001390de4",
+      "story_words": 67737,
+      "cuts": [
+        {
+          "example_id": "pg67138_0",
+          "start": 446,
+          "end": 490,
+          "context_words": 9389,
+          "target_words": 513,
+          "context_hash": "2ffeda233c4b15d69eb0ac88b028f5274ed81faf3f97c29928234974d7e6d2df",
+          "reference_hash": "4db8d9896c2ee1ead78177b591ac2542d2e0905fd284ef622b4925e08ebc3982"
+        },
+        {
+          "example_id": "pg67138_1",
+          "start": 798,
+          "end": 857,
+          "context_words": 15761,
+          "target_words": 657,
+          "context_hash": "a561074ea6e75077a5b45ad5f1575cd0f09fa392e471ed7884f2413c846392f2",
+          "reference_hash": "3dede23b1098b2aa41851426b61fd4c32f8c31d6f33284cf404647044d40c7f6"
+        },
+        {
+          "example_id": "pg67138_2",
+          "start": 1553,
+          "end": 1591,
+          "context_words": 31733,
+          "target_words": 517,
+          "context_hash": "17aa0cee7f4317e367c2041f8bf49c8d2bde2517fbe0c1569808d83adf252f71",
+          "reference_hash": "187856f48d228d6330c2ceb27c30777967cfedadae42febc2f2f5ea89e4ea5b9"
+        },
+        {
+          "example_id": "pg67138_3",
+          "start": 1910,
+          "end": 1944,
+          "context_words": 38018,
+          "target_words": 392,
+          "context_hash": "1dc8cda713aa4b4357ab10cd9eb8fcc4c0960d04610c4051dbe83a8392f6d376",
+          "reference_hash": "63affd6c49d214c96a68a8f267ad759d5ff99bba5c1dd72e4a40d3c09666d56e"
+        },
+        {
+          "example_id": "pg67138_4",
+          "start": 2423,
+          "end": 2446,
+          "context_words": 49035,
+          "target_words": 342,
+          "context_hash": "38b679d205d6f3cf315c1d2e32ff3c511036c1fe33ce0771ae3bbfdd5766362b",
+          "reference_hash": "c32d2576bae1dcdbc3e33bc038c3b8589a3cf779fac050204a18d0110f6f9b78"
+        },
+        {
+          "example_id": "pg67138_5",
+          "start": 3130,
+          "end": 3135,
+          "context_words": 64504,
+          "target_words": 705,
+          "context_hash": "851a4d3999f6fabe666b902a44812935a0eac4abe54ae01be36d24b60e017cd4",
+          "reference_hash": "8495dea4074fb5733607567709b5218205f2f12eeafeb27c406c5e7824763cd9"
+        }
+      ]
+    },
+    {
+      "book_id": "73672",
+      "title": "Jocelyn",
+      "author": "Galsworthy, John, 1867-1933",
+      "credential": "Nobel Prize in Literature, 1932",
+      "split": "validation",
+      "downloads": 457,
+      "rights": "Public domain in the USA.",
+      "subjects": "Triangles (Interpersonal relations) -- Fiction; Man-woman relationships -- Fiction; Invalids -- Fiction; Spouses -- Fiction; Riviera (France) -- Fiction",
+      "source_url": "https://gutenberg.pglaf.org/7/3/6/7/73672/73672-0.txt",
+      "text_hash": "4ea82587217517365066393ea7bafd457ece72fead2c80a8096e04f9bb243166",
+      "story_words": 57367,
+      "cuts": [
+        {
+          "example_id": "pg73672_0",
+          "start": 53,
+          "end": 60,
+          "context_words": 2761,
+          "target_words": 315,
+          "context_hash": "28da584f39aced70e5487468ae72f22b4d049d9939cb602adbb13cd6698d1d26",
+          "reference_hash": "84c1664cc81b6d4c508e963cfdbf84a327c433366841b168226e4c56e1925e1d"
+        },
+        {
+          "example_id": "pg73672_1",
+          "start": 273,
+          "end": 283,
+          "context_words": 15484,
+          "target_words": 693,
+          "context_hash": "da678cd46c7ab1c06b398a316b43f0ee0f8074186ce56b25291fb75951e69857",
+          "reference_hash": "51e9767f718152b6dd8d652f92d2a88511d82a59b546fc9dea23224071f0cc02"
+        },
+        {
+          "example_id": "pg73672_2",
+          "start": 482,
+          "end": 492,
+          "context_words": 26560,
+          "target_words": 734,
+          "context_hash": "f074cd75abc96eb9ad05c66c8c2a51574435196e8f928e8e7f3c3ade69aad751",
+          "reference_hash": "29f1f0f3393b4d3b393402f1ca1f6ebf046556bbcfdf02120fdfacc696ebbb12"
+        },
+        {
+          "example_id": "pg73672_3",
+          "start": 648,
+          "end": 657,
+          "context_words": 34557,
+          "target_words": 583,
+          "context_hash": "9ed90af59212fccbabed018fa1257dece57eceecfaff1109f0cee5e428b01fdf",
+          "reference_hash": "ae84336ab9095dd6611af9b18731cf417291289a81f3c418463c088296b8f502"
+        },
+        {
+          "example_id": "pg73672_4",
+          "start": 786,
+          "end": 790,
+          "context_words": 41670,
+          "target_words": 342,
+          "context_hash": "cc41d154a400d41913141f1a564de1daad7375d2190c2f7b09d96ee246bc3cf1",
+          "reference_hash": "dd35cd27b61c21c554f042a8d1a87d9c0bf4a0b22471895a7b092fe5c4405a85"
+        },
+        {
+          "example_id": "pg73672_5",
+          "start": 1000,
+          "end": 1011,
+          "context_words": 51496,
+          "target_words": 545,
+          "context_hash": "52b6c98faffe42148192a8a412e7fda817145a00c12b1199703a71ccd4fe6500",
+          "reference_hash": "ddff93949d07d386aba5a092a968bcdf4651bb8627dff991062d4ecff1e344c6"
+        }
+      ]
+    },
+    {
+      "book_id": "2773",
+      "title": "Fraternity",
+      "author": "Galsworthy, John, 1867-1933",
+      "credential": "Nobel Prize in Literature, 1932",
+      "split": "validation",
+      "downloads": 564,
+      "rights": "Public domain in the USA.",
+      "subjects": "London (England) -- Fiction; England -- Social life and customs -- 20th century -- Fiction; Upper class families -- England -- Fiction",
+      "source_url": "https://gutenberg.pglaf.org/2/7/7/2773/2773-0.txt",
+      "text_hash": "9407067da3edf713ae26c8457472084e561f9de0dfed96dde0568752640125f2",
+      "story_words": 94404,
+      "cuts": [
+        {
+          "example_id": "pg2773_0",
+          "start": 309,
+          "end": 317,
+          "context_words": 9925,
+          "target_words": 606,
+          "context_hash": "789bca439f0a3200b1bc9f429c7c51e4b8725d454ccf8d664934bf466bed6f19",
+          "reference_hash": "f713dc684ae6e71346e62bba0862f4667a1554af1e4a4f2d3a0fac1aa573aeee"
+        },
+        {
+          "example_id": "pg2773_1",
+          "start": 580,
+          "end": 607,
+          "context_words": 20331,
+          "target_words": 792,
+          "context_hash": "51865f90f8fb5a1f1113440972e0ffbbae5d855e77a00c22e09ec2a33c33316c",
+          "reference_hash": "d05618c98a0b44b777ce5ac626e0207609a914b7ecda9036e6737b5221bfea33"
+        },
+        {
+          "example_id": "pg2773_2",
+          "start": 1367,
+          "end": 1385,
+          "context_words": 46525,
+          "target_words": 448,
+          "context_hash": "2e70565c8a202e624533a3a2b85ff4c3f71c76faf8767bb491bda8fc3c43e648",
+          "reference_hash": "88ef6944429c06d87b9ce4015cca7cc205156d197c9e5be97eb0c20296553add"
+        },
+        {
+          "example_id": "pg2773_3",
+          "start": 1505,
+          "end": 1523,
+          "context_words": 51182,
+          "target_words": 480,
+          "context_hash": "55b76711ec4a256bc7cb0e6544fbb06449ce56a7fc06f8396e48a327705a928d",
+          "reference_hash": "c87cd15accf3a959ed90d1840210f0185176bb4bbd19eef494208a6c3b59cbf6"
+        },
+        {
+          "example_id": "pg2773_4",
+          "start": 1920,
+          "end": 1932,
+          "context_words": 64058,
+          "target_words": 629,
+          "context_hash": "ab8f12513bc00ac7aee9279c5366f3acd06331cffcdfa654dcad96d0bd8de60d",
+          "reference_hash": "35f74fdd0d695c787559199475e6e28b9222e36e7d60d742f624af8c1145dae2"
+        },
+        {
+          "example_id": "pg2773_5",
+          "start": 2436,
+          "end": 2458,
+          "context_words": 79267,
+          "target_words": 573,
+          "context_hash": "cad9ef7c47c4448367ae83719ec6fe8e812ceb69fb7e4e4529bd8a581368b0e2",
+          "reference_hash": "81806c933fd951afcb2fa428c9963b8ab6725e2d354b2ca709bead0b4219d0aa"
+        }
+      ]
+    },
+    {
+      "book_id": "3817",
+      "title": "To Let",
+      "author": "Galsworthy, John, 1867-1933",
+      "credential": "Nobel Prize in Literature, 1932",
+      "split": "validation",
+      "downloads": 590,
+      "rights": "Public domain in the USA.",
+      "subjects": "England -- Social life and customs -- 19th century -- Fiction; Domestic fiction; Women -- England -- Fiction; Middle class -- England -- Fiction; England -- Social life and customs -- 20th century -- Fiction; Forsyte family (Fictitious characters) -- Fiction; Families -- England -- Fiction",
+      "source_url": "https://gutenberg.pglaf.org/cache/epub/3817/pg3817.txt",
+      "text_hash": "baa9da766bade5e65bdb608d66caeccaf0c0c1059b5d05c7071bc78efcb8b953",
+      "story_words": 87987,
+      "cuts": [
+        {
+          "example_id": "pg3817_0",
+          "start": 278,
+          "end": 294,
+          "context_words": 10126,
+          "target_words": 389,
+          "context_hash": "01516a28963235e9468bd08034f03ba3992d9d0d651406ac7ffadab8b0e1e201",
+          "reference_hash": "55131b48ea307ae2c5514e89ac024210c39cf2eda257e0a03a45332f780a94eb"
+        },
+        {
+          "example_id": "pg3817_1",
+          "start": 775,
+          "end": 799,
+          "context_words": 28391,
+          "target_words": 356,
+          "context_hash": "d3f2ea36d79a71bfdac779d25291718fb883feaa5430428a3da11fd96bf4ced8",
+          "reference_hash": "1103d18468266e024ed811baeaf927538a8e9b914ac71fa9921f3e645d9f7b01"
+        },
+        {
+          "example_id": "pg3817_2",
+          "start": 1235,
+          "end": 1255,
+          "context_words": 43704,
+          "target_words": 391,
+          "context_hash": "a8b16699fc8c8c9f6a2302ec6d796ddde26e9e9d165e970aa0290ee64bf8b3c9",
+          "reference_hash": "1e407db63ecb736e9b7e62c6943751098f59976f7eed789505f8306744dd8790"
+        },
+        {
+          "example_id": "pg3817_3",
+          "start": 1587,
+          "end": 1630,
+          "context_words": 54583,
+          "target_words": 622,
+          "context_hash": "d2db9452929b2f0f3585632639117b490ac40e22b00c46cb014ef4bd1c4987d3",
+          "reference_hash": "82937cf9bfca542777b74fa08d5e9e1c09466cef838e2d423e2527d89a4425b1"
+        },
+        {
+          "example_id": "pg3817_4",
+          "start": 1964,
+          "end": 1980,
+          "context_words": 68103,
+          "target_words": 778,
+          "context_hash": "f1016084e805502b47cfc758982bd7aa506cd4b9b1221ceacc03e20bb26e294f",
+          "reference_hash": "f6cd59ab63239e5658ee3362980511eccf4faea57ae59e0ad9781c12c3b5c778"
+        },
+        {
+          "example_id": "pg3817_5",
+          "start": 2328,
+          "end": 2347,
+          "context_words": 83410,
+          "target_words": 619,
+          "context_hash": "e90d640c9750b276a98bc46c08485ab6225140f308455b68e876fe55f2049d47",
+          "reference_hash": "82ca751e8ff231cf55546b685d422147eb7e2555862d544601d92383ca096ec2"
+        }
+      ]
+    },
+    {
+      "book_id": "64700",
+      "title": "Fombombo",
+      "author": "Stribling, T. S. (Thomas Sigismund), 1881-1965",
+      "credential": "Pulitzer Prize for the Novel, 1933",
+      "split": "validation",
+      "downloads": 389,
+      "rights": "Public domain in the USA.",
+      "subjects": "Venezuela -- Fiction",
+      "source_url": "https://gutenberg.pglaf.org/6/4/7/0/64700/64700-0.txt",
+      "text_hash": "9bf1a58ea02b5d521b588959eed8d862485250f0c78cf4d8dba37503bde2472d",
+      "story_words": 89463,
+      "cuts": [
+        {
+          "example_id": "pg64700_0",
+          "start": 55,
+          "end": 74,
+          "context_words": 2158,
+          "target_words": 733,
+          "context_hash": "2aed5d171286faecb59c31af7494d0b81160125342ea110364cd8e3b62bb0c68",
+          "reference_hash": "6c452da82da6344b943e27264c5ca27db834b15d302cdf474b42dad4ac57b8e7"
+        },
+        {
+          "example_id": "pg64700_1",
+          "start": 988,
+          "end": 1008,
+          "context_words": 30291,
+          "target_words": 396,
+          "context_hash": "b8e4b8f0b254eb341f79b0cc5112084e9c43d0dcff3b3ecd07f5d29c39667efa",
+          "reference_hash": "ca9a73f6a09ec28064baf34195fb5b125b38b79605a8273d7ca82b3267439efd"
+        },
+        {
+          "example_id": "pg64700_2",
+          "start": 1344,
+          "end": 1366,
+          "context_words": 41742,
+          "target_words": 699,
+          "context_hash": "e35de7633f9d699312f16cf39f06b7fd109c083e35c473e0c610f3f1e0999f4a",
+          "reference_hash": "09897f6c58b186ec79c7d5542349018269f94cd8dc3ca6bad5bd149aee725b41"
+        },
+        {
+          "example_id": "pg64700_3",
+          "start": 1451,
+          "end": 1480,
+          "context_words": 46632,
+          "target_words": 781,
+          "context_hash": "68c6d97dc3d1fadcfe0bfdca8052afc15df85bdac027ea7d81a0a9f8ef673c13",
+          "reference_hash": "aa086d750c149788d0df708cebcd7c83ad160618dfe73498a46da0bd7485db2f"
+        },
+        {
+          "example_id": "pg64700_4",
+          "start": 1915,
+          "end": 1924,
+          "context_words": 62990,
+          "target_words": 410,
+          "context_hash": "072f854241f57d6eca79077619bb05ef34fc2ac008a05e8bf560c2d144ceef4d",
+          "reference_hash": "8758945c4fea9a44ea713701a32386054806386d6b521b5b40f939ce983eb729"
+        },
+        {
+          "example_id": "pg64700_5",
+          "start": 2246,
+          "end": 2263,
+          "context_words": 76068,
+          "target_words": 632,
+          "context_hash": "eccda56843e49c872bbe904182e991ef50296c6112db37a0f02a3bd5b79a2dc6",
+          "reference_hash": "1e58420660cd338bba9a3487d5032c5987dec5d4d448e4e5b372d905ed788e23"
+        }
+      ]
+    },
+    {
+      "book_id": "2369",
+      "title": "One of Ours",
+      "author": "Cather, Willa, 1873-1947",
+      "credential": "Pulitzer Prize for the Novel, 1923",
+      "split": "validation",
+      "downloads": 949,
+      "rights": "Public domain in the USA.",
+      "subjects": "Nebraska -- Fiction; World War, 1914-1918 -- Fiction; War stories; Farm life -- Fiction; Soldiers -- Fiction",
+      "source_url": "https://gutenberg.pglaf.org/cache/epub/2369/pg2369.txt",
+      "text_hash": "5009d67c621196179db2573f138a468e508a13dbcf8553546255996d2e7ecc8b",
+      "story_words": 93239,
+      "cuts": [
+        {
+          "example_id": "pg2369_0",
+          "start": 123,
+          "end": 132,
+          "context_words": 6441,
+          "target_words": 308,
+          "context_hash": "f78bb5e54f0e1e81798b3a235da69ff63d54c549992514779ccceb0e14d8808e",
+          "reference_hash": "288ea4ca1b09d9e16680d0c978f355825087c5558c053691c41cae6a62eefa74"
+        },
+        {
+          "example_id": "pg2369_1",
+          "start": 368,
+          "end": 376,
+          "context_words": 20255,
+          "target_words": 697,
+          "context_hash": "f58dbc3c8dc0ab6b252c86a2987a244ff5d1a9353f9783f994d60788b21d568e",
+          "reference_hash": "00f2d01eae4dc1f39835e294e6c879f7bd3d43f10f47ceea1494e8060a030a28"
+        },
+        {
+          "example_id": "pg2369_2",
+          "start": 757,
+          "end": 761,
+          "context_words": 42955,
+          "target_words": 325,
+          "context_hash": "604faa4dd9270ad3f1babd0113b890d7a2c5bf90ce880c57b09661f5acd277b4",
+          "reference_hash": "9996d8f9921ac4085c3b15d433005a6a314d934d1cd371fd0dc47f759ba8c9f6"
+        },
+        {
+          "example_id": "pg2369_3",
+          "start": 949,
+          "end": 965,
+          "context_words": 53540,
+          "target_words": 733,
+          "context_hash": "1bd9e903a4c10b4a932b716d7bbea5caa02b5be27395244132cd224845d35b40",
+          "reference_hash": "b64354fe907bf64bdc70505c453d9f615a096312a563607b357c2be0c9b7a494"
+        },
+        {
+          "example_id": "pg2369_4",
+          "start": 1207,
+          "end": 1229,
+          "context_words": 69178,
+          "target_words": 711,
+          "context_hash": "441cab84d704d754622e6365df7f8da45444d799a8a3e425e9f79229065a9cfc",
+          "reference_hash": "da261f654ab7883292f35a59cb4d3cbf3ca86b40bd7d03c97314eff048982d6a"
+        },
+        {
+          "example_id": "pg2369_5",
+          "start": 1535,
+          "end": 1541,
+          "context_words": 88156,
+          "target_words": 331,
+          "context_hash": "b6e1659b83f141325abf7f57f312c11065f41c69447471e79ca998f5fef76528",
+          "reference_hash": "77702f1319eedcd187f494a7e8157eca45352a1a5603c91ad5efda9eca9e28a9"
+        }
+      ]
+    },
+    {
+      "book_id": "65465",
+      "title": "The Professor's House",
+      "author": "Cather, Willa, 1873-1947",
+      "credential": "Pulitzer Prize for the Novel, 1923",
+      "split": "validation",
+      "downloads": 625,
+      "rights": "Public domain in the USA.",
+      "subjects": "Psychological fiction; Frame stories; College teachers -- Fiction; Middle-aged men -- Fiction; Midlife crisis -- Fiction; Teacher-student relationships -- Fiction",
+      "source_url": "https://gutenberg.pglaf.org/6/5/4/6/65465/65465-0.txt",
+      "text_hash": "6228bc12e854746ba0f9c7fadaf8b506d64a8ee00a16b449e3f47493fa245ad3",
+      "story_words": 60892,
+      "cuts": [
+        {
+          "example_id": "pg65465_0",
+          "start": 89,
+          "end": 95,
+          "context_words": 6872,
+          "target_words": 396,
+          "context_hash": "00949d29710de3078d0745ab4fe02cfdf01d60d65ef9d21ae57a79e57acaa545",
+          "reference_hash": "1494daa0cf5bb9909d90fc80161294728fe2b949d94450ef575edbe19dc6b642"
+        },
+        {
+          "example_id": "pg65465_1",
+          "start": 340,
+          "end": 349,
+          "context_words": 19657,
+          "target_words": 798,
+          "context_hash": "f4093f25043c1521fb8bd5e46433960ec3f0034307b92ee1f88a7bbd838bb38e",
+          "reference_hash": "d40ad600d3be88aa14f9b85d43441939bd82b259e5cdc32844d7f89c0a0714d8"
+        },
+        {
+          "example_id": "pg65465_2",
+          "start": 504,
+          "end": 515,
+          "context_words": 27378,
+          "target_words": 646,
+          "context_hash": "a2507e5b9fb4e8878cdcffe379467b07a88d0df1320d60900c2bab37403bb41a",
+          "reference_hash": "7baae7f6866f2b007ab463b0f2bb7e09d66148b526100bc35ed2381be0f13d88"
+        },
+        {
+          "example_id": "pg65465_3",
+          "start": 681,
+          "end": 690,
+          "context_words": 37256,
+          "target_words": 592,
+          "context_hash": "d2ab905eec9f651ea7b00255788c25ec7b312be666342a70c0130278fb7b68f3",
+          "reference_hash": "9b49aa55ceb7cc7e30f8cd3f9505c4f27a61d25b94b61148a1bdafc6b8fb7402"
+        },
+        {
+          "example_id": "pg65465_4",
+          "start": 736,
+          "end": 742,
+          "context_words": 42967,
+          "target_words": 469,
+          "context_hash": "067963d870b69fae59d8d42c69ef5f05cd3c6bf02f7dba05e7a30b4df721a3b4",
+          "reference_hash": "62a7140b089fa4cf44d39a5766122990f02d3110d3768685ac36aa321234787c"
+        },
+        {
+          "example_id": "pg65465_5",
+          "start": 823,
+          "end": 832,
+          "context_words": 52261,
+          "target_words": 473,
+          "context_hash": "a6cc4aeab4a75c4a4fa1718665f61e32e0d74077331b4a863ee95556c613e979",
+          "reference_hash": "b52ea88243736addb54c48aa3c75a71fd329aa7a83147e9b9dd82b7c58401033"
+        }
+      ]
+    },
+    {
+      "book_id": "68105",
+      "title": "The Cabala",
+      "author": "Wilder, Thornton, 1897-1975",
+      "credential": "Pulitzer Prize for the Novel, 1928",
+      "split": "confirmation",
+      "downloads": 577,
+      "rights": "Public domain in the USA.",
+      "subjects": "Upper class -- Fiction; Rome (Italy) -- Social life and customs -- 20th century -- Fiction; Americans -- Italy -- Fiction",
+      "source_url": "https://gutenberg.pglaf.org/6/8/1/0/68105/68105-0.txt",
+      "text_hash": "b048a58f8240555e519e4de88ea0492e9b344c5e3e5ca535b767352eb3ab00cc",
+      "story_words": 42920,
+      "cuts": [
+        {
+          "example_id": "pg68105_0",
+          "start": 58,
+          "end": 69,
+          "context_words": 5784,
+          "target_words": 498,
+          "context_hash": "418eac78eb222db86088b50cbd4aab35995b6d3d1799acf90c2a4197d4ecbd5f",
+          "reference_hash": "dcc5697737020a9d3e0dc083c4c6679ed5fdd2b778b4c84e420bf7e0e9a2131f"
+        },
+        {
+          "example_id": "pg68105_1",
+          "start": 199,
+          "end": 213,
+          "context_words": 15091,
+          "target_words": 567,
+          "context_hash": "e83d7d8124aba7044fafda77563aa0d587ffbd23c01db62b90031677dd541300",
+          "reference_hash": "9b3fff3a725498fa29228971ef6c5053108fd086b7f40e34fc321cdaaba503f2"
+        },
+        {
+          "example_id": "pg68105_2",
+          "start": 253,
+          "end": 255,
+          "context_words": 20587,
+          "target_words": 424,
+          "context_hash": "5bbb045d11999204abb216884c34b8596eb18100494e9386d69a77068326f3f7",
+          "reference_hash": "5c8ff78ef26741b433ec8d77fa9332f24628e90e4f26f89ecfaf2a04dc061ab9"
+        },
+        {
+          "example_id": "pg68105_3",
+          "start": 295,
+          "end": 302,
+          "context_words": 23286,
+          "target_words": 654,
+          "context_hash": "5c4a05fa220d725581fdc3cd2545ebfcefd58b374a88878e8b407ab614e12a0f",
+          "reference_hash": "11b40ea1cdda71ba823a1d33cba1edbf3efdec49e192e70d0bdc95b2e94189aa"
+        },
+        {
+          "example_id": "pg68105_4",
+          "start": 419,
+          "end": 426,
+          "context_words": 34746,
+          "target_words": 544,
+          "context_hash": "3b2f2ea3f051cda6debd9196a2e509432a761aa80e3255188db60c39dca3d614",
+          "reference_hash": "9d1ac54ca2e956bc62028d484232ce6e954f97bf2a081e6c972090dca2e878b8"
+        },
+        {
+          "example_id": "pg68105_5",
+          "start": 564,
+          "end": 575,
+          "context_words": 41963,
+          "target_words": 435,
+          "context_hash": "fe121de0c1a79a6d331a7a6a088052b8ea49e5a68ea254e9873086e4eaa141c7",
+          "reference_hash": "aa1125eadd772e2836f5e502b1c869e889504dc96a7f6beaf290d9b5d1c16551"
+        }
+      ]
+    },
+    {
+      "book_id": "2876",
+      "title": "The Light That Failed",
+      "author": "Kipling, Rudyard, 1865-1936",
+      "credential": "Nobel Prize in Literature, 1907",
+      "split": "confirmation",
+      "downloads": 904,
+      "rights": "Public domain in the USA.",
+      "subjects": "Man-woman relationships -- Fiction; Artists -- Fiction; Voyages and travels -- Fiction; Blindness -- Fiction; War correspondents -- Sudan -- Fiction",
+      "source_url": "https://gutenberg.pglaf.org/2/8/7/2876/2876-0.txt",
+      "text_hash": "c29a771aeb58319bbc53b162fb8997160ac382f8c03002d11e5a79a063897ae7",
+      "story_words": 70927,
+      "cuts": [
+        {
+          "example_id": "pg2876_0",
+          "start": 118,
+          "end": 135,
+          "context_words": 4799,
+          "target_words": 776,
+          "context_hash": "2ff9ac14b15df6e93c09ecc8659d1354bc656e61e5b90b8cad0d4d259a2045c4",
+          "reference_hash": "7d3c74c9ceacaf9a0f5064324c87b2bd7aa3bbe08bfca11c5127f50f76661238"
+        },
+        {
+          "example_id": "pg2876_1",
+          "start": 563,
+          "end": 591,
+          "context_words": 21660,
+          "target_words": 681,
+          "context_hash": "6e484f1963391609e32838a19e661decd91513260400ee9f5f6e09cb48ce8fa0",
+          "reference_hash": "75bd10d9c92f5ef9b41e8af860ce6cd75d2bb43c1c615a5a0ecc12b3307215b5"
+        },
+        {
+          "example_id": "pg2876_2",
+          "start": 721,
+          "end": 748,
+          "context_words": 25993,
+          "target_words": 710,
+          "context_hash": "394e99f8ecc18c8854f97835f8daa671b8fd7e3c7a4f6ef5f944a199b32fd9cf",
+          "reference_hash": "3190b1f42254b2c2d2875f21fae46b109fe27c4d35b3e7b5aa3f8f0af4ae7191"
+        },
+        {
+          "example_id": "pg2876_3",
+          "start": 1306,
+          "end": 1321,
+          "context_words": 44045,
+          "target_words": 556,
+          "context_hash": "225bfe6800d149a2a1b09b11a539471f2137a0ce11dc05b254bfe9b335f14d36",
+          "reference_hash": "979ef5aeba3247c9c21c6a9a2afcee3c218fe8d483cd3a5ec7325723a4558b0e"
+        },
+        {
+          "example_id": "pg2876_4",
+          "start": 1675,
+          "end": 1685,
+          "context_words": 57874,
+          "target_words": 347,
+          "context_hash": "bbf23a5fa22239e83d61c0c5ddf2103c0b01d082a4ebcbf5ad0476b16c6ee9bd",
+          "reference_hash": "7a84dfa6aae926f9288cf95f0dcf8f5ba23313c6eef9f6fcf84e28d86589c032"
+        },
+        {
+          "example_id": "pg2876_5",
+          "start": 1827,
+          "end": 1856,
+          "context_words": 62390,
+          "target_words": 614,
+          "context_hash": "0ebab9a225601a4b9b7decfba3d50bae34624597a69e3626f874d36e6d8cd435",
+          "reference_hash": "ab835bcdf3e4dd1e0c2bf3b7e04d68c74e068d2a0d7b2c93a20500337cdf6154"
+        }
+      ]
+    },
+    {
+      "book_id": "72406",
+      "title": "Early autumn",
+      "author": "Bromfield, Louis, 1896-1956",
+      "credential": "Pulitzer Prize for the Novel, 1927",
+      "split": "confirmation",
+      "downloads": 554,
+      "rights": "Public domain in the USA.",
+      "subjects": "Domestic fiction; New England -- Fiction; Conduct of life -- Fiction; Women -- Fiction; Man-woman relationships -- Fiction; Families -- Fiction; United States -- Social conditions -- 1918-1932 -- Fiction",
+      "source_url": "https://gutenberg.pglaf.org/7/2/4/0/72406/72406-0.txt",
+      "text_hash": "db5a459f7852771f8fcf2d8a8f5ee47d945afa6f014d56b6562441a87e0074a4",
+      "story_words": 99247,
+      "cuts": [
+        {
+          "example_id": "pg72406_0",
+          "start": 246,
+          "end": 256,
+          "context_words": 16639,
+          "target_words": 683,
+          "context_hash": "ebcc25b81f8ea24fe739a124a46ee79eb268b4b5c273c1bfc86a7fad907e4d05",
+          "reference_hash": "d873e441aff720c7fbb43052b2d9b38979c11d020cab89daedbdc064cb8348ee"
+        },
+        {
+          "example_id": "pg72406_1",
+          "start": 378,
+          "end": 388,
+          "context_words": 23639,
+          "target_words": 617,
+          "context_hash": "77e36c5d5d6fbd77f08140b3dd6d0592ed0c149b74bf7c11bc165c0226b76bb2",
+          "reference_hash": "57270525958438437e4f0615a93a9d17dc74ee6c59613e31d189a5c37595f948"
+        },
+        {
+          "example_id": "pg72406_2",
+          "start": 589,
+          "end": 600,
+          "context_words": 36317,
+          "target_words": 367,
+          "context_hash": "8f0451b6e9303862b065e06542546a7e3da16e7df45dd3f1359ff185af9f26df",
+          "reference_hash": "728d81657c45452b1d806d7a74555198be4e8e0527e218606a397c90a41cddbb"
+        },
+        {
+          "example_id": "pg72406_3",
+          "start": 1056,
+          "end": 1067,
+          "context_words": 65528,
+          "target_words": 799,
+          "context_hash": "6029a280eabbcc3e32c46efa3d51c73b64519b3e1ac273ea0a73ea67112eb5df",
+          "reference_hash": "a27aac63552ae2e374c68eb436734749b22fa4aeb14a246f2e67f98da6f7518c"
+        },
+        {
+          "example_id": "pg72406_4",
+          "start": 1170,
+          "end": 1182,
+          "context_words": 72093,
+          "target_words": 457,
+          "context_hash": "be07abb077b3e326444e4d46ac5a789f96765f3a1d4ead14b275a44f8a992c95",
+          "reference_hash": "fec2006c2cd11223d97e192093224800c048a62dfee163924fa8c5f92d07d403"
+        },
+        {
+          "example_id": "pg72406_5",
+          "start": 1534,
+          "end": 1552,
+          "context_words": 90200,
+          "target_words": 709,
+          "context_hash": "0bfa0869f068adff633da6d52890d1052f80cd040403e73e4e67e9c816250de0",
+          "reference_hash": "6b0d8e76677b25999755cb905b20f8400d5df4886dd04beaa041e7f2fc65a043"
+        }
+      ]
+    },
+    {
+      "book_id": "73188",
+      "title": "Possession",
+      "author": "Bromfield, Louis, 1896-1956",
+      "credential": "Pulitzer Prize for the Novel, 1927",
+      "split": "confirmation",
+      "downloads": 569,
+      "rights": "Public domain in the USA.",
+      "subjects": "American fiction -- 20th century; Women musicians -- Fiction",
+      "source_url": "https://gutenberg.pglaf.org/7/3/1/8/73188/73188-0.txt",
+      "text_hash": "14ce8170505e66615c59edc7872e9def5a515d8b0e44baadc6d4b3589dd093fe",
+      "story_words": 176420,
+      "cuts": [
+        {
+          "example_id": "pg73188_0",
+          "start": 53,
+          "end": 63,
+          "context_words": 5161,
+          "target_words": 775,
+          "context_hash": "75ae8bcffe5589fc925493886299a86cb484d3edb2b15abcf120e0fc8987ed8f",
+          "reference_hash": "dbb8e4c25828cd4da08e7394983ad902c014630007604341d77f16ab26408cac"
+        },
+        {
+          "example_id": "pg73188_1",
+          "start": 534,
+          "end": 543,
+          "context_words": 34558,
+          "target_words": 444,
+          "context_hash": "ad4b412d63f008eb3ec48f6f1dd5bbb70074326615c18aa1e34acb870ffd92bd",
+          "reference_hash": "15f2f45d69a2dc73594967d58d732e3395dbf13fd9bfcfedbd0f6325a9763180"
+        },
+        {
+          "example_id": "pg73188_2",
+          "start": 1045,
+          "end": 1049,
+          "context_words": 67633,
+          "target_words": 619,
+          "context_hash": "5f04e2394f5b5a0795c90fff550467788e17a1099a9f2f2c3c1f24ccb3eaf9d6",
+          "reference_hash": "1dfbedac91ec0715b6d65e71271846b14807d54dbc100899d6afdf951b9e3822"
+        },
+        {
+          "example_id": "pg73188_3",
+          "start": 1618,
+          "end": 1632,
+          "context_words": 106812,
+          "target_words": 502,
+          "context_hash": "8baf2a02ad12a3c19d1fd452385ed50c65a01dcfa59c7328df56465ca11cb431",
+          "reference_hash": "62475cb4a1c8a9fee70bc89992860e78c2bd8de3e9467c606d8880a86bb74d15"
+        },
+        {
+          "example_id": "pg73188_4",
+          "start": 2243,
+          "end": 2253,
+          "context_words": 142823,
+          "target_words": 514,
+          "context_hash": "49f74e19b7e21d8ee0997f357b751671f8700496564219013f2bde08601b3bd9",
+          "reference_hash": "b8f950b1ebe3604b27e90d225735c6609913c66af287ce72bde34f2c3434027e"
+        },
+        {
+          "example_id": "pg73188_5",
+          "start": 2533,
+          "end": 2536,
+          "context_words": 164701,
+          "target_words": 465,
+          "context_hash": "ee95f53970606006f47826722b8de8e76f8470914a8ac90780b155cf38736578",
+          "reference_hash": "c8a57db0777e606440ef0f950ab684ac6eb8421b5ef53840a19919fb4dd8d63b"
+        }
+      ]
+    },
+    {
+      "book_id": "5807",
+      "title": "Sylvia's Marriage: A Novel",
+      "author": "Sinclair, Upton, 1878-1968",
+      "credential": "Pulitzer Prize for the Novel, 1943",
+      "split": "confirmation",
+      "downloads": 487,
+      "rights": "Public domain in the USA.",
+      "subjects": "Marriage -- Fiction",
+      "source_url": "https://gutenberg.pglaf.org/5/8/0/5807/5807-0.txt",
+      "text_hash": "1289bebe737f2d3fb7b6ec9e30dd17e5c9e1db7724fa1d6d8318f561bafac1a1",
+      "story_words": 74234,
+      "cuts": [
+        {
+          "example_id": "pg5807_0",
+          "start": 31,
+          "end": 35,
+          "context_words": 3251,
+          "target_words": 425,
+          "context_hash": "72d530a1d2b110d96365e6cdad11e44d7152de1565843cc77f64680af3c420c6",
+          "reference_hash": "a585c01c73d8bf483880fa581d709f8fb9dcc9c30fbaec570e49bf7901a5aa8b"
+        },
+        {
+          "example_id": "pg5807_1",
+          "start": 272,
+          "end": 285,
+          "context_words": 18565,
+          "target_words": 790,
+          "context_hash": "1391acd236c6d124a3788d5d17bc7af1d17e5b2aca34d98b5a68ec838abdef0a",
+          "reference_hash": "0eb7e08e18c4da4549fc8e665d0351ee6d5a30fa4d8e13604e4091aed1374180"
+        },
+        {
+          "example_id": "pg5807_2",
+          "start": 485,
+          "end": 496,
+          "context_words": 27828,
+          "target_words": 637,
+          "context_hash": "601d23f5947696108eb3a34801c1a491e95d514b7615763334480ab97fc6028f",
+          "reference_hash": "fe67ffad007500475c47e75786c60b6fc341ea8668f1c5f1673a878232cddbec"
+        },
+        {
+          "example_id": "pg5807_3",
+          "start": 855,
+          "end": 869,
+          "context_words": 42779,
+          "target_words": 397,
+          "context_hash": "900ee6a879e214828d223144e59c54b8343ca3fde32bef4549a56808152ecdbd",
+          "reference_hash": "71ca12269467b736a1b0be46fcd23cc46d03949c9be49a729d562db5181716a8"
+        },
+        {
+          "example_id": "pg5807_4",
+          "start": 1087,
+          "end": 1098,
+          "context_words": 51678,
+          "target_words": 582,
+          "context_hash": "bffed880627b0af8eb4aec86ad8e04d357cca90ea3fc616e93213ef02b5cea63",
+          "reference_hash": "ecb5c9f0ea29a229162f0e30503b4354b4a1adee5d28fff6188f13801bff626c"
+        },
+        {
+          "example_id": "pg5807_5",
+          "start": 1552,
+          "end": 1568,
+          "context_words": 73397,
+          "target_words": 714,
+          "context_hash": "33b6203501d29e3018af9fc884665a6c197e70d8d19a518e71edc84792631200",
+          "reference_hash": "9e1b6777c45764024664c54951fa29a5314c5e04fe474de7407a878a7fb32432"
+        }
+      ]
+    },
+    {
+      "book_id": "5421",
+      "title": "The Metropolis",
+      "author": "Sinclair, Upton, 1878-1968",
+      "credential": "Pulitzer Prize for the Novel, 1943",
+      "split": "confirmation",
+      "downloads": 613,
+      "rights": "Public domain in the USA.",
+      "subjects": "Socialites -- Fiction; Upper class -- Fiction",
+      "source_url": "https://gutenberg.pglaf.org/5/4/2/5421/5421-0.txt",
+      "text_hash": "ae9b29be63a2276983bca941fd22f9642c96144f48fc727a231961a3a63e8a81",
+      "story_words": 95570,
+      "cuts": [
+        {
+          "example_id": "pg5421_0",
+          "start": 206,
+          "end": 209,
+          "context_words": 12159,
+          "target_words": 541,
+          "context_hash": "fdce1a1e6f44ad98575daef3cf5a2acd9a874030efd8cb68c2d4568de9f36965",
+          "reference_hash": "76fc156327d2a8905937eb3bce0317678c4065604f31679cc83da6db5e9bb3aa"
+        },
+        {
+          "example_id": "pg5421_1",
+          "start": 519,
+          "end": 523,
+          "context_words": 28811,
+          "target_words": 587,
+          "context_hash": "c47224aecd2f5b9ddcbe80d84f04bca3ea30791c90615dcfc231c441b767789f",
+          "reference_hash": "f8536d016335548f73ffd10f8feed98e04e5868167040b31a253129b4fb24415"
+        },
+        {
+          "example_id": "pg5421_2",
+          "start": 591,
+          "end": 598,
+          "context_words": 35750,
+          "target_words": 708,
+          "context_hash": "6bb645d3b015a4eae0ececb0fa5033b66b1fa56a919d29de21e3083d68b83d70",
+          "reference_hash": "2e0bc61926e3f00cd2a3c31ed2ab7f4bdfd4ae2348c280ad9528300da8725fdd"
+        },
+        {
+          "example_id": "pg5421_3",
+          "start": 863,
+          "end": 881,
+          "context_words": 54934,
+          "target_words": 745,
+          "context_hash": "565a5a116ded101aff5ef894a88fd28d80c5334d5d6ad6e25f4472e33347933f",
+          "reference_hash": "a3b1f35c4865188d3e1368acaddfb09192b0975a41ae448a1ffec35828aa8892"
+        },
+        {
+          "example_id": "pg5421_4",
+          "start": 1261,
+          "end": 1275,
+          "context_words": 76816,
+          "target_words": 743,
+          "context_hash": "950561182ac6c9065906928d072c50c2b69f57af4234c701cd255ea2151c108f",
+          "reference_hash": "4c35f5f87aab4773bfbd05489672e2ad0c40fd42ab3c76ec85c0d905dcf62254"
+        },
+        {
+          "example_id": "pg5421_5",
+          "start": 1639,
+          "end": 1649,
+          "context_words": 94989,
+          "target_words": 380,
+          "context_hash": "7c2aa7314ea61e8bc82547830951d7eba9ebe24e7f9ddfea99d9190405e053f3",
+          "reference_hash": "986f191946500c2e9b0703a1a33813f94f92273a32492c0d569b23dc3b74d93a"
+        }
+      ]
+    },
+    {
+      "book_id": "61984",
+      "title": "Sylvia: A Novel",
+      "author": "Sinclair, Upton, 1878-1968",
+      "credential": "Pulitzer Prize for the Novel, 1943",
+      "split": "confirmation",
+      "downloads": 423,
+      "rights": "Public domain in the USA.",
+      "subjects": "Man-woman relationships -- Fiction; Marriage -- Fiction; Women -- Conduct of life -- Fiction",
+      "source_url": "https://gutenberg.pglaf.org/6/1/9/8/61984/61984-0.txt",
+      "text_hash": "40ca63073d7c52a1b44dd95f78bed586ea4358369add671151be2f67f26fbcbe",
+      "story_words": 96095,
+      "cuts": [
+        {
+          "example_id": "pg61984_0",
+          "start": 26,
+          "end": 36,
+          "context_words": 3048,
+          "target_words": 679,
+          "context_hash": "0a4cb2bbade899d50dede7c6fe8e5e522d0da9ec970e324f3680fe88fba73e55",
+          "reference_hash": "bb147114766a353b20aebc2e47110c007fc618e06b83f5dfe0dd72abd00139bc"
+        },
+        {
+          "example_id": "pg61984_1",
+          "start": 686,
+          "end": 702,
+          "context_words": 32540,
+          "target_words": 512,
+          "context_hash": "63fa148ce59e4c25bb594e7ba5e1e284157792e21ceff4848571bd995f6f46a7",
+          "reference_hash": "ad5b23b9f210b42add567e39635b72f354e1c4a27e266d3f1a140fccdc15cd20"
+        },
+        {
+          "example_id": "pg61984_2",
+          "start": 1165,
+          "end": 1183,
+          "context_words": 48348,
+          "target_words": 465,
+          "context_hash": "93ba3d6bbedf8517d30148e22b014dada123ad921d50c40ff1d97215c70a6353",
+          "reference_hash": "20337327a99e8d0202dc826218cdbcd2e0fed95aafb9defcc9676f0ef7d02c82"
+        },
+        {
+          "example_id": "pg61984_3",
+          "start": 1213,
+          "end": 1223,
+          "context_words": 49430,
+          "target_words": 767,
+          "context_hash": "02c1260632e9d002bc3d67bed8f9f0b9429bece2c3909c397239751e66ff1305",
+          "reference_hash": "ccaab59e627401208c1fe7965dfc8349501bc8e5f6ae15a3ef0551b723427ce1"
+        },
+        {
+          "example_id": "pg61984_4",
+          "start": 1876,
+          "end": 1882,
+          "context_words": 73263,
+          "target_words": 418,
+          "context_hash": "a7ede3f8cf15bb335faa49fbf23a84d8fa4ad96435169fb7d62f59493fbc89da",
+          "reference_hash": "d2a68198f407034d0c150141ef88a3e5647625364503826c8a06042769dfcb70"
+        },
+        {
+          "example_id": "pg61984_5",
+          "start": 2223,
+          "end": 2243,
+          "context_words": 89942,
+          "target_words": 477,
+          "context_hash": "13461254fcbd9dec723ba9492fa87013ce4c806e40bdbec27b0595bd209b1a28",
+          "reference_hash": "7a8fb0e8f9a6e20ae39d98f9a101ea165e7ef37c348d8d6c304a99d20229c3dd"
+        }
+      ]
+    },
+    {
+      "book_id": "11354",
+      "title": "The Irrational Knot Being the Second Novel of His Nonage",
+      "author": "Shaw, Bernard, 1856-1950",
+      "credential": "Nobel Prize in Literature, 1925",
+      "split": "confirmation",
+      "downloads": 522,
+      "rights": "Public domain in the USA.",
+      "subjects": "Social classes -- Fiction; Marriage -- Fiction",
+      "source_url": "https://gutenberg.pglaf.org/1/1/3/5/11354/11354-0.txt",
+      "text_hash": "c6c1b21c706c1d900ee60c9fe66b4e5a4bc690f44a0ffaa736f70e3f25d1e9cc",
+      "story_words": 114634,
+      "cuts": [
+        {
+          "example_id": "pg11354_0",
+          "start": 535,
+          "end": 564,
+          "context_words": 18162,
+          "target_words": 741,
+          "context_hash": "cc56858b785275e8d4ea200c6259dbc0b6f4f46306bd2dfab64c193efeb4eab2",
+          "reference_hash": "e9784715696b1f1e00dca6b61e61898ae8a8e1a0bb75794ae2af8acff5b50d5a"
+        },
+        {
+          "example_id": "pg11354_1",
+          "start": 1137,
+          "end": 1162,
+          "context_words": 38069,
+          "target_words": 544,
+          "context_hash": "79ae586d03b733699e9cda2126a89933ad2e595236976f46cb789ea762112cfe",
+          "reference_hash": "fd2e8fbb9a9e70e52ea0b2ecfd30e3e8ab2e287e6169b9508b7b7cde39768e2c"
+        },
+        {
+          "example_id": "pg11354_2",
+          "start": 1460,
+          "end": 1481,
+          "context_words": 48065,
+          "target_words": 707,
+          "context_hash": "ddf8dcf3f26c9f222cf0fd0c63bfa7a0214d922999ddf9b553fef5bc53b6a880",
+          "reference_hash": "b21c11fed83cc6bce37d6859d3ec79e36fe3520e4f88c52d278cc509daacdd64"
+        },
+        {
+          "example_id": "pg11354_3",
+          "start": 2131,
+          "end": 2151,
+          "context_words": 73468,
+          "target_words": 677,
+          "context_hash": "49ba20331ca4189e6cc6bfc13f6a56644971768bc08fcd32825aa70e84b026a3",
+          "reference_hash": "3b3502b256200b64bf3ad41d832711959b820aac53b3c81605dc2dc3ae691479"
+        },
+        {
+          "example_id": "pg11354_4",
+          "start": 2505,
+          "end": 2520,
+          "context_words": 87539,
+          "target_words": 401,
+          "context_hash": "17f9f9294887b6de2cccd30dec69534797d76b88f54c319216f3bfcb8a36d2dc",
+          "reference_hash": "429f9df3e01e0ed472dfc4de8a452e0df63cd002f13b3fbd941aceda0da31611"
+        },
+        {
+          "example_id": "pg11354_5",
+          "start": 2976,
+          "end": 2997,
+          "context_words": 105271,
+          "target_words": 347,
+          "context_hash": "bd64140899cf0f06e8a673359279f4e97f59c1db307102988194a8ec5e429f57",
+          "reference_hash": "33fad21e4d8b06032a45fad866e10a5e21fd5d6282034d164f4cc91cd62e83b7"
+        }
+      ]
+    },
+    {
+      "book_id": "75334",
+      "title": "The girls",
+      "author": "Ferber, Edna, 1885-1968",
+      "credential": "Pulitzer Prize for the Novel, 1925",
+      "split": "confirmation",
+      "downloads": 373,
+      "rights": "Public domain in the USA.",
+      "subjects": "World War, 1914-1918 -- Fiction; Chicago (Ill.) -- Fiction; Women -- Fiction; Families -- Fiction",
+      "source_url": "https://gutenberg.pglaf.org/7/5/3/3/75334/75334-0.txt",
+      "text_hash": "fa8bde1fc74095ddae7635d2628ef7893db1f70fb246eef2f916eef635b4001e",
+      "story_words": 78362,
+      "cuts": [
+        {
+          "example_id": "pg75334_0",
+          "start": 145,
+          "end": 155,
+          "context_words": 8846,
+          "target_words": 351,
+          "context_hash": "274979a5502ff6bc3f477ad7c7dfbd648629a89544cdc1dcbd3745e34b7793db",
+          "reference_hash": "535f3243a9226e3cc8785b429bb2b96ec6339b5091492108667193b22ca8fbe2"
+        },
+        {
+          "example_id": "pg75334_1",
+          "start": 489,
+          "end": 507,
+          "context_words": 25878,
+          "target_words": 794,
+          "context_hash": "0441f541a6ee1ff7e88f29f129de978e8ab12b231f523f1772b118ff9ad788ca",
+          "reference_hash": "cddb91f97674dd2ea037b1717d03b8a94bd0cfe4c3ac28020bb6640d04c8ae9c"
+        },
+        {
+          "example_id": "pg75334_2",
+          "start": 561,
+          "end": 572,
+          "context_words": 28788,
+          "target_words": 327,
+          "context_hash": "1c6ef498e32a45b27bcb5e3bfe0415404e91fa7bfc94857e5ff87a816fd3ae4d",
+          "reference_hash": "87e329bd3cc20b19066df80bcb3c4beceec369f42d1a84a33ee2a8375feae8a5"
+        },
+        {
+          "example_id": "pg75334_3",
+          "start": 925,
+          "end": 945,
+          "context_words": 41785,
+          "target_words": 506,
+          "context_hash": "78a9d744841a0013d38524613b80736fec7417f62bb7a52ff6198695ac546671",
+          "reference_hash": "40cb8766fc1349f2b7316efbc539c9ca98c176fdf7ab67140909fa7dc6899b29"
+        },
+        {
+          "example_id": "pg75334_4",
+          "start": 1342,
+          "end": 1361,
+          "context_words": 62375,
+          "target_words": 736,
+          "context_hash": "be5bbfce08ddcb30df1e2fe13c6f5311b7bd44dc5938a810b991e447ae9ad603",
+          "reference_hash": "9362c43ca08c520ecca651fa9381912be6dbc930c125035fbb4401b5d8b75ae1"
+        },
+        {
+          "example_id": "pg75334_5",
+          "start": 1639,
+          "end": 1648,
+          "context_words": 75486,
+          "target_words": 670,
+          "context_hash": "66e3bd5ed27208e95e0cf8cc49ead060e04b9fa47a1d82e9281d178ddaa84d46",
+          "reference_hash": "f996af4811d4549c9f413b96b747e356216c13b7b77affcbcd5161a93df34c0f"
+        }
+      ]
+    },
+    {
+      "book_id": "59437",
+      "title": "A Son at the Front",
+      "author": "Wharton, Edith, 1862-1937",
+      "credential": "Pulitzer Prize for the Novel, 1921",
+      "split": "confirmation",
+      "downloads": 376,
+      "rights": "Public domain in the USA.",
+      "subjects": "World War, 1914-1918 -- Fiction; War stories; Fathers and sons -- Fiction; Domestic fiction; Paris (France) -- Fiction; Americans -- France -- Fiction",
+      "source_url": "https://gutenberg.pglaf.org/5/9/4/3/59437/59437-0.txt",
+      "text_hash": "ed8b294366a1c2fc55201a0c159e692b0e50f95696e882727d305874a408d51e",
+      "story_words": 97256,
+      "cuts": [
+        {
+          "example_id": "pg59437_0",
+          "start": 129,
+          "end": 135,
+          "context_words": 6109,
+          "target_words": 685,
+          "context_hash": "060cc2f94503aeaebec12f2aa4d9c700057dced1fa3b91452313fc5ea8d56ee2",
+          "reference_hash": "eaa1db18c1f9670d7b8f3def95faa1d0735cdfed7760b9788b9267bc1099f7f5"
+        },
+        {
+          "example_id": "pg59437_1",
+          "start": 447,
+          "end": 466,
+          "context_words": 20321,
+          "target_words": 617,
+          "context_hash": "da889d25d0d576ecfeb9e8e16dbfc7c11795330e38396bd1f32d89374774bfd4",
+          "reference_hash": "c6bd7441db92667b006b5ec2b0c4e5f4fb79cc549d89a3d0878c43268bff9645"
+        },
+        {
+          "example_id": "pg59437_2",
+          "start": 983,
+          "end": 992,
+          "context_words": 46729,
+          "target_words": 357,
+          "context_hash": "4d231fd86aec58ce2d7f92f86e1387f7e0a26a5cea00d9582ce6918fbfe66559",
+          "reference_hash": "afaf44ea6c13550bb7ffcba8ba1ce09e9464cb59d241db40d2d7ddec42ffd13b"
+        },
+        {
+          "example_id": "pg59437_3",
+          "start": 1280,
+          "end": 1298,
+          "context_words": 61567,
+          "target_words": 663,
+          "context_hash": "a2323a57bf34522d0e09490a5ffab1591a003486fecfbfe02a2103f6241b710c",
+          "reference_hash": "9aae7ba17ba8e7a1fc5b7c85e6e1cb5e1f3d39fe51a6047db187c3b3128a38b9"
+        },
+        {
+          "example_id": "pg59437_4",
+          "start": 1416,
+          "end": 1420,
+          "context_words": 66697,
+          "target_words": 485,
+          "context_hash": "eb3c569ce7532a77db860cf9fe9ce78510042259c9d99e4ca5e69bc9b2b63595",
+          "reference_hash": "3b8f60bdc62b0b23250a70c737bb3291ad2832f54836d783117775217c9eb7da"
+        },
+        {
+          "example_id": "pg59437_5",
+          "start": 2000,
+          "end": 2008,
+          "context_words": 92179,
+          "target_words": 625,
+          "context_hash": "6fdf0e65a59877000d9be6e0cbdef40959d23be977e08bfddeddf1f38867aa70",
+          "reference_hash": "cd0fa72f040d31b199801a7872d5d40c95dac8148ecb32ebe4b320573afef7e3"
+        }
+      ]
+    },
+    {
+      "book_id": "70844",
+      "title": "Twilight sleep",
+      "author": "Wharton, Edith, 1862-1937",
+      "credential": "Pulitzer Prize for the Novel, 1921",
+      "split": "confirmation",
+      "downloads": 491,
+      "rights": "Public domain in the USA.",
+      "subjects": "New York (N.Y.) -- Fiction; Domestic fiction; Man-woman relationships -- Fiction; Upper class -- Fiction",
+      "source_url": "https://gutenberg.pglaf.org/7/0/8/4/70844/70844-0.txt",
+      "text_hash": "2c7d87d6c4d76b2389a356d996a9c49f96017e0bd4c6bbe6c2f82d6b61d5293e",
+      "story_words": 81309,
+      "cuts": [
+        {
+          "example_id": "pg70844_0",
+          "start": 68,
+          "end": 73,
+          "context_words": 5961,
+          "target_words": 472,
+          "context_hash": "683f6b456275a54988ebf9bd1017c23d7cf6f444112a5d5a39cc80501de6a636",
+          "reference_hash": "28381337957e14ac5859665dec7a6f0d7a5ac51e6c06954cff95efc136f6369a"
+        },
+        {
+          "example_id": "pg70844_1",
+          "start": 480,
+          "end": 488,
+          "context_words": 27604,
+          "target_words": 577,
+          "context_hash": "1176fa2dd87f7b49f6e1d36363b07bfdc3f9483eb4307cf591375b115932459c",
+          "reference_hash": "97bfe337ad2e81e8c77eef67d5687258f82b302db5770d9747cab0404143189d"
+        },
+        {
+          "example_id": "pg70844_2",
+          "start": 755,
+          "end": 767,
+          "context_words": 39309,
+          "target_words": 616,
+          "context_hash": "55ad313fc1e080677e9eade49dcc5e0a3ddb32b2c7354733e66bcb6e6692dda8",
+          "reference_hash": "3459ad1bbaa61c4141805d5430e3cb5d5a6f1d17ed9efbfabc5c671e314b3547"
+        },
+        {
+          "example_id": "pg70844_3",
+          "start": 988,
+          "end": 1006,
+          "context_words": 50238,
+          "target_words": 638,
+          "context_hash": "2e837a8deafcefa9675e95694c0e50051e01aa31f7e933cc479a6c53f2006ab6",
+          "reference_hash": "0da968665a145e4bb1593dea00ae262fce28c3b1e34cc27979114bb524e2803b"
+        },
+        {
+          "example_id": "pg70844_4",
+          "start": 1285,
+          "end": 1292,
+          "context_words": 64263,
+          "target_words": 467,
+          "context_hash": "5c91589c3c8f8bf140b5c422a0121caf88bce711e14f97167b1f84c79f535e12",
+          "reference_hash": "6e09b63dd9baec5dd67b4e3c6ee8c88b753b303b74b9c81fb8fa9d28d4224df0"
+        },
+        {
+          "example_id": "pg70844_5",
+          "start": 1531,
+          "end": 1552,
+          "context_words": 74368,
+          "target_words": 661,
+          "context_hash": "cd6a5d6a6d0e9939f8387fc4e58a5974a58f9adacc6af6d8f57ba84f55f14adf",
+          "reference_hash": "b579b5065b279cccbf7e91f2b398703e3b6050ef0a2d559a01a9a62eaee4f1ff"
+        }
+      ]
+    },
+    {
+      "book_id": "76417",
+      "title": "The children",
+      "author": "Wharton, Edith, 1862-1937",
+      "credential": "Pulitzer Prize for the Novel, 1921",
+      "split": "confirmation",
+      "downloads": 477,
+      "rights": "Public domain in the USA.",
+      "subjects": "American fiction -- 20th century; Stepchildren -- Fiction; Middle-aged men -- Fiction; Americans -- Europe -- Fiction; Families -- Fiction; Children of divorced parents -- Fiction; Stepfamilies -- Fiction; Bachelors -- Fiction",
+      "source_url": "https://gutenberg.pglaf.org/7/6/4/1/76417/76417-0.txt",
+      "text_hash": "43b7636b3befc0c31afff34ecf0d15b1b0d5e24489758800ff0a7f90e1e2b3d9",
+      "story_words": 94622,
+      "cuts": [
+        {
+          "example_id": "pg76417_0",
+          "start": 165,
+          "end": 175,
+          "context_words": 7824,
+          "target_words": 560,
+          "context_hash": "18c307f79252bf76a858dd42c33357813f76693d77c63814adba19e786409b13",
+          "reference_hash": "51163804fa2246f063eadcdf2b0828240e9e9285184a9b7467ef51ecca767af6"
+        },
+        {
+          "example_id": "pg76417_1",
+          "start": 393,
+          "end": 397,
+          "context_words": 22214,
+          "target_words": 643,
+          "context_hash": "bddb91abcb3b5fe8c7e518a050f7752f4c8191fe8e57031756f6bac8e5d6f6fc",
+          "reference_hash": "5be9a3976d2166552ea18c864ad9af7ccbb9ea63d720e19f90372552e804bd90"
+        },
+        {
+          "example_id": "pg76417_2",
+          "start": 852,
+          "end": 871,
+          "context_words": 42120,
+          "target_words": 480,
+          "context_hash": "fd9574feda7cf76ad152db0e11cd425341f05fa54a387b0bd3a48fa04847b410",
+          "reference_hash": "fc53ad0247339db5c889bf0e0ef8a10077661f2ff1c246b94ff3f82d97239be2"
+        },
+        {
+          "example_id": "pg76417_3",
+          "start": 1327,
+          "end": 1335,
+          "context_words": 62719,
+          "target_words": 427,
+          "context_hash": "56c6d60d385f9af045865bb60257f3cc71c14206713426f791194f9ddb65a49a",
+          "reference_hash": "dbbec9a6801faf5d65c4b878edc74f3d674a49d2936b8eb08222e7faa36915d4"
+        },
+        {
+          "example_id": "pg76417_4",
+          "start": 1535,
+          "end": 1543,
+          "context_words": 76730,
+          "target_words": 759,
+          "context_hash": "2957c5a0f8a08336c7c45c18bea3bec5c1823b0e0f5fd45f2edecf4dee93a6f8",
+          "reference_hash": "0ff73dee8c9ea1c03e211f6a0d6b5c100f12d6cf135ecc6c23d5be3208d31be5"
+        },
+        {
+          "example_id": "pg76417_5",
+          "start": 1614,
+          "end": 1624,
+          "context_words": 81621,
+          "target_words": 461,
+          "context_hash": "ef3962919b6b4fabee1d8331613adfc569b0e41f2f8bda24420b3bb9fe2c5200",
+          "reference_hash": "0332d01b7a717d5364425985b2c671f912cc5f19464d91b1c0ca61977212bf59"
+        }
+      ]
+    },
+    {
+      "book_id": "65207",
+      "title": "Women",
+      "author": "Tarkington, Booth, 1869-1946",
+      "credential": "Pulitzer Prize for the Novel, 1919 and 1922",
+      "split": "confirmation",
+      "downloads": 575,
+      "rights": "Public domain in the USA.",
+      "subjects": "Married people -- Fiction; Women -- Fiction; Suburban life -- Fiction",
+      "source_url": "https://gutenberg.pglaf.org/6/5/2/0/65207/65207-0.txt",
+      "text_hash": "e939687fbc18b8b731e2eb7d279800485c17c59ed874e19f1e847e151ec16e74",
+      "story_words": 79129,
+      "cuts": [
+        {
+          "example_id": "pg65207_0",
+          "start": 204,
+          "end": 210,
+          "context_words": 9058,
+          "target_words": 635,
+          "context_hash": "c6de06703d7252a5f4a882b13df1519f6bc60fade323bcdbe13be8ea86c0ca80",
+          "reference_hash": "b0e18cbffac94a06a07a68eecc457ebd75e4c228bf58e47d45ca9ccbf8390c88"
+        },
+        {
+          "example_id": "pg65207_1",
+          "start": 335,
+          "end": 342,
+          "context_words": 15479,
+          "target_words": 419,
+          "context_hash": "87b4fa587c72289f119b9e1f2970df5315cd91365f0af76e6c5942dcb03987a9",
+          "reference_hash": "3ccce1578ed582406d5fc526e2e4828a233290e2429e3f010f496770c9e4083b"
+        },
+        {
+          "example_id": "pg65207_2",
+          "start": 630,
+          "end": 637,
+          "context_words": 29347,
+          "target_words": 435,
+          "context_hash": "440dcbc890f317e7ddbc777260ebe0333170e5bcfc92f9fb172e07ce88ff18e6",
+          "reference_hash": "dbd418e3dea47aaf01cdb0d05433de6b3f11390c438253423158e5398a1a27fb"
+        },
+        {
+          "example_id": "pg65207_3",
+          "start": 1050,
+          "end": 1062,
+          "context_words": 45349,
+          "target_words": 784,
+          "context_hash": "618450c1e0ed2987d2660f300ffd1ccd82b5b61b47e3e40743a9f61fc458b109",
+          "reference_hash": "da64a6db7cc0a081880280cdd26a55fa2833c157efe286513520109da04104ba"
+        },
+        {
+          "example_id": "pg65207_4",
+          "start": 1294,
+          "end": 1311,
+          "context_words": 56875,
+          "target_words": 312,
+          "context_hash": "1b7078f1981b1e96e80843c7101d57af3eb1c1b5956ff68bbaeedf27b467c7a5",
+          "reference_hash": "6e0a1c298b16f1ba0ea9ec00d31467abe85faf27f511428bf920585b196cdf45"
+        },
+        {
+          "example_id": "pg65207_5",
+          "start": 1717,
+          "end": 1733,
+          "context_words": 73952,
+          "target_words": 682,
+          "context_hash": "6bda31d199f30b39c3150499ce1d1c556d348ad80af1b0a8860edf00b093e7be",
+          "reference_hash": "8695bbe9213ff862ec24435561ae233c66e4c978ccaf983d75dfaa5849296260"
+        }
+      ]
+    },
+    {
+      "book_id": "3428",
+      "title": "The Two Vanrevels",
+      "author": "Tarkington, Booth, 1869-1946",
+      "credential": "Pulitzer Prize for the Novel, 1919 and 1922",
+      "split": "confirmation",
+      "downloads": 479,
+      "rights": "Public domain in the USA.",
+      "subjects": "Triangles (Interpersonal relations) -- Fiction; Man-woman relationships -- Fiction; Mistaken identity -- Fiction; American fiction -- 20th century",
+      "source_url": "https://gutenberg.pglaf.org/3/4/2/3428/3428-0.txt",
+      "text_hash": "544c65c64e716582fea261cc5031a6929acb1953f115dda654508025a70936e4",
+      "story_words": 62385,
+      "cuts": [
+        {
+          "example_id": "pg3428_0",
+          "start": 39,
+          "end": 50,
+          "context_words": 3000,
+          "target_words": 431,
+          "context_hash": "062d4bc158576c80cf6d87d34503690d52456f0ec1381ba561e86eb7bd99da64",
+          "reference_hash": "4cd1bca60e09c70da79d0208bb5b2cc1630f02c0c77f17ca35becdde60cbfcec"
+        },
+        {
+          "example_id": "pg3428_1",
+          "start": 200,
+          "end": 205,
+          "context_words": 16963,
+          "target_words": 429,
+          "context_hash": "58299e3532a852c0c19895a00fe778129f8d3fab93113459601e4061d46ce7ee",
+          "reference_hash": "3338c9fc2535db3466e22bd3fbbd7a3f68b1248faf4f3308622fe06cdaf7cbcb"
+        },
+        {
+          "example_id": "pg3428_2",
+          "start": 350,
+          "end": 361,
+          "context_words": 25265,
+          "target_words": 702,
+          "context_hash": "313a276c9b04aad5429db0acebe6f3f9eae862f9fa00a6b5573083bb9e62fbb6",
+          "reference_hash": "fb3b8c8e5fae0943d54bedd2ee29ab6e2cdea26bc9c9d36f30a0766535fa8135"
+        },
+        {
+          "example_id": "pg3428_3",
+          "start": 622,
+          "end": 629,
+          "context_words": 37467,
+          "target_words": 353,
+          "context_hash": "bee3cb85fc7c79f3a50970d2766610a1fb420b3b072aacc1f8ee120bc028fd56",
+          "reference_hash": "31a393ef05dd92e6b8da3244de8229bb0b49a28675c5a9326e93f27fab6593cf"
+        },
+        {
+          "example_id": "pg3428_4",
+          "start": 792,
+          "end": 810,
+          "context_words": 45836,
+          "target_words": 770,
+          "context_hash": "7bc3d19e4a0cb7547c83facd2ee0291e33104b3aea16b0649a785df498e55489",
+          "reference_hash": "625a933f2d3d1a9d6e4550378aabd11cf9a7523577552129f8f795b41fcd5ad6"
+        },
+        {
+          "example_id": "pg3428_5",
+          "start": 939,
+          "end": 949,
+          "context_words": 55536,
+          "target_words": 768,
+          "context_hash": "82f442bed9af0ebc57ba05a8edc811d75599afbdb09a176bbeddb0d124cafd12",
+          "reference_hash": "69a1ee97894ad8ec3dcc8ae15dd2fa8a4340a4530ca2cf1da51c518009b36a1f"
+        }
+      ]
+    },
+    {
+      "book_id": "9659",
+      "title": "The Gentleman from Indiana",
+      "author": "Tarkington, Booth, 1869-1946",
+      "credential": "Pulitzer Prize for the Novel, 1919 and 1922",
+      "split": "confirmation",
+      "downloads": 450,
+      "rights": "Public domain in the USA.",
+      "subjects": "Indiana -- Fiction",
+      "source_url": "https://gutenberg.pglaf.org/9/6/5/9659/9659-0.txt",
+      "text_hash": "18a3245a4377ce1a1fca9defd473d5c53c622614b2f3adfbc56bb827c84b4276",
+      "story_words": 101442,
+      "cuts": [
+        {
+          "example_id": "pg9659_0",
+          "start": 104,
+          "end": 115,
+          "context_words": 8780,
+          "target_words": 625,
+          "context_hash": "808c5f83496710510db256c8f5180cc4af56669e14cbb130e4c8cecba98a3c06",
+          "reference_hash": "21b532501ebc1855222d4608591a544fac04ddac5eacf1f68ad641b2ac077dc2"
+        },
+        {
+          "example_id": "pg9659_1",
+          "start": 415,
+          "end": 430,
+          "context_words": 27897,
+          "target_words": 778,
+          "context_hash": "3a5071a62d0eed9fb8fc8c7305714864dfb9d86dad7f01264d63e7510e118836",
+          "reference_hash": "0dd7d5068866fe1c7363f8e9cbe8e6852cbf14da213bba21e56b99063497d733"
+        },
+        {
+          "example_id": "pg9659_2",
+          "start": 636,
+          "end": 645,
+          "context_words": 39162,
+          "target_words": 426,
+          "context_hash": "2ea5747692be9abf604f417d5eda9dfc5dfdcc91d405d7867a0520fcd4d32482",
+          "reference_hash": "a621f6626a51b1d6470d17aed18f2377c558461184de8f64f7e89ae0d21785f6"
+        },
+        {
+          "example_id": "pg9659_3",
+          "start": 848,
+          "end": 858,
+          "context_words": 52608,
+          "target_words": 682,
+          "context_hash": "76823542d611c8f971b07fc2a1716a051c002970c5eeb74aa7fac039c0e70f69",
+          "reference_hash": "dd785289756d89920da053633205950586c3cbfbd9a429c8ed5a82c67e958f1b"
+        },
+        {
+          "example_id": "pg9659_4",
+          "start": 1102,
+          "end": 1114,
+          "context_words": 71511,
+          "target_words": 580,
+          "context_hash": "9209ed03c8ccbcee72c3d23f9c022e3960c1fc5f95ff4941cc0792a7ae7b80a1",
+          "reference_hash": "2908d1e359f1710d37bd246ad82b643f4f9c99351276951b94f29169a99a7045"
+        },
+        {
+          "example_id": "pg9659_5",
+          "start": 1700,
+          "end": 1732,
+          "context_words": 97787,
+          "target_words": 597,
+          "context_hash": "ee1c411c554b60cd3dece9523f34dfcfc187362667ff720d02fd03aa0e5a74db",
+          "reference_hash": "1236590902bf57de996e2b8053f16b4e8b461b1d03b5995b10f7bb80f39fc3c7"
+        }
+      ]
+    }
+  ]
+}

@@ -45,23 +45,30 @@ export async function listRuns() {
   }
 }
 
-let datasetPromise = null;
+const datasetPromises = new Map();
 
-// All 80 examples keyed by example_id, plus the paper split file.
-export function loadDataset() {
-  datasetPromise ??= Promise.all([fetchText("/data/examples.jsonl"), fetchJSON("/data/splits.json")]).then(
-    ([jsonl, splits]) => {
+// Runs before the fiction corpus call the source paper_id and the kind section_type; the viewer
+// uses those names for both.
+const legacyNames = (record) => ({ ...record, paper_id: record.paper_id ?? record.source_id, section_type: record.section_type ?? record.kind });
+
+// The run's dataset (data/examples.jsonl for papers, data/fiction/examples.jsonl for fiction) keyed
+// by example_id, its split file, and whether it holds books.
+export function loadDataset(run) {
+  const path = "/" + ((run.manifest.config ?? run.manifest.arguments)?.dataset ?? "data/examples.jsonl").replace(/^\.?\//, "");
+  if (!datasetPromises.has(path)) {
+    const splitsPath = path.replace(/examples\.jsonl$/, "splits.json");
+    datasetPromises.set(path, Promise.all([fetchText(path), fetchJSON(splitsPath)]).then(([jsonl, splits]) => {
       const examples = new Map();
       for (const line of jsonl.split("\n")) {
         if (line.trim()) {
-          const example = JSON.parse(line);
+          const example = legacyNames(JSON.parse(line));
           examples.set(example.example_id, example);
         }
       }
-      return { examples, splits };
-    },
-  );
-  return datasetPromise;
+      return { examples, sources: splits.papers ?? splits.books, fiction: Boolean(splits.books) };
+    }));
+  }
+  return datasetPromises.get(path);
 }
 
 // Everything needed for the overview, the section list and the prompt history.
@@ -100,8 +107,8 @@ export async function loadRun(name) {
       if (!sections.has(row.example_id)) {
         sections.set(row.example_id, {
           example_id: row.example_id,
-          paper_id: row.paper_id,
-          section_type: row.section_type,
+          paper_id: row.paper_id ?? row.source_id,
+          section_type: row.section_type ?? row.kind,
           split: row.split,
           length_compliant: row.length_compliant,
           gaps: [],

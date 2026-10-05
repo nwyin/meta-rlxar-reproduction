@@ -5,7 +5,7 @@ Run with --check to validate the local corpus without downloading or writing any
 Paper selection and provenance live in data/source_manifest.json and data/splits.json.
 """
 
-from __future__ import annotations; import argparse, hashlib, json, os, re, time; from collections import Counter; from pathlib import Path; import httpx; from bs4 import BeautifulSoup  # noqa: I001  # fmt: skip
+from __future__ import annotations; import argparse, hashlib, json, os, re, time; from collections import Counter; from pathlib import Path; import httpx; from bs4 import BeautifulSoup; from run import normalize_text  # noqa: I001  # fmt: skip
 
 ROOT = Path(__file__).resolve().parent
 REQUIRED_SECTIONS = ("abstract", "introduction")
@@ -21,10 +21,6 @@ def digest(value):
 
 def words(text):
     return len(text.split())
-
-
-def normalize(text):
-    return " ".join(text.split())
 
 
 def read_json(path):
@@ -87,7 +83,7 @@ def html_text(node, strip_heading=False, strip_non_prose=False):
     for element in fragment.select(BLOCK_TAGS):
         element.insert_before(" ")
         element.insert_after(" ")
-    return normalize(fragment.get_text())
+    return normalize_text(fragment.get_text(), False)
 
 
 def extract_paper(html, metadata):
@@ -159,8 +155,8 @@ def extract_paper(html, metadata):
         examples.append(
             {
                 "example_id": metadata["paper_id"] + "_" + kind,
-                "paper_id": metadata["paper_id"],
-                "section_type": kind,
+                "source_id": metadata["paper_id"],
+                "kind": kind,
                 "context": context,
                 "reference": reference,
                 "context_hash": digest(context),
@@ -198,7 +194,7 @@ def validate_dataset(text, manifest, splits):
         raise RunError("source_manifest.json and splits.json must list the same papers exactly once")
     ids, sections = set(), {}
     for example, expected in zip(examples, manifest["examples"]):
-        eid, paper = example["example_id"], example["paper_id"]
+        eid, paper = example["example_id"], example["source_id"]
         if eid in ids or any(example.get(field) != value for field, value in expected.items()):
             raise RunError(f"{eid}: duplicate example or fields differ from source_manifest.json")
         ids.add(eid)
@@ -211,9 +207,9 @@ def validate_dataset(text, manifest, splits):
                 raise RunError(f"{eid}: {field} text differs from its saved hash")
         if not example["target_words"] or words(example["reference"]) != example["target_words"]:
             raise RunError(f"{eid}: reference length differs from target_words or is empty")
-        if normalize(example["reference"]) in normalize(example["context"]):
+        if example["reference"] in example["context"]:
             raise RunError(f"{eid}: the withheld reference still appears in the visible paper")
-        sections.setdefault(paper, []).append(example["section_type"])
+        sections.setdefault(paper, []).append(example["kind"])
     if set(sections) != set(metadata):
         raise RunError("Some manifest papers have no examples")
     for paper, kinds in sections.items():

@@ -17,6 +17,7 @@ const SECTION_NAMES = {
   introduction: "Introduction",
   related_work: "Related work",
   conclusion: "Conclusion",
+  continuation: "Continuation",
 };
 
 const runs = new Map();
@@ -119,7 +120,8 @@ async function route() {
   );
   app.replaceChildren(h("p", { class: "empty" }, "Loading…"));
   try {
-    const [run, dataset] = await Promise.all([getRun(params.run), loadDataset()]);
+    const run = await getRun(params.run);
+    const dataset = await loadDataset(run);
     if (token !== renderToken) return;
     const renderers = { overview, sections, prompts, criteria, datasetView };
     const content = await (renderers[view === "dataset" ? "datasetView" : view] ?? overview)(run, dataset, params, token);
@@ -225,7 +227,7 @@ function overview(run) {
     h("div", { class: "grid stats" },
       stat("Writer, rubric, judge", role("writer"), roles.judge && roles.judge.model !== roles.writer?.model ? `judge: ${role("judge")}` : null),
       stat("Optimizer", role("optimizer")),
-      stat("Sections", `${trainCount} train · ${validationCount} val`, `${papers.size} papers`),
+      stat("Sections", `${trainCount} train · ${validationCount} val`, `${papers.size} ${dataset.fiction ? "books" : "papers"}`),
       stat("Prompt updates", String(checkpoints.length - 1), freeze ? `P${freeze.selected} selected on training` : "no selection saved"),
       stat(costs?.unresolved ? "Cost (partial)" : "Cost", costs ? `$${costs.actual_complete_usd.toFixed(2)}` : "–",
         costs ? `${costs.requests.toLocaleString()} requests · ${costs.unresolved ?? 0} unresolved` : null)),
@@ -289,7 +291,7 @@ function sections(run, dataset, params, token) {
 
   const sidebar = h("div", { class: "card sidebar" },
     h("div", { class: "filters" },
-      h("input", { type: "search", placeholder: "Search paper title or ID", value: sectionFilters.query,
+      h("input", { type: "search", placeholder: dataset.fiction ? "Search book title or ID" : "Search paper title or ID", value: sectionFilters.query,
         oninput: (event) => { sectionFilters.query = event.target.value; renderList(); } }),
       pillGroup("split", [["all", "All"], ["train", "Training"], ["validation", "Validation"]]),
       pillGroup("type", [["all", "All types"], ...Object.entries(SECTION_NAMES)])),
@@ -345,9 +347,9 @@ async function sectionDetail(run, dataset, section, checkpoint, token) {
     h("div", { style: "margin-top: 12px" }, checkpointPills));
 
   const texts = h("div", { class: "columns" },
-    h("div", { class: "card text-card author" }, h("h3", null, h("span", { class: "who-author" }, "Author's section"), h("span", { class: "muted small" }, "from the paper")),
+    h("div", { class: "card text-card author" }, h("h3", null, h("span", { class: "who-author" }, "Author's section"), h("span", { class: "muted small" }, dataset.fiction ? "the book's next passage" : "from the paper")),
       h("div", { class: "prose" }, authorText)),
-    h("div", { class: "card text-card muse" }, h("h3", null, h("span", { class: "who-muse" }, "Muse's section"), h("span", { class: "muted small" }, "generated from the rest of the paper")),
+    h("div", { class: "card text-card muse" }, h("h3", null, h("span", { class: "who-muse" }, "Muse's section"), h("span", { class: "muted small" }, dataset.fiction ? "generated from the story so far" : "generated from the rest of the paper")),
       h("div", { class: "prose" }, museText), drafts));
 
   const rubricCard = h("div", { class: "card stack" },
@@ -357,7 +359,7 @@ async function sectionDetail(run, dataset, section, checkpoint, token) {
   const history = h("div", { class: "card" }, h("h2", null, "This section's rubric over time"), h("p", { class: "empty" }, "Loading…"));
   rubricHistory(run, section, checkpoint).then((node) => token === renderToken && history.replaceChildren(h("h2", null, "This section's rubric over time"), node));
 
-  const context = h("details", { class: "card" }, h("summary", null, "Show the paper Muse was given (the section itself is removed)"));
+  const context = h("details", { class: "card" }, h("summary", null, dataset.fiction ? "Show the story so far that Muse was given" : "Show the paper Muse was given (the section itself is removed)"));
   context.addEventListener("toggle", () => {
     if (context.open && context.children.length === 1) append(context, [h("div", { class: "prose tall", style: "margin-top: 8px" }, example?.context ?? "(not available)")]);
   }, { once: false });
@@ -465,9 +467,9 @@ function prompts(run, dataset, params) {
       h("h2", null, `What Kimi saw: training results at P${checkpoint - 1}`),
       h("p", null, `Mean training gap ${signed(feedback.summary?.gap)} over ${feedback.summary?.examples ?? "?"} sections. `,
         `These ${feedback.failures?.length ?? 0} sections, where Muse was furthest ahead, were sent in full with their rubrics and grades:`),
-      h("table", null, h("thead", null, h("tr", null, h("th", null, "Section"), h("th", null, "Paper"), h("th", { class: "num" }, "Gap"))),
+      h("table", null, h("thead", null, h("tr", null, h("th", null, "Section"), h("th", null, dataset.fiction ? "Book" : "Paper"), h("th", { class: "num" }, "Gap"))),
         h("tbody", null, (feedback.failures ?? []).map((f) => h("tr", { class: "clickable", onclick: () => go({ view: "sections", id: f.example_id, ck: checkpoint - 1 }) },
-          h("td", null, sectionName(f.section_type)), h("td", null, paperTitle(dataset, f.paper_id)), h("td", { class: "num" }, gapSpan(f.gap))))))));
+          h("td", null, sectionName(f.section_type ?? f.kind)), h("td", null, paperTitle(dataset, dataset.examples.get(f.example_id)?.paper_id)), h("td", { class: "num" }, gapSpan(f.gap))))))));
   }
 
   return h("div", { class: "split-view" }, sidebar, body);
@@ -570,12 +572,13 @@ function criterionDetail(entry, checkpoints, dataset) {
 // ---------- dataset ----------
 
 function datasetView(run, dataset, params) {
-  const bySplit = dataset.splits.papers;
+  const bySplit = dataset.sources;
+  const noun = dataset.fiction ? "books" : "papers";
   const order = ["train", "validation", "pilot", "confirmation"];
   const blurbs = {
-    train: "Training papers: the optimizer sees their results.",
-    validation: "Validation papers: scored only after a checkpoint is selected.",
-    pilot: "Pilot papers: used for the short pilot run.",
+    train: "Training: the optimizer sees their results.",
+    validation: "Validation: scored only after a checkpoint is selected.",
+    pilot: "Pilot: used for the short pilot run.",
     confirmation: "Held back for a later confirmation run; never used so far.",
   };
   const sectionsOf = (paperId) => [...dataset.examples.values()].filter((e) => e.paper_id === paperId)
@@ -583,9 +586,11 @@ function datasetView(run, dataset, params) {
 
   return h("div", { class: "stack" },
     h("div", null, h("h1", null, "Dataset"),
-      h("p", { class: "muted" }, `${dataset.examples.size} sections from ${Object.values(bySplit).flat().length} papers. Each paper gives an abstract, an introduction and, when it has them, related work and a conclusion; the writer sees the paper with one section removed.`)),
+      h("p", { class: "muted" }, dataset.fiction
+        ? `${dataset.examples.size} passages from ${Object.values(bySplit).flat().length} books. Each book gives 4 passages; the writer sees the story up to each passage and continues it.`
+        : `${dataset.examples.size} sections from ${Object.values(bySplit).flat().length} papers. Each paper gives an abstract, an introduction and, when it has them, related work and a conclusion; the writer sees the paper with one section removed.`)),
     order.filter((split) => bySplit[split]).map((split) => h("div", { class: "stack" },
-      h("h2", null, `${splitName(split)} `, h("span", { class: "muted small" }, `${bySplit[split].length} papers — ${blurbs[split] ?? ""}`)),
+      h("h2", null, `${splitName(split)} `, h("span", { class: "muted small" }, `${bySplit[split].length} ${noun} — ${blurbs[split] ?? ""}`)),
       h("div", { class: "grid papers" }, bySplit[split].map((paperId) => {
         const examples = sectionsOf(paperId);
         const provenance = examples[0]?.provenance ?? {};

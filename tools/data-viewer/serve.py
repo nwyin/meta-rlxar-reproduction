@@ -1,7 +1,7 @@
 """Serve the data viewer and the run data it reads, on localhost only.
 
-Only the viewer, runs/ and the two dataset files are served, so .env and the rest of the
-repository stay private. Usage: uv run python tools/data-viewer/serve.py [--port 8431]
+Only the viewer, runs/ and the paper and fiction dataset files are served, so .env and the
+rest of the repository stay private. Usage: uv run python tools/data-viewer/serve.py [--port 8431]
 """
 
 import argparse
@@ -13,7 +13,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 VIEWER = "/tools/data-viewer/"
 ALLOWED_FOLDERS = (ROOT / "tools" / "data-viewer", ROOT / "runs")
-ALLOWED_FILES = {ROOT / "data" / "examples.jsonl", ROOT / "data" / "splits.json"}
+ALLOWED_FILES = {ROOT / "data" / folder / name for folder in ("", "fiction") for name in ("examples.jsonl", "splits.json")}
 
 
 def list_runs():

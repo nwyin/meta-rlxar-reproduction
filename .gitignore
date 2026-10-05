@@ -7,6 +7,8 @@ __pycache__/
 .ruff_cache/
 data/raw/
 data/examples.jsonl
+data/fiction/raw/
+data/fiction/examples.jsonl
 data/tokenizers/
 runs/
 reports/

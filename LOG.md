@@ -1090,3 +1090,84 @@ Inline offline checks confirmed that summaries handle empty inputs, missing grad
 without the removed field. Historical rows with the field produced the same summaries as
 rows without it. Python lint and JavaScript syntax checks passed. We made no paid calls;
 full runs and the viewer's browser rendering remain untested.
+
+## 2026-10-05: Generalize the pipeline and add the Gutenberg fiction corpus
+
+The owner noticed that the quality of arXiv input is hard to judge, and asked us to run the
+loop on the blog's second task: continuing a novel from where it stops. We refactored the
+pipeline so that one runner serves any text, and we added `fetch_fiction.py`, which builds the
+corpus the blog describes from Project Gutenberg.
+
+Runner changes:
+
+- Examples now carry `source_id` (the paper or book) and `kind` (`abstract`, `continuation`, …)
+  instead of `paper_id` and `section_type`. Writer, rubric and judge requests send `context`
+  and `kind` instead of `visible_paper` and `section_type`. Summaries report `kinds` and
+  `source_interval`, and the bootstrap resamples whole sources.
+- The config names its prompt directory. The paper prompts moved unchanged to `prompts/papers/`,
+  and `prompts/fiction/` holds the new ones. The manifest records the hash of all 5 prompts.
+- `pilot_papers` became `pilot_sources`. We removed the branch for the old dataset's `pilot`
+  label, because that dataset no longer fits the runner.
+- The feedback policy is now recorded as `failing_gap_without_context`; it is unchanged.
+- `run.normalize_text` gives references, contexts and the writer's text one form: NFC, straight
+  quotes, "..." for an ellipsis and single spaces. Paragraph breaks stay when the dataset's
+  references have them and go when they do not. The judge's quote check uses the same form.
+
+We found an origin tell in the paper runs. No author section had a line break (0 of 153),
+while 89 of 140 model sections in `meta-blog-v4-seed0` had paragraph breaks. The judge saw
+both texts as written. Whether it used the difference is untested. Model sections in new paper
+runs are one line, like the author sections. The paper dataset changed only in typography. We
+renamed the fields and normalized quotes and ellipses, which changed 220 of its 306 context and
+reference texts, and we re-froze its hashes in `data/source_manifest.json`. The previous
+dataset and manifest are kept locally in `data/archive/papers-before-source-rename/`.
+
+The fiction corpus follows the blog's description. We took English-language Nobel and Pulitzer
+novelists, chose their below-median-download novels that Gutenberg marks public domain in the
+USA, kept each author in one split, and cut 6 candidate passages per book. A temperature-0
+probe drops a passage when the writer reproduces more than 5% of its 13-grams or a run of 20
+or more words. [METHOD.md](METHOD.md#fiction-corpus) gives the rules. Discovery chose 30 books
+from 16 authors: 9 training, 6 validation and 15 confirmation. 14 candidates were rejected:
+4 had no chapter heading followed by prose (2 story collections, a novel in play form and a
+novella), and 10 were under 30,000 words. We excluded 2 more books by hand,
+*Tatterdemalion* and *Roast Beef, Medium*. Both are story collections, but the catalog lists
+them as novels. The supply is tight: the confirmation split has no spare book, and validation
+draws on 3 authors.
+
+We checked the refactor offline with a fake OpenRouter client. The previous runner (HEAD) on
+the previous paper dataset and the new runner on the re-frozen one ran the same mocked paper
+pilot. Their checkpoint tables, summaries and paired improvements matched after the field
+renames. The new runner's model sections had no line breaks; the old runner's did. A mocked
+full fiction run (8 training and 5 validation books, 4 updates) completed. Mocked probe and
+freeze checks confirmed the drop rules. A book that lost 3 of 6 passages gave way to the spare,
+and a split short of books stopped the freeze without writing. A stale `probe.json` also
+stopped it. Restore rebuilt an identical dataset. It re-downloaded a missing book with the
+same hash and stopped on an edited book or dataset. The optimizer audit flagged training
+authors' full and last names, training titles and a copied 12-word span. The data viewer loaded
+an old paper run and a mocked fiction run with a stubbed fetch. Its browser rendering remains
+untested.
+
+The owner approved small paid end-to-end checks. The live probe on 2 training books (12
+passages) found no memorized passage. The longest shared run was 6 words, and no 13-gram
+matched. It cost $0.0551. A live fiction pilot (`runs/pilot-fiction-2026-10-05`, 1 book for
+training and 1 for validation, 1 update) completed in 27 minutes with every rubric and grade
+valid. It had a training gap of +0.250 at P0 and +0.167 at P1, so training selected P0. The
+validation gap was -1.375 at P0 and -0.417 at P1, over 4 passages from 1 book. The pilot cost
+$0.292 across 71 generations. 6 of its 8 continuations met the length window within 3 drafts;
+the other 2 ran to 1.51 and 1.70 times the target. Kimi's proposal passed the audit at
+1,005 words.
+
+The pilot exposed 2 problems:
+
+- 6 judge replies failed the quote check and needed a repair. In each, the quoted words
+  occurred in the text, but the judge had moved a comma inside the quotation, swapped double
+  quotes for single ones, or written `\"` inside its evidence. The check now compares word
+  sequences and ignores punctuation and case. On the saved replies it rejects 0 of the 6. It
+  still rejects an invented quote and a partial word. This also applies to paper runs.
+- OpenRouter's generation API returned 404 for every generation in the first minutes after a
+  run, so the pilot's report marked its cost as partial ($0.2834 with 2 unresolved). Lookups a
+  few minutes later resolved all of them. We left the runner unchanged; rerun
+  `OpenRouter.costs()` for a complete figure.
+
+The full probe and freeze have not run. The owner chose not to run the paid probe for now; we
+estimate it from the pilot probe at $1 to $2. Until then `data/fiction/` holds no frozen
+corpus, and `fetch_fiction.py --check` says so.

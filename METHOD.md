@@ -4,7 +4,8 @@ This repository reproduces the Initial Empirical Investigation in
 [Meta's Unslopping AI blog](https://facebookresearch.github.io/RAM/blogs/unslop/).
 A writer model fills in a missing section of a research paper. A rubric generator writes a
 rubric for that section from a meta prompt, and a judge scores the author's section and the
-model's section against it. An optimizer rewrites the meta prompt so that the judge's scores
+model's section against it. The same pipeline also runs on the blog's second task, continuing
+a novel from where it stops; [Fiction corpus](#fiction-corpus) describes that data. An optimizer rewrites the meta prompt so that the judge's scores
 favour the author's writing. The blog reports that the validation gap (author minus model)
 goes from -4.2 at the initial prompt to +2.76, crossing zero at update 4 and peaking at update 5.
 
@@ -73,7 +74,10 @@ The example's reference is the author's section text. Its context is the rest of
 with that section replaced by a placeholder such as `[Missing introduction section]`.
 Extraction changes formatting only:
 
-- Formulas become their TeX source and whitespace is normalized.
+- Formulas become their TeX source and whitespace is normalized. Curly quotes become straight
+  quotes and "…" becomes "...", in the shared form that `run.normalize_text` also gives the
+  writer's sections. The writer's paragraph breaks are removed, because the author's sections
+  have none.
 - Text is joined as written, with spaces only at paragraph, list and table boundaries.
 - Every citation takes one numeric style: "[3, 7]" in the text and "[n]" in the reference
   list. Journal styles differ and LaTeXML renders some badly, so a model's clean prose would
@@ -94,7 +98,7 @@ holds papers from most fields (`data/splits.json`):
 | 5 | 13 | confirmation; not used |
 
 The research run therefore has 140 sections, 96 for training and 44 for validation. There is
-no pilot split. a pilot run (`split: pilot`) uses the first `pilot_papers` training papers in dataset order,
+no pilot split. A pilot run (`split: pilot`) uses the first `pilot_sources` training papers in dataset order,
 the only papers it needs.
 
 `data/source_manifest.json` records each paper's URL, metadata and hashes, and the hash of
@@ -107,6 +111,53 @@ afterward: the selection policy, the reason for each rejected candidate and the 
 `git show corpus-2026-10-01:data/exclusions.json` reads one. The papers' text is not in Git,
 because redistribution licenses were not checked. `data/source_manifest.json` has each paper's
 URLs and HTML hash, so anyone can pull the pages again and check them.
+
+## Fiction corpus
+
+The blog's story task shows a model a novel up to a point where it stops mid-scene and asks it
+to continue in the same voice, point of view, characters, setting and tone, within about ±15%
+of the author's length. `fetch_fiction.py` builds this data from Project Gutenberg, following
+the blog's description:
+
+1. Authors. `data/fiction/authors.json` lists 20 English-language novelists with a Nobel Prize
+   in Literature or a Pulitzer Prize for the Novel or Fiction. We left out authors who wrote in
+   other languages, because a translation is the translator's prose.
+2. Novels. Gutenberg's catalog CSV gives each author's English texts with Fiction among their
+   subjects. We drop short-story, drama, poetry and juvenile subjects, single volumes of a
+   multi-volume work, titles naming stories, tales, essays or sketches, books with a second
+   author, and 2 collections the catalog lists as novels (`excluded_books`).
+3. Lesser-read works. Gutenberg's RDF catalog gives each book's recent download count and
+   rights statement. A book qualifies if its count is below the median of its author's novels
+   and Gutenberg marks it "Public domain in the USA." An author's only novel never qualifies.
+4. Splits. The authors are shuffled (seed 20261005) and each goes whole to the first split that
+   still needs books, so no author appears in 2 splits. An author gives up to 3 books.
+5. Text. We download each book from the PGLAF mirror, 2 seconds apart, as Gutenberg's robot
+   policy asks. Cleaning strips the Gutenberg header and licence, illustrations, footnotes and
+   production notes, turns `_italics_` into plain words and `--` into an em dash, and unwraps
+   each paragraph onto one line. The story starts at its first chapter heading that prose
+   follows. A book needs 30,000 words. Contexts, references and the writer's continuations all
+   keep their paragraphs, one blank line apart, with straight quotes.
+6. Passages. Each book gets 6 candidate cuts, one in each sixth of the story after the first
+   2,000 words. A cut falls between paragraphs, at least 3 prose paragraphs after the last
+   heading or scene break. The reference is the next whole paragraphs, 300 to 800 words, with no
+   heading, scene break or indented block. The context is the story from its first chapter up to
+   the cut, untruncated.
+7. Probe. The writer continues each candidate at temperature 0 with the fiction writer prompt.
+   A passage is dropped when its continuation contains more than 5% of the reference's 13-grams
+   or shares a run of 20 or more words with it, the blog's rule. Words are casefolded and
+   punctuation is ignored.
+8. Freeze. Each book keeps its first 4 passages that pass. The splits take books in turn by
+   author until they hold 8 training, 5 validation and 15 confirmation books: 32, 20 and 60
+   passages, the blog's 52 meta-optimization examples with 20 held out, and 60 for testing.
+
+The blog's dataset is not public, so the books, cut points and continuation lengths are ours.
+The blog does not say how long a continuation is or how much of the story the model sees.
+
+`data/fiction/` keeps `authors.json`, `discovery.json` (the books considered, chosen and
+rejected, with each cut's hashes), `probe.json`, `source_manifest.json` and `splits.json`. The
+book text and `examples.jsonl` stay local. `uv run python fetch_fiction.py` downloads the books
+and rebuilds the dataset against the saved hashes, and `--check` verifies local files.
+Gutenberg regenerates some files monthly, so a changed source stops the restore.
 
 ## Roles
 
@@ -137,8 +188,10 @@ cost, since the result is Muse's judgment either way.
 All requests go through OpenRouter. The models and their settings are in `configs/models.yaml`,
 the rest of the experiment (seed, number of updates, word limits, attempt counts, bootstrap settings, run names) in
 `configs/experiments.yaml`, and the prompts
-in `prompts/`: `writer.md`, `rubric_initial.md` (the initial meta prompt), `rubric_wrapper.md`
-(the fixed instructions around the meta prompt), `judge.md` and `optimizer.md`.
+in `prompts/papers/`: `writer.md`, `rubric_initial.md` (the initial meta prompt), `rubric_wrapper.md`
+(the fixed instructions around the meta prompt), `judge.md` and `optimizer.md`. The fiction run
+uses `configs/fiction.yaml` and the prompts in `prompts/fiction/`. The manifest records the hash
+of every prompt.
 
 ## Procedure
 
@@ -160,7 +213,9 @@ in `prompts/`: `writer.md`, `rubric_initial.md` (the initial meta prompt), `rubr
 3. Judge. Muse grades the author's section and its own section in separate requests,
    against the same rubric, in a seeded random order. The request does not say which section
    is which. The judge returns a 0-10 score and a short justification for every criterion, and
-   any text it quotes must occur in the section or the paper. Since 2026-10-02 the judge
+   the words of any text it quotes must occur in order in the section or the paper. Punctuation
+   and case are ignored, since 2026-10-05, because judges move commas inside quotations and swap
+   double quotes for single ones around dialogue. Since 2026-10-02 the judge
    prompt says a section that fails a criterion's purpose scores 0 to 3 however fluent it is,
    and that claims about the paper's figures and tables, which the context omits, do not count
    against a section. The earlier prompt told the judge to start from the middle anchor,
@@ -181,7 +236,8 @@ in `prompts/`: `writer.md`, `rubric_initial.md` (the initial meta prompt), `rubr
    4 worst failures. The completed run
    `meta-blog-seed0` used the earliest policy: the 4 lowest-gap sections, each with the paper.
    The run manifest records the policy as `feedback_policy`. The simplified runner supports only
-   `failing_gap_without_paper`.
+   this policy, recorded as `failing_gap_without_paper` before 2026-10-05 and
+   `failing_gap_without_context` since.
 
 5. Optimize. The optimizer returns a new meta prompt of at most 2,000 words and a rationale. A
    pattern check rejects a proposal that is too long; tells the rubric to prefer the author's
@@ -219,8 +275,8 @@ from negative to positive.
 Each run writes `results.md`, `checkpoints.csv` and `summary.json` in its output directory.
 They give the author mean, model mean and gap at each checkpoint. The paired improvement
 is the mean, over validation sections, of the gap at the selected checkpoint minus the gap
-at P0. Its 95% interval uses a percentile bootstrap that resamples whole papers, with 2,000
-replicates and the run's seed. The summaries also include sections that meet the length
+at P0. Its 95% interval uses a percentile bootstrap that resamples whole sources (papers or
+books), with 2,000 replicates and the run's seed. The summaries also include sections that meet the length
 target and sections without a copying flag. Historical reports remain in `reports/`.
 
 ## Cost and request handling

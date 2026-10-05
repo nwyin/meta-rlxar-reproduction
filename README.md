@@ -2,8 +2,10 @@
 
 This repository reproduces the Initial Empirical Investigation in
 [Meta's Unslopping AI blog](https://facebookresearch.github.io/RAM/blogs/unslop/).
-The reproduction uses 2 scripts: `fetch_data.py` restores the frozen paper corpus, and
-`run.py` writes missing sections, optimizes the rubric meta prompt, and evaluates the result.
+The reproduction uses 3 scripts. `fetch_data.py` restores the frozen paper corpus.
+`fetch_fiction.py` builds and restores the blog's story-continuation corpus from Project
+Gutenberg. `run.py` writes the model's sections or continuations, optimizes the rubric meta
+prompt, and evaluates the result on either corpus.
 
 The current settings use Muse Spark 1.3, on OpenRouter's contributor tier, as writer,
 rubric generator and judge, and Kimi K2.6 as optimizer. The corpus holds 56 peer-reviewed
@@ -50,6 +52,25 @@ without downloads or writes:
 uv run python fetch_data.py --check
 ```
 
+### Fiction
+
+```sh
+uv run python fetch_fiction.py           # download the frozen books and build data/fiction/examples.jsonl
+uv run python fetch_fiction.py --check   # verify local files without downloads or writes
+```
+
+Building the corpus from scratch takes 3 steps. `discover` reads the Gutenberg catalogs,
+chooses lesser-read novels by the authors in `data/fiction/authors.json` and proposes 6 cuts
+per book. `probe` is paid: the writer continues every cut at temperature 0, and `freeze` drops
+the passages it reproduced and fills the splits. [METHOD.md](METHOD.md#fiction-corpus) gives
+the rules.
+
+```sh
+uv run python fetch_fiction.py discover
+uv run python fetch_fiction.py probe --output runs/probe-fiction-<date>
+uv run python fetch_fiction.py freeze
+```
+
 Copy `.env.example` to `.env` and set `OPENROUTER_API_KEY`.
 
 ## Run
@@ -70,9 +91,15 @@ For a small pilot, run `configs/pilot.yaml`. It trains on 1 paper and validates 
 uv run python run.py configs/pilot.yaml
 ```
 
+The fiction run and its pilot use `configs/fiction.yaml` and `configs/fiction_pilot.yaml`:
+
+```sh
+uv run python run.py configs/fiction.yaml
+```
+
 The pilot's scores stay separate from a full run. `seed` controls grading order and bootstrap
-sampling, not model decoding. Model roles come from `configs/models.yaml`; prompts stay in
-`prompts/`. The run copies its config into its directory as `config.yaml`.
+sampling, not model decoding. Model roles come from `configs/models.yaml`; the config's
+`prompts` key names the prompt directory, `prompts/papers` or `prompts/fiction`. The run copies its config into its directory as `config.yaml`.
 
 The runner trusts the prepared examples and their split labels. It enforces the initial
 meta-prompt word limit. It sends the configured model, provider and settings directly to
@@ -121,17 +148,20 @@ The run directory contains the whole result:
 | `costs.json` | Charges retrieved from OpenRouter, lookup errors and sends missing generation IDs. |
 | `status.json` | Run status and any stopping error. |
 
-`runs/`, `reports/`, paper text and raw HTML stay local. `runs/budget_ledger.json` remains
+`runs/`, `reports/`, paper text, raw HTML, book text and both `examples.jsonl` files stay local. `runs/budget_ledger.json` remains
 as the record of runs before 2026-10-01.
 
 ## Repository layout
 
 ```text
-fetch_data.py          Restore and check the frozen corpus from raw paper HTML.
+fetch_data.py          Restore and check the frozen paper corpus from raw paper HTML.
+fetch_fiction.py       Build, freeze, restore and check the Gutenberg fiction corpus.
 run.py                 OpenRouter calls, optimization, validation and result summary.
 configs/               Experiment settings, models and saved endpoint listings.
-prompts/               Writer, rubric, judge and optimizer prompts.
-data/                  Frozen manifests, splits and local paper text.
+prompts/papers/        Writer, rubric, judge and optimizer prompts for papers.
+prompts/fiction/       The same prompts for story continuation.
+data/                  Frozen paper manifests, splits and local paper text.
+data/fiction/          Fiction authors, discovery, probe, manifests and splits; local book text.
 tools/data-viewer/     Optional local viewer for saved runs.
 METHOD.md              Method and limitations.
 LOG.md                 Experiment history.
@@ -146,7 +176,8 @@ uv run ruff check .
 
 Validate code changes with temporary checks during the session, then discard them. The
 repository keeps no test suite. `AGENTS.md` describes this workflow. Use
-`fetch_data.py --check` to verify local corpus files against their frozen hashes.
+`fetch_data.py --check` and `fetch_fiction.py --check` to verify local corpus files against
+their frozen hashes.
 
 The tags `meta-blog-seed0` and `alternative-model-study` preserve earlier implementations
 and experiments.
