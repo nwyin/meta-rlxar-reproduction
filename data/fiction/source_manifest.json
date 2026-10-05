@@ -1,0 +1,2446 @@
+{
+  "source": "Project Gutenberg novels by Nobel and Pulitzer prize-winning authors; see authors.json",
+  "discovery_hash": "37ff851db88edd11eb81d89346f5c878650a9a6c92b507fba2fe507161ec86ab",
+  "probe_hash": "2b9c6718d6862962dba9d5ed9295328242a4ad698d3bc61cfa59a298a7ef32e0",
+  "dataset_hash": "232fcb70ed99d6cf2099ffc3ea7914cd6d12668c596ce260da2ba1fea1d618b1",
+  "books": [
+    {
+      "book_id": "14696",
+      "title": "The Wheel of Life",
+      "author": "Glasgow, Ellen Anderson Gholson, 1873-1945",
+      "credential": "Pulitzer Prize for the Novel, 1942",
+      "split": "train",
+      "downloads": 431,
+      "rights": "Public domain in the USA.",
+      "subjects": "New York (State) -- Social life and customs -- Fiction",
+      "source_url": "https://gutenberg.pglaf.org/1/4/6/9/14696/14696-0.txt",
+      "text_hash": "92402374e338f72ec58c90da9464de2da1e9351f3dc39669f615bf873f5b1898",
+      "story_words": 123441,
+      "cuts": [
+        {
+          "example_id": "pg14696_0",
+          "start": 314,
+          "end": 321,
+          "context_words": 16107,
+          "target_words": 756,
+          "context_hash": "79df0d9cdcfab0dc4d83e0f2653b6b0a5fe76539ffcae0d2b0e29582f2d7d6ba",
+          "reference_hash": "816894268dd309401225aac494d53888597ced71172d49e3f4b45eee0846883b"
+        },
+        {
+          "example_id": "pg14696_1",
+          "start": 640,
+          "end": 653,
+          "context_words": 29251,
+          "target_words": 609,
+          "context_hash": "3b557f190ae94f7e1c0440b7fd9b08177120f58ead720892a78be8e8a330227b",
+          "reference_hash": "eccefcfcfc3fd7cb19d1a0faa1ca00b57782d200895fc5df08c1a1fa71bb5835"
+        },
+        {
+          "example_id": "pg14696_2",
+          "start": 1020,
+          "end": 1037,
+          "context_words": 54971,
+          "target_words": 367,
+          "context_hash": "116c8bede44d2abbf0d3e2edaa4b535ff060469a73b61c518e2e46403e7c129a",
+          "reference_hash": "114f78f5ee167feb1966175e6f50e524379506661ef16717baa6c2f164c732c9"
+        },
+        {
+          "example_id": "pg14696_3",
+          "start": 1497,
+          "end": 1504,
+          "context_words": 78059,
+          "target_words": 586,
+          "context_hash": "016bd5e36fef141425bcf9dd85866194802c18c282289e9c8a8f982a0fbea27e",
+          "reference_hash": "91db8282cf1e51acc755ee78ac5a8dfe61532403440e1e42b121a9547711abdb"
+        }
+      ]
+    },
+    {
+      "book_id": "25430",
+      "title": "The Innocents: A Story for Lovers",
+      "author": "Lewis, Sinclair, 1885-1951",
+      "credential": "Nobel Prize in Literature, 1930; Pulitzer Prize for the Novel, 1926 (declined)",
+      "split": "train",
+      "downloads": 878,
+      "rights": "Public domain in the USA.",
+      "subjects": "Married people -- Fiction; New York (State) -- Social life and customs -- Fiction",
+      "source_url": "https://gutenberg.pglaf.org/cache/epub/25430/pg25430.txt",
+      "text_hash": "560b761bf97c93ab01d8d995ee4c8ea26f9a099b6f90cf8a6af5bc6256e85ce3",
+      "story_words": 41340,
+      "cuts": [
+        {
+          "example_id": "pg25430_0",
+          "start": 48,
+          "end": 57,
+          "context_words": 4005,
+          "target_words": 694,
+          "context_hash": "3e04711918e56650b5fb48f3b43ef7217bf478d120e41d30ba1b9840fafcd0bd",
+          "reference_hash": "b62e984ed62e4dffc553435c84f09ab5162b8b3d5f57340cfbcd40284f9d0256"
+        },
+        {
+          "example_id": "pg25430_1",
+          "start": 117,
+          "end": 125,
+          "context_words": 9137,
+          "target_words": 611,
+          "context_hash": "42f3ca5539c7b9f1dfa95a11ed3d3a6d25d4f94d26e82bc8b527b8194fc529d1",
+          "reference_hash": "0d3375d7f8965cb7a2272a89b25d2aa30397e72c4d8ce8fd3376b0240a782dbe"
+        },
+        {
+          "example_id": "pg25430_2",
+          "start": 265,
+          "end": 279,
+          "context_words": 16512,
+          "target_words": 571,
+          "context_hash": "d511518f0fc26b15a518e2868041016fa248765e90bc5a1218ca4f69715e01dd",
+          "reference_hash": "3b7827e42641de81b306ab70e208f986becb4041a6086f99862e915f249eff5b"
+        },
+        {
+          "example_id": "pg25430_3",
+          "start": 386,
+          "end": 394,
+          "context_words": 22227,
+          "target_words": 501,
+          "context_hash": "41bf5bc8597059c1a1dc5897241426596974b6026d6f96a17fd3dcdf66a79d4b",
+          "reference_hash": "140ed25ab84a7ea206eb72dd43b0f8e634b8a58557760c990d3fe140be917aac"
+        }
+      ]
+    },
+    {
+      "book_id": "69549",
+      "title": "The painted room",
+      "author": "Wilson, Margaret, 1882-1973",
+      "credential": "Pulitzer Prize for the Novel, 1924",
+      "split": "train",
+      "downloads": 413,
+      "rights": "Public domain in the USA.",
+      "subjects": "First loves -- Fiction; Mate selection -- Fiction; United States -- Social life and customs -- 20th century -- Fiction; Middle West -- Fiction; Families -- Fiction",
+      "source_url": "https://gutenberg.pglaf.org/6/9/5/4/69549/69549-0.txt",
+      "text_hash": "fe5b13178ac92cbb34b764cfc18154fee6857feb6e03945b1e569cc604525205",
+      "story_words": 79171,
+      "cuts": [
+        {
+          "example_id": "pg69549_0",
+          "start": 182,
+          "end": 188,
+          "context_words": 9565,
+          "target_words": 582,
+          "context_hash": "2a006a5e0294f225a62f2619656191492c6af4f31f2a084e99e1188e89e1296f",
+          "reference_hash": "554cb42816c2d92dd8fcc0b14106b0d130ff397119d0288f7158cb3ac7217c8e"
+        },
+        {
+          "example_id": "pg69549_1",
+          "start": 345,
+          "end": 359,
+          "context_words": 19264,
+          "target_words": 319,
+          "context_hash": "9b657f46eca0ff11d9f0a3ddcdb267bf802ac606340be538ca0b35f98e5668c3",
+          "reference_hash": "19d578deac61af1205f9eb8d7782d33081f529a718f43fb563ee5c0320a980e5"
+        },
+        {
+          "example_id": "pg69549_2",
+          "start": 766,
+          "end": 779,
+          "context_words": 33077,
+          "target_words": 625,
+          "context_hash": "44d96d04a1cadd3fce6783b3378b22ace31399b5f4701b28564a27194470002b",
+          "reference_hash": "e5458ddcf5a8637f0b26d9bb1065cb15823ea8283bcb46898365616a32b72eb7"
+        },
+        {
+          "example_id": "pg69549_3",
+          "start": 1019,
+          "end": 1053,
+          "context_words": 42285,
+          "target_words": 742,
+          "context_hash": "ae9ff0c7bdccc677cfc7093160ac6f83995d593c9424e12086b73c6d767ff465",
+          "reference_hash": "787849c2829a744042beee22afaeaceff8ee468e3d70d78ec5f027fceb1792eb"
+        }
+      ]
+    },
+    {
+      "book_id": "17259",
+      "title": "His Second Wife",
+      "author": "Poole, Ernest, 1880-1950",
+      "credential": "Pulitzer Prize for the Novel, 1918",
+      "split": "train",
+      "downloads": 346,
+      "rights": "Public domain in the USA.",
+      "subjects": "New York (N.Y.) -- Social life and customs -- Fiction; Marriage -- Fiction",
+      "source_url": "https://gutenberg.pglaf.org/cache/epub/17259/pg17259.txt",
+      "text_hash": "9fe073f8ceade23ea44b0701742a5d94ae83f71336ba06ab5cf26013005573ea",
+      "story_words": 64975,
+      "cuts": [
+        {
+          "example_id": "pg17259_0",
+          "start": 140,
+          "end": 158,
+          "context_words": 8536,
+          "target_words": 505,
+          "context_hash": "b5dfd6751ffa026b97a4f142a01f8b7ddead3abc7dd4630b052aadb712770256",
+          "reference_hash": "98bd2d882d3d38f664937bb9b59b26316635501a00aadd36cc477c4b2a370954"
+        },
+        {
+          "example_id": "pg17259_1",
+          "start": 343,
+          "end": 348,
+          "context_words": 17310,
+          "target_words": 367,
+          "context_hash": "858e4fe9b480fc4ec92c3078f497d17510497d0c8c7758804bb72033290f2313",
+          "reference_hash": "5d7f900a1dc39d35241770e3986516f4918da56387d3a52909a78b01cd1356e0"
+        },
+        {
+          "example_id": "pg17259_2",
+          "start": 623,
+          "end": 643,
+          "context_words": 33426,
+          "target_words": 774,
+          "context_hash": "c1a756e8c2f759059db116c18c30eed9da6ca3696a3a3d1c35b3ed9d61a7135e",
+          "reference_hash": "103898a937095bc017897341f87ff2af404bbf0b1d35aec89c865be2e10b8e52"
+        },
+        {
+          "example_id": "pg17259_3",
+          "start": 734,
+          "end": 739,
+          "context_words": 38525,
+          "target_words": 747,
+          "context_hash": "11004f102459f83e273cdd4b7df7ba5d0a1aba921039e7ca7673a5934e93682c",
+          "reference_hash": "8a9f9b4b744407cc18db398ca2f2e25d4d38c05d6a51ce2fa245aecb6cb96843"
+        }
+      ]
+    },
+    {
+      "book_id": "67138",
+      "title": "The Sun Also Rises",
+      "author": "Hemingway, Ernest, 1899-1961",
+      "credential": "Nobel Prize in Literature, 1954; Pulitzer Prize for Fiction, 1953",
+      "split": "train",
+      "downloads": 4955,
+      "rights": "Public domain in the USA.",
+      "subjects": "Americans -- France -- Fiction; Americans -- Spain -- Fiction; Ashley, Brett (Fictitious character) -- Fiction; Expatriation -- Fiction; Spain -- History -- Alfonso XIII, 1886-1931 -- Fiction",
+      "source_url": "https://gutenberg.pglaf.org/6/7/1/3/67138/67138-0.txt",
+      "text_hash": "85e210bdc5cbf70689a0c05e3067457f6451e3c52b4f76942206403001390de4",
+      "story_words": 67737,
+      "cuts": [
+        {
+          "example_id": "pg67138_0",
+          "start": 446,
+          "end": 490,
+          "context_words": 9389,
+          "target_words": 513,
+          "context_hash": "2ffeda233c4b15d69eb0ac88b028f5274ed81faf3f97c29928234974d7e6d2df",
+          "reference_hash": "4db8d9896c2ee1ead78177b591ac2542d2e0905fd284ef622b4925e08ebc3982"
+        },
+        {
+          "example_id": "pg67138_2",
+          "start": 1553,
+          "end": 1591,
+          "context_words": 31733,
+          "target_words": 517,
+          "context_hash": "17aa0cee7f4317e367c2041f8bf49c8d2bde2517fbe0c1569808d83adf252f71",
+          "reference_hash": "187856f48d228d6330c2ceb27c30777967cfedadae42febc2f2f5ea89e4ea5b9"
+        },
+        {
+          "example_id": "pg67138_3",
+          "start": 1910,
+          "end": 1944,
+          "context_words": 38018,
+          "target_words": 392,
+          "context_hash": "1dc8cda713aa4b4357ab10cd9eb8fcc4c0960d04610c4051dbe83a8392f6d376",
+          "reference_hash": "63affd6c49d214c96a68a8f267ad759d5ff99bba5c1dd72e4a40d3c09666d56e"
+        },
+        {
+          "example_id": "pg67138_4",
+          "start": 2423,
+          "end": 2446,
+          "context_words": 49035,
+          "target_words": 342,
+          "context_hash": "38b679d205d6f3cf315c1d2e32ff3c511036c1fe33ce0771ae3bbfdd5766362b",
+          "reference_hash": "c32d2576bae1dcdbc3e33bc038c3b8589a3cf779fac050204a18d0110f6f9b78"
+        }
+      ]
+    },
+    {
+      "book_id": "34419",
+      "title": "The Ancient Law",
+      "author": "Glasgow, Ellen Anderson Gholson, 1873-1945",
+      "credential": "Pulitzer Prize for the Novel, 1942",
+      "split": "train",
+      "downloads": 441,
+      "rights": "Public domain in the USA.",
+      "subjects": "Virginia -- Fiction; Textile industry -- Fiction; Atonement -- Fiction; Ex-convicts -- Fiction; Industrial relations -- Fiction",
+      "source_url": "https://gutenberg.pglaf.org/cache/epub/34419/pg34419.txt",
+      "text_hash": "c6e4eed78075e12b619d11edbff28e5f74252c6c3cfc3c75caeb3cfb448ebda3",
+      "story_words": 118605,
+      "cuts": [
+        {
+          "example_id": "pg34419_0",
+          "start": 309,
+          "end": 321,
+          "context_words": 18958,
+          "target_words": 642,
+          "context_hash": "12cee674dd51e86926dec8ce7b15b24eb59fb967ac6f555d46dadfdcef74eddd",
+          "reference_hash": "dd2551c370581e5aab3e1b6c17b94643042ff174e541b1d7e74d6b9beeeec870"
+        },
+        {
+          "example_id": "pg34419_1",
+          "start": 427,
+          "end": 438,
+          "context_words": 25374,
+          "target_words": 616,
+          "context_hash": "b32961f0a727fda212d3ee5283dabbc2ff314d7c51ccf37d5eb51286d8ab4a1f",
+          "reference_hash": "86d12ce639d6aa27ea8310098e7b9c554d384054698598aeabbc084f111040d2"
+        },
+        {
+          "example_id": "pg34419_2",
+          "start": 1090,
+          "end": 1123,
+          "context_words": 54593,
+          "target_words": 767,
+          "context_hash": "e163636423cdeddb2e0ae39b4288b3a46e5fffc5f62c1353d0fa4e181edf0e50",
+          "reference_hash": "36404d3869d20e1bf241457c239880b99c99d581f80c62c1a9fc6b1503826310"
+        },
+        {
+          "example_id": "pg34419_3",
+          "start": 1479,
+          "end": 1491,
+          "context_words": 73514,
+          "target_words": 538,
+          "context_hash": "922300a7c358bffc450bf86933dcf0a7c8b5e571c508416cc160683d79122802",
+          "reference_hash": "2af3ee239bac7cd0401f312479d302599ed628fe2026e13f15b66583fa67d492"
+        }
+      ]
+    },
+    {
+      "book_id": "4961",
+      "title": "Our Mr. Wrenn: The Romantic Adventures of a Gentle Man",
+      "author": "Lewis, Sinclair, 1885-1951",
+      "credential": "Nobel Prize in Literature, 1930; Pulitzer Prize for the Novel, 1926 (declined)",
+      "split": "train",
+      "downloads": 690,
+      "rights": "Public domain in the USA.",
+      "subjects": "Love stories; Courtship -- Fiction; Man-woman relationships -- Fiction; Middle-aged men -- United States -- Fiction",
+      "source_url": "https://gutenberg.pglaf.org/4/9/6/4961/4961-0.txt",
+      "text_hash": "4f454fc0a8662cf04f0e113bfdc9edc69167879ef291b76955043f60447528e4",
+      "story_words": 76103,
+      "cuts": [
+        {
+          "example_id": "pg4961_0",
+          "start": 255,
+          "end": 266,
+          "context_words": 11802,
+          "target_words": 630,
+          "context_hash": "b1f405ef802feda846545006168ea9cc07b0b418b874d915b8444390d638d386",
+          "reference_hash": "bb7f754f6326da57fc5f6d054816b708881a7873c96dfb7b87aff27a3ed47c4e"
+        },
+        {
+          "example_id": "pg4961_1",
+          "start": 540,
+          "end": 550,
+          "context_words": 22214,
+          "target_words": 616,
+          "context_hash": "83877ca58640a3a7c974a768e385b582da34b670ef01a388c6c5abb90ea59c25",
+          "reference_hash": "ba2313fd8944b39f5930ad8c5a163bc88b88b2aec569122ff86c114fc214d7c8"
+        },
+        {
+          "example_id": "pg4961_2",
+          "start": 1000,
+          "end": 1016,
+          "context_words": 38206,
+          "target_words": 695,
+          "context_hash": "9d69f306b8b845f2b251e3494c354c746e552bfd3da96a11ed98103c85336d42",
+          "reference_hash": "a8d78e05062c701228b352782912307856f0b34b65eadaeb5e203dc8022b76fd"
+        },
+        {
+          "example_id": "pg4961_3",
+          "start": 1407,
+          "end": 1428,
+          "context_words": 51363,
+          "target_words": 537,
+          "context_hash": "6928eef307285a028b85604c44c1389837bc0dc76a84b9a1835ddea70583bdba",
+          "reference_hash": "c51983e33b33be2dce2358e9af8e566bd2daf3c3ca6dafea8b11cc58fbf0f885"
+        }
+      ]
+    },
+    {
+      "book_id": "66191",
+      "title": "Barren Ground",
+      "author": "Glasgow, Ellen Anderson Gholson, 1873-1945",
+      "credential": "Pulitzer Prize for the Novel, 1942",
+      "split": "train",
+      "downloads": 470,
+      "rights": "Public domain in the USA.",
+      "subjects": "Pastoral fiction; Country life -- Fiction; Virginia -- Fiction; Piedmont (U.S. : Region) -- Fiction",
+      "source_url": "https://gutenberg.pglaf.org/6/6/1/9/66191/66191-0.txt",
+      "text_hash": "9afa97723e9292b6028176b5b12cd498a07621152a6cafb387577555b232d945",
+      "story_words": 153716,
+      "cuts": [
+        {
+          "example_id": "pg66191_0",
+          "start": 327,
+          "end": 337,
+          "context_words": 23155,
+          "target_words": 407,
+          "context_hash": "4a05bd760d1fc98b377bc437832444f872eb653ec1e6a2be38c4b48a273bd82e",
+          "reference_hash": "e2cc65280155bc1e94ead75ac075e007382facebb4d4bc0225c6b210e8b9ae58"
+        },
+        {
+          "example_id": "pg66191_1",
+          "start": 795,
+          "end": 801,
+          "context_words": 52563,
+          "target_words": 577,
+          "context_hash": "cc1d07a0fe3b8f8e64e90c1cdc96d7026f98858ee517e29a5a1d0c6df42954f1",
+          "reference_hash": "770cb98a9f1a445327111e4a03b9857ee0cd9483523b2da7681dbcbb336fe8fd"
+        },
+        {
+          "example_id": "pg66191_2",
+          "start": 811,
+          "end": 824,
+          "context_words": 53498,
+          "target_words": 743,
+          "context_hash": "0d2db56965ce37a08aea76acb4ebb586ef64152e81b5c3c8f7f15e9e7e900eee",
+          "reference_hash": "07a3a598361b9d0493aa810ea41f0ee99461ea0b63843736273dbd2176479af9"
+        },
+        {
+          "example_id": "pg66191_3",
+          "start": 1286,
+          "end": 1303,
+          "context_words": 80738,
+          "target_words": 666,
+          "context_hash": "e1e72d5a93eefca46fe1471a4bdb6d417ac8a95fde3a6f5f4ae0fabcbba584a9",
+          "reference_hash": "f50624b3d407379eec23c4af00916ca3117777f0d9cd15d50e2bbde3e7be0ca3"
+        }
+      ]
+    },
+    {
+      "book_id": "73672",
+      "title": "Jocelyn",
+      "author": "Galsworthy, John, 1867-1933",
+      "credential": "Nobel Prize in Literature, 1932",
+      "split": "validation",
+      "downloads": 457,
+      "rights": "Public domain in the USA.",
+      "subjects": "Triangles (Interpersonal relations) -- Fiction; Man-woman relationships -- Fiction; Invalids -- Fiction; Spouses -- Fiction; Riviera (France) -- Fiction",
+      "source_url": "https://gutenberg.pglaf.org/7/3/6/7/73672/73672-0.txt",
+      "text_hash": "4ea82587217517365066393ea7bafd457ece72fead2c80a8096e04f9bb243166",
+      "story_words": 57367,
+      "cuts": [
+        {
+          "example_id": "pg73672_0",
+          "start": 53,
+          "end": 60,
+          "context_words": 2761,
+          "target_words": 315,
+          "context_hash": "28da584f39aced70e5487468ae72f22b4d049d9939cb602adbb13cd6698d1d26",
+          "reference_hash": "84c1664cc81b6d4c508e963cfdbf84a327c433366841b168226e4c56e1925e1d"
+        },
+        {
+          "example_id": "pg73672_1",
+          "start": 273,
+          "end": 283,
+          "context_words": 15484,
+          "target_words": 693,
+          "context_hash": "da678cd46c7ab1c06b398a316b43f0ee0f8074186ce56b25291fb75951e69857",
+          "reference_hash": "51e9767f718152b6dd8d652f92d2a88511d82a59b546fc9dea23224071f0cc02"
+        },
+        {
+          "example_id": "pg73672_2",
+          "start": 482,
+          "end": 492,
+          "context_words": 26560,
+          "target_words": 734,
+          "context_hash": "f074cd75abc96eb9ad05c66c8c2a51574435196e8f928e8e7f3c3ade69aad751",
+          "reference_hash": "29f1f0f3393b4d3b393402f1ca1f6ebf046556bbcfdf02120fdfacc696ebbb12"
+        },
+        {
+          "example_id": "pg73672_3",
+          "start": 648,
+          "end": 657,
+          "context_words": 34557,
+          "target_words": 583,
+          "context_hash": "9ed90af59212fccbabed018fa1257dece57eceecfaff1109f0cee5e428b01fdf",
+          "reference_hash": "ae84336ab9095dd6611af9b18731cf417291289a81f3c418463c088296b8f502"
+        }
+      ]
+    },
+    {
+      "book_id": "64700",
+      "title": "Fombombo",
+      "author": "Stribling, T. S. (Thomas Sigismund), 1881-1965",
+      "credential": "Pulitzer Prize for the Novel, 1933",
+      "split": "validation",
+      "downloads": 389,
+      "rights": "Public domain in the USA.",
+      "subjects": "Venezuela -- Fiction",
+      "source_url": "https://gutenberg.pglaf.org/6/4/7/0/64700/64700-0.txt",
+      "text_hash": "9bf1a58ea02b5d521b588959eed8d862485250f0c78cf4d8dba37503bde2472d",
+      "story_words": 89463,
+      "cuts": [
+        {
+          "example_id": "pg64700_0",
+          "start": 55,
+          "end": 74,
+          "context_words": 2158,
+          "target_words": 733,
+          "context_hash": "2aed5d171286faecb59c31af7494d0b81160125342ea110364cd8e3b62bb0c68",
+          "reference_hash": "6c452da82da6344b943e27264c5ca27db834b15d302cdf474b42dad4ac57b8e7"
+        },
+        {
+          "example_id": "pg64700_1",
+          "start": 988,
+          "end": 1008,
+          "context_words": 30291,
+          "target_words": 396,
+          "context_hash": "b8e4b8f0b254eb341f79b0cc5112084e9c43d0dcff3b3ecd07f5d29c39667efa",
+          "reference_hash": "ca9a73f6a09ec28064baf34195fb5b125b38b79605a8273d7ca82b3267439efd"
+        },
+        {
+          "example_id": "pg64700_2",
+          "start": 1344,
+          "end": 1366,
+          "context_words": 41742,
+          "target_words": 699,
+          "context_hash": "e35de7633f9d699312f16cf39f06b7fd109c083e35c473e0c610f3f1e0999f4a",
+          "reference_hash": "09897f6c58b186ec79c7d5542349018269f94cd8dc3ca6bad5bd149aee725b41"
+        },
+        {
+          "example_id": "pg64700_3",
+          "start": 1451,
+          "end": 1480,
+          "context_words": 46632,
+          "target_words": 781,
+          "context_hash": "68c6d97dc3d1fadcfe0bfdca8052afc15df85bdac027ea7d81a0a9f8ef673c13",
+          "reference_hash": "aa086d750c149788d0df708cebcd7c83ad160618dfe73498a46da0bd7485db2f"
+        }
+      ]
+    },
+    {
+      "book_id": "2369",
+      "title": "One of Ours",
+      "author": "Cather, Willa, 1873-1947",
+      "credential": "Pulitzer Prize for the Novel, 1923",
+      "split": "validation",
+      "downloads": 949,
+      "rights": "Public domain in the USA.",
+      "subjects": "Nebraska -- Fiction; World War, 1914-1918 -- Fiction; War stories; Farm life -- Fiction; Soldiers -- Fiction",
+      "source_url": "https://gutenberg.pglaf.org/cache/epub/2369/pg2369.txt",
+      "text_hash": "5009d67c621196179db2573f138a468e508a13dbcf8553546255996d2e7ecc8b",
+      "story_words": 93239,
+      "cuts": [
+        {
+          "example_id": "pg2369_0",
+          "start": 123,
+          "end": 132,
+          "context_words": 6441,
+          "target_words": 308,
+          "context_hash": "f78bb5e54f0e1e81798b3a235da69ff63d54c549992514779ccceb0e14d8808e",
+          "reference_hash": "288ea4ca1b09d9e16680d0c978f355825087c5558c053691c41cae6a62eefa74"
+        },
+        {
+          "example_id": "pg2369_1",
+          "start": 368,
+          "end": 376,
+          "context_words": 20255,
+          "target_words": 697,
+          "context_hash": "f58dbc3c8dc0ab6b252c86a2987a244ff5d1a9353f9783f994d60788b21d568e",
+          "reference_hash": "00f2d01eae4dc1f39835e294e6c879f7bd3d43f10f47ceea1494e8060a030a28"
+        },
+        {
+          "example_id": "pg2369_2",
+          "start": 757,
+          "end": 761,
+          "context_words": 42955,
+          "target_words": 325,
+          "context_hash": "604faa4dd9270ad3f1babd0113b890d7a2c5bf90ce880c57b09661f5acd277b4",
+          "reference_hash": "9996d8f9921ac4085c3b15d433005a6a314d934d1cd371fd0dc47f759ba8c9f6"
+        },
+        {
+          "example_id": "pg2369_3",
+          "start": 949,
+          "end": 965,
+          "context_words": 53540,
+          "target_words": 733,
+          "context_hash": "1bd9e903a4c10b4a932b716d7bbea5caa02b5be27395244132cd224845d35b40",
+          "reference_hash": "b64354fe907bf64bdc70505c453d9f615a096312a563607b357c2be0c9b7a494"
+        }
+      ]
+    },
+    {
+      "book_id": "2773",
+      "title": "Fraternity",
+      "author": "Galsworthy, John, 1867-1933",
+      "credential": "Nobel Prize in Literature, 1932",
+      "split": "validation",
+      "downloads": 564,
+      "rights": "Public domain in the USA.",
+      "subjects": "London (England) -- Fiction; England -- Social life and customs -- 20th century -- Fiction; Upper class families -- England -- Fiction",
+      "source_url": "https://gutenberg.pglaf.org/2/7/7/2773/2773-0.txt",
+      "text_hash": "9407067da3edf713ae26c8457472084e561f9de0dfed96dde0568752640125f2",
+      "story_words": 94404,
+      "cuts": [
+        {
+          "example_id": "pg2773_0",
+          "start": 309,
+          "end": 317,
+          "context_words": 9925,
+          "target_words": 606,
+          "context_hash": "789bca439f0a3200b1bc9f429c7c51e4b8725d454ccf8d664934bf466bed6f19",
+          "reference_hash": "f713dc684ae6e71346e62bba0862f4667a1554af1e4a4f2d3a0fac1aa573aeee"
+        },
+        {
+          "example_id": "pg2773_1",
+          "start": 580,
+          "end": 607,
+          "context_words": 20331,
+          "target_words": 792,
+          "context_hash": "51865f90f8fb5a1f1113440972e0ffbbae5d855e77a00c22e09ec2a33c33316c",
+          "reference_hash": "d05618c98a0b44b777ce5ac626e0207609a914b7ecda9036e6737b5221bfea33"
+        },
+        {
+          "example_id": "pg2773_2",
+          "start": 1367,
+          "end": 1385,
+          "context_words": 46525,
+          "target_words": 448,
+          "context_hash": "2e70565c8a202e624533a3a2b85ff4c3f71c76faf8767bb491bda8fc3c43e648",
+          "reference_hash": "88ef6944429c06d87b9ce4015cca7cc205156d197c9e5be97eb0c20296553add"
+        },
+        {
+          "example_id": "pg2773_3",
+          "start": 1505,
+          "end": 1523,
+          "context_words": 51182,
+          "target_words": 480,
+          "context_hash": "55b76711ec4a256bc7cb0e6544fbb06449ce56a7fc06f8396e48a327705a928d",
+          "reference_hash": "c87cd15accf3a959ed90d1840210f0185176bb4bbd19eef494208a6c3b59cbf6"
+        }
+      ]
+    },
+    {
+      "book_id": "65465",
+      "title": "The Professor's House",
+      "author": "Cather, Willa, 1873-1947",
+      "credential": "Pulitzer Prize for the Novel, 1923",
+      "split": "validation",
+      "downloads": 625,
+      "rights": "Public domain in the USA.",
+      "subjects": "Psychological fiction; Frame stories; College teachers -- Fiction; Middle-aged men -- Fiction; Midlife crisis -- Fiction; Teacher-student relationships -- Fiction",
+      "source_url": "https://gutenberg.pglaf.org/6/5/4/6/65465/65465-0.txt",
+      "text_hash": "6228bc12e854746ba0f9c7fadaf8b506d64a8ee00a16b449e3f47493fa245ad3",
+      "story_words": 60892,
+      "cuts": [
+        {
+          "example_id": "pg65465_0",
+          "start": 89,
+          "end": 95,
+          "context_words": 6872,
+          "target_words": 396,
+          "context_hash": "00949d29710de3078d0745ab4fe02cfdf01d60d65ef9d21ae57a79e57acaa545",
+          "reference_hash": "1494daa0cf5bb9909d90fc80161294728fe2b949d94450ef575edbe19dc6b642"
+        },
+        {
+          "example_id": "pg65465_1",
+          "start": 340,
+          "end": 349,
+          "context_words": 19657,
+          "target_words": 798,
+          "context_hash": "f4093f25043c1521fb8bd5e46433960ec3f0034307b92ee1f88a7bbd838bb38e",
+          "reference_hash": "d40ad600d3be88aa14f9b85d43441939bd82b259e5cdc32844d7f89c0a0714d8"
+        },
+        {
+          "example_id": "pg65465_2",
+          "start": 504,
+          "end": 515,
+          "context_words": 27378,
+          "target_words": 646,
+          "context_hash": "a2507e5b9fb4e8878cdcffe379467b07a88d0df1320d60900c2bab37403bb41a",
+          "reference_hash": "7baae7f6866f2b007ab463b0f2bb7e09d66148b526100bc35ed2381be0f13d88"
+        },
+        {
+          "example_id": "pg65465_3",
+          "start": 681,
+          "end": 690,
+          "context_words": 37256,
+          "target_words": 592,
+          "context_hash": "d2ab905eec9f651ea7b00255788c25ec7b312be666342a70c0130278fb7b68f3",
+          "reference_hash": "9b49aa55ceb7cc7e30f8cd3f9505c4f27a61d25b94b61148a1bdafc6b8fb7402"
+        }
+      ]
+    },
+    {
+      "book_id": "68105",
+      "title": "The Cabala",
+      "author": "Wilder, Thornton, 1897-1975",
+      "credential": "Pulitzer Prize for the Novel, 1928",
+      "split": "confirmation",
+      "downloads": 577,
+      "rights": "Public domain in the USA.",
+      "subjects": "Upper class -- Fiction; Rome (Italy) -- Social life and customs -- 20th century -- Fiction; Americans -- Italy -- Fiction",
+      "source_url": "https://gutenberg.pglaf.org/6/8/1/0/68105/68105-0.txt",
+      "text_hash": "b048a58f8240555e519e4de88ea0492e9b344c5e3e5ca535b767352eb3ab00cc",
+      "story_words": 42920,
+      "cuts": [
+        {
+          "example_id": "pg68105_0",
+          "start": 58,
+          "end": 69,
+          "context_words": 5784,
+          "target_words": 498,
+          "context_hash": "418eac78eb222db86088b50cbd4aab35995b6d3d1799acf90c2a4197d4ecbd5f",
+          "reference_hash": "dcc5697737020a9d3e0dc083c4c6679ed5fdd2b778b4c84e420bf7e0e9a2131f"
+        },
+        {
+          "example_id": "pg68105_1",
+          "start": 199,
+          "end": 213,
+          "context_words": 15091,
+          "target_words": 567,
+          "context_hash": "e83d7d8124aba7044fafda77563aa0d587ffbd23c01db62b90031677dd541300",
+          "reference_hash": "9b3fff3a725498fa29228971ef6c5053108fd086b7f40e34fc321cdaaba503f2"
+        },
+        {
+          "example_id": "pg68105_2",
+          "start": 253,
+          "end": 255,
+          "context_words": 20587,
+          "target_words": 424,
+          "context_hash": "5bbb045d11999204abb216884c34b8596eb18100494e9386d69a77068326f3f7",
+          "reference_hash": "5c8ff78ef26741b433ec8d77fa9332f24628e90e4f26f89ecfaf2a04dc061ab9"
+        },
+        {
+          "example_id": "pg68105_3",
+          "start": 295,
+          "end": 302,
+          "context_words": 23286,
+          "target_words": 654,
+          "context_hash": "5c4a05fa220d725581fdc3cd2545ebfcefd58b374a88878e8b407ab614e12a0f",
+          "reference_hash": "11b40ea1cdda71ba823a1d33cba1edbf3efdec49e192e70d0bdc95b2e94189aa"
+        }
+      ]
+    },
+    {
+      "book_id": "2876",
+      "title": "The Light That Failed",
+      "author": "Kipling, Rudyard, 1865-1936",
+      "credential": "Nobel Prize in Literature, 1907",
+      "split": "confirmation",
+      "downloads": 904,
+      "rights": "Public domain in the USA.",
+      "subjects": "Man-woman relationships -- Fiction; Artists -- Fiction; Voyages and travels -- Fiction; Blindness -- Fiction; War correspondents -- Sudan -- Fiction",
+      "source_url": "https://gutenberg.pglaf.org/2/8/7/2876/2876-0.txt",
+      "text_hash": "c29a771aeb58319bbc53b162fb8997160ac382f8c03002d11e5a79a063897ae7",
+      "story_words": 70927,
+      "cuts": [
+        {
+          "example_id": "pg2876_0",
+          "start": 118,
+          "end": 135,
+          "context_words": 4799,
+          "target_words": 776,
+          "context_hash": "2ff9ac14b15df6e93c09ecc8659d1354bc656e61e5b90b8cad0d4d259a2045c4",
+          "reference_hash": "7d3c74c9ceacaf9a0f5064324c87b2bd7aa3bbe08bfca11c5127f50f76661238"
+        },
+        {
+          "example_id": "pg2876_1",
+          "start": 563,
+          "end": 591,
+          "context_words": 21660,
+          "target_words": 681,
+          "context_hash": "6e484f1963391609e32838a19e661decd91513260400ee9f5f6e09cb48ce8fa0",
+          "reference_hash": "75bd10d9c92f5ef9b41e8af860ce6cd75d2bb43c1c615a5a0ecc12b3307215b5"
+        },
+        {
+          "example_id": "pg2876_2",
+          "start": 721,
+          "end": 748,
+          "context_words": 25993,
+          "target_words": 710,
+          "context_hash": "394e99f8ecc18c8854f97835f8daa671b8fd7e3c7a4f6ef5f944a199b32fd9cf",
+          "reference_hash": "3190b1f42254b2c2d2875f21fae46b109fe27c4d35b3e7b5aa3f8f0af4ae7191"
+        },
+        {
+          "example_id": "pg2876_3",
+          "start": 1306,
+          "end": 1321,
+          "context_words": 44045,
+          "target_words": 556,
+          "context_hash": "225bfe6800d149a2a1b09b11a539471f2137a0ce11dc05b254bfe9b335f14d36",
+          "reference_hash": "979ef5aeba3247c9c21c6a9a2afcee3c218fe8d483cd3a5ec7325723a4558b0e"
+        }
+      ]
+    },
+    {
+      "book_id": "72406",
+      "title": "Early autumn",
+      "author": "Bromfield, Louis, 1896-1956",
+      "credential": "Pulitzer Prize for the Novel, 1927",
+      "split": "confirmation",
+      "downloads": 554,
+      "rights": "Public domain in the USA.",
+      "subjects": "Domestic fiction; New England -- Fiction; Conduct of life -- Fiction; Women -- Fiction; Man-woman relationships -- Fiction; Families -- Fiction; United States -- Social conditions -- 1918-1932 -- Fiction",
+      "source_url": "https://gutenberg.pglaf.org/7/2/4/0/72406/72406-0.txt",
+      "text_hash": "db5a459f7852771f8fcf2d8a8f5ee47d945afa6f014d56b6562441a87e0074a4",
+      "story_words": 99247,
+      "cuts": [
+        {
+          "example_id": "pg72406_0",
+          "start": 246,
+          "end": 256,
+          "context_words": 16639,
+          "target_words": 683,
+          "context_hash": "ebcc25b81f8ea24fe739a124a46ee79eb268b4b5c273c1bfc86a7fad907e4d05",
+          "reference_hash": "d873e441aff720c7fbb43052b2d9b38979c11d020cab89daedbdc064cb8348ee"
+        },
+        {
+          "example_id": "pg72406_1",
+          "start": 378,
+          "end": 388,
+          "context_words": 23639,
+          "target_words": 617,
+          "context_hash": "77e36c5d5d6fbd77f08140b3dd6d0592ed0c149b74bf7c11bc165c0226b76bb2",
+          "reference_hash": "57270525958438437e4f0615a93a9d17dc74ee6c59613e31d189a5c37595f948"
+        },
+        {
+          "example_id": "pg72406_2",
+          "start": 589,
+          "end": 600,
+          "context_words": 36317,
+          "target_words": 367,
+          "context_hash": "8f0451b6e9303862b065e06542546a7e3da16e7df45dd3f1359ff185af9f26df",
+          "reference_hash": "728d81657c45452b1d806d7a74555198be4e8e0527e218606a397c90a41cddbb"
+        },
+        {
+          "example_id": "pg72406_3",
+          "start": 1056,
+          "end": 1067,
+          "context_words": 65528,
+          "target_words": 799,
+          "context_hash": "6029a280eabbcc3e32c46efa3d51c73b64519b3e1ac273ea0a73ea67112eb5df",
+          "reference_hash": "a27aac63552ae2e374c68eb436734749b22fa4aeb14a246f2e67f98da6f7518c"
+        }
+      ]
+    },
+    {
+      "book_id": "5807",
+      "title": "Sylvia's Marriage: A Novel",
+      "author": "Sinclair, Upton, 1878-1968",
+      "credential": "Pulitzer Prize for the Novel, 1943",
+      "split": "confirmation",
+      "downloads": 487,
+      "rights": "Public domain in the USA.",
+      "subjects": "Marriage -- Fiction",
+      "source_url": "https://gutenberg.pglaf.org/5/8/0/5807/5807-0.txt",
+      "text_hash": "1289bebe737f2d3fb7b6ec9e30dd17e5c9e1db7724fa1d6d8318f561bafac1a1",
+      "story_words": 74234,
+      "cuts": [
+        {
+          "example_id": "pg5807_0",
+          "start": 31,
+          "end": 35,
+          "context_words": 3251,
+          "target_words": 425,
+          "context_hash": "72d530a1d2b110d96365e6cdad11e44d7152de1565843cc77f64680af3c420c6",
+          "reference_hash": "a585c01c73d8bf483880fa581d709f8fb9dcc9c30fbaec570e49bf7901a5aa8b"
+        },
+        {
+          "example_id": "pg5807_1",
+          "start": 272,
+          "end": 285,
+          "context_words": 18565,
+          "target_words": 790,
+          "context_hash": "1391acd236c6d124a3788d5d17bc7af1d17e5b2aca34d98b5a68ec838abdef0a",
+          "reference_hash": "0eb7e08e18c4da4549fc8e665d0351ee6d5a30fa4d8e13604e4091aed1374180"
+        },
+        {
+          "example_id": "pg5807_2",
+          "start": 485,
+          "end": 496,
+          "context_words": 27828,
+          "target_words": 637,
+          "context_hash": "601d23f5947696108eb3a34801c1a491e95d514b7615763334480ab97fc6028f",
+          "reference_hash": "fe67ffad007500475c47e75786c60b6fc341ea8668f1c5f1673a878232cddbec"
+        },
+        {
+          "example_id": "pg5807_3",
+          "start": 855,
+          "end": 869,
+          "context_words": 42779,
+          "target_words": 397,
+          "context_hash": "900ee6a879e214828d223144e59c54b8343ca3fde32bef4549a56808152ecdbd",
+          "reference_hash": "71ca12269467b736a1b0be46fcd23cc46d03949c9be49a729d562db5181716a8"
+        }
+      ]
+    },
+    {
+      "book_id": "11354",
+      "title": "The Irrational Knot Being the Second Novel of His Nonage",
+      "author": "Shaw, Bernard, 1856-1950",
+      "credential": "Nobel Prize in Literature, 1925",
+      "split": "confirmation",
+      "downloads": 522,
+      "rights": "Public domain in the USA.",
+      "subjects": "Social classes -- Fiction; Marriage -- Fiction",
+      "source_url": "https://gutenberg.pglaf.org/1/1/3/5/11354/11354-0.txt",
+      "text_hash": "c6c1b21c706c1d900ee60c9fe66b4e5a4bc690f44a0ffaa736f70e3f25d1e9cc",
+      "story_words": 114634,
+      "cuts": [
+        {
+          "example_id": "pg11354_0",
+          "start": 535,
+          "end": 564,
+          "context_words": 18162,
+          "target_words": 741,
+          "context_hash": "cc56858b785275e8d4ea200c6259dbc0b6f4f46306bd2dfab64c193efeb4eab2",
+          "reference_hash": "e9784715696b1f1e00dca6b61e61898ae8a8e1a0bb75794ae2af8acff5b50d5a"
+        },
+        {
+          "example_id": "pg11354_1",
+          "start": 1137,
+          "end": 1162,
+          "context_words": 38069,
+          "target_words": 544,
+          "context_hash": "79ae586d03b733699e9cda2126a89933ad2e595236976f46cb789ea762112cfe",
+          "reference_hash": "fd2e8fbb9a9e70e52ea0b2ecfd30e3e8ab2e287e6169b9508b7b7cde39768e2c"
+        },
+        {
+          "example_id": "pg11354_2",
+          "start": 1460,
+          "end": 1481,
+          "context_words": 48065,
+          "target_words": 707,
+          "context_hash": "ddf8dcf3f26c9f222cf0fd0c63bfa7a0214d922999ddf9b553fef5bc53b6a880",
+          "reference_hash": "b21c11fed83cc6bce37d6859d3ec79e36fe3520e4f88c52d278cc509daacdd64"
+        },
+        {
+          "example_id": "pg11354_3",
+          "start": 2131,
+          "end": 2151,
+          "context_words": 73468,
+          "target_words": 677,
+          "context_hash": "49ba20331ca4189e6cc6bfc13f6a56644971768bc08fcd32825aa70e84b026a3",
+          "reference_hash": "3b3502b256200b64bf3ad41d832711959b820aac53b3c81605dc2dc3ae691479"
+        }
+      ]
+    },
+    {
+      "book_id": "75334",
+      "title": "The girls",
+      "author": "Ferber, Edna, 1885-1968",
+      "credential": "Pulitzer Prize for the Novel, 1925",
+      "split": "confirmation",
+      "downloads": 373,
+      "rights": "Public domain in the USA.",
+      "subjects": "World War, 1914-1918 -- Fiction; Chicago (Ill.) -- Fiction; Women -- Fiction; Families -- Fiction",
+      "source_url": "https://gutenberg.pglaf.org/7/5/3/3/75334/75334-0.txt",
+      "text_hash": "fa8bde1fc74095ddae7635d2628ef7893db1f70fb246eef2f916eef635b4001e",
+      "story_words": 78362,
+      "cuts": [
+        {
+          "example_id": "pg75334_0",
+          "start": 145,
+          "end": 155,
+          "context_words": 8846,
+          "target_words": 351,
+          "context_hash": "274979a5502ff6bc3f477ad7c7dfbd648629a89544cdc1dcbd3745e34b7793db",
+          "reference_hash": "535f3243a9226e3cc8785b429bb2b96ec6339b5091492108667193b22ca8fbe2"
+        },
+        {
+          "example_id": "pg75334_1",
+          "start": 489,
+          "end": 507,
+          "context_words": 25878,
+          "target_words": 794,
+          "context_hash": "0441f541a6ee1ff7e88f29f129de978e8ab12b231f523f1772b118ff9ad788ca",
+          "reference_hash": "cddb91f97674dd2ea037b1717d03b8a94bd0cfe4c3ac28020bb6640d04c8ae9c"
+        },
+        {
+          "example_id": "pg75334_2",
+          "start": 561,
+          "end": 572,
+          "context_words": 28788,
+          "target_words": 327,
+          "context_hash": "1c6ef498e32a45b27bcb5e3bfe0415404e91fa7bfc94857e5ff87a816fd3ae4d",
+          "reference_hash": "87e329bd3cc20b19066df80bcb3c4beceec369f42d1a84a33ee2a8375feae8a5"
+        },
+        {
+          "example_id": "pg75334_3",
+          "start": 925,
+          "end": 945,
+          "context_words": 41785,
+          "target_words": 506,
+          "context_hash": "78a9d744841a0013d38524613b80736fec7417f62bb7a52ff6198695ac546671",
+          "reference_hash": "40cb8766fc1349f2b7316efbc539c9ca98c176fdf7ab67140909fa7dc6899b29"
+        }
+      ]
+    },
+    {
+      "book_id": "59437",
+      "title": "A Son at the Front",
+      "author": "Wharton, Edith, 1862-1937",
+      "credential": "Pulitzer Prize for the Novel, 1921",
+      "split": "confirmation",
+      "downloads": 376,
+      "rights": "Public domain in the USA.",
+      "subjects": "World War, 1914-1918 -- Fiction; War stories; Fathers and sons -- Fiction; Domestic fiction; Paris (France) -- Fiction; Americans -- France -- Fiction",
+      "source_url": "https://gutenberg.pglaf.org/5/9/4/3/59437/59437-0.txt",
+      "text_hash": "ed8b294366a1c2fc55201a0c159e692b0e50f95696e882727d305874a408d51e",
+      "story_words": 97256,
+      "cuts": [
+        {
+          "example_id": "pg59437_0",
+          "start": 129,
+          "end": 135,
+          "context_words": 6109,
+          "target_words": 685,
+          "context_hash": "060cc2f94503aeaebec12f2aa4d9c700057dced1fa3b91452313fc5ea8d56ee2",
+          "reference_hash": "eaa1db18c1f9670d7b8f3def95faa1d0735cdfed7760b9788b9267bc1099f7f5"
+        },
+        {
+          "example_id": "pg59437_1",
+          "start": 447,
+          "end": 466,
+          "context_words": 20321,
+          "target_words": 617,
+          "context_hash": "da889d25d0d576ecfeb9e8e16dbfc7c11795330e38396bd1f32d89374774bfd4",
+          "reference_hash": "c6bd7441db92667b006b5ec2b0c4e5f4fb79cc549d89a3d0878c43268bff9645"
+        },
+        {
+          "example_id": "pg59437_2",
+          "start": 983,
+          "end": 992,
+          "context_words": 46729,
+          "target_words": 357,
+          "context_hash": "4d231fd86aec58ce2d7f92f86e1387f7e0a26a5cea00d9582ce6918fbfe66559",
+          "reference_hash": "afaf44ea6c13550bb7ffcba8ba1ce09e9464cb59d241db40d2d7ddec42ffd13b"
+        },
+        {
+          "example_id": "pg59437_3",
+          "start": 1280,
+          "end": 1298,
+          "context_words": 61567,
+          "target_words": 663,
+          "context_hash": "a2323a57bf34522d0e09490a5ffab1591a003486fecfbfe02a2103f6241b710c",
+          "reference_hash": "9aae7ba17ba8e7a1fc5b7c85e6e1cb5e1f3d39fe51a6047db187c3b3128a38b9"
+        }
+      ]
+    },
+    {
+      "book_id": "65207",
+      "title": "Women",
+      "author": "Tarkington, Booth, 1869-1946",
+      "credential": "Pulitzer Prize for the Novel, 1919 and 1922",
+      "split": "confirmation",
+      "downloads": 575,
+      "rights": "Public domain in the USA.",
+      "subjects": "Married people -- Fiction; Women -- Fiction; Suburban life -- Fiction",
+      "source_url": "https://gutenberg.pglaf.org/6/5/2/0/65207/65207-0.txt",
+      "text_hash": "e939687fbc18b8b731e2eb7d279800485c17c59ed874e19f1e847e151ec16e74",
+      "story_words": 79129,
+      "cuts": [
+        {
+          "example_id": "pg65207_0",
+          "start": 204,
+          "end": 210,
+          "context_words": 9058,
+          "target_words": 635,
+          "context_hash": "c6de06703d7252a5f4a882b13df1519f6bc60fade323bcdbe13be8ea86c0ca80",
+          "reference_hash": "b0e18cbffac94a06a07a68eecc457ebd75e4c228bf58e47d45ca9ccbf8390c88"
+        },
+        {
+          "example_id": "pg65207_1",
+          "start": 335,
+          "end": 342,
+          "context_words": 15479,
+          "target_words": 419,
+          "context_hash": "87b4fa587c72289f119b9e1f2970df5315cd91365f0af76e6c5942dcb03987a9",
+          "reference_hash": "3ccce1578ed582406d5fc526e2e4828a233290e2429e3f010f496770c9e4083b"
+        },
+        {
+          "example_id": "pg65207_2",
+          "start": 630,
+          "end": 637,
+          "context_words": 29347,
+          "target_words": 435,
+          "context_hash": "440dcbc890f317e7ddbc777260ebe0333170e5bcfc92f9fb172e07ce88ff18e6",
+          "reference_hash": "dbd418e3dea47aaf01cdb0d05433de6b3f11390c438253423158e5398a1a27fb"
+        },
+        {
+          "example_id": "pg65207_3",
+          "start": 1050,
+          "end": 1062,
+          "context_words": 45349,
+          "target_words": 784,
+          "context_hash": "618450c1e0ed2987d2660f300ffd1ccd82b5b61b47e3e40743a9f61fc458b109",
+          "reference_hash": "da64a6db7cc0a081880280cdd26a55fa2833c157efe286513520109da04104ba"
+        }
+      ]
+    },
+    {
+      "book_id": "73188",
+      "title": "Possession",
+      "author": "Bromfield, Louis, 1896-1956",
+      "credential": "Pulitzer Prize for the Novel, 1927",
+      "split": "confirmation",
+      "downloads": 569,
+      "rights": "Public domain in the USA.",
+      "subjects": "American fiction -- 20th century; Women musicians -- Fiction",
+      "source_url": "https://gutenberg.pglaf.org/7/3/1/8/73188/73188-0.txt",
+      "text_hash": "14ce8170505e66615c59edc7872e9def5a515d8b0e44baadc6d4b3589dd093fe",
+      "story_words": 176420,
+      "cuts": [
+        {
+          "example_id": "pg73188_0",
+          "start": 53,
+          "end": 63,
+          "context_words": 5161,
+          "target_words": 775,
+          "context_hash": "75ae8bcffe5589fc925493886299a86cb484d3edb2b15abcf120e0fc8987ed8f",
+          "reference_hash": "dbb8e4c25828cd4da08e7394983ad902c014630007604341d77f16ab26408cac"
+        },
+        {
+          "example_id": "pg73188_1",
+          "start": 534,
+          "end": 543,
+          "context_words": 34558,
+          "target_words": 444,
+          "context_hash": "ad4b412d63f008eb3ec48f6f1dd5bbb70074326615c18aa1e34acb870ffd92bd",
+          "reference_hash": "15f2f45d69a2dc73594967d58d732e3395dbf13fd9bfcfedbd0f6325a9763180"
+        },
+        {
+          "example_id": "pg73188_2",
+          "start": 1045,
+          "end": 1049,
+          "context_words": 67633,
+          "target_words": 619,
+          "context_hash": "5f04e2394f5b5a0795c90fff550467788e17a1099a9f2f2c3c1f24ccb3eaf9d6",
+          "reference_hash": "1dfbedac91ec0715b6d65e71271846b14807d54dbc100899d6afdf951b9e3822"
+        },
+        {
+          "example_id": "pg73188_3",
+          "start": 1618,
+          "end": 1632,
+          "context_words": 106812,
+          "target_words": 502,
+          "context_hash": "8baf2a02ad12a3c19d1fd452385ed50c65a01dcfa59c7328df56465ca11cb431",
+          "reference_hash": "62475cb4a1c8a9fee70bc89992860e78c2bd8de3e9467c606d8880a86bb74d15"
+        }
+      ]
+    },
+    {
+      "book_id": "5421",
+      "title": "The Metropolis",
+      "author": "Sinclair, Upton, 1878-1968",
+      "credential": "Pulitzer Prize for the Novel, 1943",
+      "split": "confirmation",
+      "downloads": 613,
+      "rights": "Public domain in the USA.",
+      "subjects": "Socialites -- Fiction; Upper class -- Fiction",
+      "source_url": "https://gutenberg.pglaf.org/5/4/2/5421/5421-0.txt",
+      "text_hash": "ae9b29be63a2276983bca941fd22f9642c96144f48fc727a231961a3a63e8a81",
+      "story_words": 95570,
+      "cuts": [
+        {
+          "example_id": "pg5421_0",
+          "start": 206,
+          "end": 209,
+          "context_words": 12159,
+          "target_words": 541,
+          "context_hash": "fdce1a1e6f44ad98575daef3cf5a2acd9a874030efd8cb68c2d4568de9f36965",
+          "reference_hash": "76fc156327d2a8905937eb3bce0317678c4065604f31679cc83da6db5e9bb3aa"
+        },
+        {
+          "example_id": "pg5421_1",
+          "start": 519,
+          "end": 523,
+          "context_words": 28811,
+          "target_words": 587,
+          "context_hash": "c47224aecd2f5b9ddcbe80d84f04bca3ea30791c90615dcfc231c441b767789f",
+          "reference_hash": "f8536d016335548f73ffd10f8feed98e04e5868167040b31a253129b4fb24415"
+        },
+        {
+          "example_id": "pg5421_2",
+          "start": 591,
+          "end": 598,
+          "context_words": 35750,
+          "target_words": 708,
+          "context_hash": "6bb645d3b015a4eae0ececb0fa5033b66b1fa56a919d29de21e3083d68b83d70",
+          "reference_hash": "2e0bc61926e3f00cd2a3c31ed2ab7f4bdfd4ae2348c280ad9528300da8725fdd"
+        },
+        {
+          "example_id": "pg5421_3",
+          "start": 863,
+          "end": 881,
+          "context_words": 54934,
+          "target_words": 745,
+          "context_hash": "565a5a116ded101aff5ef894a88fd28d80c5334d5d6ad6e25f4472e33347933f",
+          "reference_hash": "a3b1f35c4865188d3e1368acaddfb09192b0975a41ae448a1ffec35828aa8892"
+        }
+      ]
+    },
+    {
+      "book_id": "70844",
+      "title": "Twilight sleep",
+      "author": "Wharton, Edith, 1862-1937",
+      "credential": "Pulitzer Prize for the Novel, 1921",
+      "split": "confirmation",
+      "downloads": 491,
+      "rights": "Public domain in the USA.",
+      "subjects": "New York (N.Y.) -- Fiction; Domestic fiction; Man-woman relationships -- Fiction; Upper class -- Fiction",
+      "source_url": "https://gutenberg.pglaf.org/7/0/8/4/70844/70844-0.txt",
+      "text_hash": "2c7d87d6c4d76b2389a356d996a9c49f96017e0bd4c6bbe6c2f82d6b61d5293e",
+      "story_words": 81309,
+      "cuts": [
+        {
+          "example_id": "pg70844_0",
+          "start": 68,
+          "end": 73,
+          "context_words": 5961,
+          "target_words": 472,
+          "context_hash": "683f6b456275a54988ebf9bd1017c23d7cf6f444112a5d5a39cc80501de6a636",
+          "reference_hash": "28381337957e14ac5859665dec7a6f0d7a5ac51e6c06954cff95efc136f6369a"
+        },
+        {
+          "example_id": "pg70844_1",
+          "start": 480,
+          "end": 488,
+          "context_words": 27604,
+          "target_words": 577,
+          "context_hash": "1176fa2dd87f7b49f6e1d36363b07bfdc3f9483eb4307cf591375b115932459c",
+          "reference_hash": "97bfe337ad2e81e8c77eef67d5687258f82b302db5770d9747cab0404143189d"
+        },
+        {
+          "example_id": "pg70844_2",
+          "start": 755,
+          "end": 767,
+          "context_words": 39309,
+          "target_words": 616,
+          "context_hash": "55ad313fc1e080677e9eade49dcc5e0a3ddb32b2c7354733e66bcb6e6692dda8",
+          "reference_hash": "3459ad1bbaa61c4141805d5430e3cb5d5a6f1d17ed9efbfabc5c671e314b3547"
+        },
+        {
+          "example_id": "pg70844_3",
+          "start": 988,
+          "end": 1006,
+          "context_words": 50238,
+          "target_words": 638,
+          "context_hash": "2e837a8deafcefa9675e95694c0e50051e01aa31f7e933cc479a6c53f2006ab6",
+          "reference_hash": "0da968665a145e4bb1593dea00ae262fce28c3b1e34cc27979114bb524e2803b"
+        }
+      ]
+    },
+    {
+      "book_id": "3428",
+      "title": "The Two Vanrevels",
+      "author": "Tarkington, Booth, 1869-1946",
+      "credential": "Pulitzer Prize for the Novel, 1919 and 1922",
+      "split": "confirmation",
+      "downloads": 479,
+      "rights": "Public domain in the USA.",
+      "subjects": "Triangles (Interpersonal relations) -- Fiction; Man-woman relationships -- Fiction; Mistaken identity -- Fiction; American fiction -- 20th century",
+      "source_url": "https://gutenberg.pglaf.org/3/4/2/3428/3428-0.txt",
+      "text_hash": "544c65c64e716582fea261cc5031a6929acb1953f115dda654508025a70936e4",
+      "story_words": 62385,
+      "cuts": [
+        {
+          "example_id": "pg3428_0",
+          "start": 39,
+          "end": 50,
+          "context_words": 3000,
+          "target_words": 431,
+          "context_hash": "062d4bc158576c80cf6d87d34503690d52456f0ec1381ba561e86eb7bd99da64",
+          "reference_hash": "4cd1bca60e09c70da79d0208bb5b2cc1630f02c0c77f17ca35becdde60cbfcec"
+        },
+        {
+          "example_id": "pg3428_1",
+          "start": 200,
+          "end": 205,
+          "context_words": 16963,
+          "target_words": 429,
+          "context_hash": "58299e3532a852c0c19895a00fe778129f8d3fab93113459601e4061d46ce7ee",
+          "reference_hash": "3338c9fc2535db3466e22bd3fbbd7a3f68b1248faf4f3308622fe06cdaf7cbcb"
+        },
+        {
+          "example_id": "pg3428_2",
+          "start": 350,
+          "end": 361,
+          "context_words": 25265,
+          "target_words": 702,
+          "context_hash": "313a276c9b04aad5429db0acebe6f3f9eae862f9fa00a6b5573083bb9e62fbb6",
+          "reference_hash": "fb3b8c8e5fae0943d54bedd2ee29ab6e2cdea26bc9c9d36f30a0766535fa8135"
+        },
+        {
+          "example_id": "pg3428_3",
+          "start": 622,
+          "end": 629,
+          "context_words": 37467,
+          "target_words": 353,
+          "context_hash": "bee3cb85fc7c79f3a50970d2766610a1fb420b3b072aacc1f8ee120bc028fd56",
+          "reference_hash": "31a393ef05dd92e6b8da3244de8229bb0b49a28675c5a9326e93f27fab6593cf"
+        }
+      ]
+    },
+    {
+      "book_id": "61984",
+      "title": "Sylvia: A Novel",
+      "author": "Sinclair, Upton, 1878-1968",
+      "credential": "Pulitzer Prize for the Novel, 1943",
+      "split": "confirmation",
+      "downloads": 423,
+      "rights": "Public domain in the USA.",
+      "subjects": "Man-woman relationships -- Fiction; Marriage -- Fiction; Women -- Conduct of life -- Fiction",
+      "source_url": "https://gutenberg.pglaf.org/6/1/9/8/61984/61984-0.txt",
+      "text_hash": "40ca63073d7c52a1b44dd95f78bed586ea4358369add671151be2f67f26fbcbe",
+      "story_words": 96095,
+      "cuts": [
+        {
+          "example_id": "pg61984_0",
+          "start": 26,
+          "end": 36,
+          "context_words": 3048,
+          "target_words": 679,
+          "context_hash": "0a4cb2bbade899d50dede7c6fe8e5e522d0da9ec970e324f3680fe88fba73e55",
+          "reference_hash": "bb147114766a353b20aebc2e47110c007fc618e06b83f5dfe0dd72abd00139bc"
+        },
+        {
+          "example_id": "pg61984_1",
+          "start": 686,
+          "end": 702,
+          "context_words": 32540,
+          "target_words": 512,
+          "context_hash": "63fa148ce59e4c25bb594e7ba5e1e284157792e21ceff4848571bd995f6f46a7",
+          "reference_hash": "ad5b23b9f210b42add567e39635b72f354e1c4a27e266d3f1a140fccdc15cd20"
+        },
+        {
+          "example_id": "pg61984_2",
+          "start": 1165,
+          "end": 1183,
+          "context_words": 48348,
+          "target_words": 465,
+          "context_hash": "93ba3d6bbedf8517d30148e22b014dada123ad921d50c40ff1d97215c70a6353",
+          "reference_hash": "20337327a99e8d0202dc826218cdbcd2e0fed95aafb9defcc9676f0ef7d02c82"
+        },
+        {
+          "example_id": "pg61984_3",
+          "start": 1213,
+          "end": 1223,
+          "context_words": 49430,
+          "target_words": 767,
+          "context_hash": "02c1260632e9d002bc3d67bed8f9f0b9429bece2c3909c397239751e66ff1305",
+          "reference_hash": "ccaab59e627401208c1fe7965dfc8349501bc8e5f6ae15a3ef0551b723427ce1"
+        }
+      ]
+    },
+    {
+      "book_id": "76417",
+      "title": "The children",
+      "author": "Wharton, Edith, 1862-1937",
+      "credential": "Pulitzer Prize for the Novel, 1921",
+      "split": "confirmation",
+      "downloads": 477,
+      "rights": "Public domain in the USA.",
+      "subjects": "American fiction -- 20th century; Stepchildren -- Fiction; Middle-aged men -- Fiction; Americans -- Europe -- Fiction; Families -- Fiction; Children of divorced parents -- Fiction; Stepfamilies -- Fiction; Bachelors -- Fiction",
+      "source_url": "https://gutenberg.pglaf.org/7/6/4/1/76417/76417-0.txt",
+      "text_hash": "43b7636b3befc0c31afff34ecf0d15b1b0d5e24489758800ff0a7f90e1e2b3d9",
+      "story_words": 94622,
+      "cuts": [
+        {
+          "example_id": "pg76417_0",
+          "start": 165,
+          "end": 175,
+          "context_words": 7824,
+          "target_words": 560,
+          "context_hash": "18c307f79252bf76a858dd42c33357813f76693d77c63814adba19e786409b13",
+          "reference_hash": "51163804fa2246f063eadcdf2b0828240e9e9285184a9b7467ef51ecca767af6"
+        },
+        {
+          "example_id": "pg76417_1",
+          "start": 393,
+          "end": 397,
+          "context_words": 22214,
+          "target_words": 643,
+          "context_hash": "bddb91abcb3b5fe8c7e518a050f7752f4c8191fe8e57031756f6bac8e5d6f6fc",
+          "reference_hash": "5be9a3976d2166552ea18c864ad9af7ccbb9ea63d720e19f90372552e804bd90"
+        },
+        {
+          "example_id": "pg76417_2",
+          "start": 852,
+          "end": 871,
+          "context_words": 42120,
+          "target_words": 480,
+          "context_hash": "fd9574feda7cf76ad152db0e11cd425341f05fa54a387b0bd3a48fa04847b410",
+          "reference_hash": "fc53ad0247339db5c889bf0e0ef8a10077661f2ff1c246b94ff3f82d97239be2"
+        },
+        {
+          "example_id": "pg76417_3",
+          "start": 1327,
+          "end": 1335,
+          "context_words": 62719,
+          "target_words": 427,
+          "context_hash": "56c6d60d385f9af045865bb60257f3cc71c14206713426f791194f9ddb65a49a",
+          "reference_hash": "dbbec9a6801faf5d65c4b878edc74f3d674a49d2936b8eb08222e7faa36915d4"
+        }
+      ]
+    },
+    {
+      "book_id": "9659",
+      "title": "The Gentleman from Indiana",
+      "author": "Tarkington, Booth, 1869-1946",
+      "credential": "Pulitzer Prize for the Novel, 1919 and 1922",
+      "split": "confirmation",
+      "downloads": 450,
+      "rights": "Public domain in the USA.",
+      "subjects": "Indiana -- Fiction",
+      "source_url": "https://gutenberg.pglaf.org/9/6/5/9659/9659-0.txt",
+      "text_hash": "18a3245a4377ce1a1fca9defd473d5c53c622614b2f3adfbc56bb827c84b4276",
+      "story_words": 101442,
+      "cuts": [
+        {
+          "example_id": "pg9659_0",
+          "start": 104,
+          "end": 115,
+          "context_words": 8780,
+          "target_words": 625,
+          "context_hash": "808c5f83496710510db256c8f5180cc4af56669e14cbb130e4c8cecba98a3c06",
+          "reference_hash": "21b532501ebc1855222d4608591a544fac04ddac5eacf1f68ad641b2ac077dc2"
+        },
+        {
+          "example_id": "pg9659_1",
+          "start": 415,
+          "end": 430,
+          "context_words": 27897,
+          "target_words": 778,
+          "context_hash": "3a5071a62d0eed9fb8fc8c7305714864dfb9d86dad7f01264d63e7510e118836",
+          "reference_hash": "0dd7d5068866fe1c7363f8e9cbe8e6852cbf14da213bba21e56b99063497d733"
+        },
+        {
+          "example_id": "pg9659_2",
+          "start": 636,
+          "end": 645,
+          "context_words": 39162,
+          "target_words": 426,
+          "context_hash": "2ea5747692be9abf604f417d5eda9dfc5dfdcc91d405d7867a0520fcd4d32482",
+          "reference_hash": "a621f6626a51b1d6470d17aed18f2377c558461184de8f64f7e89ae0d21785f6"
+        },
+        {
+          "example_id": "pg9659_3",
+          "start": 848,
+          "end": 858,
+          "context_words": 52608,
+          "target_words": 682,
+          "context_hash": "76823542d611c8f971b07fc2a1716a051c002970c5eeb74aa7fac039c0e70f69",
+          "reference_hash": "dd785289756d89920da053633205950586c3cbfbd9a429c8ed5a82c67e958f1b"
+        }
+      ]
+    }
+  ],
+  "examples": [
+    {
+      "example_id": "pg14696_0",
+      "source_id": "pg14696",
+      "kind": "continuation",
+      "split": "train",
+      "context_hash": "79df0d9cdcfab0dc4d83e0f2653b6b0a5fe76539ffcae0d2b0e29582f2d7d6ba",
+      "reference_hash": "816894268dd309401225aac494d53888597ced71172d49e3f4b45eee0846883b",
+      "target_words": 756
+    },
+    {
+      "example_id": "pg14696_1",
+      "source_id": "pg14696",
+      "kind": "continuation",
+      "split": "train",
+      "context_hash": "3b557f190ae94f7e1c0440b7fd9b08177120f58ead720892a78be8e8a330227b",
+      "reference_hash": "eccefcfcfc3fd7cb19d1a0faa1ca00b57782d200895fc5df08c1a1fa71bb5835",
+      "target_words": 609
+    },
+    {
+      "example_id": "pg14696_2",
+      "source_id": "pg14696",
+      "kind": "continuation",
+      "split": "train",
+      "context_hash": "116c8bede44d2abbf0d3e2edaa4b535ff060469a73b61c518e2e46403e7c129a",
+      "reference_hash": "114f78f5ee167feb1966175e6f50e524379506661ef16717baa6c2f164c732c9",
+      "target_words": 367
+    },
+    {
+      "example_id": "pg14696_3",
+      "source_id": "pg14696",
+      "kind": "continuation",
+      "split": "train",
+      "context_hash": "016bd5e36fef141425bcf9dd85866194802c18c282289e9c8a8f982a0fbea27e",
+      "reference_hash": "91db8282cf1e51acc755ee78ac5a8dfe61532403440e1e42b121a9547711abdb",
+      "target_words": 586
+    },
+    {
+      "example_id": "pg25430_0",
+      "source_id": "pg25430",
+      "kind": "continuation",
+      "split": "train",
+      "context_hash": "3e04711918e56650b5fb48f3b43ef7217bf478d120e41d30ba1b9840fafcd0bd",
+      "reference_hash": "b62e984ed62e4dffc553435c84f09ab5162b8b3d5f57340cfbcd40284f9d0256",
+      "target_words": 694
+    },
+    {
+      "example_id": "pg25430_1",
+      "source_id": "pg25430",
+      "kind": "continuation",
+      "split": "train",
+      "context_hash": "42f3ca5539c7b9f1dfa95a11ed3d3a6d25d4f94d26e82bc8b527b8194fc529d1",
+      "reference_hash": "0d3375d7f8965cb7a2272a89b25d2aa30397e72c4d8ce8fd3376b0240a782dbe",
+      "target_words": 611
+    },
+    {
+      "example_id": "pg25430_2",
+      "source_id": "pg25430",
+      "kind": "continuation",
+      "split": "train",
+      "context_hash": "d511518f0fc26b15a518e2868041016fa248765e90bc5a1218ca4f69715e01dd",
+      "reference_hash": "3b7827e42641de81b306ab70e208f986becb4041a6086f99862e915f249eff5b",
+      "target_words": 571
+    },
+    {
+      "example_id": "pg25430_3",
+      "source_id": "pg25430",
+      "kind": "continuation",
+      "split": "train",
+      "context_hash": "41bf5bc8597059c1a1dc5897241426596974b6026d6f96a17fd3dcdf66a79d4b",
+      "reference_hash": "140ed25ab84a7ea206eb72dd43b0f8e634b8a58557760c990d3fe140be917aac",
+      "target_words": 501
+    },
+    {
+      "example_id": "pg69549_0",
+      "source_id": "pg69549",
+      "kind": "continuation",
+      "split": "train",
+      "context_hash": "2a006a5e0294f225a62f2619656191492c6af4f31f2a084e99e1188e89e1296f",
+      "reference_hash": "554cb42816c2d92dd8fcc0b14106b0d130ff397119d0288f7158cb3ac7217c8e",
+      "target_words": 582
+    },
+    {
+      "example_id": "pg69549_1",
+      "source_id": "pg69549",
+      "kind": "continuation",
+      "split": "train",
+      "context_hash": "9b657f46eca0ff11d9f0a3ddcdb267bf802ac606340be538ca0b35f98e5668c3",
+      "reference_hash": "19d578deac61af1205f9eb8d7782d33081f529a718f43fb563ee5c0320a980e5",
+      "target_words": 319
+    },
+    {
+      "example_id": "pg69549_2",
+      "source_id": "pg69549",
+      "kind": "continuation",
+      "split": "train",
+      "context_hash": "44d96d04a1cadd3fce6783b3378b22ace31399b5f4701b28564a27194470002b",
+      "reference_hash": "e5458ddcf5a8637f0b26d9bb1065cb15823ea8283bcb46898365616a32b72eb7",
+      "target_words": 625
+    },
+    {
+      "example_id": "pg69549_3",
+      "source_id": "pg69549",
+      "kind": "continuation",
+      "split": "train",
+      "context_hash": "ae9ff0c7bdccc677cfc7093160ac6f83995d593c9424e12086b73c6d767ff465",
+      "reference_hash": "787849c2829a744042beee22afaeaceff8ee468e3d70d78ec5f027fceb1792eb",
+      "target_words": 742
+    },
+    {
+      "example_id": "pg17259_0",
+      "source_id": "pg17259",
+      "kind": "continuation",
+      "split": "train",
+      "context_hash": "b5dfd6751ffa026b97a4f142a01f8b7ddead3abc7dd4630b052aadb712770256",
+      "reference_hash": "98bd2d882d3d38f664937bb9b59b26316635501a00aadd36cc477c4b2a370954",
+      "target_words": 505
+    },
+    {
+      "example_id": "pg17259_1",
+      "source_id": "pg17259",
+      "kind": "continuation",
+      "split": "train",
+      "context_hash": "858e4fe9b480fc4ec92c3078f497d17510497d0c8c7758804bb72033290f2313",
+      "reference_hash": "5d7f900a1dc39d35241770e3986516f4918da56387d3a52909a78b01cd1356e0",
+      "target_words": 367
+    },
+    {
+      "example_id": "pg17259_2",
+      "source_id": "pg17259",
+      "kind": "continuation",
+      "split": "train",
+      "context_hash": "c1a756e8c2f759059db116c18c30eed9da6ca3696a3a3d1c35b3ed9d61a7135e",
+      "reference_hash": "103898a937095bc017897341f87ff2af404bbf0b1d35aec89c865be2e10b8e52",
+      "target_words": 774
+    },
+    {
+      "example_id": "pg17259_3",
+      "source_id": "pg17259",
+      "kind": "continuation",
+      "split": "train",
+      "context_hash": "11004f102459f83e273cdd4b7df7ba5d0a1aba921039e7ca7673a5934e93682c",
+      "reference_hash": "8a9f9b4b744407cc18db398ca2f2e25d4d38c05d6a51ce2fa245aecb6cb96843",
+      "target_words": 747
+    },
+    {
+      "example_id": "pg67138_0",
+      "source_id": "pg67138",
+      "kind": "continuation",
+      "split": "train",
+      "context_hash": "2ffeda233c4b15d69eb0ac88b028f5274ed81faf3f97c29928234974d7e6d2df",
+      "reference_hash": "4db8d9896c2ee1ead78177b591ac2542d2e0905fd284ef622b4925e08ebc3982",
+      "target_words": 513
+    },
+    {
+      "example_id": "pg67138_2",
+      "source_id": "pg67138",
+      "kind": "continuation",
+      "split": "train",
+      "context_hash": "17aa0cee7f4317e367c2041f8bf49c8d2bde2517fbe0c1569808d83adf252f71",
+      "reference_hash": "187856f48d228d6330c2ceb27c30777967cfedadae42febc2f2f5ea89e4ea5b9",
+      "target_words": 517
+    },
+    {
+      "example_id": "pg67138_3",
+      "source_id": "pg67138",
+      "kind": "continuation",
+      "split": "train",
+      "context_hash": "1dc8cda713aa4b4357ab10cd9eb8fcc4c0960d04610c4051dbe83a8392f6d376",
+      "reference_hash": "63affd6c49d214c96a68a8f267ad759d5ff99bba5c1dd72e4a40d3c09666d56e",
+      "target_words": 392
+    },
+    {
+      "example_id": "pg67138_4",
+      "source_id": "pg67138",
+      "kind": "continuation",
+      "split": "train",
+      "context_hash": "38b679d205d6f3cf315c1d2e32ff3c511036c1fe33ce0771ae3bbfdd5766362b",
+      "reference_hash": "c32d2576bae1dcdbc3e33bc038c3b8589a3cf779fac050204a18d0110f6f9b78",
+      "target_words": 342
+    },
+    {
+      "example_id": "pg34419_0",
+      "source_id": "pg34419",
+      "kind": "continuation",
+      "split": "train",
+      "context_hash": "12cee674dd51e86926dec8ce7b15b24eb59fb967ac6f555d46dadfdcef74eddd",
+      "reference_hash": "dd2551c370581e5aab3e1b6c17b94643042ff174e541b1d7e74d6b9beeeec870",
+      "target_words": 642
+    },
+    {
+      "example_id": "pg34419_1",
+      "source_id": "pg34419",
+      "kind": "continuation",
+      "split": "train",
+      "context_hash": "b32961f0a727fda212d3ee5283dabbc2ff314d7c51ccf37d5eb51286d8ab4a1f",
+      "reference_hash": "86d12ce639d6aa27ea8310098e7b9c554d384054698598aeabbc084f111040d2",
+      "target_words": 616
+    },
+    {
+      "example_id": "pg34419_2",
+      "source_id": "pg34419",
+      "kind": "continuation",
+      "split": "train",
+      "context_hash": "e163636423cdeddb2e0ae39b4288b3a46e5fffc5f62c1353d0fa4e181edf0e50",
+      "reference_hash": "36404d3869d20e1bf241457c239880b99c99d581f80c62c1a9fc6b1503826310",
+      "target_words": 767
+    },
+    {
+      "example_id": "pg34419_3",
+      "source_id": "pg34419",
+      "kind": "continuation",
+      "split": "train",
+      "context_hash": "922300a7c358bffc450bf86933dcf0a7c8b5e571c508416cc160683d79122802",
+      "reference_hash": "2af3ee239bac7cd0401f312479d302599ed628fe2026e13f15b66583fa67d492",
+      "target_words": 538
+    },
+    {
+      "example_id": "pg4961_0",
+      "source_id": "pg4961",
+      "kind": "continuation",
+      "split": "train",
+      "context_hash": "b1f405ef802feda846545006168ea9cc07b0b418b874d915b8444390d638d386",
+      "reference_hash": "bb7f754f6326da57fc5f6d054816b708881a7873c96dfb7b87aff27a3ed47c4e",
+      "target_words": 630
+    },
+    {
+      "example_id": "pg4961_1",
+      "source_id": "pg4961",
+      "kind": "continuation",
+      "split": "train",
+      "context_hash": "83877ca58640a3a7c974a768e385b582da34b670ef01a388c6c5abb90ea59c25",
+      "reference_hash": "ba2313fd8944b39f5930ad8c5a163bc88b88b2aec569122ff86c114fc214d7c8",
+      "target_words": 616
+    },
+    {
+      "example_id": "pg4961_2",
+      "source_id": "pg4961",
+      "kind": "continuation",
+      "split": "train",
+      "context_hash": "9d69f306b8b845f2b251e3494c354c746e552bfd3da96a11ed98103c85336d42",
+      "reference_hash": "a8d78e05062c701228b352782912307856f0b34b65eadaeb5e203dc8022b76fd",
+      "target_words": 695
+    },
+    {
+      "example_id": "pg4961_3",
+      "source_id": "pg4961",
+      "kind": "continuation",
+      "split": "train",
+      "context_hash": "6928eef307285a028b85604c44c1389837bc0dc76a84b9a1835ddea70583bdba",
+      "reference_hash": "c51983e33b33be2dce2358e9af8e566bd2daf3c3ca6dafea8b11cc58fbf0f885",
+      "target_words": 537
+    },
+    {
+      "example_id": "pg66191_0",
+      "source_id": "pg66191",
+      "kind": "continuation",
+      "split": "train",
+      "context_hash": "4a05bd760d1fc98b377bc437832444f872eb653ec1e6a2be38c4b48a273bd82e",
+      "reference_hash": "e2cc65280155bc1e94ead75ac075e007382facebb4d4bc0225c6b210e8b9ae58",
+      "target_words": 407
+    },
+    {
+      "example_id": "pg66191_1",
+      "source_id": "pg66191",
+      "kind": "continuation",
+      "split": "train",
+      "context_hash": "cc1d07a0fe3b8f8e64e90c1cdc96d7026f98858ee517e29a5a1d0c6df42954f1",
+      "reference_hash": "770cb98a9f1a445327111e4a03b9857ee0cd9483523b2da7681dbcbb336fe8fd",
+      "target_words": 577
+    },
+    {
+      "example_id": "pg66191_2",
+      "source_id": "pg66191",
+      "kind": "continuation",
+      "split": "train",
+      "context_hash": "0d2db56965ce37a08aea76acb4ebb586ef64152e81b5c3c8f7f15e9e7e900eee",
+      "reference_hash": "07a3a598361b9d0493aa810ea41f0ee99461ea0b63843736273dbd2176479af9",
+      "target_words": 743
+    },
+    {
+      "example_id": "pg66191_3",
+      "source_id": "pg66191",
+      "kind": "continuation",
+      "split": "train",
+      "context_hash": "e1e72d5a93eefca46fe1471a4bdb6d417ac8a95fde3a6f5f4ae0fabcbba584a9",
+      "reference_hash": "f50624b3d407379eec23c4af00916ca3117777f0d9cd15d50e2bbde3e7be0ca3",
+      "target_words": 666
+    },
+    {
+      "example_id": "pg73672_0",
+      "source_id": "pg73672",
+      "kind": "continuation",
+      "split": "validation",
+      "context_hash": "28da584f39aced70e5487468ae72f22b4d049d9939cb602adbb13cd6698d1d26",
+      "reference_hash": "84c1664cc81b6d4c508e963cfdbf84a327c433366841b168226e4c56e1925e1d",
+      "target_words": 315
+    },
+    {
+      "example_id": "pg73672_1",
+      "source_id": "pg73672",
+      "kind": "continuation",
+      "split": "validation",
+      "context_hash": "da678cd46c7ab1c06b398a316b43f0ee0f8074186ce56b25291fb75951e69857",
+      "reference_hash": "51e9767f718152b6dd8d652f92d2a88511d82a59b546fc9dea23224071f0cc02",
+      "target_words": 693
+    },
+    {
+      "example_id": "pg73672_2",
+      "source_id": "pg73672",
+      "kind": "continuation",
+      "split": "validation",
+      "context_hash": "f074cd75abc96eb9ad05c66c8c2a51574435196e8f928e8e7f3c3ade69aad751",
+      "reference_hash": "29f1f0f3393b4d3b393402f1ca1f6ebf046556bbcfdf02120fdfacc696ebbb12",
+      "target_words": 734
+    },
+    {
+      "example_id": "pg73672_3",
+      "source_id": "pg73672",
+      "kind": "continuation",
+      "split": "validation",
+      "context_hash": "9ed90af59212fccbabed018fa1257dece57eceecfaff1109f0cee5e428b01fdf",
+      "reference_hash": "ae84336ab9095dd6611af9b18731cf417291289a81f3c418463c088296b8f502",
+      "target_words": 583
+    },
+    {
+      "example_id": "pg64700_0",
+      "source_id": "pg64700",
+      "kind": "continuation",
+      "split": "validation",
+      "context_hash": "2aed5d171286faecb59c31af7494d0b81160125342ea110364cd8e3b62bb0c68",
+      "reference_hash": "6c452da82da6344b943e27264c5ca27db834b15d302cdf474b42dad4ac57b8e7",
+      "target_words": 733
+    },
+    {
+      "example_id": "pg64700_1",
+      "source_id": "pg64700",
+      "kind": "continuation",
+      "split": "validation",
+      "context_hash": "b8e4b8f0b254eb341f79b0cc5112084e9c43d0dcff3b3ecd07f5d29c39667efa",
+      "reference_hash": "ca9a73f6a09ec28064baf34195fb5b125b38b79605a8273d7ca82b3267439efd",
+      "target_words": 396
+    },
+    {
+      "example_id": "pg64700_2",
+      "source_id": "pg64700",
+      "kind": "continuation",
+      "split": "validation",
+      "context_hash": "e35de7633f9d699312f16cf39f06b7fd109c083e35c473e0c610f3f1e0999f4a",
+      "reference_hash": "09897f6c58b186ec79c7d5542349018269f94cd8dc3ca6bad5bd149aee725b41",
+      "target_words": 699
+    },
+    {
+      "example_id": "pg64700_3",
+      "source_id": "pg64700",
+      "kind": "continuation",
+      "split": "validation",
+      "context_hash": "68c6d97dc3d1fadcfe0bfdca8052afc15df85bdac027ea7d81a0a9f8ef673c13",
+      "reference_hash": "aa086d750c149788d0df708cebcd7c83ad160618dfe73498a46da0bd7485db2f",
+      "target_words": 781
+    },
+    {
+      "example_id": "pg2369_0",
+      "source_id": "pg2369",
+      "kind": "continuation",
+      "split": "validation",
+      "context_hash": "f78bb5e54f0e1e81798b3a235da69ff63d54c549992514779ccceb0e14d8808e",
+      "reference_hash": "288ea4ca1b09d9e16680d0c978f355825087c5558c053691c41cae6a62eefa74",
+      "target_words": 308
+    },
+    {
+      "example_id": "pg2369_1",
+      "source_id": "pg2369",
+      "kind": "continuation",
+      "split": "validation",
+      "context_hash": "f58dbc3c8dc0ab6b252c86a2987a244ff5d1a9353f9783f994d60788b21d568e",
+      "reference_hash": "00f2d01eae4dc1f39835e294e6c879f7bd3d43f10f47ceea1494e8060a030a28",
+      "target_words": 697
+    },
+    {
+      "example_id": "pg2369_2",
+      "source_id": "pg2369",
+      "kind": "continuation",
+      "split": "validation",
+      "context_hash": "604faa4dd9270ad3f1babd0113b890d7a2c5bf90ce880c57b09661f5acd277b4",
+      "reference_hash": "9996d8f9921ac4085c3b15d433005a6a314d934d1cd371fd0dc47f759ba8c9f6",
+      "target_words": 325
+    },
+    {
+      "example_id": "pg2369_3",
+      "source_id": "pg2369",
+      "kind": "continuation",
+      "split": "validation",
+      "context_hash": "1bd9e903a4c10b4a932b716d7bbea5caa02b5be27395244132cd224845d35b40",
+      "reference_hash": "b64354fe907bf64bdc70505c453d9f615a096312a563607b357c2be0c9b7a494",
+      "target_words": 733
+    },
+    {
+      "example_id": "pg2773_0",
+      "source_id": "pg2773",
+      "kind": "continuation",
+      "split": "validation",
+      "context_hash": "789bca439f0a3200b1bc9f429c7c51e4b8725d454ccf8d664934bf466bed6f19",
+      "reference_hash": "f713dc684ae6e71346e62bba0862f4667a1554af1e4a4f2d3a0fac1aa573aeee",
+      "target_words": 606
+    },
+    {
+      "example_id": "pg2773_1",
+      "source_id": "pg2773",
+      "kind": "continuation",
+      "split": "validation",
+      "context_hash": "51865f90f8fb5a1f1113440972e0ffbbae5d855e77a00c22e09ec2a33c33316c",
+      "reference_hash": "d05618c98a0b44b777ce5ac626e0207609a914b7ecda9036e6737b5221bfea33",
+      "target_words": 792
+    },
+    {
+      "example_id": "pg2773_2",
+      "source_id": "pg2773",
+      "kind": "continuation",
+      "split": "validation",
+      "context_hash": "2e70565c8a202e624533a3a2b85ff4c3f71c76faf8767bb491bda8fc3c43e648",
+      "reference_hash": "88ef6944429c06d87b9ce4015cca7cc205156d197c9e5be97eb0c20296553add",
+      "target_words": 448
+    },
+    {
+      "example_id": "pg2773_3",
+      "source_id": "pg2773",
+      "kind": "continuation",
+      "split": "validation",
+      "context_hash": "55b76711ec4a256bc7cb0e6544fbb06449ce56a7fc06f8396e48a327705a928d",
+      "reference_hash": "c87cd15accf3a959ed90d1840210f0185176bb4bbd19eef494208a6c3b59cbf6",
+      "target_words": 480
+    },
+    {
+      "example_id": "pg65465_0",
+      "source_id": "pg65465",
+      "kind": "continuation",
+      "split": "validation",
+      "context_hash": "00949d29710de3078d0745ab4fe02cfdf01d60d65ef9d21ae57a79e57acaa545",
+      "reference_hash": "1494daa0cf5bb9909d90fc80161294728fe2b949d94450ef575edbe19dc6b642",
+      "target_words": 396
+    },
+    {
+      "example_id": "pg65465_1",
+      "source_id": "pg65465",
+      "kind": "continuation",
+      "split": "validation",
+      "context_hash": "f4093f25043c1521fb8bd5e46433960ec3f0034307b92ee1f88a7bbd838bb38e",
+      "reference_hash": "d40ad600d3be88aa14f9b85d43441939bd82b259e5cdc32844d7f89c0a0714d8",
+      "target_words": 798
+    },
+    {
+      "example_id": "pg65465_2",
+      "source_id": "pg65465",
+      "kind": "continuation",
+      "split": "validation",
+      "context_hash": "a2507e5b9fb4e8878cdcffe379467b07a88d0df1320d60900c2bab37403bb41a",
+      "reference_hash": "7baae7f6866f2b007ab463b0f2bb7e09d66148b526100bc35ed2381be0f13d88",
+      "target_words": 646
+    },
+    {
+      "example_id": "pg65465_3",
+      "source_id": "pg65465",
+      "kind": "continuation",
+      "split": "validation",
+      "context_hash": "d2ab905eec9f651ea7b00255788c25ec7b312be666342a70c0130278fb7b68f3",
+      "reference_hash": "9b49aa55ceb7cc7e30f8cd3f9505c4f27a61d25b94b61148a1bdafc6b8fb7402",
+      "target_words": 592
+    },
+    {
+      "example_id": "pg68105_0",
+      "source_id": "pg68105",
+      "kind": "continuation",
+      "split": "confirmation",
+      "context_hash": "418eac78eb222db86088b50cbd4aab35995b6d3d1799acf90c2a4197d4ecbd5f",
+      "reference_hash": "dcc5697737020a9d3e0dc083c4c6679ed5fdd2b778b4c84e420bf7e0e9a2131f",
+      "target_words": 498
+    },
+    {
+      "example_id": "pg68105_1",
+      "source_id": "pg68105",
+      "kind": "continuation",
+      "split": "confirmation",
+      "context_hash": "e83d7d8124aba7044fafda77563aa0d587ffbd23c01db62b90031677dd541300",
+      "reference_hash": "9b3fff3a725498fa29228971ef6c5053108fd086b7f40e34fc321cdaaba503f2",
+      "target_words": 567
+    },
+    {
+      "example_id": "pg68105_2",
+      "source_id": "pg68105",
+      "kind": "continuation",
+      "split": "confirmation",
+      "context_hash": "5bbb045d11999204abb216884c34b8596eb18100494e9386d69a77068326f3f7",
+      "reference_hash": "5c8ff78ef26741b433ec8d77fa9332f24628e90e4f26f89ecfaf2a04dc061ab9",
+      "target_words": 424
+    },
+    {
+      "example_id": "pg68105_3",
+      "source_id": "pg68105",
+      "kind": "continuation",
+      "split": "confirmation",
+      "context_hash": "5c4a05fa220d725581fdc3cd2545ebfcefd58b374a88878e8b407ab614e12a0f",
+      "reference_hash": "11b40ea1cdda71ba823a1d33cba1edbf3efdec49e192e70d0bdc95b2e94189aa",
+      "target_words": 654
+    },
+    {
+      "example_id": "pg2876_0",
+      "source_id": "pg2876",
+      "kind": "continuation",
+      "split": "confirmation",
+      "context_hash": "2ff9ac14b15df6e93c09ecc8659d1354bc656e61e5b90b8cad0d4d259a2045c4",
+      "reference_hash": "7d3c74c9ceacaf9a0f5064324c87b2bd7aa3bbe08bfca11c5127f50f76661238",
+      "target_words": 776
+    },
+    {
+      "example_id": "pg2876_1",
+      "source_id": "pg2876",
+      "kind": "continuation",
+      "split": "confirmation",
+      "context_hash": "6e484f1963391609e32838a19e661decd91513260400ee9f5f6e09cb48ce8fa0",
+      "reference_hash": "75bd10d9c92f5ef9b41e8af860ce6cd75d2bb43c1c615a5a0ecc12b3307215b5",
+      "target_words": 681
+    },
+    {
+      "example_id": "pg2876_2",
+      "source_id": "pg2876",
+      "kind": "continuation",
+      "split": "confirmation",
+      "context_hash": "394e99f8ecc18c8854f97835f8daa671b8fd7e3c7a4f6ef5f944a199b32fd9cf",
+      "reference_hash": "3190b1f42254b2c2d2875f21fae46b109fe27c4d35b3e7b5aa3f8f0af4ae7191",
+      "target_words": 710
+    },
+    {
+      "example_id": "pg2876_3",
+      "source_id": "pg2876",
+      "kind": "continuation",
+      "split": "confirmation",
+      "context_hash": "225bfe6800d149a2a1b09b11a539471f2137a0ce11dc05b254bfe9b335f14d36",
+      "reference_hash": "979ef5aeba3247c9c21c6a9a2afcee3c218fe8d483cd3a5ec7325723a4558b0e",
+      "target_words": 556
+    },
+    {
+      "example_id": "pg72406_0",
+      "source_id": "pg72406",
+      "kind": "continuation",
+      "split": "confirmation",
+      "context_hash": "ebcc25b81f8ea24fe739a124a46ee79eb268b4b5c273c1bfc86a7fad907e4d05",
+      "reference_hash": "d873e441aff720c7fbb43052b2d9b38979c11d020cab89daedbdc064cb8348ee",
+      "target_words": 683
+    },
+    {
+      "example_id": "pg72406_1",
+      "source_id": "pg72406",
+      "kind": "continuation",
+      "split": "confirmation",
+      "context_hash": "77e36c5d5d6fbd77f08140b3dd6d0592ed0c149b74bf7c11bc165c0226b76bb2",
+      "reference_hash": "57270525958438437e4f0615a93a9d17dc74ee6c59613e31d189a5c37595f948",
+      "target_words": 617
+    },
+    {
+      "example_id": "pg72406_2",
+      "source_id": "pg72406",
+      "kind": "continuation",
+      "split": "confirmation",
+      "context_hash": "8f0451b6e9303862b065e06542546a7e3da16e7df45dd3f1359ff185af9f26df",
+      "reference_hash": "728d81657c45452b1d806d7a74555198be4e8e0527e218606a397c90a41cddbb",
+      "target_words": 367
+    },
+    {
+      "example_id": "pg72406_3",
+      "source_id": "pg72406",
+      "kind": "continuation",
+      "split": "confirmation",
+      "context_hash": "6029a280eabbcc3e32c46efa3d51c73b64519b3e1ac273ea0a73ea67112eb5df",
+      "reference_hash": "a27aac63552ae2e374c68eb436734749b22fa4aeb14a246f2e67f98da6f7518c",
+      "target_words": 799
+    },
+    {
+      "example_id": "pg5807_0",
+      "source_id": "pg5807",
+      "kind": "continuation",
+      "split": "confirmation",
+      "context_hash": "72d530a1d2b110d96365e6cdad11e44d7152de1565843cc77f64680af3c420c6",
+      "reference_hash": "a585c01c73d8bf483880fa581d709f8fb9dcc9c30fbaec570e49bf7901a5aa8b",
+      "target_words": 425
+    },
+    {
+      "example_id": "pg5807_1",
+      "source_id": "pg5807",
+      "kind": "continuation",
+      "split": "confirmation",
+      "context_hash": "1391acd236c6d124a3788d5d17bc7af1d17e5b2aca34d98b5a68ec838abdef0a",
+      "reference_hash": "0eb7e08e18c4da4549fc8e665d0351ee6d5a30fa4d8e13604e4091aed1374180",
+      "target_words": 790
+    },
+    {
+      "example_id": "pg5807_2",
+      "source_id": "pg5807",
+      "kind": "continuation",
+      "split": "confirmation",
+      "context_hash": "601d23f5947696108eb3a34801c1a491e95d514b7615763334480ab97fc6028f",
+      "reference_hash": "fe67ffad007500475c47e75786c60b6fc341ea8668f1c5f1673a878232cddbec",
+      "target_words": 637
+    },
+    {
+      "example_id": "pg5807_3",
+      "source_id": "pg5807",
+      "kind": "continuation",
+      "split": "confirmation",
+      "context_hash": "900ee6a879e214828d223144e59c54b8343ca3fde32bef4549a56808152ecdbd",
+      "reference_hash": "71ca12269467b736a1b0be46fcd23cc46d03949c9be49a729d562db5181716a8",
+      "target_words": 397
+    },
+    {
+      "example_id": "pg11354_0",
+      "source_id": "pg11354",
+      "kind": "continuation",
+      "split": "confirmation",
+      "context_hash": "cc56858b785275e8d4ea200c6259dbc0b6f4f46306bd2dfab64c193efeb4eab2",
+      "reference_hash": "e9784715696b1f1e00dca6b61e61898ae8a8e1a0bb75794ae2af8acff5b50d5a",
+      "target_words": 741
+    },
+    {
+      "example_id": "pg11354_1",
+      "source_id": "pg11354",
+      "kind": "continuation",
+      "split": "confirmation",
+      "context_hash": "79ae586d03b733699e9cda2126a89933ad2e595236976f46cb789ea762112cfe",
+      "reference_hash": "fd2e8fbb9a9e70e52ea0b2ecfd30e3e8ab2e287e6169b9508b7b7cde39768e2c",
+      "target_words": 544
+    },
+    {
+      "example_id": "pg11354_2",
+      "source_id": "pg11354",
+      "kind": "continuation",
+      "split": "confirmation",
+      "context_hash": "ddf8dcf3f26c9f222cf0fd0c63bfa7a0214d922999ddf9b553fef5bc53b6a880",
+      "reference_hash": "b21c11fed83cc6bce37d6859d3ec79e36fe3520e4f88c52d278cc509daacdd64",
+      "target_words": 707
+    },
+    {
+      "example_id": "pg11354_3",
+      "source_id": "pg11354",
+      "kind": "continuation",
+      "split": "confirmation",
+      "context_hash": "49ba20331ca4189e6cc6bfc13f6a56644971768bc08fcd32825aa70e84b026a3",
+      "reference_hash": "3b3502b256200b64bf3ad41d832711959b820aac53b3c81605dc2dc3ae691479",
+      "target_words": 677
+    },
+    {
+      "example_id": "pg75334_0",
+      "source_id": "pg75334",
+      "kind": "continuation",
+      "split": "confirmation",
+      "context_hash": "274979a5502ff6bc3f477ad7c7dfbd648629a89544cdc1dcbd3745e34b7793db",
+      "reference_hash": "535f3243a9226e3cc8785b429bb2b96ec6339b5091492108667193b22ca8fbe2",
+      "target_words": 351
+    },
+    {
+      "example_id": "pg75334_1",
+      "source_id": "pg75334",
+      "kind": "continuation",
+      "split": "confirmation",
+      "context_hash": "0441f541a6ee1ff7e88f29f129de978e8ab12b231f523f1772b118ff9ad788ca",
+      "reference_hash": "cddb91f97674dd2ea037b1717d03b8a94bd0cfe4c3ac28020bb6640d04c8ae9c",
+      "target_words": 794
+    },
+    {
+      "example_id": "pg75334_2",
+      "source_id": "pg75334",
+      "kind": "continuation",
+      "split": "confirmation",
+      "context_hash": "1c6ef498e32a45b27bcb5e3bfe0415404e91fa7bfc94857e5ff87a816fd3ae4d",
+      "reference_hash": "87e329bd3cc20b19066df80bcb3c4beceec369f42d1a84a33ee2a8375feae8a5",
+      "target_words": 327
+    },
+    {
+      "example_id": "pg75334_3",
+      "source_id": "pg75334",
+      "kind": "continuation",
+      "split": "confirmation",
+      "context_hash": "78a9d744841a0013d38524613b80736fec7417f62bb7a52ff6198695ac546671",
+      "reference_hash": "40cb8766fc1349f2b7316efbc539c9ca98c176fdf7ab67140909fa7dc6899b29",
+      "target_words": 506
+    },
+    {
+      "example_id": "pg59437_0",
+      "source_id": "pg59437",
+      "kind": "continuation",
+      "split": "confirmation",
+      "context_hash": "060cc2f94503aeaebec12f2aa4d9c700057dced1fa3b91452313fc5ea8d56ee2",
+      "reference_hash": "eaa1db18c1f9670d7b8f3def95faa1d0735cdfed7760b9788b9267bc1099f7f5",
+      "target_words": 685
+    },
+    {
+      "example_id": "pg59437_1",
+      "source_id": "pg59437",
+      "kind": "continuation",
+      "split": "confirmation",
+      "context_hash": "da889d25d0d576ecfeb9e8e16dbfc7c11795330e38396bd1f32d89374774bfd4",
+      "reference_hash": "c6bd7441db92667b006b5ec2b0c4e5f4fb79cc549d89a3d0878c43268bff9645",
+      "target_words": 617
+    },
+    {
+      "example_id": "pg59437_2",
+      "source_id": "pg59437",
+      "kind": "continuation",
+      "split": "confirmation",
+      "context_hash": "4d231fd86aec58ce2d7f92f86e1387f7e0a26a5cea00d9582ce6918fbfe66559",
+      "reference_hash": "afaf44ea6c13550bb7ffcba8ba1ce09e9464cb59d241db40d2d7ddec42ffd13b",
+      "target_words": 357
+    },
+    {
+      "example_id": "pg59437_3",
+      "source_id": "pg59437",
+      "kind": "continuation",
+      "split": "confirmation",
+      "context_hash": "a2323a57bf34522d0e09490a5ffab1591a003486fecfbfe02a2103f6241b710c",
+      "reference_hash": "9aae7ba17ba8e7a1fc5b7c85e6e1cb5e1f3d39fe51a6047db187c3b3128a38b9",
+      "target_words": 663
+    },
+    {
+      "example_id": "pg65207_0",
+      "source_id": "pg65207",
+      "kind": "continuation",
+      "split": "confirmation",
+      "context_hash": "c6de06703d7252a5f4a882b13df1519f6bc60fade323bcdbe13be8ea86c0ca80",
+      "reference_hash": "b0e18cbffac94a06a07a68eecc457ebd75e4c228bf58e47d45ca9ccbf8390c88",
+      "target_words": 635
+    },
+    {
+      "example_id": "pg65207_1",
+      "source_id": "pg65207",
+      "kind": "continuation",
+      "split": "confirmation",
+      "context_hash": "87b4fa587c72289f119b9e1f2970df5315cd91365f0af76e6c5942dcb03987a9",
+      "reference_hash": "3ccce1578ed582406d5fc526e2e4828a233290e2429e3f010f496770c9e4083b",
+      "target_words": 419
+    },
+    {
+      "example_id": "pg65207_2",
+      "source_id": "pg65207",
+      "kind": "continuation",
+      "split": "confirmation",
+      "context_hash": "440dcbc890f317e7ddbc777260ebe0333170e5bcfc92f9fb172e07ce88ff18e6",
+      "reference_hash": "dbd418e3dea47aaf01cdb0d05433de6b3f11390c438253423158e5398a1a27fb",
+      "target_words": 435
+    },
+    {
+      "example_id": "pg65207_3",
+      "source_id": "pg65207",
+      "kind": "continuation",
+      "split": "confirmation",
+      "context_hash": "618450c1e0ed2987d2660f300ffd1ccd82b5b61b47e3e40743a9f61fc458b109",
+      "reference_hash": "da64a6db7cc0a081880280cdd26a55fa2833c157efe286513520109da04104ba",
+      "target_words": 784
+    },
+    {
+      "example_id": "pg73188_0",
+      "source_id": "pg73188",
+      "kind": "continuation",
+      "split": "confirmation",
+      "context_hash": "75ae8bcffe5589fc925493886299a86cb484d3edb2b15abcf120e0fc8987ed8f",
+      "reference_hash": "dbb8e4c25828cd4da08e7394983ad902c014630007604341d77f16ab26408cac",
+      "target_words": 775
+    },
+    {
+      "example_id": "pg73188_1",
+      "source_id": "pg73188",
+      "kind": "continuation",
+      "split": "confirmation",
+      "context_hash": "ad4b412d63f008eb3ec48f6f1dd5bbb70074326615c18aa1e34acb870ffd92bd",
+      "reference_hash": "15f2f45d69a2dc73594967d58d732e3395dbf13fd9bfcfedbd0f6325a9763180",
+      "target_words": 444
+    },
+    {
+      "example_id": "pg73188_2",
+      "source_id": "pg73188",
+      "kind": "continuation",
+      "split": "confirmation",
+      "context_hash": "5f04e2394f5b5a0795c90fff550467788e17a1099a9f2f2c3c1f24ccb3eaf9d6",
+      "reference_hash": "1dfbedac91ec0715b6d65e71271846b14807d54dbc100899d6afdf951b9e3822",
+      "target_words": 619
+    },
+    {
+      "example_id": "pg73188_3",
+      "source_id": "pg73188",
+      "kind": "continuation",
+      "split": "confirmation",
+      "context_hash": "8baf2a02ad12a3c19d1fd452385ed50c65a01dcfa59c7328df56465ca11cb431",
+      "reference_hash": "62475cb4a1c8a9fee70bc89992860e78c2bd8de3e9467c606d8880a86bb74d15",
+      "target_words": 502
+    },
+    {
+      "example_id": "pg5421_0",
+      "source_id": "pg5421",
+      "kind": "continuation",
+      "split": "confirmation",
+      "context_hash": "fdce1a1e6f44ad98575daef3cf5a2acd9a874030efd8cb68c2d4568de9f36965",
+      "reference_hash": "76fc156327d2a8905937eb3bce0317678c4065604f31679cc83da6db5e9bb3aa",
+      "target_words": 541
+    },
+    {
+      "example_id": "pg5421_1",
+      "source_id": "pg5421",
+      "kind": "continuation",
+      "split": "confirmation",
+      "context_hash": "c47224aecd2f5b9ddcbe80d84f04bca3ea30791c90615dcfc231c441b767789f",
+      "reference_hash": "f8536d016335548f73ffd10f8feed98e04e5868167040b31a253129b4fb24415",
+      "target_words": 587
+    },
+    {
+      "example_id": "pg5421_2",
+      "source_id": "pg5421",
+      "kind": "continuation",
+      "split": "confirmation",
+      "context_hash": "6bb645d3b015a4eae0ececb0fa5033b66b1fa56a919d29de21e3083d68b83d70",
+      "reference_hash": "2e0bc61926e3f00cd2a3c31ed2ab7f4bdfd4ae2348c280ad9528300da8725fdd",
+      "target_words": 708
+    },
+    {
+      "example_id": "pg5421_3",
+      "source_id": "pg5421",
+      "kind": "continuation",
+      "split": "confirmation",
+      "context_hash": "565a5a116ded101aff5ef894a88fd28d80c5334d5d6ad6e25f4472e33347933f",
+      "reference_hash": "a3b1f35c4865188d3e1368acaddfb09192b0975a41ae448a1ffec35828aa8892",
+      "target_words": 745
+    },
+    {
+      "example_id": "pg70844_0",
+      "source_id": "pg70844",
+      "kind": "continuation",
+      "split": "confirmation",
+      "context_hash": "683f6b456275a54988ebf9bd1017c23d7cf6f444112a5d5a39cc80501de6a636",
+      "reference_hash": "28381337957e14ac5859665dec7a6f0d7a5ac51e6c06954cff95efc136f6369a",
+      "target_words": 472
+    },
+    {
+      "example_id": "pg70844_1",
+      "source_id": "pg70844",
+      "kind": "continuation",
+      "split": "confirmation",
+      "context_hash": "1176fa2dd87f7b49f6e1d36363b07bfdc3f9483eb4307cf591375b115932459c",
+      "reference_hash": "97bfe337ad2e81e8c77eef67d5687258f82b302db5770d9747cab0404143189d",
+      "target_words": 577
+    },
+    {
+      "example_id": "pg70844_2",
+      "source_id": "pg70844",
+      "kind": "continuation",
+      "split": "confirmation",
+      "context_hash": "55ad313fc1e080677e9eade49dcc5e0a3ddb32b2c7354733e66bcb6e6692dda8",
+      "reference_hash": "3459ad1bbaa61c4141805d5430e3cb5d5a6f1d17ed9efbfabc5c671e314b3547",
+      "target_words": 616
+    },
+    {
+      "example_id": "pg70844_3",
+      "source_id": "pg70844",
+      "kind": "continuation",
+      "split": "confirmation",
+      "context_hash": "2e837a8deafcefa9675e95694c0e50051e01aa31f7e933cc479a6c53f2006ab6",
+      "reference_hash": "0da968665a145e4bb1593dea00ae262fce28c3b1e34cc27979114bb524e2803b",
+      "target_words": 638
+    },
+    {
+      "example_id": "pg3428_0",
+      "source_id": "pg3428",
+      "kind": "continuation",
+      "split": "confirmation",
+      "context_hash": "062d4bc158576c80cf6d87d34503690d52456f0ec1381ba561e86eb7bd99da64",
+      "reference_hash": "4cd1bca60e09c70da79d0208bb5b2cc1630f02c0c77f17ca35becdde60cbfcec",
+      "target_words": 431
+    },
+    {
+      "example_id": "pg3428_1",
+      "source_id": "pg3428",
+      "kind": "continuation",
+      "split": "confirmation",
+      "context_hash": "58299e3532a852c0c19895a00fe778129f8d3fab93113459601e4061d46ce7ee",
+      "reference_hash": "3338c9fc2535db3466e22bd3fbbd7a3f68b1248faf4f3308622fe06cdaf7cbcb",
+      "target_words": 429
+    },
+    {
+      "example_id": "pg3428_2",
+      "source_id": "pg3428",
+      "kind": "continuation",
+      "split": "confirmation",
+      "context_hash": "313a276c9b04aad5429db0acebe6f3f9eae862f9fa00a6b5573083bb9e62fbb6",
+      "reference_hash": "fb3b8c8e5fae0943d54bedd2ee29ab6e2cdea26bc9c9d36f30a0766535fa8135",
+      "target_words": 702
+    },
+    {
+      "example_id": "pg3428_3",
+      "source_id": "pg3428",
+      "kind": "continuation",
+      "split": "confirmation",
+      "context_hash": "bee3cb85fc7c79f3a50970d2766610a1fb420b3b072aacc1f8ee120bc028fd56",
+      "reference_hash": "31a393ef05dd92e6b8da3244de8229bb0b49a28675c5a9326e93f27fab6593cf",
+      "target_words": 353
+    },
+    {
+      "example_id": "pg61984_0",
+      "source_id": "pg61984",
+      "kind": "continuation",
+      "split": "confirmation",
+      "context_hash": "0a4cb2bbade899d50dede7c6fe8e5e522d0da9ec970e324f3680fe88fba73e55",
+      "reference_hash": "bb147114766a353b20aebc2e47110c007fc618e06b83f5dfe0dd72abd00139bc",
+      "target_words": 679
+    },
+    {
+      "example_id": "pg61984_1",
+      "source_id": "pg61984",
+      "kind": "continuation",
+      "split": "confirmation",
+      "context_hash": "63fa148ce59e4c25bb594e7ba5e1e284157792e21ceff4848571bd995f6f46a7",
+      "reference_hash": "ad5b23b9f210b42add567e39635b72f354e1c4a27e266d3f1a140fccdc15cd20",
+      "target_words": 512
+    },
+    {
+      "example_id": "pg61984_2",
+      "source_id": "pg61984",
+      "kind": "continuation",
+      "split": "confirmation",
+      "context_hash": "93ba3d6bbedf8517d30148e22b014dada123ad921d50c40ff1d97215c70a6353",
+      "reference_hash": "20337327a99e8d0202dc826218cdbcd2e0fed95aafb9defcc9676f0ef7d02c82",
+      "target_words": 465
+    },
+    {
+      "example_id": "pg61984_3",
+      "source_id": "pg61984",
+      "kind": "continuation",
+      "split": "confirmation",
+      "context_hash": "02c1260632e9d002bc3d67bed8f9f0b9429bece2c3909c397239751e66ff1305",
+      "reference_hash": "ccaab59e627401208c1fe7965dfc8349501bc8e5f6ae15a3ef0551b723427ce1",
+      "target_words": 767
+    },
+    {
+      "example_id": "pg76417_0",
+      "source_id": "pg76417",
+      "kind": "continuation",
+      "split": "confirmation",
+      "context_hash": "18c307f79252bf76a858dd42c33357813f76693d77c63814adba19e786409b13",
+      "reference_hash": "51163804fa2246f063eadcdf2b0828240e9e9285184a9b7467ef51ecca767af6",
+      "target_words": 560
+    },
+    {
+      "example_id": "pg76417_1",
+      "source_id": "pg76417",
+      "kind": "continuation",
+      "split": "confirmation",
+      "context_hash": "bddb91abcb3b5fe8c7e518a050f7752f4c8191fe8e57031756f6bac8e5d6f6fc",
+      "reference_hash": "5be9a3976d2166552ea18c864ad9af7ccbb9ea63d720e19f90372552e804bd90",
+      "target_words": 643
+    },
+    {
+      "example_id": "pg76417_2",
+      "source_id": "pg76417",
+      "kind": "continuation",
+      "split": "confirmation",
+      "context_hash": "fd9574feda7cf76ad152db0e11cd425341f05fa54a387b0bd3a48fa04847b410",
+      "reference_hash": "fc53ad0247339db5c889bf0e0ef8a10077661f2ff1c246b94ff3f82d97239be2",
+      "target_words": 480
+    },
+    {
+      "example_id": "pg76417_3",
+      "source_id": "pg76417",
+      "kind": "continuation",
+      "split": "confirmation",
+      "context_hash": "56c6d60d385f9af045865bb60257f3cc71c14206713426f791194f9ddb65a49a",
+      "reference_hash": "dbbec9a6801faf5d65c4b878edc74f3d674a49d2936b8eb08222e7faa36915d4",
+      "target_words": 427
+    },
+    {
+      "example_id": "pg9659_0",
+      "source_id": "pg9659",
+      "kind": "continuation",
+      "split": "confirmation",
+      "context_hash": "808c5f83496710510db256c8f5180cc4af56669e14cbb130e4c8cecba98a3c06",
+      "reference_hash": "21b532501ebc1855222d4608591a544fac04ddac5eacf1f68ad641b2ac077dc2",
+      "target_words": 625
+    },
+    {
+      "example_id": "pg9659_1",
+      "source_id": "pg9659",
+      "kind": "continuation",
+      "split": "confirmation",
+      "context_hash": "3a5071a62d0eed9fb8fc8c7305714864dfb9d86dad7f01264d63e7510e118836",
+      "reference_hash": "0dd7d5068866fe1c7363f8e9cbe8e6852cbf14da213bba21e56b99063497d733",
+      "target_words": 778
+    },
+    {
+      "example_id": "pg9659_2",
+      "source_id": "pg9659",
+      "kind": "continuation",
+      "split": "confirmation",
+      "context_hash": "2ea5747692be9abf604f417d5eda9dfc5dfdcc91d405d7867a0520fcd4d32482",
+      "reference_hash": "a621f6626a51b1d6470d17aed18f2377c558461184de8f64f7e89ae0d21785f6",
+      "target_words": 426
+    },
+    {
+      "example_id": "pg9659_3",
+      "source_id": "pg9659",
+      "kind": "continuation",
+      "split": "confirmation",
+      "context_hash": "76823542d611c8f971b07fc2a1716a051c002970c5eeb74aa7fac039c0e70f69",
+      "reference_hash": "dd785289756d89920da053633205950586c3cbfbd9a429c8ed5a82c67e958f1b",
+      "target_words": 682
+    }
+  ]
+}

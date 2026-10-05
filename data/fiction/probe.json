@@ -1,0 +1,1638 @@
+{
+  "probed_at": "2026-10-05T16:11:14.339075+00:00",
+  "discovery_hash": "37ff851db88edd11eb81d89346f5c878650a9a6c92b507fba2fe507161ec86ab",
+  "writer": {
+    "model": "meta/muse-spark-1.3-contributor",
+    "provider": "meta",
+    "temperature": 0,
+    "reasoning": {
+      "effort": "medium"
+    },
+    "max_tokens": 16384
+  },
+  "writer_prompt_hash": "f79cf54e2912dd4a7b336363973f44007f45378ce9af7fdd2099d6dd6e04304a",
+  "requests": "runs/probe-fiction-2026-10-05",
+  "rule": "memorized if more than 5% of the reference's 13-grams or a run of 20 or more words appear in the temperature-0 continuation",
+  "results": [
+    {
+      "example_id": "pg14696_0",
+      "ngram_fraction": 0.0,
+      "longest_run_words": 4,
+      "memorized": false,
+      "words": 1322,
+      "finish_reason": "stop",
+      "request_key": "5f5708ac5e5a355a26fdc69a4f5d7d9d4b2dcfe4cce010271fb66053deffbfd1"
+    },
+    {
+      "example_id": "pg14696_1",
+      "ngram_fraction": 0.0,
+      "longest_run_words": 4,
+      "memorized": false,
+      "words": 679,
+      "finish_reason": "stop",
+      "request_key": "e80787ab158eadac08d114643870221d0ab97eede60fa80dff76ba0c87b1d648"
+    },
+    {
+      "example_id": "pg14696_2",
+      "ngram_fraction": 0.0,
+      "longest_run_words": 2,
+      "memorized": false,
+      "words": 397,
+      "finish_reason": "stop",
+      "request_key": "f6478e5a0f1cc6d08e627dccb7625afcc768433d754b74e65225e490a85cf7c3"
+    },
+    {
+      "example_id": "pg14696_3",
+      "ngram_fraction": 0.0,
+      "longest_run_words": 5,
+      "memorized": false,
+      "words": 795,
+      "finish_reason": "stop",
+      "request_key": "2ff852837557ec30743b12620102bcc1d877631cf0122cf3c026cb71c5646845"
+    },
+    {
+      "example_id": "pg14696_4",
+      "ngram_fraction": 0.0,
+      "longest_run_words": 5,
+      "memorized": false,
+      "words": 1115,
+      "finish_reason": "stop",
+      "request_key": "0bdd540505788f50a280bbe71758696fa48bbe6b0535f3951308994d0f5e9ff2"
+    },
+    {
+      "example_id": "pg14696_5",
+      "ngram_fraction": 0.0,
+      "longest_run_words": 7,
+      "memorized": false,
+      "words": 821,
+      "finish_reason": "stop",
+      "request_key": "39f2d0c297ded35abfa8b98f5ceb4d02f9441a18abf8eba7d975c77392289433"
+    },
+    {
+      "example_id": "pg34419_0",
+      "ngram_fraction": 0.0,
+      "longest_run_words": 4,
+      "memorized": false,
+      "words": 1031,
+      "finish_reason": "stop",
+      "request_key": "53a25d19e79a40f6ba34e03349a18e525e5babf43bc3e0f436eb5036182de315"
+    },
+    {
+      "example_id": "pg34419_1",
+      "ngram_fraction": 0.0,
+      "longest_run_words": 3,
+      "memorized": false,
+      "words": 1006,
+      "finish_reason": "stop",
+      "request_key": "8a2edfbaff105ab53b5bdd3da3fc6d3fcad8eb6d8d4e42ef349efde5774155c0"
+    },
+    {
+      "example_id": "pg34419_2",
+      "ngram_fraction": 0.0,
+      "longest_run_words": 3,
+      "memorized": false,
+      "words": 1109,
+      "finish_reason": "stop",
+      "request_key": "efd557fdfc6758cd4c75cc1bab693379ce2b50ff3717e67377441e7dabe82a2e"
+    },
+    {
+      "example_id": "pg34419_3",
+      "ngram_fraction": 0.0,
+      "longest_run_words": 3,
+      "memorized": false,
+      "words": 615,
+      "finish_reason": "stop",
+      "request_key": "af0e0f01e9ba807a699392b4fa09d64cf655be8180bfa23a39f3a3d3524a7762"
+    },
+    {
+      "example_id": "pg34419_4",
+      "ngram_fraction": 0.0,
+      "longest_run_words": 3,
+      "memorized": false,
+      "words": 1134,
+      "finish_reason": "stop",
+      "request_key": "c46b45780656e637bf306ec5b5382b5e8a0509ba3a179cd83cb5a2d8dbe6d7ba"
+    },
+    {
+      "example_id": "pg34419_5",
+      "ngram_fraction": 0.0,
+      "longest_run_words": 5,
+      "memorized": false,
+      "words": 731,
+      "finish_reason": "stop",
+      "request_key": "4f6e94a5a18218918178f5eaae8ffafbbc6b9170c2f824b6b314b7ed5ec2bc22"
+    },
+    {
+      "example_id": "pg66191_0",
+      "ngram_fraction": 0.0,
+      "longest_run_words": 3,
+      "memorized": false,
+      "words": 457,
+      "finish_reason": "stop",
+      "request_key": "e01fca80faa721daa12dcbca7474198716c05aed40c2573c6e433e2f436511e7"
+    },
+    {
+      "example_id": "pg66191_1",
+      "ngram_fraction": 0.0,
+      "longest_run_words": 5,
+      "memorized": false,
+      "words": 920,
+      "finish_reason": "stop",
+      "request_key": "045f48b718f644246374f912fe7092be7b36c015e9f63c5acac770ee3cbbb397"
+    },
+    {
+      "example_id": "pg66191_2",
+      "ngram_fraction": 0.0,
+      "longest_run_words": 4,
+      "memorized": false,
+      "words": 1170,
+      "finish_reason": "stop",
+      "request_key": "1a9815f818915cab151a234ff34f6db76d49444f06c10f72a9162e4cc589427b"
+    },
+    {
+      "example_id": "pg66191_3",
+      "ngram_fraction": 0.0,
+      "longest_run_words": 3,
+      "memorized": false,
+      "words": 674,
+      "finish_reason": "stop",
+      "request_key": "142f7e9bd1754842864b412dcc402f35230ff0b18c36fb4bd50bd25eeffc4c95"
+    },
+    {
+      "example_id": "pg66191_4",
+      "ngram_fraction": 0.0,
+      "longest_run_words": 3,
+      "memorized": false,
+      "words": 384,
+      "finish_reason": "stop",
+      "request_key": "17595c7f9815b32984cfea863d4e9186a5f5281ccdf890e97e601edb735b471c"
+    },
+    {
+      "example_id": "pg66191_5",
+      "ngram_fraction": 0.0,
+      "longest_run_words": 3,
+      "memorized": false,
+      "words": 1405,
+      "finish_reason": "stop",
+      "request_key": "e94e5106aded3e977d9a1c67670696d2ca0faaab810a697d7077ea0c1ef03568"
+    },
+    {
+      "example_id": "pg25430_0",
+      "ngram_fraction": 0.0,
+      "longest_run_words": 6,
+      "memorized": false,
+      "words": 774,
+      "finish_reason": "stop",
+      "request_key": "a1ba7cad06ed99dbf54b671734b787da5f3c8b9c355de181a21986536a5544c2"
+    },
+    {
+      "example_id": "pg25430_1",
+      "ngram_fraction": 0.0,
+      "longest_run_words": 3,
+      "memorized": false,
+      "words": 932,
+      "finish_reason": "stop",
+      "request_key": "7fd4c75fca9666a319965345a48bea376d11eaa6ffefdf373e2028ff73470f77"
+    },
+    {
+      "example_id": "pg25430_2",
+      "ngram_fraction": 0.0,
+      "longest_run_words": 3,
+      "memorized": false,
+      "words": 569,
+      "finish_reason": "stop",
+      "request_key": "ab9303869360baeb48f1b8d652fe2c8cc499e8b1ba3e4b594d0231b53eb93cf5"
+    },
+    {
+      "example_id": "pg25430_3",
+      "ngram_fraction": 0.0,
+      "longest_run_words": 5,
+      "memorized": false,
+      "words": 751,
+      "finish_reason": "stop",
+      "request_key": "9ada80568e2adcae82737472a0ea2b1140d6deef3504c3c68f2e6e0c96e46136"
+    },
+    {
+      "example_id": "pg25430_4",
+      "ngram_fraction": 0.0,
+      "longest_run_words": 4,
+      "memorized": false,
+      "words": 979,
+      "finish_reason": "stop",
+      "request_key": "118632d9b5458ddc3610f2d95daf286fb0f9fd0acc4d99237394778885606959"
+    },
+    {
+      "example_id": "pg25430_5",
+      "ngram_fraction": 0.0,
+      "longest_run_words": 4,
+      "memorized": false,
+      "words": 457,
+      "finish_reason": "stop",
+      "request_key": "9767e87bb28cc185066533aca50179b81f2369a93db13cb189d65e957b6c6747"
+    },
+    {
+      "example_id": "pg4961_0",
+      "ngram_fraction": 0.0,
+      "longest_run_words": 3,
+      "memorized": false,
+      "words": 888,
+      "finish_reason": "stop",
+      "request_key": "4410de9cbdd79ab667312739475fbfacf37785f513cefd7eb6dfa7c471c47e1e"
+    },
+    {
+      "example_id": "pg4961_1",
+      "ngram_fraction": 0.0,
+      "longest_run_words": 4,
+      "memorized": false,
+      "words": 785,
+      "finish_reason": "stop",
+      "request_key": "800219eb1a17a291791b6d8c55e04bc5cd2a17d94ce47a78430540119a239716"
+    },
+    {
+      "example_id": "pg4961_2",
+      "ngram_fraction": 0.0,
+      "longest_run_words": 4,
+      "memorized": false,
+      "words": 974,
+      "finish_reason": "stop",
+      "request_key": "11364f00255e26257bcce7520517dbedbe735f03c4bcbc925a83b5f672687e46"
+    },
+    {
+      "example_id": "pg4961_3",
+      "ngram_fraction": 0.0,
+      "longest_run_words": 4,
+      "memorized": false,
+      "words": 793,
+      "finish_reason": "stop",
+      "request_key": "204f839ea87375c867b5d8d9206fbdec2a4405a439e21f4a7e1c4ec4dc8b81dd"
+    },
+    {
+      "example_id": "pg4961_4",
+      "ngram_fraction": 0.0,
+      "longest_run_words": 3,
+      "memorized": false,
+      "words": 328,
+      "finish_reason": "stop",
+      "request_key": "451f65ad00ca2ba3c1b88e78816f231c5784e14ec31ca15a7119e8ef362f270f"
+    },
+    {
+      "example_id": "pg4961_5",
+      "ngram_fraction": 0.0,
+      "longest_run_words": 3,
+      "memorized": false,
+      "words": 815,
+      "finish_reason": "stop",
+      "request_key": "350deaebb08b164888239b526c545769c27163a37ad812b8a1c5a30c92ab4be5"
+    },
+    {
+      "example_id": "pg25474_0",
+      "ngram_fraction": 0.0,
+      "longest_run_words": 2,
+      "memorized": false,
+      "words": 546,
+      "finish_reason": "stop",
+      "request_key": "f642519c9d57b34159583020f8c6f13622ac25dcf0cf0effbcca64359dfcd113"
+    },
+    {
+      "example_id": "pg25474_1",
+      "ngram_fraction": 0.0,
+      "longest_run_words": 4,
+      "memorized": false,
+      "words": 1182,
+      "finish_reason": "stop",
+      "request_key": "f4c0a0d20677efbcc316c5b44d0d554841e7eb8442dceba1729746487b26c2a8"
+    },
+    {
+      "example_id": "pg25474_2",
+      "ngram_fraction": 0.0,
+      "longest_run_words": 3,
+      "memorized": false,
+      "words": 692,
+      "finish_reason": "stop",
+      "request_key": "e8caac71e7c62f5c0cbd7708ff564961427b15282a9417c3b952d6a7df8fb04b"
+    },
+    {
+      "example_id": "pg25474_3",
+      "ngram_fraction": 0.0,
+      "longest_run_words": 3,
+      "memorized": false,
+      "words": 402,
+      "finish_reason": "stop",
+      "request_key": "1961a48b8d236153eb6e29f878da5e8aa1e3d20ef7175375a212aebb638b2f8e"
+    },
+    {
+      "example_id": "pg25474_4",
+      "ngram_fraction": 0.0,
+      "longest_run_words": 3,
+      "memorized": false,
+      "words": 1152,
+      "finish_reason": "stop",
+      "request_key": "81ad99f2b15564c0029f2c358d39fbc6c08fd0f5bbe13a3acf79615b66b9898f"
+    },
+    {
+      "example_id": "pg25474_5",
+      "ngram_fraction": 0.0,
+      "longest_run_words": 3,
+      "memorized": false,
+      "words": 361,
+      "finish_reason": "stop",
+      "request_key": "ca17933890ed335228200405c9aa91658fe942ae66bb4987fc2c6c3f6541d00a"
+    },
+    {
+      "example_id": "pg69549_0",
+      "ngram_fraction": 0.0,
+      "longest_run_words": 3,
+      "memorized": false,
+      "words": 833,
+      "finish_reason": "stop",
+      "request_key": "92a27feb6cbf0a6370435fb0f7ecbdceee2d57d4a40e0ff4d232c8b4e7b266c7"
+    },
+    {
+      "example_id": "pg69549_1",
+      "ngram_fraction": 0.0,
+      "longest_run_words": 7,
+      "memorized": false,
+      "words": 339,
+      "finish_reason": "stop",
+      "request_key": "85b55b0351894e1e6d0414cb4fd865130acd25d52635de81779f693b3b075f9c"
+    },
+    {
+      "example_id": "pg69549_2",
+      "ngram_fraction": 0.0,
+      "longest_run_words": 4,
+      "memorized": false,
+      "words": 793,
+      "finish_reason": "stop",
+      "request_key": "d994993fd399ab285f452f811b0e581dc348d7aad30604ed52d9fc4a7beddc9c"
+    },
+    {
+      "example_id": "pg69549_3",
+      "ngram_fraction": 0.0,
+      "longest_run_words": 4,
+      "memorized": false,
+      "words": 1066,
+      "finish_reason": "stop",
+      "request_key": "0ff2f322b778c3f15341211b70decf956bc664ffab4ebd538e46ebfab78d0094"
+    },
+    {
+      "example_id": "pg69549_4",
+      "ngram_fraction": 0.0,
+      "longest_run_words": 6,
+      "memorized": false,
+      "words": 1174,
+      "finish_reason": "stop",
+      "request_key": "78fa1b8a05651bedbe85b553f149864a631e1b9896207703a77e695240e826b7"
+    },
+    {
+      "example_id": "pg69549_5",
+      "ngram_fraction": 0.0,
+      "longest_run_words": 3,
+      "memorized": false,
+      "words": 611,
+      "finish_reason": "stop",
+      "request_key": "7b2f1352fa94f7df91828c1e239f0f3af47d1cfe2590611abb42cb48b9c6a1bf"
+    },
+    {
+      "example_id": "pg17259_0",
+      "ngram_fraction": 0.0,
+      "longest_run_words": 4,
+      "memorized": false,
+      "words": 713,
+      "finish_reason": "stop",
+      "request_key": "cca408aafb50a049bfc5b2e93f3ac91406d53d4d78006656a4fd96df2e8f7f30"
+    },
+    {
+      "example_id": "pg17259_1",
+      "ngram_fraction": 0.0,
+      "longest_run_words": 4,
+      "memorized": false,
+      "words": 383,
+      "finish_reason": "stop",
+      "request_key": "3b6e4df35670ee5e0e082a22fa1464cc0feaa29686f24e94bcbce052baf365f2"
+    },
+    {
+      "example_id": "pg17259_2",
+      "ngram_fraction": 0.0,
+      "longest_run_words": 4,
+      "memorized": false,
+      "words": 1005,
+      "finish_reason": "stop",
+      "request_key": "76e32c9746072db2bab0f4f24e51299e965b419c3bbe238d3ebfe537f05ea15b"
+    },
+    {
+      "example_id": "pg17259_3",
+      "ngram_fraction": 0.0,
+      "longest_run_words": 4,
+      "memorized": false,
+      "words": 1087,
+      "finish_reason": "stop",
+      "request_key": "0ed7e8dbfc9ae5de2dd502355f56531c322b3198d105aa8f8ee12cf89e653091"
+    },
+    {
+      "example_id": "pg17259_4",
+      "ngram_fraction": 0.0,
+      "longest_run_words": 3,
+      "memorized": false,
+      "words": 387,
+      "finish_reason": "stop",
+      "request_key": "cc630b1a2247641c0d2f1518416c8954bb82d33effe826f18f921bf8a9c7102f"
+    },
+    {
+      "example_id": "pg17259_5",
+      "ngram_fraction": 0.0,
+      "longest_run_words": 3,
+      "memorized": false,
+      "words": 371,
+      "finish_reason": "stop",
+      "request_key": "e47a8727d339184fecd5b50a15af2354017570dd829e293884fb4bbb24da43d1"
+    },
+    {
+      "example_id": "pg67138_0",
+      "ngram_fraction": 0.0,
+      "longest_run_words": 5,
+      "memorized": false,
+      "words": 776,
+      "finish_reason": "stop",
+      "request_key": "218c78dd9a38570af603be7ccc48080cd02969317588cdf2164c3b36549c496a"
+    },
+    {
+      "example_id": "pg67138_1",
+      "ngram_fraction": 0.03698224852071006,
+      "longest_run_words": 33,
+      "memorized": true,
+      "words": 859,
+      "finish_reason": "stop",
+      "request_key": "1cb54af89f85a6dc368f640171dde9decbb7fcc6e878623845ce1df355619019"
+    },
+    {
+      "example_id": "pg67138_2",
+      "ngram_fraction": 0.0,
+      "longest_run_words": 5,
+      "memorized": false,
+      "words": 681,
+      "finish_reason": "stop",
+      "request_key": "55a25f97783a0c46c59aee234be1c348b570afaed7a3f77659f5f99f2c037e25"
+    },
+    {
+      "example_id": "pg67138_3",
+      "ngram_fraction": 0.0,
+      "longest_run_words": 3,
+      "memorized": false,
+      "words": 537,
+      "finish_reason": "stop",
+      "request_key": "1825661d2f124a0375d4075f7c4b8778b9c4640fa1388a11ae466630ba6e18a2"
+    },
+    {
+      "example_id": "pg67138_4",
+      "ngram_fraction": 0.0,
+      "longest_run_words": 6,
+      "memorized": false,
+      "words": 377,
+      "finish_reason": "stop",
+      "request_key": "eef4c05da924ad0e9bfb2dcc408708317705531a0c8fa2f2c782a313469b8410"
+    },
+    {
+      "example_id": "pg67138_5",
+      "ngram_fraction": 0.0,
+      "longest_run_words": 5,
+      "memorized": false,
+      "words": 1073,
+      "finish_reason": "stop",
+      "request_key": "0fe6853dfc1bc05cd53efcd21f4dc40def4a3a943da35c6d88520a779c27315d"
+    },
+    {
+      "example_id": "pg73672_0",
+      "ngram_fraction": 0.0,
+      "longest_run_words": 3,
+      "memorized": false,
+      "words": 323,
+      "finish_reason": "stop",
+      "request_key": "04d9625e8e85c1e74531cc4502f0aaca6a7bb03b22cca65e13beb7c2df82e2e5"
+    },
+    {
+      "example_id": "pg73672_1",
+      "ngram_fraction": 0.0,
+      "longest_run_words": 3,
+      "memorized": false,
+      "words": 944,
+      "finish_reason": "stop",
+      "request_key": "071728d973c8e6364ed5016bc2cd915d6300123d17c4ec178a8792531e8d104b"
+    },
+    {
+      "example_id": "pg73672_2",
+      "ngram_fraction": 0.0,
+      "longest_run_words": 4,
+      "memorized": false,
+      "words": 1018,
+      "finish_reason": "stop",
+      "request_key": "6532a76b5550f118898a27effe6b22438e049e98be2f97e4818f5b39cca620af"
+    },
+    {
+      "example_id": "pg73672_3",
+      "ngram_fraction": 0.0,
+      "longest_run_words": 3,
+      "memorized": false,
+      "words": 639,
+      "finish_reason": "stop",
+      "request_key": "93a4b32596112c30cc433ad025d307886cc283383d861ac2e6d11487b996a89c"
+    },
+    {
+      "example_id": "pg73672_4",
+      "ngram_fraction": 0.0,
+      "longest_run_words": 4,
+      "memorized": false,
+      "words": 378,
+      "finish_reason": "stop",
+      "request_key": "6c4f717471d90148bfbb01db93da52c8d209bdfd19998eaff240d8461ec7cc70"
+    },
+    {
+      "example_id": "pg73672_5",
+      "ngram_fraction": 0.0,
+      "longest_run_words": 6,
+      "memorized": false,
+      "words": 674,
+      "finish_reason": "stop",
+      "request_key": "6bb4c9d71676be5c0185bbd2e5d5d3c5b1757ba48749dc6d676d4c8f70e5725f"
+    },
+    {
+      "example_id": "pg2773_0",
+      "ngram_fraction": 0.0,
+      "longest_run_words": 3,
+      "memorized": false,
+      "words": 793,
+      "finish_reason": "stop",
+      "request_key": "d6d74f352a9f46460a2aa247c9860ab847259207a0b03e7cbe8028ae3f86a99e"
+    },
+    {
+      "example_id": "pg2773_1",
+      "ngram_fraction": 0.0,
+      "longest_run_words": 4,
+      "memorized": false,
+      "words": 1106,
+      "finish_reason": "stop",
+      "request_key": "84c40853cd050c5d0218d9a77a4b607a4c03d3c5045ec43d86a811017822bd46"
+    },
+    {
+      "example_id": "pg2773_2",
+      "ngram_fraction": 0.0,
+      "longest_run_words": 4,
+      "memorized": false,
+      "words": 720,
+      "finish_reason": "stop",
+      "request_key": "2e204f9089f52ed15ed2f556cd085824408793c3ec24225861dded136b54a027"
+    },
+    {
+      "example_id": "pg2773_3",
+      "ngram_fraction": 0.0,
+      "longest_run_words": 4,
+      "memorized": false,
+      "words": 512,
+      "finish_reason": "stop",
+      "request_key": "2db0ca06869d2b7694dfeba855bd5959c69c1f2a3101158955d28fc10f7dde12"
+    },
+    {
+      "example_id": "pg2773_4",
+      "ngram_fraction": 0.0,
+      "longest_run_words": 5,
+      "memorized": false,
+      "words": 919,
+      "finish_reason": "stop",
+      "request_key": "e5abf263328090b6d3a3beab08f3ef5415084c6604d1dddf5d8acd7803c422eb"
+    },
+    {
+      "example_id": "pg2773_5",
+      "ngram_fraction": 0.0,
+      "longest_run_words": 4,
+      "memorized": false,
+      "words": 606,
+      "finish_reason": "stop",
+      "request_key": "a59fd56672ff4d32f31a31e89b11f7ecc17dc90e8ac0a92223a471debbb39845"
+    },
+    {
+      "example_id": "pg3817_0",
+      "ngram_fraction": 0.0,
+      "longest_run_words": 4,
+      "memorized": false,
+      "words": 544,
+      "finish_reason": "stop",
+      "request_key": "17f0cc1027b7c355702aa4607a3c6432ab887dc922e5fa8c4d0155394561c3a2"
+    },
+    {
+      "example_id": "pg3817_1",
+      "ngram_fraction": 0.0,
+      "longest_run_words": 3,
+      "memorized": false,
+      "words": 408,
+      "finish_reason": "stop",
+      "request_key": "0b7f7144ce7c47fbc522298b49d77078ea188eb5a80e50e86c38a0a01419435e"
+    },
+    {
+      "example_id": "pg3817_2",
+      "ngram_fraction": 0.0,
+      "longest_run_words": 4,
+      "memorized": false,
+      "words": 415,
+      "finish_reason": "stop",
+      "request_key": "651a8ab274a955bfb372853fbe24900800f96ea3250d3b08547eb51ee543ed77"
+    },
+    {
+      "example_id": "pg3817_3",
+      "ngram_fraction": 0.0,
+      "longest_run_words": 3,
+      "memorized": false,
+      "words": 657,
+      "finish_reason": "stop",
+      "request_key": "c384870c6654a614ae614b8406640228c7199edb8a272dcd15f2f254b075bef7"
+    },
+    {
+      "example_id": "pg3817_4",
+      "ngram_fraction": 0.0,
+      "longest_run_words": 4,
+      "memorized": false,
+      "words": 1039,
+      "finish_reason": "stop",
+      "request_key": "0783614edd65a531f9f0d0f434cd6939dc205f4c115b7a85c7731804a5c293e3"
+    },
+    {
+      "example_id": "pg3817_5",
+      "ngram_fraction": 0.0,
+      "longest_run_words": 3,
+      "memorized": false,
+      "words": 645,
+      "finish_reason": "stop",
+      "request_key": "3e084082cec8015d8a238a2791600ca9f3d9907baf4361a0530efe93c4096fa1"
+    },
+    {
+      "example_id": "pg64700_0",
+      "ngram_fraction": 0.0,
+      "longest_run_words": 5,
+      "memorized": false,
+      "words": 1143,
+      "finish_reason": "stop",
+      "request_key": "49730974a48e50b2b74898b064d5338c54e204819ed6f3216ceeca871578b6e2"
+    },
+    {
+      "example_id": "pg64700_1",
+      "ngram_fraction": 0.0,
+      "longest_run_words": 5,
+      "memorized": false,
+      "words": 449,
+      "finish_reason": "stop",
+      "request_key": "102fff7a6178864086dfe1b4a3091e83e24efc9b1cbc24d4fe8d7d475da674c2"
+    },
+    {
+      "example_id": "pg64700_2",
+      "ngram_fraction": 0.0,
+      "longest_run_words": 3,
+      "memorized": false,
+      "words": 873,
+      "finish_reason": "stop",
+      "request_key": "fd90169eaefd7635611b80f658f297bdc8587ba5a8b924784016977d9df706d7"
+    },
+    {
+      "example_id": "pg64700_3",
+      "ngram_fraction": 0.0,
+      "longest_run_words": 4,
+      "memorized": false,
+      "words": 1075,
+      "finish_reason": "stop",
+      "request_key": "f4ac9e3ca57a671170c595e56900e9c40c7c63ecc9fb3f84c0bdce69d6de3953"
+    },
+    {
+      "example_id": "pg64700_4",
+      "ngram_fraction": 0.0,
+      "longest_run_words": 4,
+      "memorized": false,
+      "words": 594,
+      "finish_reason": "stop",
+      "request_key": "1b32c90b6d166dc67a742d8dc13a4bc401082e2bc8162c415adfe7bd63601405"
+    },
+    {
+      "example_id": "pg64700_5",
+      "ngram_fraction": 0.0,
+      "longest_run_words": 4,
+      "memorized": false,
+      "words": 816,
+      "finish_reason": "stop",
+      "request_key": "c4cb39e014be81ae2d515d6887899fd7737469259b14d6683c9942bf30d0ec6a"
+    },
+    {
+      "example_id": "pg2369_0",
+      "ngram_fraction": 0.0,
+      "longest_run_words": 3,
+      "memorized": false,
+      "words": 340,
+      "finish_reason": "stop",
+      "request_key": "d211d05f22c78f6b6c7fc599d16a35b5d19fcdf6e83688f099bec3fb061c288d"
+    },
+    {
+      "example_id": "pg2369_1",
+      "ngram_fraction": 0.0,
+      "longest_run_words": 3,
+      "memorized": false,
+      "words": 883,
+      "finish_reason": "stop",
+      "request_key": "f1448db456cd1d9bd0ef1f2bc3b9024fbc8424a635cb26c387478aba8890cac7"
+    },
+    {
+      "example_id": "pg2369_2",
+      "ngram_fraction": 0.0,
+      "longest_run_words": 2,
+      "memorized": false,
+      "words": 364,
+      "finish_reason": "stop",
+      "request_key": "c295c146a86534773a2256d9f5510bcfedda46dec468da53301ef57b62d0ae45"
+    },
+    {
+      "example_id": "pg2369_3",
+      "ngram_fraction": 0.0,
+      "longest_run_words": 4,
+      "memorized": false,
+      "words": 984,
+      "finish_reason": "stop",
+      "request_key": "a265c5df927ef608258a782e9d70ea11de098c9f97596eb387f96cfbe2861028"
+    },
+    {
+      "example_id": "pg2369_4",
+      "ngram_fraction": 0.0,
+      "longest_run_words": 5,
+      "memorized": false,
+      "words": 1026,
+      "finish_reason": "stop",
+      "request_key": "ec7e1ee49e43d89c3c7336e0b6b6f9d24d49a0d3da942df1add71ca172332dc8"
+    },
+    {
+      "example_id": "pg2369_5",
+      "ngram_fraction": 0.0,
+      "longest_run_words": 3,
+      "memorized": false,
+      "words": 380,
+      "finish_reason": "stop",
+      "request_key": "8a9518390d9fa20ddc86bf4c9e01ec2978d9fed1776ebc5ae825c5f15d089f3e"
+    },
+    {
+      "example_id": "pg65465_0",
+      "ngram_fraction": 0.0,
+      "longest_run_words": 3,
+      "memorized": false,
+      "words": 481,
+      "finish_reason": "stop",
+      "request_key": "716a17cd3df780323558c507eaecbdd727fbfe9ebdf3f8284a307885287182d7"
+    },
+    {
+      "example_id": "pg65465_1",
+      "ngram_fraction": 0.0,
+      "longest_run_words": 4,
+      "memorized": false,
+      "words": 1155,
+      "finish_reason": "stop",
+      "request_key": "fbe1f748c39cd0b35ba0734b6b5f51ddf9334a7ce536a792dab27431241f9044"
+    },
+    {
+      "example_id": "pg65465_2",
+      "ngram_fraction": 0.0,
+      "longest_run_words": 4,
+      "memorized": false,
+      "words": 949,
+      "finish_reason": "stop",
+      "request_key": "e7486c3cc51d0de68726c32853988a019acfd0825831e81820a510b56d77dc5f"
+    },
+    {
+      "example_id": "pg65465_3",
+      "ngram_fraction": 0.0,
+      "longest_run_words": 4,
+      "memorized": false,
+      "words": 885,
+      "finish_reason": "stop",
+      "request_key": "b981a645b78aa3b6eb321dafd77b382249f36e0240da7a9b3c37b33fc48a3c1a"
+    },
+    {
+      "example_id": "pg65465_4",
+      "ngram_fraction": 0.0,
+      "longest_run_words": 3,
+      "memorized": false,
+      "words": 477,
+      "finish_reason": "stop",
+      "request_key": "5372a542b05f9c18143deb7c9f464035c48df3a63e1aee72eec96f04c1b32ea7"
+    },
+    {
+      "example_id": "pg65465_5",
+      "ngram_fraction": 0.0,
+      "longest_run_words": 3,
+      "memorized": false,
+      "words": 711,
+      "finish_reason": "stop",
+      "request_key": "9a95262dc489b1b976d143626a5183a23671cb951d860664fc90beca609a3117"
+    },
+    {
+      "example_id": "pg68105_0",
+      "ngram_fraction": 0.0,
+      "longest_run_words": 2,
+      "memorized": false,
+      "words": 567,
+      "finish_reason": "stop",
+      "request_key": "3dd5bd49f281359757bb2d86846bc47131d8326e99b2a1b6e884c80bbc121eb0"
+    },
+    {
+      "example_id": "pg68105_1",
+      "ngram_fraction": 0.0,
+      "longest_run_words": 4,
+      "memorized": false,
+      "words": 649,
+      "finish_reason": "stop",
+      "request_key": "699c60ab83f1c50abffb137b963741786290faad0501e0fb920ec7160db3f3db"
+    },
+    {
+      "example_id": "pg68105_2",
+      "ngram_fraction": 0.0,
+      "longest_run_words": 3,
+      "memorized": false,
+      "words": 563,
+      "finish_reason": "stop",
+      "request_key": "d3be5ea45008e2d088df00154df2e4f8188c20ab395c8c13d617fcc49f65a328"
+    },
+    {
+      "example_id": "pg68105_3",
+      "ngram_fraction": 0.0,
+      "longest_run_words": 3,
+      "memorized": false,
+      "words": 905,
+      "finish_reason": "stop",
+      "request_key": "0f2bd327572fa4a4c8499ef1b110c42b0cc983e963f8a5bd1dc64ec4b9437639"
+    },
+    {
+      "example_id": "pg68105_4",
+      "ngram_fraction": 0.0,
+      "longest_run_words": 3,
+      "memorized": false,
+      "words": 723,
+      "finish_reason": "stop",
+      "request_key": "790545830a5a7c6427eed583c486c57122e411c33fb16db63fc9ef81f7748367"
+    },
+    {
+      "example_id": "pg68105_5",
+      "ngram_fraction": 0.0,
+      "longest_run_words": 2,
+      "memorized": false,
+      "words": 539,
+      "finish_reason": "stop",
+      "request_key": "71beed75700fc2abfe832608712d622cf5581acad688e78235ea9ddae0970e84"
+    },
+    {
+      "example_id": "pg2876_0",
+      "ngram_fraction": 0.0,
+      "longest_run_words": 7,
+      "memorized": false,
+      "words": 1358,
+      "finish_reason": "stop",
+      "request_key": "06c038c5ea017a7f91b89fccdd596961b3c7ea435a8378e7102fbbd8b3bc8629"
+    },
+    {
+      "example_id": "pg2876_1",
+      "ngram_fraction": 0.0,
+      "longest_run_words": 4,
+      "memorized": false,
+      "words": 1219,
+      "finish_reason": "stop",
+      "request_key": "f377a1a137b4bb84adc24614506181c01ed5af758d0718434efb81a06d6636b4"
+    },
+    {
+      "example_id": "pg2876_2",
+      "ngram_fraction": 0.0,
+      "longest_run_words": 4,
+      "memorized": false,
+      "words": 990,
+      "finish_reason": "stop",
+      "request_key": "fd4a5617b457001989d8787befd62c73eb0a7d29479130ca2a7d51d4f3a6f7b2"
+    },
+    {
+      "example_id": "pg2876_3",
+      "ngram_fraction": 0.0,
+      "longest_run_words": 3,
+      "memorized": false,
+      "words": 565,
+      "finish_reason": "stop",
+      "request_key": "ff62674074e59ca78e255bf44c5c197666a10e70729f2ad51d98c2686b920eca"
+    },
+    {
+      "example_id": "pg2876_4",
+      "ngram_fraction": 0.0,
+      "longest_run_words": 5,
+      "memorized": false,
+      "words": 393,
+      "finish_reason": "stop",
+      "request_key": "af20ceac1b3a42dfc9db98dd8600817e6052d5640f1fb496b37cde224288e7bf"
+    },
+    {
+      "example_id": "pg2876_5",
+      "ngram_fraction": 0.0,
+      "longest_run_words": 5,
+      "memorized": false,
+      "words": 658,
+      "finish_reason": "stop",
+      "request_key": "9a3ddc436b6e9ca1d8273b2c7ad1f6db6d01197449bab22c44564ae2d58831ee"
+    },
+    {
+      "example_id": "pg72406_0",
+      "ngram_fraction": 0.0,
+      "longest_run_words": 3,
+      "memorized": false,
+      "words": 866,
+      "finish_reason": "stop",
+      "request_key": "fbea7103147fd8c94cdc7d971e9f1703006eea0fa5f6258d700211418b1c0206"
+    },
+    {
+      "example_id": "pg72406_1",
+      "ngram_fraction": 0.0,
+      "longest_run_words": 4,
+      "memorized": false,
+      "words": 897,
+      "finish_reason": "stop",
+      "request_key": "470d496ec0faa078754bfbaf8d2a79710ac9b0337fc1085c8dc74519d0867174"
+    },
+    {
+      "example_id": "pg72406_2",
+      "ngram_fraction": 0.0,
+      "longest_run_words": 8,
+      "memorized": false,
+      "words": 370,
+      "finish_reason": "stop",
+      "request_key": "150ab657de63dc8fc54d7e068ae47d4e6a05a264dfc12cf9ad82302bf764bf11"
+    },
+    {
+      "example_id": "pg72406_3",
+      "ngram_fraction": 0.0,
+      "longest_run_words": 5,
+      "memorized": false,
+      "words": 921,
+      "finish_reason": "stop",
+      "request_key": "c3dbd1aea1de6babb5c511eb69f6db24ec253c40460a1abed62fa7a887c93a48"
+    },
+    {
+      "example_id": "pg72406_4",
+      "ngram_fraction": 0.0,
+      "longest_run_words": 4,
+      "memorized": false,
+      "words": 594,
+      "finish_reason": "stop",
+      "request_key": "46a6a730e78cdf2843c9a915c4a57a85cf49209b82e9a3666c2b15635d27b5c8"
+    },
+    {
+      "example_id": "pg72406_5",
+      "ngram_fraction": 0.0,
+      "longest_run_words": 6,
+      "memorized": false,
+      "words": 1131,
+      "finish_reason": "stop",
+      "request_key": "bdd5fd88a9ab1206e22356f5bca88d859c1007b3de5b9c3ed4bc853253ec211b"
+    },
+    {
+      "example_id": "pg73188_0",
+      "ngram_fraction": 0.0,
+      "longest_run_words": 3,
+      "memorized": false,
+      "words": 1061,
+      "finish_reason": "stop",
+      "request_key": "7d1234a1116897022a0310b4ceb2cecc436ddb0eb4afc13b3550116e425bea9a"
+    },
+    {
+      "example_id": "pg73188_1",
+      "ngram_fraction": 0.0,
+      "longest_run_words": 4,
+      "memorized": false,
+      "words": 505,
+      "finish_reason": "stop",
+      "request_key": "79e99b130d4dba5fcd18fcefe6fe4d6f44adeafa6e017b3a8e4563e3ff59671f"
+    },
+    {
+      "example_id": "pg73188_2",
+      "ngram_fraction": 0.0,
+      "longest_run_words": 5,
+      "memorized": false,
+      "words": 897,
+      "finish_reason": "stop",
+      "request_key": "cf5ebc598d61b61d43df93063ad64b1182505c754b36a175118645b281a04a2d"
+    },
+    {
+      "example_id": "pg73188_3",
+      "ngram_fraction": 0.0,
+      "longest_run_words": 4,
+      "memorized": false,
+      "words": 657,
+      "finish_reason": "stop",
+      "request_key": "e74120fdc4e32df58b7699098fccdfff668090e35b73822c27d5f694c0769ca2"
+    },
+    {
+      "example_id": "pg73188_4",
+      "ngram_fraction": 0.0,
+      "longest_run_words": 4,
+      "memorized": false,
+      "words": 671,
+      "finish_reason": "stop",
+      "request_key": "3bafce6063f7f19b3ccaf2a37d4dfb6eec81d89c92f0a47bb9ab57096570f2ee"
+    },
+    {
+      "example_id": "pg73188_5",
+      "ngram_fraction": 0.0,
+      "longest_run_words": 3,
+      "memorized": false,
+      "words": 523,
+      "finish_reason": "stop",
+      "request_key": "f0713a8aabe010966d7cc30e9e36967de6147f22027f711af1a78edf775c6428"
+    },
+    {
+      "example_id": "pg5807_0",
+      "ngram_fraction": 0.0,
+      "longest_run_words": 3,
+      "memorized": false,
+      "words": 436,
+      "finish_reason": "stop",
+      "request_key": "71abfb69462b857e8cbb269c0bc0d5c6cb67e8f70f816ec71778723cb51fc62f"
+    },
+    {
+      "example_id": "pg5807_1",
+      "ngram_fraction": 0.0,
+      "longest_run_words": 7,
+      "memorized": false,
+      "words": 1279,
+      "finish_reason": "stop",
+      "request_key": "59b3d2b170a20ca4294a7f1d58cb79a8dc692bd782bb888b46d4e2810e4237f4"
+    },
+    {
+      "example_id": "pg5807_2",
+      "ngram_fraction": 0.0,
+      "longest_run_words": 3,
+      "memorized": false,
+      "words": 953,
+      "finish_reason": "stop",
+      "request_key": "cb6a4706e5c32ccada8b9504587bc4614c63e398fe143eb339dba9c42a2db67c"
+    },
+    {
+      "example_id": "pg5807_3",
+      "ngram_fraction": 0.0,
+      "longest_run_words": 3,
+      "memorized": false,
+      "words": 539,
+      "finish_reason": "stop",
+      "request_key": "be92b8143e1debbc40606bbb7978d62cd264706303220ac1f42d84a3f0b1de27"
+    },
+    {
+      "example_id": "pg5807_4",
+      "ngram_fraction": 0.0,
+      "longest_run_words": 3,
+      "memorized": false,
+      "words": 930,
+      "finish_reason": "stop",
+      "request_key": "d972a9bcb9153466d9be207b3635d3139248671d34a5952be92de47bfe092c98"
+    },
+    {
+      "example_id": "pg5807_5",
+      "ngram_fraction": 0.0,
+      "longest_run_words": 4,
+      "memorized": false,
+      "words": 886,
+      "finish_reason": "stop",
+      "request_key": "265e828a3e6cb62124cfab86b9a1b599ca2ff473e32749c10ae589538ccde1c6"
+    },
+    {
+      "example_id": "pg5421_0",
+      "ngram_fraction": 0.0,
+      "longest_run_words": 3,
+      "memorized": false,
+      "words": 572,
+      "finish_reason": "stop",
+      "request_key": "827c5e5b08ec45f7c356db55cfa8094625f5cd40019136783a48e7b4749df439"
+    },
+    {
+      "example_id": "pg5421_1",
+      "ngram_fraction": 0.0,
+      "longest_run_words": 3,
+      "memorized": false,
+      "words": 997,
+      "finish_reason": "stop",
+      "request_key": "14dcd2c579785c56db93356d06012368b83eed85497fe1896fd0dace1b6af8bb"
+    },
+    {
+      "example_id": "pg5421_2",
+      "ngram_fraction": 0.0,
+      "longest_run_words": 4,
+      "memorized": false,
+      "words": 1129,
+      "finish_reason": "stop",
+      "request_key": "853d20e80758407a765cd5dd5fd215fdc70aa3f8d08b2d8cb513eedaad247902"
+    },
+    {
+      "example_id": "pg5421_3",
+      "ngram_fraction": 0.0,
+      "longest_run_words": 4,
+      "memorized": false,
+      "words": 995,
+      "finish_reason": "stop",
+      "request_key": "efefd7c066e75dbe68f5beda5c9dfc232ef211db4d620268fe5e7fa6302e4234"
+    },
+    {
+      "example_id": "pg5421_4",
+      "ngram_fraction": 0.0,
+      "longest_run_words": 4,
+      "memorized": false,
+      "words": 1093,
+      "finish_reason": "stop",
+      "request_key": "4f54597d48b9d0c62c8115ba19c250f71ec41e705765ad3db0daff46a494ed36"
+    },
+    {
+      "example_id": "pg5421_5",
+      "ngram_fraction": 0.0,
+      "longest_run_words": 3,
+      "memorized": false,
+      "words": 430,
+      "finish_reason": "stop",
+      "request_key": "c502e989321d8e40ee9b18752b204cfec239daccf3b5a4b4b0707002cd5b204e"
+    },
+    {
+      "example_id": "pg61984_0",
+      "ngram_fraction": 0.0,
+      "longest_run_words": 4,
+      "memorized": false,
+      "words": 926,
+      "finish_reason": "stop",
+      "request_key": "1bea1893bbb56ca7db836b36d0df9586c2cee068c1e1cc89327aeaf0d89cccd9"
+    },
+    {
+      "example_id": "pg61984_1",
+      "ngram_fraction": 0.0,
+      "longest_run_words": 4,
+      "memorized": false,
+      "words": 613,
+      "finish_reason": "stop",
+      "request_key": "66af972e98cb893cebc7e4ce78ac0d2cf3e60737a7e501ba4a2cf52b6f315d30"
+    },
+    {
+      "example_id": "pg61984_2",
+      "ngram_fraction": 0.0,
+      "longest_run_words": 3,
+      "memorized": false,
+      "words": 490,
+      "finish_reason": "stop",
+      "request_key": "63aaa633b2e4065f3c340c9eae467d2ac16d9a8d7b5478a81be38f4aca1272cc"
+    },
+    {
+      "example_id": "pg61984_3",
+      "ngram_fraction": 0.0,
+      "longest_run_words": 4,
+      "memorized": false,
+      "words": 1135,
+      "finish_reason": "stop",
+      "request_key": "aadd90176e8df2cdd06a1967028b0c3cdf871bf35e5a50eb7db2c250aded1a91"
+    },
+    {
+      "example_id": "pg61984_4",
+      "ngram_fraction": 0.0,
+      "longest_run_words": 5,
+      "memorized": false,
+      "words": 517,
+      "finish_reason": "stop",
+      "request_key": "69e74e691415ac3466450b337f14649753e11e7fc469788b9d86fbcf52e04313"
+    },
+    {
+      "example_id": "pg61984_5",
+      "ngram_fraction": 0.0,
+      "longest_run_words": 3,
+      "memorized": false,
+      "words": 493,
+      "finish_reason": "stop",
+      "request_key": "cfa9616a61dce968b8f68a719244de248e76a1abd71f14a1db50d0a8cac582cd"
+    },
+    {
+      "example_id": "pg11354_0",
+      "ngram_fraction": 0.0,
+      "longest_run_words": 3,
+      "memorized": false,
+      "words": 1083,
+      "finish_reason": "stop",
+      "request_key": "827fdb0faf5ec37a48d92c6ebcf5d661eff6b3557bde73d970cbb89f25ef49f4"
+    },
+    {
+      "example_id": "pg11354_1",
+      "ngram_fraction": 0.0,
+      "longest_run_words": 3,
+      "memorized": false,
+      "words": 588,
+      "finish_reason": "stop",
+      "request_key": "c71d1c50b374c94c3a730d2da5157aa78e0847e722b4471df9411356a32001b3"
+    },
+    {
+      "example_id": "pg11354_2",
+      "ngram_fraction": 0.0,
+      "longest_run_words": 3,
+      "memorized": false,
+      "words": 1076,
+      "finish_reason": "stop",
+      "request_key": "94886949e45e8871bc36f72552eeed53d6267ce85058f5018d1dc01c5708a599"
+    },
+    {
+      "example_id": "pg11354_3",
+      "ngram_fraction": 0.0,
+      "longest_run_words": 4,
+      "memorized": false,
+      "words": 767,
+      "finish_reason": "stop",
+      "request_key": "2df969a04a48f39d357b1502bf55633201f733ac501c14eb4eaf34d20ec5eb16"
+    },
+    {
+      "example_id": "pg11354_4",
+      "ngram_fraction": 0.0,
+      "longest_run_words": 3,
+      "memorized": false,
+      "words": 458,
+      "finish_reason": "stop",
+      "request_key": "43644069f8c489fe1138eec57970e3a63c6563d1e13a37bf327aa8bf329ca3d7"
+    },
+    {
+      "example_id": "pg11354_5",
+      "ngram_fraction": 0.0,
+      "longest_run_words": 4,
+      "memorized": false,
+      "words": 381,
+      "finish_reason": "stop",
+      "request_key": "f734201e659643e47790b698a7a66075c29bf1a366c11e23772ca82a87af6332"
+    },
+    {
+      "example_id": "pg75334_0",
+      "ngram_fraction": 0.0,
+      "longest_run_words": 2,
+      "memorized": false,
+      "words": 353,
+      "finish_reason": "stop",
+      "request_key": "2fd0ba065587d552ed62f91702e0847f3261a777f904cf40d6fc6b11d550cecf"
+    },
+    {
+      "example_id": "pg75334_1",
+      "ngram_fraction": 0.0,
+      "longest_run_words": 5,
+      "memorized": false,
+      "words": 1446,
+      "finish_reason": "stop",
+      "request_key": "76f1aa33de75da0f202422964c4e44af94309eb6c6311fa4766340dc55e469e8"
+    },
+    {
+      "example_id": "pg75334_2",
+      "ngram_fraction": 0.0,
+      "longest_run_words": 3,
+      "memorized": false,
+      "words": 360,
+      "finish_reason": "stop",
+      "request_key": "a295e93a72133a946dd4589ecbc822b250853f0a11c180f3581964f6bd941381"
+    },
+    {
+      "example_id": "pg75334_3",
+      "ngram_fraction": 0.0,
+      "longest_run_words": 4,
+      "memorized": false,
+      "words": 559,
+      "finish_reason": "stop",
+      "request_key": "e7c9e87adb40dc19c35d90e2491013eb8b18916e39e3db589ed331c33d1b8ebf"
+    },
+    {
+      "example_id": "pg75334_4",
+      "ngram_fraction": 0.0,
+      "longest_run_words": 3,
+      "memorized": false,
+      "words": 994,
+      "finish_reason": "stop",
+      "request_key": "24ae6457e49de4c97b70254fc9b56fc8b47d71d7574e27a76cdd029d71aefd07"
+    },
+    {
+      "example_id": "pg75334_5",
+      "ngram_fraction": 0.0,
+      "longest_run_words": 4,
+      "memorized": false,
+      "words": 947,
+      "finish_reason": "stop",
+      "request_key": "59cc4edd7e7354de44374ab0aba54309e71dcbc2a6458245f6dbf0e7c2262383"
+    },
+    {
+      "example_id": "pg59437_0",
+      "ngram_fraction": 0.0,
+      "longest_run_words": 4,
+      "memorized": false,
+      "words": 886,
+      "finish_reason": "stop",
+      "request_key": "a47417c7f0c083a2ed244746116c045f898c6bd49b1b4fb6421f9f7a328ea046"
+    },
+    {
+      "example_id": "pg59437_1",
+      "ngram_fraction": 0.0,
+      "longest_run_words": 4,
+      "memorized": false,
+      "words": 843,
+      "finish_reason": "stop",
+      "request_key": "c300416e8a9995eb93832a9a50bad0614dfae042e47a2e79a991c6598edf7481"
+    },
+    {
+      "example_id": "pg59437_2",
+      "ngram_fraction": 0.0,
+      "longest_run_words": 3,
+      "memorized": false,
+      "words": 390,
+      "finish_reason": "stop",
+      "request_key": "e130ad62c2e13d43ddf5b8f803465331401606d975e2d318ce38f1e6dfaf075d"
+    },
+    {
+      "example_id": "pg59437_3",
+      "ngram_fraction": 0.0,
+      "longest_run_words": 3,
+      "memorized": false,
+      "words": 682,
+      "finish_reason": "stop",
+      "request_key": "2ce45c72d773872b3a49e51b58cef2bd133502cabd1d7d4d04e8bd7ee46b0344"
+    },
+    {
+      "example_id": "pg59437_4",
+      "ngram_fraction": 0.0,
+      "longest_run_words": 2,
+      "memorized": false,
+      "words": 689,
+      "finish_reason": "stop",
+      "request_key": "aadb3de1b01ff9f80be40b69710e29cfdcbf14af2617e95b3921cc57e28b90b5"
+    },
+    {
+      "example_id": "pg59437_5",
+      "ngram_fraction": 0.0,
+      "longest_run_words": 4,
+      "memorized": false,
+      "words": 901,
+      "finish_reason": "stop",
+      "request_key": "8a754b9af28df8636114ef80a0a1903d49686ce15a4100a6c1bb89abe2fb3c3f"
+    },
+    {
+      "example_id": "pg70844_0",
+      "ngram_fraction": 0.0,
+      "longest_run_words": 3,
+      "memorized": false,
+      "words": 721,
+      "finish_reason": "stop",
+      "request_key": "fbeecc39d1da86f1f248ff0c72e486c7e7d71317ac8ead985f926d4d4f232e6e"
+    },
+    {
+      "example_id": "pg70844_1",
+      "ngram_fraction": 0.0,
+      "longest_run_words": 4,
+      "memorized": false,
+      "words": 828,
+      "finish_reason": "stop",
+      "request_key": "e0d849c7697a36ecf655bb692bf1fb9d465eb7a1deab7e6fc12b434207182866"
+    },
+    {
+      "example_id": "pg70844_2",
+      "ngram_fraction": 0.0,
+      "longest_run_words": 3,
+      "memorized": false,
+      "words": 824,
+      "finish_reason": "stop",
+      "request_key": "2a565a30188e96105963ba98228c387725c81f44b8dbcbe7e31ab7d910d50e77"
+    },
+    {
+      "example_id": "pg70844_3",
+      "ngram_fraction": 0.0,
+      "longest_run_words": 3,
+      "memorized": false,
+      "words": 769,
+      "finish_reason": "stop",
+      "request_key": "86ab18c5e1b56007c0a6feca21f53a1d53c9ac5a7010cd54c550145994836e6d"
+    },
+    {
+      "example_id": "pg70844_4",
+      "ngram_fraction": 0.0,
+      "longest_run_words": 3,
+      "memorized": false,
+      "words": 474,
+      "finish_reason": "stop",
+      "request_key": "c2b4d16366c67d1ccbdcd963be29b93d5870323f192ebea28f9e903895f55751"
+    },
+    {
+      "example_id": "pg70844_5",
+      "ngram_fraction": 0.0,
+      "longest_run_words": 5,
+      "memorized": false,
+      "words": 901,
+      "finish_reason": "stop",
+      "request_key": "f741218121f169fa445f5bdbb3791030fc187a0ab4a2d8a68824b1a077461c7c"
+    },
+    {
+      "example_id": "pg76417_0",
+      "ngram_fraction": 0.0,
+      "longest_run_words": 4,
+      "memorized": false,
+      "words": 706,
+      "finish_reason": "stop",
+      "request_key": "5fa7d78e68e81bffd28ce4f11278a1f1064dcbe3640a7088d8caffd3f3e74d9d"
+    },
+    {
+      "example_id": "pg76417_1",
+      "ngram_fraction": 0.0,
+      "longest_run_words": 3,
+      "memorized": false,
+      "words": 968,
+      "finish_reason": "stop",
+      "request_key": "f12457e27e902a4ae3a5f54d2b6bdf63b7cf7b1a26537d5188125f2201664dc0"
+    },
+    {
+      "example_id": "pg76417_2",
+      "ngram_fraction": 0.0,
+      "longest_run_words": 3,
+      "memorized": false,
+      "words": 715,
+      "finish_reason": "stop",
+      "request_key": "c9747ea708341b4cf664845852824a71b634a90f1cd618436bdb952d41f89d0a"
+    },
+    {
+      "example_id": "pg76417_3",
+      "ngram_fraction": 0.0,
+      "longest_run_words": 5,
+      "memorized": false,
+      "words": 475,
+      "finish_reason": "stop",
+      "request_key": "3d11bab9d989102b5a92222a05da8b6191d04bb3b7244301c5cb91abcdb2cd90"
+    },
+    {
+      "example_id": "pg76417_4",
+      "ngram_fraction": 0.0,
+      "longest_run_words": 3,
+      "memorized": false,
+      "words": 1244,
+      "finish_reason": "stop",
+      "request_key": "5ec6f30e406c9927af11f91fb9e6dcb74a5ad4f68dc2c897ee76b798a4b4e4c4"
+    },
+    {
+      "example_id": "pg76417_5",
+      "ngram_fraction": 0.0,
+      "longest_run_words": 2,
+      "memorized": false,
+      "words": 557,
+      "finish_reason": "stop",
+      "request_key": "393563da1fc7cea4a3f554f138a425e0cb04da526b11b37796d9391ed552dda4"
+    },
+    {
+      "example_id": "pg65207_0",
+      "ngram_fraction": 0.0,
+      "longest_run_words": 5,
+      "memorized": false,
+      "words": 954,
+      "finish_reason": "stop",
+      "request_key": "108020a60c2bb6ed24aabeda4d2aa2a8b4d3f437558e8f760306b61ec3147e42"
+    },
+    {
+      "example_id": "pg65207_1",
+      "ngram_fraction": 0.0,
+      "longest_run_words": 3,
+      "memorized": false,
+      "words": 514,
+      "finish_reason": "stop",
+      "request_key": "e3f2c2b80f52f22caf5ebc1ab1c50de9f616bc68dffd71813399b04b8982edd5"
+    },
+    {
+      "example_id": "pg65207_2",
+      "ngram_fraction": 0.0,
+      "longest_run_words": 3,
+      "memorized": false,
+      "words": 443,
+      "finish_reason": "stop",
+      "request_key": "20e5ead2b4b144c262f03bada8d4de133987911292cf7ec511e2ef9a0b9a16a3"
+    },
+    {
+      "example_id": "pg65207_3",
+      "ngram_fraction": 0.0,
+      "longest_run_words": 4,
+      "memorized": false,
+      "words": 1101,
+      "finish_reason": "stop",
+      "request_key": "0890712bfd4d2679a3a7b72a901eddbfb2aaa820efb5792d09813b19fe1bffa2"
+    },
+    {
+      "example_id": "pg65207_4",
+      "ngram_fraction": 0.0,
+      "longest_run_words": 3,
+      "memorized": false,
+      "words": 326,
+      "finish_reason": "stop",
+      "request_key": "b43192549f3ba670b115dd3b533ea17a6a27412e85fab66a3677895287cdaf10"
+    },
+    {
+      "example_id": "pg65207_5",
+      "ngram_fraction": 0.0,
+      "longest_run_words": 4,
+      "memorized": false,
+      "words": 891,
+      "finish_reason": "stop",
+      "request_key": "46a10f3ee7b30873c8493c8913e3d29941a4c7c3eef64dfd70f02ddc1639f6db"
+    },
+    {
+      "example_id": "pg3428_0",
+      "ngram_fraction": 0.0,
+      "longest_run_words": 3,
+      "memorized": false,
+      "words": 475,
+      "finish_reason": "stop",
+      "request_key": "f99b651f97520fc5e5c6855d856ecaad040075d5cd1f9503312e1c3953ea097f"
+    },
+    {
+      "example_id": "pg3428_1",
+      "ngram_fraction": 0.0,
+      "longest_run_words": 3,
+      "memorized": false,
+      "words": 553,
+      "finish_reason": "stop",
+      "request_key": "b462b93e94401599b18c781252018684011f16fb786f8e2e9b2749c171d47ba5"
+    },
+    {
+      "example_id": "pg3428_2",
+      "ngram_fraction": 0.0,
+      "longest_run_words": 3,
+      "memorized": false,
+      "words": 1035,
+      "finish_reason": "stop",
+      "request_key": "dee0e40e40e40955d810fbe6939326db31ee68f95402b33de2a7fa7341f17e86"
+    },
+    {
+      "example_id": "pg3428_3",
+      "ngram_fraction": 0.0,
+      "longest_run_words": 2,
+      "memorized": false,
+      "words": 389,
+      "finish_reason": "stop",
+      "request_key": "e9a51e74da43f052042ea04c6c608bbad59ec7a77b4bc1b237ece0c3466d442b"
+    },
+    {
+      "example_id": "pg3428_4",
+      "ngram_fraction": 0.0,
+      "longest_run_words": 4,
+      "memorized": false,
+      "words": 1241,
+      "finish_reason": "stop",
+      "request_key": "ca525bfd47acdafa93e9ed9db624721507e1b57c9287fb6aa1242fe928aca04c"
+    },
+    {
+      "example_id": "pg3428_5",
+      "ngram_fraction": 0.0,
+      "longest_run_words": 4,
+      "memorized": false,
+      "words": 1038,
+      "finish_reason": "stop",
+      "request_key": "67574b7ff468308894dbfbe8e5053f1bf17bde995f38a0baa892a642ec071123"
+    },
+    {
+      "example_id": "pg9659_0",
+      "ngram_fraction": 0.0,
+      "longest_run_words": 4,
+      "memorized": false,
+      "words": 973,
+      "finish_reason": "stop",
+      "request_key": "2608624bb881c58dc9bac607c24a84929e818ea996d96234c0bc6c72f36212c2"
+    },
+    {
+      "example_id": "pg9659_1",
+      "ngram_fraction": 0.0,
+      "longest_run_words": 5,
+      "memorized": false,
+      "words": 1095,
+      "finish_reason": "stop",
+      "request_key": "a61ec90760b047a8a84d7a68eb6cbebfa335d2f1f1c3b367b3052dea3efc6835"
+    },
+    {
+      "example_id": "pg9659_2",
+      "ngram_fraction": 0.0,
+      "longest_run_words": 3,
+      "memorized": false,
+      "words": 457,
+      "finish_reason": "stop",
+      "request_key": "567a08e8dccde5e200dfba4850050b68c3599cbcbbc70f562e82ba0885d1b9d5"
+    },
+    {
+      "example_id": "pg9659_3",
+      "ngram_fraction": 0.0,
+      "longest_run_words": 4,
+      "memorized": false,
+      "words": 1022,
+      "finish_reason": "stop",
+      "request_key": "ba3e4b3c22fe2d038c7407e1975327c3334a99a19930c5056d929471845e2942"
+    },
+    {
+      "example_id": "pg9659_4",
+      "ngram_fraction": 0.0,
+      "longest_run_words": 3,
+      "memorized": false,
+      "words": 1007,
+      "finish_reason": "stop",
+      "request_key": "ba94518181444665a8d30639362bd0ffd64394a49f54afc67cb576d27282915d"
+    },
+    {
+      "example_id": "pg9659_5",
+      "ngram_fraction": 0.0,
+      "longest_run_words": 3,
+      "memorized": false,
+      "words": 933,
+      "finish_reason": "stop",
+      "request_key": "5738ab51094765ecd38e40e39719b05e734c580671372ee486f3d917d90b49f7"
+    }
+  ]
+}
