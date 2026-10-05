@@ -2,7 +2,7 @@
 # Everything that defines a run. run.py copies this file into the run directory as config.yaml.
 blog_url: https://facebookresearch.github.io/RAM/blogs/unslop/
 # The output directory must not exist yet, so set a new one before each run.
-output: runs/fiction-seed0
+output: runs/fiction-seed0-r5
 split: research  # research uses the saved train and validation sources; pilot (a dry run) uses pilot_sources of them
 dataset: data/fiction/examples.jsonl
 prompts: prompts/fiction  # writer, rubric, judge and optimizer prompts for this dataset
@@ -46,7 +46,7 @@ min_identifier_length: 5  # shorter source IDs, titles or author names match by 
 # How requests are sent and retried.
 api_base: https://openrouter.ai/api/v1
 max_sends: 6  # sends per request, the first included
-retryable_status: [408, 429, 500, 502, 503, 504]
+retryable_status: [404, 408, 429, 500, 502, 503, 504]  # 404: Meta answers model_not_found for about 1 request in 200
 backoff_seconds: [2, 5, 15, 30, 60]  # wait after each failed send; needs max_sends - 1 entries
 max_retry_after_seconds: 120  # cap on a Retry-After header
 request_timeout_seconds: 600

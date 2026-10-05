@@ -382,7 +382,8 @@ def validate_grade(grade, rubric, supplied_text):
     Every criterion must be scored exactly once, and the words of anything the judge quotes as
     evidence must occur in order in supplied_text (the graded section plus the visible context).
     Punctuation and case are ignored, because judges move a comma inside a quotation or swap
-    double quotes for single ones around dialogue."""
+    double quotes for single ones around dialogue. An ellipsis in a quote marks omitted words, so
+    the parts around it must occur in order but need not be adjacent."""
     ids = [s["id"] for s in grade["scores"]]
     if len(ids) != len(set(ids)) or set(ids) != {c["id"] for c in rubric["criteria"]}:
         raise InvalidOutput("Criterion IDs mismatch")
@@ -392,8 +393,14 @@ def validate_grade(grade, rubric, supplied_text):
     supplied_words = quote_words(supplied_text)
     for score in grade["scores"]:
         for quoted in QUOTED_TEXT.findall(score["evidence"].replace('\\"', '"')):
-            if quote_words(quoted).strip() and quote_words(quoted) not in supplied_words:
-                raise InvalidOutput("Quote absent from supplied text")
+            start = 0
+            for part in re.split(r"\.\.\.|…", quoted):
+                if not quote_words(part).strip():
+                    continue
+                start = supplied_words.find(quote_words(part), start)
+                if start < 0:
+                    raise InvalidOutput("Quote absent from supplied text")
+                start += len(quote_words(part)) - 1
 
 
 def writer_candidates(api, examples, output):

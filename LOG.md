@@ -1207,3 +1207,42 @@ default, and deleted `configs/pilot.yaml` and `configs/fiction_pilot.yaml`. A dr
 temporarily setting `split: pilot`, `iterations: 1` and a new `output` in `arxiv.yaml` or
 `fiction.yaml`; README.md and METHOD.md say so. The runner's pilot split is unchanged. Earlier
 runs keep the configs they copied into their directories.
+
+## 2026-10-05: Freeze the fiction corpus and complete the 1st fiction run
+
+The owner asked for a full fiction run at full concurrency. We ran the paid probe
+(`runs/probe-fiction-2026-10-05`) over 180 passages from 30 books; it marked 1 as memorized.
+`freeze` then kept 28 books and 112 passages: 32 training, 20 validation and 60 confirmation.
+This wrote `probe.json`, `source_manifest.json`, `splits.json` and `examples.jsonl` in
+`data/fiction/`, and `fetch_fiction.py --check` passes.
+
+4 runs stopped before `runs/fiction-seed0-r5` completed. We kept all of them:
+
+- `runs/fiction-seed0` stopped at P0 with 31 of 32 training passages graded. Both judge replies
+  for 1 model continuation quoted `"I'm sorry for you... it's worse for a girl!"`, which elides
+  words of a line in the context, so the quote check rejected them. The check now splits a quote
+  at an ellipsis and requires the parts in order. It accepts the 2 saved replies and still
+  rejects a reversed quote, an invented quote and a partial word.
+- `runs/fiction-seed0-r2`, `-r3` and `-r4` each stopped on an HTTP 404 `model_not_found` from
+  Meta's Muse Spark contributor endpoint. Meta returned it for about 1 send in 200, once for 7
+  sends at the same moment, while the endpoint stayed listed. The runner treated 404 as fatal,
+  so `configs/fiction.yaml` now lists 404 in `retryable_status`. A persistent 404, such as the
+  privacy exclusion of 2026-10-02, now stops a run after 6 unbilled sends instead of 1.
+
+`runs/fiction-seed0-r5` completed with every training and validation passage graded at each
+checkpoint. Its 46 404 sends and 1 504 send all succeeded on retry. Training selected P1.
+
+| Prompt | Training gap | Validation gap |
+| --- | ---: | ---: |
+| P0 | +0.469 | +0.392 |
+| P1 | +0.526 | +0.365 |
+| P2 | -0.575 | -0.690 |
+| P3 | -0.141 | -0.220 |
+| P4 | +0.002 | -0.510 |
+
+The author's continuation outscored Muse's at P0, unlike the blog's starting point, and
+optimization did not widen that lead. At the selected P1 the validation gap was +0.365, below
+P0's +0.392. Later prompts raised Muse's scores more than the author's and turned both gaps
+negative. OpenRouter recorded $4.7631 for the run's 896 generations; the 47 unresolved
+lookups are the failed sends, which have no generation record. The key's usage rose by $9.40
+across the probe, the 5 runs and a few endpoint checks. The confirmation split remains unused.
