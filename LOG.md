@@ -1420,3 +1420,17 @@ After a regression, the next revision starts from the highest-scoring training p
 using the existing numerical tie rule. Story case-diagnosis configs already enable this.
 Three fresh trials per domain use sampling seeds 20262007–20262009 and 7 updates. These
 are still 10% experiments. Only training-only pilot evidence motivated the added parent rule.
+
+The diagnosis-only format removes the actual candidate passages from Kimi's input, which
+may discard the writing evidence needed to judge voice and structure. A separate optional
+format restores both complete candidate texts alongside each diagnosis while keeping the
+long background context at the critic. The writer, critic, judge, and scoring stay fixed.
+The optimizer instructions now describe the available passages explicitly. A disposable
+check verified complete candidate retention, background exclusion, and unchanged feature-off
+behavior. The six running replications keep their existing input format.
+
+A training-only replay will use the first update of `fiction-s0`, selected for its weak
+training trajectory. It reuses the same model drafts, baseline scores, and saved critic
+diagnoses, then changes only candidate visibility and its accompanying optimizer instructions.
+New rubric generation and grading remain stochastic. The replay is a diagnostic comparison,
+not an independent validation result; its selection did not use validation scores.

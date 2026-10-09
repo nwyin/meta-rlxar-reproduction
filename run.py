@@ -761,8 +761,12 @@ def diagnose_feedback(api, feedback, iteration, output):
         return {"example_id": pair["example_id"], "kind": pair["kind"], "gap": pair["gap"], "diagnosis": result["value"]}
 
     diagnoses = bounded_map(diagnose, feedback["failures"], api.config["concurrency"], api.dispatch_stopped)
+    if api.config.get("diagnostic_candidate_texts"):
+        for diagnosis, pair in zip(diagnoses, feedback["failures"], strict=True):
+            diagnosis.update({key: pair[key] for key in ("human_candidate", "model_candidate", "target_words")})
     return {**{key: value for key, value in feedback.items() if key != "failures"},
-            "diagnoses": diagnoses, "feedback_format": "independent_full_context_diagnoses_v1"}
+            "diagnoses": diagnoses, "feedback_format": ("case_diagnoses_with_candidate_texts_v2"
+                if api.config.get("diagnostic_candidate_texts") else "independent_full_context_diagnoses_v1")}
 
 
 def propose_prompt(api, current, feedback, examples, initial, iteration, *, output):
