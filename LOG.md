@@ -1380,3 +1380,21 @@ A read-only OpenRouter check found $1,125 purchased and $925.018957074 used acco
 leaving about $199.98 available. The key still has $897.842606366 of allowance. The interrupted
 second batch can resume with its saved settings. This recovery runs only that batch so its
 results can be discussed in a PR before another method change.
+
+The second batch has already failed at least one validation trial in each domain. These
+results remain in the existing PRs. A new small experiment tests whether feedback from
+more training cases transfers better than a single concatenated context or worst pair.
+Each selected pair is read independently by an explicit Muse Spark 1.1 critic, including
+its full context, both labelled candidates, rubric, and grades. Kimi receives bounded
+diagnoses, counterevidence, and the existing training history, then revises the meta-prompt.
+Papers include all 10 training pairs; stories include all 3. Writer, judge, initial rubric,
+scoring, data splits, and length constraints stay fixed. This combines a critic stage with
+broader feedback coverage; it is not an isolated test of either change.
+
+The critic prompt and role are recorded in each manifest. Saved diagnoses require matching
+inputs, prompt, and critic configuration on resume. Disposable checks verified full contexts
+at the critic, bounded diagnostic feedback at the optimizer, complete selected-case coverage,
+cache reuse and mismatch rejection, and rejection of validation/confirmation feedback.
+Ruff and whitespace checks passed. Two 2-update, training-only pilots will check the new
+pipeline before full replications. No larger experiment or confirmation evaluation is authorized
+by these pilot results alone.

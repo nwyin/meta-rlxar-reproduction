@@ -60,6 +60,7 @@ def execute(config_path, root):
         if 'HTTP 402' in error:
             raise BudgetBlocked(error)
         recoverable = (state.get('state') == 'incomplete' or 'Training grades missing' in error
+                       or 'Training diagnoses missing' in error
                        or 'writer length/completion failure' in error or 'failed after' in error)
         if not recoverable:
             raise RuntimeError(f'{output}: {error or "runner failed before writing status"}')
