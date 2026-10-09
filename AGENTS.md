@@ -55,6 +55,23 @@ Run lint before every commit.
 ## Git
 
 - Keep `runs/` and `reports/` out of Git. They stay local.
+- Open a PR for every logical change. For experiment changes, make the change, run the
+  experiment, and include the measured results in the PR for discussion. Record the
+  hypothesis, settings, validation, costs, failures, and limits. A draft PR may track work
+  in progress; update it with results before calling the experiment complete.
+- Keep distinct experiment changes in separate PRs. Do not merge a PR without authorization.
+
+## Ongoing experiment authorization
+
+- The owner authorized continued experiments to find methods that consistently generate
+  rubrics preferring human writing over model writing, within the supplied key's budget.
+- Begin with reduced training and validation samples. Once a method consistently succeeds
+  in the small experiments, larger verification experiments are authorized within the same
+  budget. Freeze the method before scaling and report larger results in a separate PR.
+- Keep human-over-model rubric scores distinct from independent human judgments of rubric
+  quality. Keep validation and confirmation out of optimization feedback and prompt selection.
+- Stop and report a funding or technical block when experiments cannot continue. Existing
+  authorization persists; resuming after the block clears does not require another approval.
 
 ## Code
 

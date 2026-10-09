@@ -3,7 +3,9 @@
 blog_url: https://facebookresearch.github.io/RAM/blogs/unslop/
 # The completed run meta-blog-seed0 and its pilot pilot-meta-blog-attested are read-only evidence.
 # The output directory must not exist yet, so set a new one before each run.
-output: runs/meta-blog-v2-p3
+output: runs/arxiv-small-20261007
+sample_fraction: 0.1  # 10% of each active split, rounded to the nearest example
+sample_seed: 20261007  # fixed independently of grading order
 split: research  # research uses the saved train and validation sources; pilot (a dry run) uses pilot_sources of them
 dataset: data/examples.jsonl
 prompts: prompts/papers  # writer, rubric, judge and optimizer prompts for this dataset
@@ -35,12 +37,14 @@ roles:
     temperature: 0.7
     reasoning: {enabled: true}
     max_tokens: 16384
-iterations: 4
+iterations: 7
 max_meta_prompt_words: 2000
 failure_examples: 24
-concurrency: 32
+concurrency: 8
 pilot_sources: 2  # a dry run trains on the first and validates on the rest
-writer_attempts: 3  # drafts per section; a draft that is cut off or outside the length window is redrafted
+length_revision_mode: edit_only  # same-model editing of the complete draft with a measured word limit
+strict_length: true  # refuse to score an incomplete or out-of-window draft
+writer_attempts: 8  # drafts per section; a draft that is cut off or outside the length window is redrafted
 proposal_attempts: 2  # tries per optimizer update before the current meta prompt carries over
 copy_span_words: 12  # a run of this many words copied from a training source counts as leakage
 min_identifier_length: 5  # shorter source IDs, titles or author names match by chance
