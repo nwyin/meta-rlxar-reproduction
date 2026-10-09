@@ -12,13 +12,16 @@ rubric generator and judge, and Kimi K2.6 as optimizer. The corpus holds 56 peer
 papers from 2016 to 2021 across 9 fields, giving 153 sections. [METHOD.md](METHOD.md)
 describes the experiment and its limits. [LOG.md](LOG.md) records the runs and changes.
 
-## Reduced experiments (October 7–8, 2026)
+## Reduced experiments (October 7–9, 2026)
 
-The cloud search stopped because the OpenRouter account exhausted its purchased credits.
-This key used $102.16; its remaining $897.84 allowance cannot fund calls without account
-credits. The first completed batch favored human stories in 3 of 3 trials and human paper
-sections in 2 of 3 trials, with 1 tie. The second batch is incomplete. Consistent reproduction
-across the required 2 batches remains unestablished. [LOG.md](LOG.md) records the checks.
+The cloud search resumed on October 9 after the OpenRouter account was funded again.
+The preceding funding stop occurred at $102.16 of key usage; account credits and the key's
+spending allowance are separate. The first completed batch favored human stories in 3 of
+3 trials and human paper sections in 2 of 3 trials, with 1 tie. The second batch is running.
+Consistent reproduction across the required 2 batches remains unestablished.
+[PR #7](https://github.com/nwyin/meta-rlxar-reproduction/pull/7) records the reduced search;
+[PR #8](https://github.com/nwyin/meta-rlxar-reproduction/pull/8) records the revised paper
+method. [LOG.md](LOG.md) records the checks and funding history.
 
 The project has reopened for a budget-limited search of meta-optimization methods.
 Both default configs now select 10% of each active split, rounded to the nearest
