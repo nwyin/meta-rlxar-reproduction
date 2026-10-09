@@ -723,6 +723,8 @@ def audit_proposal(text, examples, initial_prompt, config):
 
 def diagnose_feedback(api, feedback, iteration, output):
     """Read each selected training pair in full, then pass compact diagnoses to the optimizer."""
+    if any("context" not in pair for pair in feedback["failures"]):
+        raise RunError("Contrastive diagnoses require full training contexts")
     instruction = read_prompt(api.config, "critic")
     schema = object_schema({name: TEXT for name in ("quality_differences", "rubric_errors", "proposed_revision", "counterevidence")})
     directory = Path(output) / "feedback" / f"iter_{iteration:02d}" / "diagnoses"
@@ -954,6 +956,9 @@ def write_report(output, summaries, selected, costs):
 def run_xar(config_path, *, resume=False):
     config_text = Path(config_path).read_text()
     config = yaml.safe_load(config_text)
+    if config.get("contrastive_feedback") and ("critic" not in config["roles"]
+            or config.get("feedback_policy", FAILING_FEEDBACK) == FAILING_FEEDBACK):
+        raise RunError("Contrastive feedback requires a critic role and a full-context feedback policy")
     initial = read_prompt(config, "rubric_initial")
     if len(initial.split()) > config["max_meta_prompt_words"]:
         raise RunError("Initial prompt exceeds max_meta_prompt_words")
