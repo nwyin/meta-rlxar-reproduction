@@ -1443,6 +1443,16 @@ confirmation run evaluates all 3 selected prompts on 13 untouched sections from 
 The amendment changes scheduling, preserves all earlier pass/fail outcomes, and supplies
 no confirmation evidence to optimization. The 3rd reduced batch continues unchanged.
 
+Paper confirmation passed on all 13 sections from 5 untouched papers. The initial gap was
+-1.107692. The 3 frozen prompts produced gaps +1.523077, +2.230769, and +2.153846, with
+complete grading and compliant drafts. Pooled source-mean gap was +2.026667 (descriptive
+95% source-bootstrap interval [+1.151111,+2.902222]); improvement was +3.14
+([+2.822222,+3.695556]). The full confirmation cost $5.57505660, with no unresolved charges.
+All 3 prompts are saved under `prompts/experiments/verified-papers/`; none was selected
+using confirmation performance. These results reproduce the preference reversal on our
+paper corpus, not the exact unpublished Meta setup or independent expert quality judgments.
+Future automatic paper batches were stopped; the already active batch continues unchanged.
+
 ## 2026-10-09: Per-passage optimizer history
 
 The story training traces show revisions helping one passage while hurting another.
@@ -1456,7 +1466,19 @@ parent prompt, drafts, grades, detailed example, and aggregate history, adding o
 per-passage history and accompanying guidance. It compares against the stored revision-4
 controls. All 3 revised means must beat those controls, with complete and length-compliant
 pairs, before this screen motivates a fresh full trial. This is an exploratory screening
-rule, not a statistical test. Results and actual provider charges are pending.
+rule, not a statistical test. The completed results are recorded below.
 
 Disposable checks confirmed identical default history payloads and rejected validation,
 confirmation, and missing grades in per-passage history. Ruff and whitespace checks passed.
+
+The history screen failed. Training gaps were -0.066667, +0.833333, and +0.733333,
+versus stored controls +0.10, +1.666667, and +0.533333. Mean gap +0.50 matched the
+parents and fell below the controls' +0.766667. All pairs were complete and compliant.
+The original method is retained. Recorded charges total $0.78009143, plus 3 unresolved
+requests from a process killed before responses returned. The replay resumed unchanged
+in a detached session and preserved those uncertain records. Unknown charges are not zero.
+
+A post hoc training-only rescore of the unchanged control prompts produced gaps 0.00,
++1.083333, and +0.666667 for $0.55532055, fully resolved. This describes scoring noise
+and preserves the original screen's failure. Combined recorded charges are $1.33541198,
+plus the 3 unresolved requests. No validation or confirmation scores informed this screen.
