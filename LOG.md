@@ -1478,8 +1478,37 @@ stay fixed. Validation and confirmation remain outside selection.
 A matched replay uses the 3 completed paper trajectories from seeds 20262013–20262015.
 It reuses drafts and all original training prompts, freezes the new selection, then reuses
 identical saved validation checkpoints or grades a newly selected checkpoint. Costs are
-incremental. This isolates final selection from proposing more prompts. Results are pending.
+incremental. This isolates final selection from proposing more prompts. Results are reported below.
 
 Disposable checks verified the exact top-2 shortlist, mean-based reranking, and rejection of
 held-out examples. Ruff and whitespace checks passed. The feature is opt-in and the default
 stays unchanged. Confirmation provenance now recognizes the recorded training recheck.
+
+
+Both unchanged selection-recheck batches passed the declared paper consistency criteria.
+The 1st replay selected P7/P2/P7, with validation gaps +0.583333/+0.70/+1.05 and gains
++1.733333/+2.40/+2.15. Its 9-paper source-mean gap was +0.866667, with descriptive
+95% interval [+0.214815,+1.507407]. Incremental recorded charges were $3.59121355.
+Two rejected credit-reservation requests remain flagged without generation IDs.
+
+The 2nd replay selected P6/P2/P4, retaining every original choice. Validation gaps were
++1.35/+1.00/+2.45 and gains +2.55/+2.75/+3.65. Its 10-paper source-mean gap was +1.63,
+with descriptive 95% interval [+0.12,+2.66]. Incremental costs were $0.91337800,
+$0.88339625, and $0.84306265, totaling $2.63983690 with no unresolved charges.
+All 6 selections used training scores and had complete, length-compliant validation.
+These are matched replays of saved optimization trajectories, not 6 fresh end-to-end runs.
+The original method's 8/9 reversals and failed strict batches remain unchanged.
+
+All 3 selections in the 2nd replay exactly match the prompts already confirmed in PR #20.
+A provenance audit checked prompt hashes, dataset, example IDs, model roles, and input
+prompt snapshots before reusing all 4 confirmation checkpoints. It made 0 model requests
+and cost $0. The original confirmation gaps remain -1.107692 initially and +1.523077,
++2.230769, and +2.153846 after optimization. This reuses the existing fixed confirmation
+set; it supplies no new independent confirmation of the selection change.
+
+The reduced paper experiments and frozen confirmation reproduce the qualitative initial
+paper preference reversal. Stories remain inconsistent. Repeated validation and matched
+replays are exploratory, and another fresh end-to-end batch would strengthen the evidence
+for the selection change. The optional recheck config is available for that work. All paid
+jobs have finished. The final account check showed $2.003585206 in credits and
+$699.865148646 of key allowance; these are separate limits.

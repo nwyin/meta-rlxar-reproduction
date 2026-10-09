@@ -7,21 +7,34 @@ The core reproduction uses 3 scripts. `fetch_data.py` restores the frozen paper 
 Gutenberg. `run.py` writes the model's sections or continuations, optimizes the rubric meta
 prompt, and evaluates the result on either corpus.
 
-The current settings use Muse Spark 1.3, on OpenRouter's contributor tier, as writer,
-rubric generator and judge, and Kimi K2.6 as optimizer. The corpus holds 56 peer-reviewed
+The proposed paper settings use Muse Spark 1.1 as writer, rubric generator and judge,
+and Kimi K2.6 as optimizer. The historical story default uses Muse Spark 1.3. The corpus holds 56 peer-reviewed
 papers from 2016 to 2021 across 9 fields, giving 153 sections. [METHOD.md](METHOD.md)
 describes the experiment and its limits. [LOG.md](LOG.md) records the runs and changes.
 
 ## Reduced experiments (October 7–9, 2026)
 
-The cloud search resumed on October 9 after the OpenRouter account was funded again.
-The preceding funding stop occurred at $102.16 of key usage; account credits and the key's
-spending allowance are separate. The first completed batch favored human stories in 3 of
-3 trials and human paper sections in 2 of 3 trials, with 1 tie. The second batch is running.
-Consistent reproduction across the required 2 batches remains unestablished.
-[PR #7](https://github.com/nwyin/meta-rlxar-reproduction/pull/7) records the reduced search;
-[PR #8](https://github.com/nwyin/meta-rlxar-reproduction/pull/8) records the revised paper
-method. [LOG.md](LOG.md) records the checks and funding history.
+The paper case-diagnosis method reversed preference in 8 of 9 reduced trials. Its 3 frozen
+prompts then passed confirmation on 13 untouched sections from 5 papers: the initial
+human-minus-model gap was -1.107692, and learned gaps were +1.523077, +2.230769, and
++2.153846. [PR #20](https://github.com/nwyin/meta-rlxar-reproduction/pull/20) records that
+evaluation and the saved prompts. Story results remain inconsistent.
+
+An optional training selection recheck produced positive validation gaps in all 6 matched
+replays across 2 unchanged-rule batches. Both passed the declared source-interval criteria.
+It regrades the 2 leading training prompts and selects by their averaged training scores.
+These reuse completed optimization trajectories; fresh end-to-end replication of this
+selection change remains untested. The 2nd batch retained exactly the 3 already-confirmed
+prompts, so confirmation was reused rather than counted as a new independent test.
+[PR #23](https://github.com/nwyin/meta-rlxar-reproduction/pull/23) records results and costs.
+To run this optional paper method with 10% sampling:
+
+```sh
+uv run python run.py configs/search-arxiv-selection-recheck.yaml
+```
+
+All paid jobs in this campaign have finished. Results establish model-judged rubric
+preference on this corpus; independent expert judgments of writing quality remain untested.
 
 The project has reopened for a budget-limited search of meta-optimization methods.
 Both default configs now select 10% of each active split, rounded to the nearest
@@ -45,8 +58,7 @@ of 2 frozen method configs and reports validation consistency with source-level 
 
 The initial campaign compares current settings with Muse Spark 1.1 and contextual
 feedback. Prompt variants live in `prompts/experiments/`. Configs, logs, raw calls and
-results live locally under `runs/campaign-20261007/`. The current configs retain Muse
-Spark 1.3; every experimental model change appears in its saved config.
+results live locally under `runs/campaign-20261007/`. Every experimental model change appears in its saved config.
 
 The historical results below remain evidence from the earlier investigation.
 New results require separate reporting, including failures and repeat evaluations.
@@ -54,7 +66,7 @@ New results require separate reporting, including failures and repeat evaluation
 ## Continuing cloud search
 
 `configs/search-arxiv.yaml` and `configs/search-fiction.yaml` define the current Muse
-Spark 1.1 / Kimi search methods. The default corpus configs still use Muse Spark 1.3.
+Spark 1.1 / Kimi search methods. The proposed paper default uses the case-diagnosis method; the story default retains Muse Spark 1.3.
 All new default and search runs require complete drafts within ±15% of the target.
 Length revisions use the same model as a focused editor of its complete draft.
 
@@ -68,7 +80,7 @@ method stays fixed for another 3 trials. It stops successfully after 2 consecuti
 batches per domain, stops when the OpenRouter budget blocks calls, or records a technical
 block after bounded recovery fails. It never changes the key's spending limit or substitutes
 models. Validation controls stopping and remains outside the instruction designer's input.
-Repeated validation checks are exploratory; confirmation remains unused.
+Repeated validation checks are exploratory. The completed paper confirmation is reported above.
 
 The cloud controller writes `runs/cloud-search-20261007/report.md`, `status.json`,
 `budget.json`, and per-run requests, prompts, scores, and costs. These files remain local
