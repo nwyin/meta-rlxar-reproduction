@@ -928,12 +928,14 @@ def write_report(output, summaries, selected, costs):
             "val_model": validation["model"],
             "val_gap": validation["gap"],
             "val_coverage": validation["paired_coverage"],
+            "val_evaluated": validation.get("evaluated", True),
             "selected_by_train": index == selected,
         }
         for index, (train, validation) in enumerate(summaries)
     ]
     result = {
         "selected_iteration": selected,
+        "validation_checkpoints": [row["iteration"] for row in table if row["val_evaluated"]],
         "checkpoints": table,
         "summaries": [{"train": train, "validation": validation} for train, validation in summaries],
         "costs": costs,
@@ -952,6 +954,8 @@ def write_report(output, summaries, selected, costs):
     ]
     for row in table:
         gap = "missing" if row["val_gap"] is None else f"{row['val_gap']:+.3f}"
+        if not row["val_evaluated"]:
+            gap = "not evaluated"
         lines.append(f"| P{row['iteration']} | {row['train_gap']:+.3f} | {gap} | {row['val_coverage']} |")
     lines += [
         "",
@@ -968,9 +972,25 @@ def write_report(output, summaries, selected, costs):
     return result
 
 
+def evaluate_validation(api, examples, candidates, prompts, selected, output):
+    """Score the requested checkpoints after training has frozen the selection."""
+    requested = {0, selected} if api.config.get("validation_policy", "all") == "selected" else set(range(len(prompts)))
+    summaries = []
+    for index, prompt in enumerate(prompts):
+        if index in requested:
+            summary = summarize(evaluate_checkpoint(api, examples, candidates, prompt, index, output))
+            summary["evaluated"] = True
+        else:
+            summary = {**summarize([]), "evaluated": False, "complete": False, "examples": len(examples)}
+        summaries.append(summary)
+    return summaries
+
+
 def run_xar(config_path, *, resume=False):
     config_text = Path(config_path).read_text()
     config = yaml.safe_load(config_text)
+    if config.get("validation_policy", "all") not in ("all", "selected"):
+        raise RunError("validation_policy must be all or selected")
     if config.get("contrastive_feedback") and ("critic" not in config["roles"]
             or config.get("feedback_policy", FAILING_FEEDBACK) == FAILING_FEEDBACK):
         raise RunError("Contrastive feedback requires a critic role and a full-context feedback policy")
@@ -1069,6 +1089,7 @@ def run_xar(config_path, *, resume=False):
             output / "freeze.json",
             {
                 "selected": selected,
+                "validation_policy": config.get("validation_policy", "all"),
                 "training_gaps": gaps,
                 "prompt_hashes": [digest(value) for value in prompts],
                 "frozen_at": dt.datetime.now(dt.UTC).isoformat(),
@@ -1080,12 +1101,11 @@ def run_xar(config_path, *, resume=False):
             status = {"state": "complete"}
             return result
         print(f"Training selected P{selected}; scoring validation", flush=True)
-        validation_rows = [evaluate_checkpoint(api, validation, candidates, value, index, output) for index, value in enumerate(prompts)]
-        validation_summaries = [summarize(rows) for rows in validation_rows]
+        validation_summaries = evaluate_validation(api, validation, candidates, prompts, selected, output)
         result = write_report(
             output, list(zip(training_summaries, validation_summaries, strict=True)), selected, api.costs(),
         )
-        status = {"state": "complete" if all(summary["complete"] for summary in validation_summaries) else "incomplete"}
+        status = {"state": "complete" if all(s["complete"] for s in validation_summaries if s["evaluated"]) else "incomplete"}
         return result
     except BaseException as error:
         status["error"] = f"{type(error).__name__}: {error}"
