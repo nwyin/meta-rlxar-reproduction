@@ -1466,3 +1466,20 @@ excluding only `output`. That trial changed validation gap from -1.20 to +1.35 a
 $9.01140460; its frozen prompt scored +1.523077 on confirmation. The other two prompts
 also passed confirmation, as reported in PR #20. Promotion required no new paid experiment.
 Provider generations remain stochastic; the sampling seed does not guarantee exact scores.
+
+## 2026-10-09: Recheck the two training leaders before selection
+
+The unchanged-control training diagnostic moved a story gap by up to 0.583333 without
+changing its prompt. This motivates an optional selection experiment: independently grade
+the 2 strongest training prompts once more, average each original and repeated training gap,
+and choose the earliest maximum among those 2. The optimizer trajectory and parent rule
+stay fixed. Validation and confirmation remain outside selection.
+
+A matched replay uses the 3 completed paper trajectories from seeds 20262013–20262015.
+It reuses drafts and all original training prompts, freezes the new selection, then reuses
+identical saved validation checkpoints or grades a newly selected checkpoint. Costs are
+incremental. This isolates final selection from proposing more prompts. Results are pending.
+
+Disposable checks verified the exact top-2 shortlist, mean-based reranking, and rejection of
+held-out examples. Ruff and whitespace checks passed. The feature is opt-in and the default
+stays unchanged. Confirmation provenance now recognizes the recorded training recheck.

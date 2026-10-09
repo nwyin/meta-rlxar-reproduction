@@ -43,7 +43,14 @@ def load_frozen(sources):
             raise RunError("Confirmation requires completed source runs")
         frozen = json.loads((source / "freeze.json").read_text())
         selected = json.loads((source / "summary.json").read_text())["selected_iteration"]
-        if selected != frozen["selected"] or selected != best_checkpoint(frozen["training_gaps"]):
+        expected = best_checkpoint(frozen["training_gaps"])
+        if config.get("selection_recheck"):
+            recheck = frozen["selection_recheck"]
+            if recheck["selection_data"] != "train":
+                raise RunError("Source recheck selection must use training data")
+            entries = recheck["candidates"]
+            expected = entries[best_checkpoint([e["mean_gap"] for e in entries])]["checkpoint"]
+        if selected != frozen["selected"] or selected != expected:
             raise RunError("Source selection differs from its training freeze")
         initial = (source / "prompts/iter_00.md").read_text()
         learned = (source / f"prompts/iter_{selected:02d}.md").read_text()
