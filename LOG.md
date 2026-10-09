@@ -1452,3 +1452,17 @@ All 3 prompts are saved under `prompts/experiments/verified-papers/`; none was s
 using confirmation performance. These results reproduce the preference reversal on our
 paper corpus, not the exact unpublished Meta setup or independent expert quality judgments.
 Future automatic paper batches were stopped; the already active batch continues unchanged.
+
+## 2026-10-09: Proposed verified paper default
+
+The proposed paper default now matches the successful seed-20262010 trial's configuration,
+except for its fresh output path, `runs/arxiv-case-feedback`. It keeps 10% sampling and
+7 updates, uses full training-pair diagnoses and best-parent revisions, and evaluates the
+initial and training-selected prompts on validation. The 3 frozen prompts from this method
+passed untouched confirmation in PR #20. The story default remains unchanged.
+
+A configuration comparison confirmed equality with the completed trial manifest after
+excluding only `output`. That trial changed validation gap from -1.20 to +1.35 and cost
+$9.01140460; its frozen prompt scored +1.523077 on confirmation. The other two prompts
+also passed confirmation, as reported in PR #20. Promotion required no new paid experiment.
+Provider generations remain stochastic; the sampling seed does not guarantee exact scores.

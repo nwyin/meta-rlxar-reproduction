@@ -265,3 +265,10 @@ on 13 sections from 5 untouched papers. Their mean human-minus-model gaps were +
 meta-prompt supplied with context to the rubric generator, alongside the existing fixed
 rubric wrapper. All 3 are retained; confirmation scores did not select a winner. See PR #20
 for settings, costs, the scheduling amendment, and limits.
+
+The proposed `configs/arxiv.yaml` default uses the verified paper recipe: 10% sampling,
+7 updates, training-pair diagnoses, best-parent revisions, and validation of the initial and
+training-selected prompts. Its settings match the completed seed-20262010 trial except for
+a fresh output path. Run it with `uv run python run.py configs/arxiv.yaml`; this is a paid
+command. Change the output path for each fresh run. Provider generations are stochastic,
+so the sampling seed reproduces the subset, not exact scores. The story default is unchanged.
