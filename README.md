@@ -246,3 +246,15 @@ their frozen hashes.
 
 The tags `meta-blog-seed0` and `alternative-model-study` preserve earlier implementations
 and experiments.
+
+To evaluate a frozen method after reduced replication, use all 3 completed runs from its
+predeclared batch. This paid command evaluates the complete confirmation split, with no
+optimizer calls or selection using confirmation scores:
+
+```sh
+uv run python confirm.py arxiv runs/confirmation-papers runs/batch/arxiv-s0 runs/batch/arxiv-s1 runs/batch/arxiv-s2
+```
+
+The command saves provenance, each checkpoint's scores, source-bootstrap intervals, and
+actual provider charges. Use `--resume` only for a failed or incomplete evaluation with the
+same inputs. Keep confirmation results separate from exploratory validation results.

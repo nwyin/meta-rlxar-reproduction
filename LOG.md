@@ -1420,3 +1420,16 @@ After a regression, the next revision starts from the highest-scoring training p
 using the existing numerical tie rule. Story case-diagnosis configs already enable this.
 Three fresh trials per domain use sampling seeds 20262007–20262009 and 7 updates. These
 are still 10% experiments. Only training-only pilot evidence motivated the added parent rule.
+
+## 2026-10-09: Frozen confirmation evaluator
+
+`confirm.py` evaluates the initial prompt and all 3 training-selected prompts from a frozen
+batch on the complete, source-disjoint confirmation split. It generates one comparison draft
+per example, preserves the writer and anonymous judge settings, and reports every prompt.
+It verifies source completion, training selection, prompt hashes, and dataset identity before
+paid calls. Identical prompts share the same grades. Confirmation scores never select a prompt.
+
+Disposable offline checks passed for split filtering, frozen inputs, evaluation-only roles,
+positive and incomplete results, identical-prompt reuse, coverage checks, tamper rejection,
+and immutable resume inputs. No paid confirmation evaluation has run yet. Larger verification
+remains conditional on the ongoing reduced method passing the declared consistency gate.
