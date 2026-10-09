@@ -202,16 +202,19 @@ class OpenRouter:
         self.resume = False
 
     def costs(self):
-        """Look up OpenRouter's recorded charges for this run's unique generation IDs."""
-        generation_ids, missing_ids = set(), []
+        """Read recorded charges, using response usage when a generation lookup is unavailable."""
+        generation_ids, missing_ids, response_costs = set(), [], {}
         for path in sorted(self.output.glob("requests/*/attempt_*.json")):
             record = json.loads(path.read_text())
             generation_id = record.get("response_id") or record.get("response", {}).get("id")
             if isinstance(generation_id, str) and generation_id:
                 generation_ids.add(generation_id)
+                cost = record.get("response", {}).get("usage", {}).get("cost")
+                if type(cost) in (int, float) and math.isfinite(cost) and cost >= 0:
+                    response_costs[generation_id] = cost
             elif record["status"] != "connect_error":
                 missing_ids.append(str(path.relative_to(self.output)))
-        charges, errors = {}, {}
+        charges, errors, sources = {}, {}, {}
         for generation_id in sorted(generation_ids):
             try:
                 response = self.client.get(
@@ -226,15 +229,20 @@ class OpenRouter:
                 if data["id"] != generation_id or type(cost) not in (int, float) or not math.isfinite(cost) or cost < 0:
                     raise ValueError("Invalid generation ID or total_cost")
                 charges[generation_id] = cost
+                sources[generation_id] = "generation.total_cost"
             except (httpx.HTTPError, ValueError, KeyError, TypeError) as error:
                 errors[generation_id] = f"{type(error).__name__}: {error}"
+                if generation_id in response_costs:
+                    charges[generation_id] = response_costs[generation_id]
+                    sources[generation_id] = "response.usage.cost"
         result = {
             "source": self.config["api_base"] + "/generation",
             "retrieved_at": dt.datetime.now(dt.UTC).isoformat(),
             "actual_complete_usd": math.fsum(charges.values()),
             "requests": len(charges),
-            "unresolved": len(errors) + len(missing_ids),
+            "unresolved": len(generation_ids - charges.keys()) + len(missing_ids),
             "generation_costs": charges,
+            "generation_cost_sources": sources,
             "lookup_errors": errors,
             "missing_generation_ids": missing_ids,
         }
