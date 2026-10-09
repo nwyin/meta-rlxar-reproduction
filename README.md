@@ -17,11 +17,14 @@ describes the experiment and its limits. [LOG.md](LOG.md) records the runs and c
 The cloud search resumed on October 9 after the OpenRouter account was funded again.
 The preceding funding stop occurred at $102.16 of key usage; account credits and the key's
 spending allowance are separate. The first completed batch favored human stories in 3 of
-3 trials and human paper sections in 2 of 3 trials, with 1 tie. The second batch is running.
-Consistent reproduction across the required 2 batches remains unestablished.
+3 trials and human paper sections in 2 of 3 trials, with 1 tie. The second batch favored
+humans in 2 of 3 trials in each domain. Every one of the 12 completed trials improved over
+its initial rubric, but consistent reversal across the required 2 batches remains unestablished.
 [PR #7](https://github.com/nwyin/meta-rlxar-reproduction/pull/7) records the reduced search;
 [PR #8](https://github.com/nwyin/meta-rlxar-reproduction/pull/8) records the revised paper
-method. [LOG.md](LOG.md) records the checks and funding history.
+method. [PR #10](https://github.com/nwyin/meta-rlxar-reproduction/pull/10) tests broader
+feedback through independent case diagnoses in separate training-only pilots.
+[LOG.md](LOG.md) records the checks and funding history.
 
 The project has reopened for a budget-limited search of meta-optimization methods.
 Both default configs now select 10% of each active split, rounded to the nearest

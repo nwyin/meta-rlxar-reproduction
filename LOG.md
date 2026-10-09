@@ -1380,3 +1380,18 @@ A read-only OpenRouter check found $1,125 purchased and $925.018957074 used acco
 leaving about $199.98 available. The key still has $897.842606366 of allowance. The interrupted
 second batch can resume with its saved settings. This recovery runs only that batch so its
 results can be discussed in a PR before another method change.
+
+The second batch completed. Paper validation gaps changed from -1.100, -1.750, and -0.400
+to +0.300, -0.150, and +1.850. Story gaps changed from -1.000, -0.700, and -0.800
+to +0.800, -0.600, and +1.200. All 6 trials improved, but each domain had 1 negative
+selected gap. Neither passed the batch criterion. Across both batches, all 12 trials
+improved: 9 selected gaps favored humans, 2 favored models, and 1 tied. Larger verification
+remains ineligible. The revised paper method and its negative result are recorded in PR #8.
+
+Recorded response charges for the second batch total $26.97312946 for papers and
+$16.00402013 for stories. Average costs were $8.99104315 and $5.33467338 per run.
+The first batch cost $41.65640415 across 6 completed runs. Interrupted attempts and
+unresolved generation lookups remain saved. A separate case-diagnosis variant in PR #10
+has begun 2-update, training-only pilots in another worktree. Its writer and judge remain
+unchanged; a new explicit critic reads each training pair separately before Kimi revises
+the rubric prompt from their diagnoses. No confirmation data enters those pilots.
