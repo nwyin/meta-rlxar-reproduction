@@ -12,6 +12,13 @@ ROOT = Path(__file__).resolve().parent
 PROMPTS = ("writer", "rubric_initial", "rubric_wrapper", "judge", "optimizer")
 FAILING_FEEDBACK = "failing_gap_without_context"
 SCHEMA_VERSION = 1
+SCORE_EPSILON = 1e-9
+
+
+def best_checkpoint(gaps):
+    """Choose the earliest maximum, treating floating-point roundoff as a tie."""
+    maximum = max(gaps)
+    return next(i for i, gap in enumerate(gaps) if maximum - gap <= SCORE_EPSILON)
 
 
 class RunError(RuntimeError):
@@ -984,7 +991,7 @@ def run_xar(config_path, *, resume=False):
         prompts, training_summaries, row_history = [initial], [], []
         for iteration in range(config["iterations"] + 1):
             if iteration:
-                parent = max(range(iteration), key=lambda i: training_summaries[i]["gap"]) if config.get("best_parent") else iteration - 1
+                parent = best_checkpoint([s["gap"] for s in training_summaries]) if config.get("best_parent") else iteration - 1
                 feedback = build_feedback(train, candidates, row_history[parent], prompts[parent], config)
                 if config.get("optimizer_history"):
                     feedback["history"] = [{"checkpoint": i, "prompt": prompts[i], "summary": training_summaries[i]}
@@ -1003,7 +1010,7 @@ def run_xar(config_path, *, resume=False):
             if not summary["complete"]:
                 raise RunError("Training grades missing")
         gaps = [summary["gap"] for summary in training_summaries]
-        selected = gaps.index(max(gaps))  # Earliest checkpoint wins a tie.
+        selected = best_checkpoint(gaps)
         write_json(
             output / "freeze.json",
             {
