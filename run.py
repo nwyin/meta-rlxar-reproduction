@@ -173,7 +173,7 @@ def routing_fields(cfg):
         "stream": False,
         "plugins": [],
         "transforms": [],
-        "temperature": cfg["temperature"],
+        **({"temperature": cfg["temperature"]} if "temperature" in cfg else {}),
         "reasoning": cfg["reasoning"],
         "max_tokens": cfg["max_tokens"],
         "provider": {
