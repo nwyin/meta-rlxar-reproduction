@@ -1407,3 +1407,16 @@ gap/improvement checks. Raw scores remain unchanged. Reassessment of all 6 compl
 preserved every selected checkpoint and both domain pass/fail decisions. Disposable checks
 rejected roundoff-only gains and accepted substantive gains; Ruff passed. The current paid
 batch continues with its original code. This change is available for subsequent experiments.
+
+The case-diagnosis pilots completed 2 updates without validation or confirmation calls.
+Paper training gaps were -0.860, +1.990, and +1.113333; story gaps were 0.000, +0.800,
+and -0.777778. Both selected P1. Recorded generation-lookup charges were $3.78008927
+and $2.25751317, respectively; raw response charges remain available for unresolved lookups.
+The declines show that broader feedback alone does not make each update improve training.
+
+A separate paper config now enables best-parent revisions for full small replications.
+It preserves the case-diagnosis prompts and every substantive setting except `best_parent`.
+After a regression, the next revision starts from the highest-scoring training prompt,
+using the existing numerical tie rule. Story case-diagnosis configs already enable this.
+Three fresh trials per domain use sampling seeds 20262007–20262009 and 7 updates. These
+are still 10% experiments. Only training-only pilot evidence motivated the added parent rule.
