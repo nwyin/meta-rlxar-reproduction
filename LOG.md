@@ -1420,3 +1420,35 @@ After a regression, the next revision starts from the highest-scoring training p
 using the existing numerical tie rule. Story case-diagnosis configs already enable this.
 Three fresh trials per domain use sampling seeds 20262007–20262009 and 7 updates. These
 are still 10% experiments. Only training-only pilot evidence motivated the added parent rule.
+
+## 2026-10-09: Frozen confirmation evaluator
+
+`confirm.py` evaluates the initial prompt and all 3 training-selected prompts from a frozen
+batch on the complete, source-disjoint confirmation split. It generates one comparison draft
+per example, preserves the writer and anonymous judge settings, and reports every prompt.
+It verifies source completion, training selection, prompt hashes, and dataset identity before
+paid calls. Identical prompts share the same grades. Confirmation scores never select a prompt.
+
+Disposable offline checks passed for split filtering, frozen inputs, evaluation-only roles,
+positive and incomplete results, identical-prompt reuse, coverage checks, tamper rejection,
+and immutable resume inputs. No paid confirmation evaluation has run yet. Larger verification
+remains conditional on the ongoing reduced method passing the declared consistency gate.
+
+Before observing confirmation scores, the verification schedule was amended. The paper
+method reversed preference in all 6 reduced trials across 2 unchanged-method batches.
+The 1st batch remains a strict interval failure and the 2nd a strict pass. This consistent
+sign reversal now triggers the owner's authorized larger verification, while account credit
+is still available, rather than waiting for 2 consecutive interval-passing batches. The
+confirmation run evaluates all 3 selected prompts on 13 untouched sections from 5 papers.
+The amendment changes scheduling, preserves all earlier pass/fail outcomes, and supplies
+no confirmation evidence to optimization. The 3rd reduced batch continues unchanged.
+
+Paper confirmation passed on all 13 sections from 5 untouched papers. The initial gap was
+-1.107692. The 3 frozen prompts produced gaps +1.523077, +2.230769, and +2.153846, with
+complete grading and compliant drafts. Pooled source-mean gap was +2.026667 (descriptive
+95% source-bootstrap interval [+1.151111,+2.902222]); improvement was +3.14
+([+2.822222,+3.695556]). The full confirmation cost $5.57505660, with no unresolved charges.
+All 3 prompts are saved under `prompts/experiments/verified-papers/`; none was selected
+using confirmation performance. These results reproduce the preference reversal on our
+paper corpus, not the exact unpublished Meta setup or independent expert quality judgments.
+Future automatic paper batches were stopped; the already active batch continues unchanged.
