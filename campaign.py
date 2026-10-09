@@ -20,7 +20,7 @@ import httpx
 import yaml
 
 from replicate import assess
-from run import TEXT, InvalidOutput, OpenRouter, digest, object_schema, prompt_names, read_prompt, write_json
+from run import TEXT, InvalidOutput, OpenRouter, best_checkpoint, digest, object_schema, prompt_names, read_prompt, write_json
 
 
 class BudgetBlocked(RuntimeError):
@@ -72,7 +72,7 @@ def training_evidence(paths):
     for path in paths:
         summary = json.loads((path / 'summary.json').read_text())
         train = [entry['train'] for entry in summary['summaries']]
-        best = max(range(len(train)), key=lambda i: train[i]['gap'])
+        best = best_checkpoint([entry['gap'] for entry in train])
         evidence.append({'training': train,
                          'initial_prompt': (path / 'prompts/iter_00.md').read_text(),
                          'best_training_prompt': (path / f'prompts/iter_{best:02d}.md').read_text(),

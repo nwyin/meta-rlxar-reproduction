@@ -1398,3 +1398,12 @@ cache reuse and mismatch rejection, and rejection of validation/confirmation fee
 Ruff and whitespace checks passed. Two 2-update, training-only pilots will check the new
 pipeline before full replications. No larger experiment or confirmation evaluation is authorized
 by these pilot results alone.
+
+An offline numerical check found that gaps such as 0.13333333333333316 and
+0.13333333333333375 could defeat the intended earliest-checkpoint tie rule. Replication
+checks could also count a roundoff-only positive gap as a win. A separate change applies
+an absolute 1e-9 tolerance to training checkpoint selection, parent selection, and positive
+gap/improvement checks. Raw scores remain unchanged. Reassessment of all 6 completed trials
+preserved every selected checkpoint and both domain pass/fail decisions. Disposable checks
+rejected roundoff-only gains and accepted substantive gains; Ruff passed. The current paid
+batch continues with its original code. This change is available for subsequent experiments.
