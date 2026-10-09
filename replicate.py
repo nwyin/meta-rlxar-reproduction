@@ -16,7 +16,7 @@ from pathlib import Path
 
 import yaml
 
-from run import digest, write_json
+from run import SCORE_EPSILON, digest, write_json
 
 
 def interval(values):
@@ -52,14 +52,15 @@ def assess(paths, domain):
     gaps = [statistics.mean(v) for v in source_gaps.values()]
     deltas = [statistics.mean(v) for v in source_deltas.values()]
     gap_ci, delta_ci = interval(gaps), interval(deltas)
-    passed = (len(trials) == 3 and all(t["complete"] and t["length_compliant"] and t["selected_gap"] > 0
-                                     and t["improvement"] > 0 for t in trials)
-              and gap_ci is not None and gap_ci[0] > 0 and delta_ci is not None and delta_ci[0] > 0)
-    reversal = passed and all(t["baseline_gap"] < 0 for t in trials)
+    passed = (len(trials) == 3 and all(t["complete"] and t["length_compliant"] and t["selected_gap"] > SCORE_EPSILON
+                                     and t["improvement"] > SCORE_EPSILON for t in trials)
+              and gap_ci is not None and gap_ci[0] > SCORE_EPSILON and delta_ci is not None and delta_ci[0] > SCORE_EPSILON)
+    reversal = passed and all(t["baseline_gap"] < -SCORE_EPSILON for t in trials)
     return {"domain": domain, "trials": trials, "sources": len(gaps), "source_mean_gap": statistics.mean(gaps) if gaps else None,
             "source_mean_improvement": statistics.mean(deltas) if deltas else None,
             "gap_95pct_source_bootstrap": gap_ci, "improvement_95pct_source_bootstrap": delta_ci,
             "consistent_preference_and_improvement": bool(passed), "consistent_reversal": bool(reversal),
+            "score_tie_tolerance": SCORE_EPSILON,
             "limitation": "Small reduced samples; percentile intervals are descriptive, especially with few sources. "
                           "This checks the learned scoring preference, not independent expert judgments of quality."}
 
