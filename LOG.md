@@ -1433,3 +1433,12 @@ Disposable offline checks passed for split filtering, frozen inputs, evaluation-
 positive and incomplete results, identical-prompt reuse, coverage checks, tamper rejection,
 and immutable resume inputs. No paid confirmation evaluation has run yet. Larger verification
 remains conditional on the ongoing reduced method passing the declared consistency gate.
+
+Before observing confirmation scores, the verification schedule was amended. The paper
+method reversed preference in all 6 reduced trials across 2 unchanged-method batches.
+The 1st batch remains a strict interval failure and the 2nd a strict pass. This consistent
+sign reversal now triggers the owner's authorized larger verification, while account credit
+is still available, rather than waiting for 2 consecutive interval-passing batches. The
+confirmation run evaluates all 3 selected prompts on 13 untouched sections from 5 papers.
+The amendment changes scheduling, preserves all earlier pass/fail outcomes, and supplies
+no confirmation evidence to optimization. The 3rd reduced batch continues unchanged.
