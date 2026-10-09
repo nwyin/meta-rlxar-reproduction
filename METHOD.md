@@ -95,11 +95,25 @@ holds papers from most fields (`data/splits.json`):
 | --- | ---: | --- |
 | 35 | 96 | training |
 | 16 | 44 | validation |
-| 5 | 13 | confirmation; not used |
+| 5 | 13 | frozen confirmation, evaluated on 2026-10-09 |
 
 The research run therefore has 140 sections, 96 for training and 44 for validation. There is
 no pilot split. A dry run (`split: pilot`) uses the first `pilot_sources` training papers in dataset order,
 the only papers it needs.
+
+The reduced experiments use `sample_fraction: 0.1` separately within training and validation:
+10 training and 4 validation paper sections, or 3 training and 2 validation story passages.
+Sampling changes between seeded runs; full contexts remain intact. The sampling and grade-order
+seeds do not make provider generations deterministic.
+
+The paper case-diagnosis method with best-parent revisions passed a separate frozen confirmation
+evaluation. All 3 training-selected prompts from seeds 20262010–20262012 were evaluated on all
+13 confirmation sections from 5 papers. Initial gap -1.107692 changed to +1.523077, +2.230769,
+and +2.153846. No confirmation score selected a prompt or entered optimizer feedback. The
+descriptive pooled source-bootstrap interval was [+1.151111,+2.902222]. The saved prompts are
+under `prompts/experiments/verified-papers/`; PR #20 records the protocol amendment, costs, and
+limits. This reproduces the paper preference reversal on our corpus. Story results remain
+inconsistent, and story confirmation remains unused.
 
 `data/source_manifest.json` records each paper's URL, metadata and hashes, and the hash of
 `data/examples.jsonl`. The paper text is not in the repository. The owner reviewed all 56
