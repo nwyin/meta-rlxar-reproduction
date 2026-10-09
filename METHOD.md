@@ -399,3 +399,29 @@ saw the hidden expert section, the judge's mean gap rose from +0.10 to +1.10. Th
 expert qualities once a rubric names them; the loop failed to infer them from the context
 alone. On fiction the rubrics favoured the author at P0, and optimization moved them toward
 Muse's strengths. Both observations come from small samples.
+
+## October 7 reduced search
+
+The current configs select one tenth of each active split. Within a split, the runner
+shuffles source IDs and each source's examples with `sample_seed`, then takes examples
+in rounds across sources. It rounds each split's count to the nearest integer, with a
+minimum of 1. This samples paper sections and story passages; it preserves the original
+source and author split boundaries. Confirmation remains excluded.
+
+Training-only runs support three feedback policies: nonpositive pairs without context,
+nonpositive pairs with context, and lowest-gap pairs with context even when positive.
+`failure_examples` limits the detailed pairs; complete contexts remain untruncated.
+The optional best-parent policy revises the strongest earlier training checkpoint.
+The history option supplies prior training prompts and scores. Separate experiments
+compare the original JSON proposal, diagnosis-first JSON, and a plain-text proposal.
+The latter sends only the revised meta-prompt downstream. All variants keep the judge
+blind to candidate origin and keep the equal-weighted 0–10 criterion score.
+
+`replicate.py` freezes two selected method configs before running 3 fresh reduced runs
+per domain on sample seeds 20261008–20261010. Each run independently generates drafts,
+optimizes from P0, selects by training gap, then evaluates validation. Success requires
+positive selected validation gaps and improvements in all 3 runs, with positive lower
+bounds from a source-level percentile bootstrap for pooled gaps and improvements.
+A paper reversal also requires a negative initial gap in all 3 runs. These small-sample
+intervals are descriptive. They do not establish expert-assessed writing quality.
+The selection and success rules are saved before validation in the campaign plan.

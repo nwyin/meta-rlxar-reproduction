@@ -1267,3 +1267,131 @@ makes the rubrics favour the author.
 
 README.md now leads with the result table, and METHOD.md has a conclusion on what the null
 result rules out. Issue #6 is closed with a link to this entry. The runs and reports stay local.
+
+## 2026-10-07: Reopen with one-tenth samples
+
+The owner authorized paid cloud experiments until the method consistently produces
+rubrics that prefer the expert text or the supplied OpenRouter key runs out of budget.
+The runtime key matched the supplied key and OpenRouter reported $1,000 remaining
+before the first request. The key's server-side limit remains unchanged.
+
+Both configs now select 10% per active split with an independent, fixed sampling seed.
+This gives 10 training and 4 validation paper sections, and 3 training and 2 validation
+story passages. The frozen corpus files remain intact and passed their integrity checks.
+Temporary checks verified deterministic selection, split isolation, fraction validation,
+and context inclusion in training-only feedback. Ruff passed.
+
+The initial comparisons run on training data only. One uses the existing prompts and
+Muse Spark 1.3 contributor endpoint. Another uses Muse Spark 1.1, a conventional initial
+rubric prompt, and full-context feedback that can include positive pairs. The existing
+paper initial prompt already encodes earlier optimization results. This confounds a
+comparison of starting gaps, so the conventional prompt is a separate recorded variant.
+These first comparisons combine changes; follow-up ablations must isolate their effects.
+
+The runner now records selected example IDs, its source hash, and input prompt snapshots.
+It can reuse verified writer drafts between ablations. Historical run artifacts were not
+included in this cloud checkout; historical numbers remain in the repository documents.
+The confirmation split remains unused. No new reproduction claim has been established.
+
+During the reduced search, one judge twice quoted an absent combined phrase and stopped
+`fiction-muse11-failcontext`. We kept its failed requests, made the format-repair error
+identify the offending quote, and resumed the run. Its valid P0 and P1 scores remained
+unchanged. Resume requires unchanged configs, corpus and prompt hashes, records code
+changes, preserves failed statuses and missing outputs, and locks the run directory.
+Temporary mock-transport checks verified cache reuse, failed-attempt preservation, and
+fresh retries for invalid replies without making network calls.
+
+The first positive training checkpoints selected provisional replication methods:
+`arxiv-muse11-history` and `fiction-muse11-nocontext`. The selection was recorded before
+validation calls. Three fresh runs per method start from the conventional initial prompt,
+regenerate drafts, and run all seven updates on independent sample seeds. Later screening
+results remain training-only; validation has not informed prompt or method revisions.
+
+The first repeat batch stopped before validation grading because several model drafts
+violated the ±15% length window. The original code retained its final draft even when
+all length repairs failed. Explicit measured counts alone still left failures after
+8 attempts. Focused editing with the same model, using the complete draft and a measured
+range, produced compliant drafts for all 10 paper and 3 story training examples. Their
+initial gaps were -0.700 and -1.667. All earlier unmatched-length runs remain diagnostic
+evidence. The post hoc compliant-subset comparison is saved in
+`reports/2026-10-07-diagnostics.md`.
+
+The cloud controller now runs strict-length replications, revises optimizer guidance using
+training summaries and learned prompts only, and preserves errors on resume. It requires
+2 consecutive passing batches of 3 runs for each domain before stopping successfully.
+The key's server-side limit remains the budget boundary. It records a technical block if
+bounded recovery cannot continue. Its output is `runs/cloud-search-20261007/`; `report.md`
+tracks assessments, `status.json` records state, and `budget.json` records OpenRouter's
+latest key usage. The controller's first methods come from a post hoc training-only
+comparison of compliant diagnostic pairs. Fiction uses one full-context feedback example
+per update to leave room in Kimi's context window. No validation score selected these methods.
+
+Temporary checks verified strict sampling, cached resumption, preserved invalid attempts,
+training-only input to the outer designer, a failed batch followed by redesign, two passing
+batches with unchanged methods, and budget exhaustion. Ruff passed. Repeated validation
+checks are exploratory. No consistent strict-length reproduction is established yet.
+
+## 2026-10-08: Recover from a temporary OpenRouter limit
+
+The first strict-length batch completed 3 trials per domain. Fiction's selected validation
+gaps were +2.250, +0.800, and +1.500. ArXiv's were +0.900, +1.800, and effectively 0.
+Every trial improved over its starting rubric. Fiction passed the first batch; arXiv
+failed the requirement that every trial favor the human text. The fixed-method second
+batch is still required. These are small exploratory validation samples.
+
+The controller stopped during the next batch at 19:42 UTC on October 7. OpenRouter returned
+HTTP 402 with reason `in_flight_budget_exhausted` and an instruction to retry after 120 seconds.
+The runner incorrectly treated this temporary concurrency limit as exhausted budget.
+A live key check on October 8 reported $95.756524024 used and $904.243475976 remaining.
+
+The runner now retries this specific temporary error using the provider's delay. Other
+HTTP 402 errors still stop dispatch. The controller can resume an interrupted, unassessed
+batch while preserving its configs, completed requests, previous assessments, and errors.
+It records the recovery code hash and uses an exclusive controller lock. Recovery starts
+with 2 concurrent trials instead of 6. The interrupted batch's prompts, models, samples,
+and scoring remain fixed. Mock checks verified temporary versus permanent 402 handling,
+retained attempts, and reconstruction of the interrupted batch without paid calls. Ruff
+and the whitespace check passed.
+
+The resumed controller stopped again at 12:48 UTC on October 8. This time OpenRouter
+reported `limit_source: openrouter_credits`, rather than the temporary in-flight limit.
+Read-only checks of `/key` and `/credits` confirmed $102.157393634 used by this key,
+$897.842606366 of key allowance remaining, and $925.018957074 account-wide usage against
+$925.00 purchased credits. The key's allowance does not supply account credits. The
+account balance is exhausted, and the process remains stopped. The verified response
+fields and check time are saved in `runs/cloud-search-20261007/credit-diagnosis.json`.
+
+The second batch produced partial training artifacts but no completed validation result.
+The first batch remains the only completed strict-length batch. The story rubrics learned
+to reward source-specific narrative voice, causal continuity, and concrete social detail.
+The paper rubrics learned to reward section-appropriate selectivity over exhaustive detail.
+These are observations about the learned prompts. Controlled ablations have not established
+which change caused the gains; some learned paper instructions also overprescribe what an
+abstract or introduction should omit. No domain has met the two-batch stopping criterion.
+
+## 2026-10-09: Resume funded experiments and require PRs
+
+The owner requires a PR for every logical change, with measured experiment results for
+discussion. AGENTS.md now records that workflow and the continuing authorization to search
+on small samples, then run larger verification experiments once a method consistently
+succeeds. Larger verification must freeze the method and keep evaluation data out of feedback.
+
+A read-only OpenRouter check found $1,125 purchased and $925.018957074 used account-wide,
+leaving about $199.98 available. The key still has $897.842606366 of allowance. The interrupted
+second batch can resume with its saved settings. This recovery runs only that batch so its
+results can be discussed in a PR before another method change.
+
+The second batch completed. Paper validation gaps changed from -1.100, -1.750, and -0.400
+to +0.300, -0.150, and +1.850. Story gaps changed from -1.000, -0.700, and -0.800
+to +0.800, -0.600, and +1.200. All 6 trials improved, but each domain had 1 negative
+selected gap. Neither passed the batch criterion. Across both batches, all 12 trials
+improved: 9 selected gaps favored humans, 2 favored models, and 1 tied. Larger verification
+remains ineligible. The revised paper method and its negative result are recorded in PR #8.
+
+Recorded response charges for the second batch total $26.97312946 for papers and
+$16.00402013 for stories. Average costs were $8.99104315 and $5.33467338 per run.
+The first batch cost $41.65640415 across 6 completed runs. Interrupted attempts and
+unresolved generation lookups remain saved. A separate case-diagnosis variant in PR #10
+has begun 2-update, training-only pilots in another worktree. Its writer and judge remain
+unchanged; a new explicit critic reads each training pair separately before Kimi revises
+the rubric prompt from their diagnoses. No confirmation data enters those pilots.

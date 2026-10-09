@@ -2,7 +2,7 @@
 
 This repository reproduces the Initial Empirical Investigation in
 [Meta's Unslopping AI blog](https://facebookresearch.github.io/RAM/blogs/unslop/).
-The reproduction uses 3 scripts. `fetch_data.py` restores the frozen paper corpus.
+The core reproduction uses 3 scripts. `fetch_data.py` restores the frozen paper corpus.
 `fetch_fiction.py` builds and restores the blog's story-continuation corpus from Project
 Gutenberg. `run.py` writes the model's sections or continuations, optimizes the rubric meta
 prompt, and evaluates the result on either corpus.
@@ -12,7 +12,72 @@ rubric generator and judge, and Kimi K2.6 as optimizer. The corpus holds 56 peer
 papers from 2016 to 2021 across 9 fields, giving 153 sections. [METHOD.md](METHOD.md)
 describes the experiment and its limits. [LOG.md](LOG.md) records the runs and changes.
 
-## Result
+## Reduced experiments (October 7–9, 2026)
+
+The cloud search resumed on October 9 after the OpenRouter account was funded again.
+The preceding funding stop occurred at $102.16 of key usage; account credits and the key's
+spending allowance are separate. The first completed batch favored human stories in 3 of
+3 trials and human paper sections in 2 of 3 trials, with 1 tie. The second batch favored
+humans in 2 of 3 trials in each domain. Every one of the 12 completed trials improved over
+its initial rubric, but consistent reversal across the required 2 batches remains unestablished.
+[PR #7](https://github.com/nwyin/meta-rlxar-reproduction/pull/7) records the reduced search;
+[PR #8](https://github.com/nwyin/meta-rlxar-reproduction/pull/8) records the revised paper
+method. [PR #10](https://github.com/nwyin/meta-rlxar-reproduction/pull/10) tests broader
+feedback through independent case diagnoses in separate training-only pilots.
+[LOG.md](LOG.md) records the checks and funding history.
+
+The project has reopened for a budget-limited search of meta-optimization methods.
+Both default configs now select 10% of each active split, rounded to the nearest
+example: papers use 10 training and 4 validation sections; fiction uses 3 training
+and 2 validation passages. Sampling rotates across shuffled sources within each
+frozen split. `sample_seed` controls this selection independently of grading order.
+The frozen datasets remain intact. Each run records the selected IDs, code hash,
+and complete input prompt snapshots.
+
+The loop now supports `feedback_policy: full_context` (nonpositive pairs with their
+visible context) and `all_pairs_context` (the lowest-gap pairs, including positive
+pairs), alongside the original `failing_gap_without_context` policy. `failure_examples`
+bounds detailed pairs. Contexts are sent whole. `train_only: true` excludes validation
+from generation and grading while searching methods. `reuse_candidates: runs/<run>`
+reuses drafts only after checking their writer configuration, context and text hashes.
+Runs still require fresh output directories. Optional `best_parent` and `optimizer_history`
+keep the search anchored to its strongest training checkpoint. `proposal_rationale_first`
+and `proposal_plaintext` compare output formats; `balanced_feedback` rotates across section
+types when choosing detailed examples. `replicate.py` runs 3 independent reduced repetitions
+of 2 frozen method configs and reports validation consistency with source-level intervals.
+
+The initial campaign compares current settings with Muse Spark 1.1 and contextual
+feedback. Prompt variants live in `prompts/experiments/`. Configs, logs, raw calls and
+results live locally under `runs/campaign-20261007/`. The current configs retain Muse
+Spark 1.3; every experimental model change appears in its saved config.
+
+The historical results below remain evidence from the earlier investigation.
+New results require separate reporting, including failures and repeat evaluations.
+
+## Continuing cloud search
+
+`configs/search-arxiv.yaml` and `configs/search-fiction.yaml` define the current Muse
+Spark 1.1 / Kimi search methods. The default corpus configs still use Muse Spark 1.3.
+All new default and search runs require complete drafts within ±15% of the target.
+Length revisions use the same model as a focused editor of its complete draft.
+
+```sh
+uv run python campaign.py runs/cloud-search-NEW configs/search-arxiv.yaml configs/search-fiction.yaml
+```
+
+This is a paid, continuing command. The controller runs 3 fresh reduced trials per domain,
+then uses training evidence to revise optimizer instructions and loop settings. A passing
+method stays fixed for another 3 trials. It stops successfully after 2 consecutive passing
+batches per domain, stops when the OpenRouter budget blocks calls, or records a technical
+block after bounded recovery fails. It never changes the key's spending limit or substitutes
+models. Validation controls stopping and remains outside the instruction designer's input.
+Repeated validation checks are exploratory; confirmation remains unused.
+
+The cloud controller writes `runs/cloud-search-20261007/report.md`, `status.json`,
+`budget.json`, and per-run requests, prompts, scores, and costs. These files remain local
+to the cloud workspace. The diagnostic report is `reports/2026-10-07-diagnostics.md`.
+
+## Historical result
 
 We closed the project on October 5, 2026 with a null result. No run reproduced the blog's
 reversal, in which the validation gap (author score minus model score) went from -4.2 to
@@ -127,8 +192,14 @@ API with the same bearer key:
   arrived needs investigation in OpenRouter Activity.
   [Generation API](https://openrouter.ai/docs/api/api-reference/generations/get-request-&-usage-metadata-for-a-generation).
 
-Each run requires a new output directory. Interrupted runs keep their evidence; start a new
-run with a different directory. The runner has no resume or historical-report command.
+Fresh runs require a new output directory. A terminal failed or incomplete run can resume
+with `uv run python run.py CONFIG --resume` when its config, dataset, and prompt hashes
+still match. Resume preserves prior errors under `resumes/`, reuses valid completed
+rubrics and grades, and retains every failed raw attempt. It retries invalid outputs
+without overwriting their request records. A lock prevents overlapping resumed runners.
+Resume records the current code hash, so compatible transport or validation repairs
+remain visible. An active or completed run cannot be resumed. The runner has no
+historical-report command.
 
 ## Outputs
 

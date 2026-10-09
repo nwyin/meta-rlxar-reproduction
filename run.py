@@ -121,7 +121,7 @@ def read_prompt(config, name):
 def run_examples(examples, config):
     """The examples a run uses, labelled train or validation.
 
-    A research run uses the train and validation sources (papers or books) as saved. A pilot run,
+    A research run samples within the saved train and validation splits. A pilot run,
     for a dry run, uses the first `pilot_sources` training sources; the first (sorted by ID) becomes training and
     the rest become validation.
     """
@@ -132,7 +132,24 @@ def run_examples(examples, config):
         if len(sources) < config["pilot_sources"]:
             raise RunError(f"Pilot needs {config['pilot_sources']} sources; found {len(sources)}")
         return [{**e, "split": "train" if e["source_id"] == sources[0] else "validation"} for e in examples if e["source_id"] in sources]
-    return [e for e in examples if e["split"] in ("train", "validation")]
+    fraction = config.get("sample_fraction", 1.0)
+    if not 0 < fraction <= 1:
+        raise RunError("sample_fraction must be in (0, 1]")
+    selected = []
+    for split in ("train", "validation"):
+        pool = [e for e in examples if e["split"] == split]
+        # Round-robin sources before taking sections; preserve the frozen split assignment.
+        rng = random.Random(f"{config.get('sample_seed', 0)}:{split}")
+        sources = sorted({e["source_id"] for e in pool})
+        rng.shuffle(sources)
+        groups = {s: [e for e in pool if e["source_id"] == s] for s in sources}
+        for group in groups.values():
+            rng.shuffle(group)
+        ordered = [groups[s][i] for i in range(max(map(len, groups.values()), default=0)) for s in sources if i < len(groups[s])]
+        selected.extend(ordered[:max(1, math.floor(len(pool) * fraction + 0.5))])
+    if not selected or not any(e["split"] == "train" for e in selected):
+        raise RunError("No training examples")
+    return selected
 
 
 # OpenRouter: configured routing, bounded retries, and raw requests and responses.
@@ -171,6 +188,7 @@ class OpenRouter:
             timeout=httpx.Timeout(config["request_timeout_seconds"], connect=config["connect_timeout_seconds"])
         )
         self.dispatch_stopped = threading.Event()
+        self.resume = False
 
     def costs(self):
         """Look up OpenRouter's recorded charges for this run's unique generation IDs."""
@@ -228,11 +246,31 @@ class OpenRouter:
             self.dispatch_stopped.set()
             raise
 
+    @staticmethod
+    def saved_response(record, key, path):
+        raw = record["response"]
+        choice = raw["choices"][0]
+        return {
+            "content": choice["message"].get("content") or "", "finish_reason": choice.get("finish_reason"),
+            "request_key": key, "response_id": record["response_id"], "usage": raw.get("usage") or {},
+            "model": raw.get("model"), "provider": raw.get("provider"), "raw_response": str(path),
+        }
+
     def _call(self, role, system, data, schema, identity):
         payload = self.payload(role, system, data, schema)
         key = digest({"payload": payload, "identity": identity, "schema_version": SCHEMA_VERSION})
         directory = self.output / "requests" / key
-        directory.mkdir(parents=True, exist_ok=False)
+        previous = []
+        if self.resume and directory.exists():
+            saved = json.loads((directory / "request.json").read_text())
+            if saved["payload"] != payload or saved["identity"] != identity:
+                raise RunError("Cached request does not match resume inputs")
+            previous = sorted(directory.glob("attempt_*.json"), key=lambda p: int(p.stem.split("_")[1]))
+            for path in previous:
+                record = json.loads(path.read_text())
+                if record["status"] == "success" and not (path.parent / ("invalid_" + path.name)).exists():
+                    return self.saved_response(record, key, path)
+        directory.mkdir(parents=True, exist_ok=self.resume)
         write_json(
             directory / "request.json",
             {
@@ -246,7 +284,8 @@ class OpenRouter:
         for attempt in range(self.config["max_sends"]):
             if self.dispatch_stopped.is_set():
                 raise Skipped("Another request failed")
-            path = directory / f"attempt_{attempt}.json"
+            offset = max((int(p.stem.split("_")[1]) + 1 for p in previous), default=0)
+            path = directory / f"attempt_{offset + attempt}.json"
             record = {"status": "uncertain", "sent_at": dt.datetime.now(dt.UTC).isoformat()}
             write_json(path, record)
             started, retry_after = time.monotonic(), None
@@ -279,20 +318,15 @@ class OpenRouter:
                     status="success" if success else "http_error",
                 )
                 if success:
-                    choice = raw["choices"][0]
-                    return {
-                        "content": choice["message"].get("content") or "",
-                        "finish_reason": choice.get("finish_reason"),
-                        "request_key": key,
-                        "response_id": record["response_id"],
-                        "usage": raw.get("usage") or {},
-                        "model": raw.get("model"),
-                        "provider": raw.get("provider"),
-                        "raw_response": str(path),
-                    }
-                if response.status_code not in self.config["retryable_status"]:
+                    return self.saved_response(record, key, path)
+                error = raw.get("error") or {}
+                metadata = error.get("metadata") or {} if isinstance(error, dict) else {}
+                transient_budget = response.status_code == 402 and metadata.get("reason") == "in_flight_budget_exhausted"
+                if response.status_code not in self.config["retryable_status"] and not transient_budget:
                     raise RunError(f"Unusable HTTP {response.status_code}: {path}")
-                retry_after = response.headers.get("Retry-After")
+                retry_after = response.headers.get("Retry-After") or str(metadata.get("headers", {}).get("Retry-After", ""))
+                if transient_budget and not retry_after:
+                    retry_after = "120"
             finally:
                 record["duration_seconds"] = time.monotonic() - started
                 write_json(path, record)
@@ -331,6 +365,8 @@ class OpenRouter:
                 return {"status": "valid", "value": value, "attempts": attempts}
             except (json.JSONDecodeError, jsonschema.ValidationError, InvalidOutput) as e:
                 attempts.append({"response": response, "status": "invalid", "error": str(e)[: self.config["max_repair_error_chars"]]})
+                raw_path = Path(response["raw_response"])
+                write_json(raw_path.parent / ("invalid_" + raw_path.name), {"error": str(e)[: self.config["max_repair_error_chars"]]})
         return {"status": "missing", "value": None, "attempts": attempts}
 
 
@@ -399,7 +435,7 @@ def validate_grade(grade, rubric, supplied_text):
                     continue
                 start = supplied_words.find(quote_words(part), start)
                 if start < 0:
-                    raise InvalidOutput("Quote absent from supplied text")
+                    raise InvalidOutput(f"Quote absent from supplied text: {quoted[:180]!r}. Paraphrase without quotation marks or quote exact text.")
                 start += len(quote_words(part)) - 1
 
 
@@ -412,25 +448,56 @@ def writer_candidates(api, examples, output):
     line when the references keep paragraphs). Returns the records keyed by example ID."""
     prompt = read_prompt(api.config, "writer")
     paragraphs = any("\n" in example["reference"] for example in examples)
-    config_hash = digest({"writer": api.roles["writer"], "prompt": prompt, "schema_version": SCHEMA_VERSION})
+    writer_identity = {"writer": api.roles["writer"], "prompt": prompt, "schema_version": SCHEMA_VERSION}
+    if api.config.get("length_revision_mode"):
+        writer_identity["length_revision_mode"] = api.config["length_revision_mode"]
+    config_hash = digest(writer_identity)
     stopped = api.dispatch_stopped
 
     def write_section(example):
         eid = example["example_id"]
         path = output / "generations" / (eid + ".json")
+        if api.config.get("reuse_candidates"):
+            record = json.loads((Path(api.config["reuse_candidates"]) / "generations" / (eid + ".json")).read_text())
+            if record["context_hash"] != example["context_hash"] or record["writer_configuration_hash"] != config_hash:
+                raise RunError(f"{eid}: reused draft has different context or writer settings")
+            if digest(record["text"]) != record["text_hash"]:
+                raise RunError(f"{eid}: reused draft hash mismatch")
+            if api.config.get("strict_length") and (not record["length_compliant"] or not record["complete"]):
+                raise RunError(f"{eid}: reused draft violates strict length/completion requirements")
+            write_json(path, record)
+            return record
         low, high = 0.85 * example["target_words"], 1.15 * example["target_words"]
         attempts = []
         for attempt in range(api.config["writer_attempts"]):
             data = task_data(example)
+            instructions = prompt
             if attempt:
+                previous_words = attempts[-1]["words"]
                 data.update(
                     previous_section=attempts[-1]["text"],
-                    length_revision=f"Revise only to fit {math.ceil(low)}–{math.floor(high)} words. Preserve claims.",
+                    length_revision=(f"The previous draft contains {previous_words} words by the evaluator's count. "
+                                     f"Rewrite it to fit {math.ceil(low)}–{math.floor(high)} words. "
+                                     f"Aim for {example['target_words']} words: change the length by approximately "
+                                     f"{example['target_words'] - previous_words:+d} words. Preserve the important claims or narrative work. "
+                                     "Return only the revised text, without a word-count note."),
                 )
+                if api.config.get("length_revision_mode") == "edit_only":
+                    instructions = (
+                        "Edit the supplied draft to satisfy its measured word limit. This is a focused length edit, "
+                        "not a fresh writing task. Preserve its central meaning, voice, and useful specific details. "
+                        "Do not add new facts, scenes, claims, or explanations. Cut redundancy and secondary material "
+                        "when shortening; clarify existing material when expanding. The supplied measured word count "
+                        "is authoritative. Words are counted by whitespace. Return ONLY the revised prose, without "
+                        "a heading, word-count note, quotation wrapper, or editing commentary."
+                    )
+                    data = {"draft": attempts[-1]["text"], "measured_words": previous_words,
+                            "minimum_words": math.ceil(low), "maximum_words": math.floor(high),
+                            "aim_words": round(example["target_words"] * 0.9)}
             if stopped.is_set():
                 raise Skipped(f"{eid}: another section failed")
             identity = {"writer": config_hash, "example": eid, "attempt": attempt}
-            response = api.call("writer", prompt, data, None, identity)
+            response = api.call("writer", instructions, data, None, identity)
             text = normalize_text(response["content"], paragraphs)
             count = len(text.split())
             compliant = low <= count <= high
@@ -462,6 +529,11 @@ def writer_candidates(api, examples, output):
             "length_ratio": accepted["words"] / example["target_words"],
         }
         write_json(path, record)
+        if api.config.get("strict_length") and (not record["length_compliant"] or not record["complete"]):
+            for item in attempts:
+                raw_path = Path(item["response"]["raw_response"])
+                write_json(raw_path.parent / ("invalid_" + raw_path.name), {"error": "Writer did not satisfy the fixed length window"})
+            raise RunError(f"{eid}: writer length/completion failure after {len(attempts)} drafts")
         return record
 
     records = bounded_map(write_section, examples, api.config["concurrency"], stopped)
@@ -477,6 +549,13 @@ def writer_candidates(api, examples, output):
 
 
 def generate_rubric(api, example, meta_prompt, identity, output):
+    if api.resume and Path(output).exists():
+        saved = json.loads(Path(output).read_text())
+        if saved["status"] == "valid":
+            if (saved["context_hash"] != example["context_hash"] or saved["meta_prompt_hash"] != digest(meta_prompt)
+                    or saved["generator_configuration"] != api.roles["rubric"]):
+                raise RunError("Saved rubric differs from resume inputs")
+            return saved
     result = api.structured(
         "rubric",
         read_prompt(api.config, "rubric_wrapper"),
@@ -500,6 +579,13 @@ def generate_rubric(api, example, meta_prompt, identity, output):
 
 def grade_candidate(api, example, rubric_record, text, identity, output):
     """Grade one anonymous section against a rubric."""
+    if api.resume and Path(output).exists():
+        saved = json.loads(Path(output).read_text())
+        if saved["status"] == "valid":
+            if (saved["candidate_hash"] != digest(text) or saved["rubric_hash"] != rubric_record["rubric_hash"]
+                    or saved["judge_configuration"] != api.roles["judge"]):
+                raise RunError("Saved grade differs from resume inputs")
+            return saved
     if rubric_record["status"] != "valid":
         result = {"status": "missing", "value": None, "attempts": [], "reason": "invalid_rubric"}
     else:
@@ -638,25 +724,46 @@ def propose_prompt(api, current, feedback, examples, initial, iteration, *, outp
     the repair fails too, the update is used up and the current prompt carries over unchanged.
     Saves the feedback and proposal under feedback/iter_XX/ and returns the next prompt."""
     directory = Path(output) / "feedback" / f"iter_{iteration:02d}"
+    if api.resume and (directory / "proposal.json").exists():
+        saved = json.loads((directory / "proposal.json").read_text())
+        if (saved["parent_prompt_hash"] != digest(current) or saved["feedback_hash"] != digest(feedback)
+                or saved["optimizer_configuration"] != api.roles["optimizer"]):
+            raise RunError("Saved proposal differs from resume inputs")
+        return saved["prompt"]
     write_json(directory / "training.json", feedback)
     data = {"feedback": feedback, "max_meta_prompt_words": api.config["max_meta_prompt_words"]}
     attempts = []
     for attempt in range(api.config["proposal_attempts"]):
         instruction = read_prompt(api.config, "optimizer")
+        schema = PROPOSAL_SCHEMA
+        if api.config.get("proposal_rationale_first"):
+            schema = object_schema({"rationale": TEXT, "prompt": TEXT})
+            instruction += (
+                "\nFirst write a brief diagnosis in rationale, then write the COMPLETE revised meta-prompt in prompt. "
+                "Downstream models receive ONLY prompt; they never receive rationale. Every change you recommend "
+                "must be explicitly implemented in prompt. Before returning, check that prompt actually expresses "
+                "the distinctions you identified. Do not put a plan for future changes only in rationale."
+            )
         if attempt:
             rejected = attempts[-1]
             instruction += "\nBOUNDED REPAIR: Fix these proposal violations: " + ", ".join(rejected["audit"]["reasons"])
             # Show the rejected proposal, or the raw reply if it was not valid JSON.
             previous = rejected["value"] or rejected["attempts"][-1]["response"]["content"]
             data = {**data, "previous_proposal": previous}
-        result = api.structured(
-            "optimizer",
-            instruction,
-            data,
-            PROPOSAL_SCHEMA,
-            {"proposal": iteration, "bounded_attempt": attempt},
-            repair=False,
-        )
+        identity = {"proposal": iteration, "bounded_attempt": attempt}
+        if api.config.get("proposal_plaintext"):
+            instruction += (
+                "\nOUTPUT FORMAT FOR THIS RUN: Return ONLY the complete revised meta-prompt as plain text. "
+                "This replaces the JSON output instruction above. Do not include a rationale, analysis, JSON, "
+                "or code fences. Implement your diagnosis directly in the returned meta-prompt."
+            )
+            response = api.call("optimizer", instruction, data, None, identity)
+            valid = response["finish_reason"] == "stop" and bool(response["content"].strip())
+            result = {"status": "valid" if valid else "missing",
+                      "value": {"prompt": response["content"].strip(), "rationale": "Plain-text proposal; see raw response."} if valid else None,
+                      "attempts": [{"response": response, "status": "valid" if valid else "invalid"}]}
+        else:
+            result = api.structured("optimizer", instruction, data, schema, identity, repair=False)
         if result["value"]:
             audit = audit_proposal(result["value"]["prompt"], examples, initial, api.config)
         else:
@@ -682,19 +789,27 @@ def propose_prompt(api, current, feedback, examples, initial, iteration, *, outp
 
 
 def build_feedback(examples, candidates, rows, current_prompt, config):
-    """The active feedback policy: nonpositive training gaps, without the visible contexts.
+    """Build training-only feedback under the configured context and example-selection policy.
 
-    Keep the recorded all_training_gaps field's existing meaning: all nonpositive gaps, before
-    limiting detailed failure examples. Validation and confirmation never enter this payload.
+    all_training_gaps includes the policy's eligible pairs before limiting detailed examples.
+    Validation and confirmation never enter this payload.
     """
     if any(item["split"] != "train" for item in [*examples, *rows]):
         raise RunError("Feedback requires training sections")
     if any(row["gap"] is None for row in rows):
         raise RunError("Training grades missing")
     lookup = {example["example_id"]: example for example in examples}
-    by_gap = sorted((row for row in rows if row["gap"] <= 0), key=lambda row: (row["gap"], row["example_id"]))
+    policy = config.get("feedback_policy", FAILING_FEEDBACK)
+    if policy not in (FAILING_FEEDBACK, "full_context", "all_pairs_context"):
+        raise RunError(f"Unknown feedback policy: {policy}")
+    by_gap = sorted((row for row in rows if row["gap"] <= 0 or policy == "all_pairs_context"),
+                    key=lambda row: (row["gap"], row["example_id"]))
+    detailed = by_gap
+    if config.get("balanced_feedback"):
+        groups = [[r for r in by_gap if r["kind"] == kind] for kind in sorted({r["kind"] for r in by_gap})]
+        detailed = [group[i] for i in range(max(map(len, groups), default=0)) for group in groups if i < len(group)]
     failures = []
-    for row in by_gap[: config["failure_examples"]]:
+    for row in detailed[: config["failure_examples"]]:
         example = lookup[row["example_id"]]
         failures.append(
             {
@@ -706,6 +821,7 @@ def build_feedback(examples, candidates, rows, current_prompt, config):
                 "rubric": json.loads(Path(row["rubric_path"]).read_text())["value"],
                 "grades": {origin: json.loads(Path(path).read_text())["value"] for origin, path in row["grade_paths"].items()},
                 "gap": row["gap"],
+                **({"context": example["context"]} if policy != FAILING_FEEDBACK else {}),
             }
         )
     return {
@@ -713,7 +829,7 @@ def build_feedback(examples, candidates, rows, current_prompt, config):
         "summary": summarize(rows),
         "failures": failures,
         "example_ids_used_for_aggregate": sorted(lookup),
-        "selection": FAILING_FEEDBACK,
+        "selection": policy,
         "all_training_gaps": [{"example_id": row["example_id"], "kind": row["kind"], "gap": row["gap"]} for row in by_gap],
     }
 
@@ -796,7 +912,7 @@ def write_report(output, summaries, selected, costs):
     return result
 
 
-def run_xar(config_path):
+def run_xar(config_path, *, resume=False):
     config_text = Path(config_path).read_text()
     config = yaml.safe_load(config_text)
     initial = read_prompt(config, "rubric_initial")
@@ -804,37 +920,80 @@ def run_xar(config_path):
         raise RunError("Initial prompt exceeds max_meta_prompt_words")
     examples = [json.loads(line) for line in Path(config["dataset"]).read_text().splitlines() if line.strip()]
     examples = run_examples(examples, config)
+    if config.get("train_only", False):
+        examples = [e for e in examples if e["split"] == "train"]
     train = [example for example in examples if example["split"] == "train"]
     validation = [example for example in examples if example["split"] == "validation"]
     output = Path(config["output"])
     # Atomic directory creation also prevents two processes from starting in the same directory.
     api = OpenRouter(output, config)
-    output.mkdir(parents=True, exist_ok=False)
+    api.resume = resume
+    if resume:
+        old_status = json.loads((output / "status.json").read_text())
+        if old_status["state"] not in ("failed", "incomplete"):
+            raise RunError("Resume requires a failed or incomplete run")
+        manifest = json.loads((output / "manifest.json").read_text())
+        if manifest["config"] != config or manifest["dataset_hash"] != hashlib.sha256(Path(config["dataset"]).read_bytes()).hexdigest():
+            raise RunError("Resume config or dataset changed")
+        if manifest["prompt_hashes"] != {name: digest(read_prompt(config, name)) for name in PROMPTS}:
+            raise RunError("Resume prompts changed")
+    output.mkdir(parents=True, exist_ok=resume)
+    lock_path = output / "active.lock"
+    lock = os.open(lock_path, os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o600)
+    os.close(lock)
     status = {"state": "failed"}
     try:
+        if resume:
+            missing = {}
+            for folder in ("scores", "rubrics"):
+                for path in output.glob(f"{folder}/**/*.json"):
+                    record = json.loads(path.read_text())
+                    if isinstance(record, dict) and record.get("status") == "missing":
+                        missing[str(path.relative_to(output))] = record
+                        for attempt in record.get("attempts", []):
+                            if attempt.get("status") == "invalid":
+                                raw_path = Path(attempt["response"]["raw_response"])
+                                write_json(raw_path.parent / ("invalid_" + raw_path.name), {"error": attempt.get("error")})
+            write_json(output / "resumes" / f"{time.time_ns()}.json", {
+                "previous_status": old_status, "code_hash": digest(Path(__file__).read_text()),
+                "missing_outputs": missing,
+            })
+        write_json(output / "status.json", {"state": "running", "pid": os.getpid()})
         (output / "config.yaml").write_text(config_text)
-        write_json(
-            output / "manifest.json",
-            {
-                "created_at": dt.datetime.now(dt.UTC).isoformat(),
-                "config": config,
-                "roles": config["roles"],
-                "dataset_hash": hashlib.sha256(Path(config["dataset"]).read_bytes()).hexdigest(),
-                "initial_meta_prompt_hash": digest(initial),
-                "prompt_hashes": {name: digest(read_prompt(config, name)) for name in PROMPTS},
-                "feedback_policy": FAILING_FEEDBACK,
-                "context_handling": "Providers enforce context limits; full inputs are sent without truncation",
-            },
-        )
+        if not resume:
+            write_json(
+                output / "manifest.json",
+                {
+                    "created_at": dt.datetime.now(dt.UTC).isoformat(),
+                    "config": config,
+                    "roles": config["roles"],
+                    "dataset_hash": hashlib.sha256(Path(config["dataset"]).read_bytes()).hexdigest(),
+                    "initial_meta_prompt_hash": digest(initial),
+                    "prompt_hashes": {name: digest(read_prompt(config, name)) for name in PROMPTS},
+                    "feedback_policy": config.get("feedback_policy", FAILING_FEEDBACK),
+                    "example_ids": [e["example_id"] for e in examples],
+                    "code_hash": digest(Path(__file__).read_text()),
+                    "context_handling": "Providers enforce context limits; full inputs are sent without truncation",
+                },
+            )
+        for name in PROMPTS:
+            snapshot = output / "input_prompts" / f"{name}.md"
+            snapshot.parent.mkdir(exist_ok=True)
+            snapshot.write_text(read_prompt(config, name))
         candidates = writer_candidates(api, examples, output)
-        prompts, training_summaries, training_rows = [initial], [], None
+        prompts, training_summaries, row_history = [initial], [], []
         for iteration in range(config["iterations"] + 1):
             if iteration:
-                feedback = build_feedback(train, candidates, training_rows, prompts[-1], config)
-                prompts.append(propose_prompt(api, prompts[-1], feedback, train, initial, iteration, output=output))
+                parent = max(range(iteration), key=lambda i: training_summaries[i]["gap"]) if config.get("best_parent") else iteration - 1
+                feedback = build_feedback(train, candidates, row_history[parent], prompts[parent], config)
+                if config.get("optimizer_history"):
+                    feedback["history"] = [{"checkpoint": i, "prompt": prompts[i], "summary": training_summaries[i]}
+                                           for i in range(iteration)]
+                prompts.append(propose_prompt(api, prompts[parent], feedback, train, initial, iteration, output=output))
             (output / "prompts").mkdir(exist_ok=True)
             (output / "prompts" / f"iter_{iteration:02d}.md").write_text(prompts[-1])
             training_rows = evaluate_checkpoint(api, train, candidates, prompts[-1], iteration, output)
+            row_history.append(training_rows)
             summary = summarize(training_rows)
             training_summaries.append(summary)
             print(
@@ -854,6 +1013,11 @@ def run_xar(config_path):
                 "frozen_at": dt.datetime.now(dt.UTC).isoformat(),
             },
         )
+        if config.get("train_only", False):
+            result = {"selected": selected, "training_summaries": training_summaries, "costs": api.costs(), "train_only": True}
+            write_json(output / "summary.json", result)
+            status = {"state": "complete"}
+            return result
         print(f"Training selected P{selected}; scoring validation", flush=True)
         validation_rows = [evaluate_checkpoint(api, validation, candidates, value, index, output) for index, value in enumerate(prompts)]
         validation_summaries = [summarize(rows) for rows in validation_rows]
@@ -867,13 +1031,16 @@ def run_xar(config_path):
         raise
     finally:
         write_json(output / "status.json", status)
+        lock_path.unlink()
         api.client.close()
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("config", nargs="?", default=str(ROOT / "configs/arxiv.yaml"), help="run configuration (default: configs/arxiv.yaml)")
+    parser.add_argument("--resume", action="store_true", help="resume a failed run with unchanged config, dataset and prompts")
     try:
-        run_xar(parser.parse_args().config)
+        args = parser.parse_args()
+        run_xar(args.config, resume=args.resume)
     except (RunError, httpx.HTTPError, FileExistsError) as error:
         raise SystemExit(f"STOP: {error}") from None
