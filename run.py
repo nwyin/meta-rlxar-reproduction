@@ -125,6 +125,10 @@ def read_prompt(config, name):
     return (ROOT / config["prompts"] / f"{name}.md").read_text()
 
 
+def prompt_names(config):
+    return PROMPTS + (("critic",) if config.get("contrastive_feedback") else ())
+
+
 def run_examples(examples, config):
     """The examples a run uses, labelled train or validation.
 
@@ -724,6 +728,43 @@ def audit_proposal(text, examples, initial_prompt, config):
     }
 
 
+def diagnose_feedback(api, feedback, iteration, output):
+    """Read each selected training pair in full, then pass compact diagnoses to the optimizer."""
+    if any("context" not in pair for pair in feedback["failures"]):
+        raise RunError("Contrastive diagnoses require full training contexts")
+    instruction = read_prompt(api.config, "critic")
+    schema = object_schema({name: TEXT for name in ("quality_differences", "rubric_errors", "proposed_revision", "counterevidence")})
+    directory = Path(output) / "feedback" / f"iter_{iteration:02d}" / "diagnoses"
+    write_json(directory / "full_training_feedback.json", feedback)
+
+    def diagnose(pair):
+        data = {"current_prompt": feedback["current_prompt"], "training_pair": pair}
+        identity = {"diagnosis": iteration, "example_id": pair["example_id"]}
+        path = directory / f"{pair['example_id']}.json"
+        signature = {"input_hash": digest(data), "instruction_hash": digest(instruction), "critic": api.roles["critic"]}
+        if api.resume and path.exists():
+            saved = json.loads(path.read_text())
+            if saved["signature"] != signature:
+                raise RunError("Saved diagnosis differs from resume inputs")
+            if saved["result"]["status"] == "valid":
+                return {"example_id": pair["example_id"], "kind": pair["kind"], "gap": pair["gap"],
+                        "diagnosis": saved["result"]["value"]}
+
+        def validate(value):
+            if sum(len(text.split()) for text in value.values()) > 600:
+                raise InvalidOutput("Keep the entire diagnosis within 600 words")
+
+        result = api.structured("critic", instruction, data, schema, identity, validator=validate)
+        write_json(path, {"signature": signature, "result": result})
+        if result["status"] != "valid":
+            raise RunError("Training diagnoses missing")
+        return {"example_id": pair["example_id"], "kind": pair["kind"], "gap": pair["gap"], "diagnosis": result["value"]}
+
+    diagnoses = bounded_map(diagnose, feedback["failures"], api.config["concurrency"], api.dispatch_stopped)
+    return {**{key: value for key, value in feedback.items() if key != "failures"},
+            "diagnoses": diagnoses, "feedback_format": "independent_full_context_diagnoses_v1"}
+
+
 def propose_prompt(api, current, feedback, examples, initial, iteration, *, output):
     """Ask the optimizer for the next meta prompt, given the training feedback on the current one.
 
@@ -922,6 +963,9 @@ def write_report(output, summaries, selected, costs):
 def run_xar(config_path, *, resume=False):
     config_text = Path(config_path).read_text()
     config = yaml.safe_load(config_text)
+    if config.get("contrastive_feedback") and ("critic" not in config["roles"]
+            or config.get("feedback_policy", FAILING_FEEDBACK) == FAILING_FEEDBACK):
+        raise RunError("Contrastive feedback requires a critic role and a full-context feedback policy")
     initial = read_prompt(config, "rubric_initial")
     if len(initial.split()) > config["max_meta_prompt_words"]:
         raise RunError("Initial prompt exceeds max_meta_prompt_words")
@@ -942,7 +986,7 @@ def run_xar(config_path, *, resume=False):
         manifest = json.loads((output / "manifest.json").read_text())
         if manifest["config"] != config or manifest["dataset_hash"] != hashlib.sha256(Path(config["dataset"]).read_bytes()).hexdigest():
             raise RunError("Resume config or dataset changed")
-        if manifest["prompt_hashes"] != {name: digest(read_prompt(config, name)) for name in PROMPTS}:
+        if manifest["prompt_hashes"] != {name: digest(read_prompt(config, name)) for name in prompt_names(config)}:
             raise RunError("Resume prompts changed")
     output.mkdir(parents=True, exist_ok=resume)
     lock_path = output / "active.lock"
@@ -976,14 +1020,14 @@ def run_xar(config_path, *, resume=False):
                     "roles": config["roles"],
                     "dataset_hash": hashlib.sha256(Path(config["dataset"]).read_bytes()).hexdigest(),
                     "initial_meta_prompt_hash": digest(initial),
-                    "prompt_hashes": {name: digest(read_prompt(config, name)) for name in PROMPTS},
+                    "prompt_hashes": {name: digest(read_prompt(config, name)) for name in prompt_names(config)},
                     "feedback_policy": config.get("feedback_policy", FAILING_FEEDBACK),
                     "example_ids": [e["example_id"] for e in examples],
                     "code_hash": digest(Path(__file__).read_text()),
                     "context_handling": "Providers enforce context limits; full inputs are sent without truncation",
                 },
             )
-        for name in PROMPTS:
+        for name in prompt_names(config):
             snapshot = output / "input_prompts" / f"{name}.md"
             snapshot.parent.mkdir(exist_ok=True)
             snapshot.write_text(read_prompt(config, name))
@@ -993,6 +1037,8 @@ def run_xar(config_path, *, resume=False):
             if iteration:
                 parent = best_checkpoint([s["gap"] for s in training_summaries]) if config.get("best_parent") else iteration - 1
                 feedback = build_feedback(train, candidates, row_history[parent], prompts[parent], config)
+                if config.get("contrastive_feedback"):
+                    feedback = diagnose_feedback(api, feedback, iteration, output)
                 if config.get("optimizer_history"):
                     feedback["history"] = [{"checkpoint": i, "prompt": prompts[i], "summary": training_summaries[i]}
                                            for i in range(iteration)]

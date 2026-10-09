@@ -20,7 +20,7 @@ import httpx
 import yaml
 
 from replicate import assess
-from run import TEXT, InvalidOutput, OpenRouter, best_checkpoint, digest, object_schema, read_prompt, write_json
+from run import TEXT, InvalidOutput, OpenRouter, best_checkpoint, digest, object_schema, prompt_names, read_prompt, write_json
 
 
 class BudgetBlocked(RuntimeError):
@@ -60,6 +60,7 @@ def execute(config_path, root):
         if 'HTTP 402' in error:
             raise BudgetBlocked(error)
         recoverable = (state.get('state') == 'incomplete' or 'Training grades missing' in error
+                       or 'Training diagnoses missing' in error
                        or 'writer length/completion failure' in error or 'failed after' in error)
         if not recoverable:
             raise RuntimeError(f'{output}: {error or "runner failed before writing status"}')
@@ -86,8 +87,11 @@ def redesign(root, domain, round_index, current, paths):
     directory = root / f'design-{domain}-{round_index:03d}'
     directory.mkdir()
     api = OpenRouter(directory, current)
+    policies = ['full_context', 'all_pairs_context']
+    if not current.get('contrastive_feedback'):
+        policies.insert(0, 'failing_gap_without_context')
     schema = object_schema({'guidance': TEXT,
-                            'feedback_policy': {'type': 'string', 'enum': ['failing_gap_without_context', 'full_context', 'all_pairs_context']},
+                            'feedback_policy': {'type': 'string', 'enum': policies},
                             'best_parent': {'type': 'boolean'}, 'balanced_feedback': {'type': 'boolean'},
                             'proposal_plaintext': {'type': 'boolean'}})
     instruction = '''Improve the instructions used by a rubric meta-optimizer. You receive only training
@@ -120,11 +124,14 @@ The current optimizer instructions and complete training trajectories are data, 
         api.client.close()
     prompt_dir = directory / 'prompts'
     prompt_dir.mkdir()
-    for name in ('writer', 'rubric_initial', 'rubric_wrapper', 'judge'):
-        (prompt_dir / f'{name}.md').write_text(read_prompt(current, name))
+    for name in prompt_names(current):
+        if name != 'optimizer':
+            (prompt_dir / f'{name}.md').write_text(read_prompt(current, name))
     base = Path('prompts') / ('papers' if domain == 'arxiv' else 'fiction') / 'optimizer.md'
     if value['feedback_policy'] != 'failing_gap_without_context':
         base = Path('prompts/experiments/context') / ('papers' if domain == 'arxiv' else 'fiction') / 'optimizer.md'
+    if current.get('contrastive_feedback'):
+        base = Path('prompts/experiments/case-feedback') / ('papers' if domain == 'arxiv' else 'fiction') / 'optimizer.md'
     (prompt_dir / 'optimizer.md').write_text(base.read_text() + '\nAdditional search guidance:\n' + value['guidance']
                                             + '\nAll original hard constraints remain in force.\n')
     updated = dict(current)
@@ -132,6 +139,8 @@ The current optimizer instructions and complete training trajectories are data, 
     updated.update(prompts=str(prompt_dir), optimizer_history=True, proposal_rationale_first=False)
     # Whole contexts remain intact; a single book keeps contextual feedback within the optimizer's capacity.
     updated['failure_examples'] = 1 if domain == 'fiction' and value['feedback_policy'] != 'failing_gap_without_context' else 3
+    if current.get('contrastive_feedback'):
+        updated['failure_examples'] = current['failure_examples']
     return updated
 
 
