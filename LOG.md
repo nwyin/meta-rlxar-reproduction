@@ -1433,3 +1433,21 @@ Disposable offline checks passed for split filtering, frozen inputs, evaluation-
 positive and incomplete results, identical-prompt reuse, coverage checks, tamper rejection,
 and immutable resume inputs. No paid confirmation evaluation has run yet. Larger verification
 remains conditional on the ongoing reduced method passing the declared consistency gate.
+
+## 2026-10-09: Per-passage optimizer history
+
+The story training traces show revisions helping one passage while hurting another.
+The existing history gives each earlier prompt and its mean score. A separate optional
+configuration now includes every training passage's human score, model score, and gap at
+all earlier checkpoints. The optimizer is asked to inspect these tradeoffs while treating
+scores as noisy observations. Mean-gap selection and the judge remain unchanged.
+
+A training-only screen replays revision 4 on seeds 20262010–20262012. It reuses the original
+parent prompt, drafts, grades, detailed example, and aggregate history, adding only the
+per-passage history and accompanying guidance. It compares against the stored revision-4
+controls. All 3 revised means must beat those controls, with complete and length-compliant
+pairs, before this screen motivates a fresh full trial. This is an exploratory screening
+rule, not a statistical test. Results and actual provider charges are pending.
+
+Disposable checks confirmed identical default history payloads and rejected validation,
+confirmation, and missing grades in per-passage history. Ruff and whitespace checks passed.

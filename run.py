@@ -791,6 +791,14 @@ def propose_prompt(api, current, feedback, examples, initial, iteration, *, outp
     attempts = []
     for attempt in range(api.config["proposal_attempts"]):
         instruction = read_prompt(api.config, "optimizer")
+        if api.config.get("optimizer_case_history"):
+            instruction += (
+                "\nHistory includes each training passage's human and model scores and gap at every checkpoint. "
+                "Compare the same passage across revisions. Identify changes that helped several passages versus "
+                "changes that raised the mean by sacrificing another passage. Use these tradeoffs to form a "
+                "transferable quality distinction. Scores are noisy observations, not proof that a revision caused "
+                "a change. Retain supported improvements without inventing story-specific exceptions."
+            )
         schema = PROPOSAL_SCHEMA
         if api.config.get("proposal_rationale_first"):
             schema = object_schema({"rationale": TEXT, "prompt": TEXT})
@@ -895,6 +903,16 @@ def kind_summary(graded, kind):
     return {"coverage": len(gaps), "gap": statistics.mean(gaps) if gaps else None}
 
 
+def training_history(prompts, summaries, rows, *, include_cases=False):
+    history = [{"checkpoint": i, "prompt": prompt, "summary": summaries[i]} for i, prompt in enumerate(prompts)]
+    if include_cases:
+        for entry, values in zip(history, rows, strict=True):
+            if any(r["split"] != "train" or r["gap"] is None for r in values):
+                raise RunError("Case history requires complete training grades")
+            entry["training_cases"] = [{k: r[k] for k in ("example_id", "kind", "human", "model", "gap")} for r in values]
+    return history
+
+
 def summarize(rows):
     """Summarize one checkpoint's rows: mean human, model and gap scores over the examples with
     both grades, and the gap for each kind."""
@@ -991,6 +1009,8 @@ def run_xar(config_path, *, resume=False):
     config = yaml.safe_load(config_text)
     if config.get("validation_policy", "all") not in ("all", "selected"):
         raise RunError("validation_policy must be all or selected")
+    if config.get("optimizer_case_history") and not config.get("optimizer_history"):
+        raise RunError("optimizer_case_history requires optimizer_history")
     if config.get("contrastive_feedback") and ("critic" not in config["roles"]
             or config.get("feedback_policy", FAILING_FEEDBACK) == FAILING_FEEDBACK):
         raise RunError("Contrastive feedback requires a critic role and a full-context feedback policy")
@@ -1068,8 +1088,8 @@ def run_xar(config_path, *, resume=False):
                 if config.get("contrastive_feedback"):
                     feedback = diagnose_feedback(api, feedback, iteration, output)
                 if config.get("optimizer_history"):
-                    feedback["history"] = [{"checkpoint": i, "prompt": prompts[i], "summary": training_summaries[i]}
-                                           for i in range(iteration)]
+                    feedback["history"] = training_history(prompts, training_summaries, row_history,
+                                                           include_cases=config.get("optimizer_case_history", False))
                 prompts.append(propose_prompt(api, prompts[parent], feedback, train, initial, iteration, output=output))
             (output / "prompts").mkdir(exist_ok=True)
             (output / "prompts" / f"iter_{iteration:02d}.md").write_text(prompts[-1])

@@ -1,0 +1,76 @@
+blog_url: https://facebookresearch.github.io/RAM/blogs/unslop/
+output: runs/search-fiction-case-history
+sample_fraction: 0.1
+sample_seed: 20261007
+split: research
+dataset: data/fiction/examples.jsonl
+prompts: prompts/experiments/history/fiction
+seed: 0
+roles:
+  writer:
+    model: meta/muse-spark-1.1
+    provider: meta
+    temperature: 0.7
+    reasoning:
+      effort: medium
+    max_tokens: 16384
+  rubric:
+    model: meta/muse-spark-1.1
+    provider: meta
+    temperature: 0.2
+    reasoning:
+      effort: medium
+    max_tokens: 16384
+  judge:
+    model: meta/muse-spark-1.1
+    provider: meta
+    temperature: 0
+    reasoning:
+      effort: medium
+    max_tokens: 16384
+  optimizer:
+    model: moonshotai/kimi-k2.6
+    provider: siliconflow/fp8
+    temperature: 0.7
+    reasoning:
+      enabled: true
+    max_tokens: 16384
+iterations: 7
+max_meta_prompt_words: 2000
+failure_examples: 1
+concurrency: 8
+pilot_sources: 2
+writer_attempts: 8
+proposal_attempts: 2
+copy_span_words: 12
+min_identifier_length: 5
+api_base: https://openrouter.ai/api/v1
+max_sends: 6
+retryable_status:
+- 404
+- 408
+- 429
+- 500
+- 502
+- 503
+- 504
+backoff_seconds:
+- 2
+- 5
+- 15
+- 30
+- 60
+max_retry_after_seconds: 120
+request_timeout_seconds: 600
+connect_timeout_seconds: 30
+lookup_timeout_seconds: 30
+format_repairs: 1
+max_repair_error_chars: 500
+train_only: false
+feedback_policy: all_pairs_context
+best_parent: true
+optimizer_history: true
+proposal_plaintext: true
+strict_length: true
+length_revision_mode: edit_only
+optimizer_case_history: true
