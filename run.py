@@ -917,6 +917,32 @@ def summarize(rows):
     }
 
 
+def recheck_selection(api, examples, candidates, prompts, row_history, output):
+    """Choose between the two original training leaders using one independent recheck each."""
+    if any(e["split"] != "train" for e in examples) or len(prompts) != len(row_history):
+        raise RunError("Selection rechecks require matching training inputs")
+    if any(r["split"] != "train" or r["gap"] is None for rows in row_history for r in rows):
+        raise RunError("Selection rechecks require complete training grades")
+    original = [summarize(rows)["gap"] for rows in row_history]
+    ranked, shortlist = original.copy(), []
+    for _ in range(min(2, len(prompts))):
+        index = best_checkpoint(ranked)
+        shortlist.append(index)
+        ranked[index] = float("-inf")
+    entries = []
+    for index in sorted(shortlist):
+        rows = evaluate_checkpoint(api, examples, candidates, prompts[index], f"selection_{index}", output)
+        summary = summarize(rows)
+        if not summary["complete"] or summary["examples"] != len(examples):
+            raise RunError("Training recheck grades missing")
+        entries.append({"checkpoint": index, "original_gap": original[index], "recheck_gap": summary["gap"],
+                        "mean_gap": (original[index] + summary["gap"]) / 2})
+    selected = entries[best_checkpoint([e["mean_gap"] for e in entries])]["checkpoint"]
+    record = {"selected": selected, "candidates": entries, "selection_data": "train"}
+    write_json(output / "selection_recheck.json", record)
+    return selected, record
+
+
 def write_report(output, summaries, selected, costs):
     table = [
         {
@@ -1085,6 +1111,9 @@ def run_xar(config_path, *, resume=False):
                 raise RunError("Training grades missing")
         gaps = [summary["gap"] for summary in training_summaries]
         selected = best_checkpoint(gaps)
+        selection_recheck = None
+        if config.get("selection_recheck"):
+            selected, selection_recheck = recheck_selection(api, train, candidates, prompts, row_history, output)
         write_json(
             output / "freeze.json",
             {
@@ -1093,6 +1122,7 @@ def run_xar(config_path, *, resume=False):
                 "training_gaps": gaps,
                 "prompt_hashes": [digest(value) for value in prompts],
                 "frozen_at": dt.datetime.now(dt.UTC).isoformat(),
+                **({"selection_recheck": selection_recheck} if selection_recheck is not None else {}),
             },
         )
         if config.get("train_only", False):
