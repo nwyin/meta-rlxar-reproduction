@@ -1380,3 +1380,13 @@ A read-only OpenRouter check found $1,125 purchased and $925.018957074 used acco
 leaving about $199.98 available. The key still has $897.842606366 of allowance. The interrupted
 second batch can resume with its saved settings. This recovery runs only that batch so its
 results can be discussed in a PR before another method change.
+
+The paper method already generated for the second batch now has a tracked snapshot:
+`configs/search-arxiv-flexible.yaml` and `prompts/experiments/flexible/papers/`.
+The optimizer guidance relaxes fixed rhetorical templates and enables training history.
+The outer designer generated this guidance from training trajectories only. Its wording
+describes intended fixes; it is not evidence that those fixes transfer to validation.
+The snapshot matches every saved prompt byte and all trial-0 settings except local prompt
+and output paths. The three existing trials use sampling seeds 20262003–20262005.
+Publishing the snapshot leaves the running experiment's inputs unchanged. A separate PR
+will collect this method's results; validation is still pending.
