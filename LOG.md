@@ -1442,3 +1442,13 @@ is still available, rather than waiting for 2 consecutive interval-passing batch
 confirmation run evaluates all 3 selected prompts on 13 untouched sections from 5 papers.
 The amendment changes scheduling, preserves all earlier pass/fail outcomes, and supplies
 no confirmation evidence to optimization. The 3rd reduced batch continues unchanged.
+
+Paper confirmation passed on all 13 sections from 5 untouched papers. The initial gap was
+-1.107692. The 3 frozen prompts produced gaps +1.523077, +2.230769, and +2.153846, with
+complete grading and compliant drafts. Pooled source-mean gap was +2.026667 (descriptive
+95% source-bootstrap interval [+1.151111,+2.902222]); improvement was +3.14
+([+2.822222,+3.695556]). The full confirmation cost $5.57505660, with no unresolved charges.
+All 3 prompts are saved under `prompts/experiments/verified-papers/`; none was selected
+using confirmation performance. These results reproduce the preference reversal on our
+paper corpus, not the exact unpublished Meta setup or independent expert quality judgments.
+Future automatic paper batches were stopped; the already active batch continues unchanged.

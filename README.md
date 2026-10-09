@@ -258,3 +258,10 @@ uv run python confirm.py arxiv runs/confirmation-papers runs/batch/arxiv-s0 runs
 The command saves provenance, each checkpoint's scores, source-bootstrap intervals, and
 actual provider charges. Use `--resume` only for a failed or incomplete evaluation with the
 same inputs. Keep confirmation results separate from exploratory validation results.
+
+The 3 paper meta-prompts in `prompts/experiments/verified-papers/` passed frozen confirmation
+on 13 sections from 5 untouched papers. Their mean human-minus-model gaps were +1.523077,
++2.230769, and +2.153846, versus -1.107692 for the initial prompt. Each is the complete
+meta-prompt supplied with context to the rubric generator, alongside the existing fixed
+rubric wrapper. All 3 are retained; confirmation scores did not select a winner. See PR #20
+for settings, costs, the scheduling amendment, and limits.
